@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RTA จูน 3 ทาง · ดีสแต็ก</title>
+<style>
+  :root{
+    --bg:#0a0b0e; --panel:#14161c; --panel2:#1b1e26; --line:#262a34;
+    --text:#e8eaf0; --muted:#8a90a0; --accent:#ff6a1a; --accent2:#ffb020;
+    --spectrum:#35d0c0; --target:#ffd24a; --over:#ff4d4d; --under:#4d9bff;
+    --ok:#37c871; --sub:#ff5a8a; --mid:#5ad1ff; --twe:#c48cff;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Noto Sans Thai Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans)}
+  body{padding:0 0 40px;max-width:720px;margin:0 auto}
+
+  header{display:flex;align-items:center;gap:12px;padding:14px 16px 12px;
+    border-bottom:1px solid var(--line);position:sticky;top:0;background:linear-gradient(180deg,#0d0f13,#0a0b0e);z-index:5}
+  .logo{width:30px;height:30px;flex:0 0 auto}
+  .brand{display:flex;flex-direction:column;line-height:1.1}
+  .brand b{font-size:16px;letter-spacing:.4px}
+  .brand b span{color:var(--accent)}
+  .brand small{color:var(--muted);font-size:10px;letter-spacing:1.5px;font-family:var(--mono)}
+  .status{margin-left:auto;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#444;margin-left:6px;vertical-align:middle}
+  .dot.live{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+
+  .label{font-size:11px;color:var(--muted);letter-spacing:1px;font-family:var(--mono);text-transform:uppercase;margin:16px 14px 6px}
+
+  /* crossover reference cards */
+  .xcards{display:flex;gap:8px;padding:0 12px;overflow-x:auto}
+  .xcard{flex:1 0 31%;min-width:120px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 11px 12px;border-top:3px solid}
+  .xcard.sub{border-top-color:var(--sub)}
+  .xcard.mid{border-top-color:var(--mid)}
+  .xcard.twe{border-top-color:var(--twe)}
+  .xcard h3{margin:0 0 2px;font-size:13px}
+  .xcard .qty{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:8px}
+  .xcard .kv{display:flex;justify-content:space-between;font-size:11.5px;padding:3px 0;border-top:1px dashed var(--line)}
+  .xcard .kv span:first-child{color:var(--muted)}
+  .xcard .kv b{font-family:var(--mono);font-weight:600}
+
+  .graphwrap{position:relative;margin:12px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  canvas{display:block;width:100%;height:300px;touch-action:none}
+  .overlay-legend{position:absolute;top:8px;left:10px;display:flex;gap:10px;font-family:var(--mono);font-size:10px;pointer-events:none;flex-wrap:wrap;max-width:60%}
+  .overlay-legend span{display:flex;align-items:center;gap:4px;color:var(--muted)}
+  .swatch{width:12px;height:3px;border-radius:2px;display:inline-block}
+  .readout{position:absolute;top:8px;right:10px;text-align:right;font-family:var(--mono);font-size:10px;color:var(--muted);pointer-events:none}
+  .readout b{color:var(--text);font-size:15px}
+
+  .controls{padding:12px}
+  .row{display:flex;gap:8px;margin-bottom:8px}
+  button{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--text);
+    background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px 10px;cursor:pointer;
+    flex:1;transition:.12s;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px}
+  button:active{transform:scale(.97)}
+  button.primary,button.on{background:linear-gradient(180deg,#ff7c2e,#ef5f10);border-color:#ff8a44;color:#1a0d02}
+  button:disabled{opacity:.4;pointer-events:none}
+  .icn{font-size:16px;line-height:1}
+
+  .seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px}
+  .seg button{background:transparent;border:none;border-radius:8px;font-size:12.5px;font-weight:600;padding:9px 4px;min-height:auto;color:var(--muted)}
+  .seg button.sel{background:var(--panel2);color:var(--accent2)}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 14px 4px;margin:0 12px}
+  .sug{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-bottom:14px}
+  .sug.over{border-color:var(--over)} .sug.under{border-color:var(--under)} .sug.note{border-color:var(--accent2)}
+  .sug h4{margin:0 0 3px;font-size:14px;font-weight:700}
+  .sug h4 em{font-style:normal;font-family:var(--mono);font-size:12px;font-weight:600;padding:1px 7px;border-radius:6px;margin-left:6px}
+  .sug.over em{background:rgba(255,77,77,.15);color:#ff9b9b}
+  .sug.under em{background:rgba(77,155,255,.15);color:#9bc4ff}
+  .sug p{margin:0;font-size:13px;color:var(--muted);line-height:1.55}
+  .sug .fix{color:var(--text);font-family:var(--mono);font-size:12.5px;margin-top:4px;background:var(--panel2);padding:7px 9px;border-radius:8px}
+  .empty{color:var(--muted);font-size:13px;line-height:1.6;padding:6px 0 12px}
+  .kbd{font-family:var(--mono);background:var(--panel2);padding:1px 6px;border-radius:5px;color:var(--accent2);font-size:11.5px}
+
+  .help{margin:14px 12px 0;font-size:12.5px;color:var(--muted);line-height:1.7;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .help b{color:var(--text)} .help ol{margin:8px 0 0;padding-left:20px} .help li{margin-bottom:5px}
+  .warn{background:rgba(255,106,26,.08);border:1px solid rgba(255,106,26,.3);color:#ffb98a}
+  .foot{text-align:center;color:#4a4f5c;font-size:10.5px;font-family:var(--mono);margin-top:20px;letter-spacing:1px}
+
+  /* step priority panel */
+  .steps{margin:0 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 12px 8px}
+  .step{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:none}
+  .step i{flex:0 0 24px;height:24px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);
+    color:var(--accent2);font-style:normal;font-family:var(--mono);font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .step:nth-child(1) i,.step:nth-child(2) i{background:linear-gradient(180deg,#ff7c2e,#ef5f10);color:#1a0d02;border-color:#ff8a44}
+  .step b{display:block;font-size:13.5px;margin-bottom:2px}
+  .step small{display:block;font-size:11.5px;color:var(--muted);line-height:1.5}
+
+  /* preset panel */
+  .presets{margin:0 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;display:none}
+  .presets.show{display:block}
+  .presets input,.presets textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    color:var(--text);font-family:var(--sans);font-size:13px;padding:9px 10px;margin-bottom:8px;resize:vertical}
+  .presets textarea{font-family:var(--mono);font-size:12px;min-height:70px}
+  .plist{margin-top:4px}
+  .pitem{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:7px}
+  .pitem .ph{display:flex;align-items:center;gap:8px}
+  .pitem .ph b{font-size:13px;flex:1}
+  .pitem .ph span{font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .pitem .ph button{flex:0 0 auto;min-height:auto;padding:4px 9px;font-size:11px;border-radius:7px}
+  .pitem pre{margin:6px 0 0;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:pre-wrap;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="logo" viewBox="0 0 100 100" fill="none">
+    <circle cx="30" cy="30" r="13" fill="#ff6a1a"/><circle cx="72" cy="42" r="10" fill="#ff8a3a"/>
+    <circle cx="38" cy="72" r="10" fill="#ff8a3a"/><path d="M30 30 L72 42 M30 30 L38 72" stroke="#ff6a1a" stroke-width="5"/>
+  </svg>
+  <div class="brand"><b>RTA จูน <span>3 ทาง</span></b><small>DSTACK · 10" + 4"×2 + 2"×2</small></div>
+  <div class="status"><span id="stMode">พร้อมใช้งาน</span><span class="dot" id="stDot"></span><br>
+    <span id="stFs" style="font-size:10px">— kHz</span></div>
+</header>
+
+<div class="label">⚡ ต้องหาค่าใดก่อน — ทำตามลำดับนี้เท่านั้น</div>
+<div class="steps">
+  <div class="step"><i>1</i><div><b>เกน + Limiter (ก่อนอื่นใด)</b><small>ตั้งให้แอมป์ไม่คลิป · ยังไม่ต้องวัดอะไร ถ้าแอมป์คลิปอยู่ ค่าที่วัดได้ทั้งหมดจะผิดหมด</small></div></div>
+  <div class="step"><i>2</i><div><b>จูนตู้ (Fb) → ได้ Subsonic</b><small>กด 🌊 Sweep เบส · นี่คือค่าที่ต้องหาเป็นอันดับแรกของการวัด เพราะมันกำหนด Subsonic ที่กันดอกพัง</small></div></div>
+  <div class="step"><i>3</i><div><b>ครอสโอเวอร์ + สโลป</b><small>ใส่ Subsonic จากข้อ 2 + ครอสตามการ์ดด้านล่าง ลงช่องซับ/กลาง/แหลม</small></div></div>
+  <div class="step"><i>4</i><div><b>เฟส/โพลาริตี้ + ดีเลย์</b><small>กด 🔄 เช็กเฟส · ต้องแก้ก่อน EQ เสมอ ดิพจากเฟสแก้ด้วย EQ ไม่หาย</small></div></div>
+  <div class="step"><i>5</i><div><b>เลเวลสมดุล 3 ทาง</b><small>ปรับเกนซับ/กลาง/แหลม ให้เส้นใกล้เป้าหมายก่อน แล้วค่อยละเอียด</small></div></div>
+  <div class="step"><i>6</i><div><b>PEQ ละเอียด (ท้ายสุด)</b><small>กด 📸 วัดผล แล้วทำตามคำแนะนำ · เน้นตัดมากกว่าบูสต์ · เก็บ A/B ดูว่าดีขึ้นจริง</small></div></div>
+</div>
+
+<div class="label">ตั้งครอสโอเวอร์แนะนำ (ป้อนลง Blue Art · 4CH)</div>
+<div class="xcards">
+  <div class="xcard sub">
+    <h3>ซับ 10"</h3><div class="qty">ตู้ออเดอร์ 6 · กระแทกข้าง</div>
+    <div class="kv"><span>HPF (subsonic)</span><b>38Hz · BW24</b></div>
+    <div class="kv"><span>LPF</span><b>110Hz · LR24</b></div>
+    <div class="kv"><span>Limiter / Phase</span><b>ON · 0/180°*</b></div>
+  </div>
+  <div class="xcard mid">
+    <h3>กลาง 4"</h3><div class="qty">×2 ตัว</div>
+    <div class="kv"><span>HPF</span><b>120Hz · LR24</b></div>
+    <div class="kv"><span>LPF</span><b>3.91k · LR12</b></div>
+    <div class="kv"><span>Limiter</span><b>ON · กันคลิป</b></div>
+  </div>
+  <div class="xcard twe">
+    <h3>แหลม 2"</h3><div class="qty">×2 ตัว</div>
+    <div class="kv"><span>HPF</span><b>3.91k · LR12</b></div>
+    <div class="kv"><span>Level</span><b>ค่อยเปิด</b></div>
+    <div class="kv"><span>Limiter</span><b>ON · 5–8k บาดหู</b></div>
+  </div>
+</div>
+<div style="font-size:11px;color:var(--muted);margin:6px 16px 0;line-height:1.5">
+  * ใน Blue Art เลือกชนิดฟิลเตอร์ได้ (LinkwitzRiley / Butterworth / Bessel) — ใช้ LR24 ตรงจุดตัดหลักเพื่อรวมเฟสสวย, HPF ซับใช้ Butterworth ชันๆ กันดอกหลุด · ถ้ามีดิพตรงจุดตัดให้สลับ Phase ซับ 180° ก่อนแก้ EQ · ค่าเหล่านี้เป็นจุดตั้งต้น (คลิปในวิดีโออ้างอิงตัด mid→แหลม ~5–6k) ปรับตามผลวัดจริงได้
+</div>
+
+<div class="graphwrap">
+  <canvas id="cv"></canvas>
+  <div class="overlay-legend">
+    <span><i class="swatch" style="background:var(--spectrum)"></i>เสียงจริง</span>
+    <span><i class="swatch" style="background:var(--target)"></i>เป้าหมาย</span>
+    <span><i class="swatch" style="background:#556"></i>จุดตัดครอส</span>
+  </div>
+  <div class="readout"><b id="rLevel">–</b> dB<br><span id="rBand">—</span></div>
+</div>
+
+<div class="controls">
+  <div class="row">
+    <button id="btnMic" class="primary"><span class="icn">🎙️</span> เริ่มวัดด้วยไมค์</button>
+    <button id="btnNoise"><span class="icn">📻</span> Pink Noise</button>
+  </div>
+  <div class="row">
+    <button id="btnMeasure" disabled><span class="icn">📸</span> วัดผล (4 วิ)</button>
+    <button id="btnHold" disabled><span class="icn">⤒</span> Peak</button>
+    <button id="btnClear" disabled><span class="icn">↺</span> ล้าง</button>
+  </div>
+  <div class="row">
+    <button id="btnSweep" disabled><span class="icn">🌊</span> Sweep เบส · หาจูนตู้ (20–160Hz)</button>
+  </div>
+  <div class="row">
+    <button id="btnPhase" disabled><span class="icn">🔄</span> เช็กเฟส/โพลาริตี้</button>
+    <button id="btnPreset"><span class="icn">💾</span> พรีเซ็ต</button>
+  </div>
+
+  <div class="label" style="margin-left:2px">เทียบก่อน–หลัง (A/B)</div>
+  <div class="row">
+    <button id="btnSaveA" disabled><span class="icn">Ⓐ</span> เก็บเป็น A</button>
+    <button id="btnSaveB" disabled><span class="icn">Ⓑ</span> เก็บเป็น B</button>
+    <button id="btnAB" disabled><span class="icn">⇄</span> ซ้อน A/B</button>
+  </div>
+
+  <div class="label" style="margin-left:2px">เส้นเป้าหมาย</div>
+  <div class="seg" id="segTarget">
+    <button data-t="dstack" class="sel">ดีสแต็ก</button>
+    <button data-t="bass">เน้นเบส</button>
+    <button data-t="music">เพลิน</button>
+    <button data-t="vocal">พูด</button>
+    <button data-t="flat">Flat</button>
+  </div>
+
+  <div class="label" style="margin-left:2px">ความละเอียด</div>
+  <div class="seg" id="segRes">
+    <button data-r="1">1/1</button><button data-r="3" class="sel">1/3 Oct</button><button data-r="6">1/6</button>
+  </div>
+</div>
+
+<div class="label" id="presetLabel" style="margin-left:14px;display:none">จดค่าพรีเซ็ต</div>
+<div class="presets" id="presetPanel">
+  <input id="pName" placeholder="ชื่อพรีเซ็ต (เช่น ฟังเพลิน / ประกวด / ประกาศ)" maxlength="40">
+  <textarea id="pNote" placeholder="ค่าที่ตั้งไว้ — เช่น&#10;Sub: HPF 38 BW24 · LPF 110 LR24 · Gain -2&#10;Mid: HPF 120 · LPF 3.91k · PEQ 250Hz Q1.2 -4dB&#10;Twe: HPF 3.91k · PEQ 6.3k Q2 -2dB"></textarea>
+  <div class="row" style="margin:0">
+    <button id="pSave" class="primary"><span class="icn">💾</span> บันทึกพรีเซ็ต</button>
+    <button id="pFill"><span class="icn">✨</span> ดึงค่าที่วัดได้</button>
+  </div>
+  <div class="plist" id="pList"></div>
+</div>
+
+<div class="label" style="margin-left:14px">คำแนะนำการจูน (รู้จักระบบ 3 ทาง)</div>
+<div class="card" id="sugBox">
+  <div class="empty">ป้อนครอสตามการ์ดด้านบนก่อน แล้วกด <span class="kbd">เริ่มวัดด้วยไมค์</span> → เปิด Pink Noise เข้าระบบ → วางมือถือระดับหูตำแหน่งฟัง → กด <span class="kbd">วัดผล</span> ระบบจะวิเคราะห์เทียบเป้าหมาย “ดีสแต็ก” และบอกจุดที่ควรปรับ</div>
+</div>
+
+<div class="help">
+  <b>ลำดับการจูนชุด 3 ทางนี้</b>
+  <ol>
+    <li><b>หาจูนตู้ก่อน:</b> กด <span class="kbd">Sweep เบส</span> กวาด 20–160Hz — ระบบจะบอกความถี่ที่ตู้ดังสุด (จูนตู้) และแนะนำจุดตั้ง Subsonic ให้อัตโนมัติ เอาไปตั้งช่องซับ</li>
+    <li><b>ครอส:</b> ตั้งครอส/subsonic ตามการ์ด+ผล Sweep บน Blue Art — subsonic สำคัญมากกับตู้ออเดอร์ 6 กันดอกซับหลุดใต้จูนตู้จนพัง</li>
+    <li><b>เฟส/ดีเลย์:</b> เล่น Pink Noise วัดรอบจุดตัด 100Hz กับ 4kHz — ถ้าเป็นดิพลึก ลองสลับโพลาริตี้/ปรับดีเลย์ ให้ไดรเวอร์มาถึงหูพร้อมกันก่อน อย่าเพิ่งดันด้วย EQ</li>
+    <li><b>เลเวลสมดุล:</b> ปรับเกนซับ/กลาง/แหลม ให้เส้นเสียงจริงราบใกล้เป้าหมาย</li>
+    <li><b>EQ ละเอียด:</b> ค่อยจูน PEQ ตามที่ระบบแนะนำ เน้นตัด (subtractive) มากกว่าบูสต์</li>
+    <li>วัดซ้ำจนพอใจ → Save Preset บน DSP (ทำหลายพรีเซ็ต: ฟังเพลิน / ประกวด / ประกาศ)</li>
+  </ol>
+</div>
+<div class="help warn">
+  <b>อาการเบสแตกตอนเร่ง (แก้ตามลำดับ):</b> ① ตั้ง <b>Subsonic HPF ~38Hz Butterworth ชันๆ</b> — กันดอกซับหลุดใต้จูนตู้ (สาเหตุอันดับ 1 ของเสียงแตก) ② เช็ก <b>amp คลิปไหม</b> ตั้งเกน+Limiter สับให้เอาต์พุตไม่ดันแอมป์คลิป ③ <b>อย่าบูสต์ต่ำกว่าที่ตู้เล่นได้</b> — ตู้ออเดอร์ 6 เป็นตู้แบนด์แคบ บูสต์ 30–45Hz มีแต่ทำดอกสะบัด/แตก ให้ตัดพีคของตู้แล้วเร่งเกนรวมแทน จะดังสะอาดกว่า<br><br>
+  <b>หมายเหตุ:</b> Blue Art มี RTA/Spectrum ในตัว และเครื่องพี่มี Smaart Suite ด้วย — ถ้ามีไมค์วัดคาลิเบรต ใช้ Smaart จะเที่ยงสุด · ตัวนี้ไว้เช็กเร็ว/พกพา + ได้เส้นเป้าหมายและคำแนะนำอัตโนมัติที่ RTA ในตัวไม่มี แล้วเอาค่าไปใส่ Blue Art ตามฟอร์แมต Band/F/Q/G ได้เลย<br><br>
+  <b>จุดอ่อนที่ต้องจับตาในชุดนี้:</b> ไม่มีมิดเบสแยก — 10" ตู้ออเดอร์ 6 เป็นตู้แบนด์แคบ (ขึ้นไม่ค่อยถึง 150–300Hz) ส่วน 4" ก็ยังไม่เต็มที่ในย่านนั้น ทำให้ช่วง <b>150–300 Hz</b> มักตก ฟังแล้วเสียงบาง/ขาดเนื้อ · แก้โดยขยับ LP ซับขึ้นเล็กน้อยหรือ HP กลางลง แล้วหนุน PEQ เบาๆ · และไมค์มือถือไม่ได้คาลิเบรต ค่าที่อ่านเป็นแนวโน้ม ถ้าอยากเป๊ะใช้ UMIK-1 + REW (ฟรี)
+</div>
+
+<div class="foot">RTA 3-WAY TUNING · เปิดผ่าน https เท่านั้นไมค์จึงทำงาน · ห้ามใช้บน GAS</div>
+
+<script>
+(function(){
+  "use strict";
+  // crossover config (Hz)
+  const X={ subsonic:38, subLP:110, midHP:120, midLP:3910, tweHP:3910 };
+  const XMARK=[110,3910], SUBMARK=38;
+
+  function centers(perOct){
+    const ratio=Math.pow(2,1/perOct); let f=1000; const low=[];
+    while(f>=18){ low.push(f); f/=ratio; } low.reverse();
+    f=1000*ratio; const high=[]; while(f<=20500){ high.push(f); f*=ratio; }
+    return low.concat(high).map(x=>Math.round(x));
+  }
+  function niceLabel(f){ if(f>=1000){const k=f/1000;return (k%1===0?k:k.toFixed(1))+'k';} return String(f); }
+
+  const TARGETS={
+    flat:  f=>0,
+    music: f=>{ if(f<=100)return 4; if(f>=10000)return -4; const l=Math.log10(f);
+      return f<1000? 4*(1-(l-2)) : -4*(l-3); },
+    vocal: f=>{ if(f<80)return -8; if(f<160)return -3; if(f>=2000&&f<=4500)return 3; if(f>8000)return -3; return 0; },
+    // tailored for this 3-way dstack rig
+    dstack:f=>{ if(f<38)return -12; if(f<=90)return 5; if(f<=160)return 2;
+      if(f<340)return 0; if(f>=2000&&f<=4500)return 2; if(f>12000)return -2; return 0; },
+    // bass-forward but rolled below box tuning (boost only where the box can play)
+    bass:  f=>{ if(f<38)return -12; if(f<=70)return 7; if(f<=120)return 5; if(f<=180)return 3;
+      if(f<340)return 0; if(f>=2000&&f<=4000)return 1; if(f>10000)return -2; return 0; }
+  };
+  const targetNames={dstack:'ดีสแต็ก',bass:'เน้นเบส',music:'ฟังเพลิน',vocal:'ประกาศ/พูด',flat:'Flat'};
+
+  let audioCtx=null, analyser=null, micStream=null, srcNode=null;
+  let noiseNode=null, noiseOn=false, running=false, holdOn=false;
+  let perOct=3, bandF=centers(3), bandLabels=bandF.map(niceLabel);
+  let freqData=null, peakHold=[], measured=null, target='dstack', raf=null, measuring=false;
+  let sweeping=false, sweepData=[], sweepPeak=null, sweepResult=null, sweepOsc=null, sweepMeta=null, sweepFrozen=false;
+  let snapA=null, snapB=null, abOn=false;
+  let phasing=false, phaseOsc=null, phaseGain=null, phaseMeta=null, phaseLog=[];
+  let presets=[];
+
+  const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  let W=0,H=0; const DPR=Math.min(window.devicePixelRatio||1,2.5);
+  const PAD={l:34,r:12,t:16,b:22}, FMIN=20,FMAX=20000,DB_TOP=18,DB_BOT=-18;
+  const lminF=Math.log10(FMIN), lmaxF=Math.log10(FMAX);
+  function xF(f){ return PAD.l+(Math.log10(f)-lminF)/(lmaxF-lminF)*(W-PAD.l-PAD.r); }
+  function yDb(db){ const c=Math.max(DB_BOT,Math.min(DB_TOP,db)); return PAD.t+(DB_TOP-c)/(DB_TOP-DB_BOT)*(H-PAD.t-PAD.b); }
+  function resize(){ const r=cv.getBoundingClientRect(); W=r.width;H=r.height; cv.width=W*DPR;cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  window.addEventListener('resize',resize);
+
+  async function startMic(){
+    try{
+      audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+      await audioCtx.resume();
+      micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      srcNode=audioCtx.createMediaStreamSource(micStream);
+      analyser=audioCtx.createAnalyser(); analyser.fftSize=16384; analyser.smoothingTimeConstant=0.7;
+      freqData=new Float32Array(analyser.frequencyBinCount); srcNode.connect(analyser);
+      running=true; rebuildBands();
+      document.getElementById('stMode').textContent='กำลังวัด';
+      document.getElementById('stDot').classList.add('live');
+      document.getElementById('stFs').textContent=(audioCtx.sampleRate/1000).toFixed(1)+' kHz';
+      const b=document.getElementById('btnMic'); b.classList.add('on'); b.innerHTML='<span class="icn">⏹</span> หยุดไมค์';
+      ['btnMeasure','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=false);
+      loop();
+    }catch(e){ showMicError(e); }
+  }
+  function stopMic(){
+    running=false; if(raf)cancelAnimationFrame(raf);
+    if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
+    document.getElementById('stMode').textContent='พร้อมใช้งาน';
+    document.getElementById('stDot').classList.remove('live');
+    const b=document.getElementById('btnMic'); b.classList.remove('on'); b.innerHTML='<span class="icn">🎙️</span> เริ่มวัดด้วยไมค์';
+    ['btnMeasure','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=true);
+    sweepFrozen=false;
+    draw();
+  }
+  function showMicError(e){
+    let msg='เปิดไมค์ไม่ได้';
+    if(location.protocol!=='https:'&&location.hostname!=='localhost')
+      msg='ไมค์ทำงานเฉพาะหน้า <b>https</b> — เปิดไฟล์นี้ผ่านลิงก์ https (GitHub Pages / โฮสต์ของพี่) อย่าเปิดจากไฟล์ตรงๆ และอย่าวางบน GAS';
+    else if(e&&e.name==='NotAllowedError') msg='ยังไม่ได้อนุญาตไมโครโฟน — กดอนุญาตในเบราว์เซอร์แล้วลองใหม่';
+    else msg='เปิดไมค์ไม่ได้: '+(e&&e.message||e);
+    document.getElementById('sugBox').innerHTML='<div class="empty" style="color:#ffb98a">'+msg+'</div>';
+  }
+
+  function makePinkNoise(){
+    const sr=audioCtx.sampleRate,len=sr*2,buf=audioCtx.createBuffer(1,len,sr),d=buf.getChannelData(0);
+    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for(let i=0;i<len;i++){const w=Math.random()*2-1;
+      b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.96900*b2+w*0.1538520;
+      b3=0.86650*b3+w*0.3104856;b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;
+      d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;}
+    return buf;
+  }
+  function toggleNoise(){
+    if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); audioCtx.resume();
+    const btn=document.getElementById('btnNoise');
+    if(noiseOn){ try{noiseNode.stop();}catch(_){}; noiseNode=null;noiseOn=false; btn.classList.remove('on'); btn.innerHTML='<span class="icn">📻</span> Pink Noise'; }
+    else{ noiseNode=audioCtx.createBufferSource(); noiseNode.buffer=makePinkNoise(); noiseNode.loop=true;
+      const g=audioCtx.createGain(); g.gain.value=0.5; noiseNode.connect(g).connect(audioCtx.destination); noiseNode.start();
+      noiseOn=true; btn.classList.add('on'); btn.innerHTML='<span class="icn">⏹</span> หยุด Noise'; }
+  }
+
+  function rebuildBands(){ bandF=centers(perOct); bandLabels=bandF.map(niceLabel); peakHold=new Array(bandF.length).fill(-120); }
+  function computeBands(){
+    analyser.getFloatFrequencyData(freqData);
+    const hzPerBin=audioCtx.sampleRate/analyser.fftSize, half=Math.pow(2,1/(2*perOct)), out=new Array(bandF.length).fill(-120);
+    for(let i=0;i<bandF.length;i++){
+      const fc=bandF[i]; let b0=Math.max(1,Math.floor((fc/half)/hzPerBin)), b1=Math.min(freqData.length-1,Math.ceil((fc*half)/hzPerBin));
+      if(b1<b0)b1=b0; let p=0,c=0;
+      for(let b=b0;b<=b1;b++){const db=freqData[b]; if(db>-Infinity){p+=Math.pow(10,db/10);c++;}}
+      out[i]=c?10*Math.log10(p/c):-120;
+    } return out;
+  }
+  function normalize(arr){ let s=0,c=0;
+    for(let i=0;i<bandF.length;i++){ if(bandF[i]>=200&&bandF[i]<=2000&&arr[i]>-100){s+=arr[i];c++;} }
+    const ref=c?s/c:0; return arr.map(v=> v<=-100?DB_BOT-1:v-ref);
+  }
+
+  function measure(){
+    if(!running||measuring)return; measuring=true; sweepFrozen=false; sweepResult=null;
+    const btn=document.getElementById('btnMeasure'), accP=new Array(bandF.length).fill(0), acc=new Array(bandF.length).fill(0);
+    const t0=performance.now(),DUR=4000;
+    (function tick(){
+      const raw=computeBands();
+      for(let i=0;i<bandF.length;i++){ if(raw[i]>-100){accP[i]+=Math.pow(10,raw[i]/10);acc[i]++;} }
+      const el=performance.now()-t0; btn.innerHTML='<span class="icn">⏱</span> วัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
+      if(el<DUR)requestAnimationFrame(tick);
+      else{ measured=normalize(bandF.map((_,i)=>acc[i]?10*Math.log10(accP[i]/acc[i]):-120)); measuring=false;
+        btn.innerHTML='<span class="icn">📸</span> วัดผล (4 วิ)'; analyze(); }
+    })();
+  }
+
+  function nearestFc(f){ const nice=[31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150,4000,5000,6300,8000,10000,12500];
+    let best=nice[0],bd=1e9; for(const x of nice){const d=Math.abs(Math.log2(x/f)); if(d<bd){bd=d;best=x;}} return best; }
+  function nearXover(f){ for(const x of XMARK){ if(Math.abs(Math.log2(f/x))<0.2) return x; } return null; }
+
+  function analyze(){
+    const box=document.getElementById('sugBox'); if(!measured)return;
+    const delta=bandF.map((f,i)=>measured[i]-TARGETS[target](f)); const TH=3.5;
+    const regions=[]; let cur=null;
+    for(let i=0;i<bandF.length;i++){
+      if(bandF[i]<25||bandF[i]>18000){ if(cur){regions.push(cur);cur=null;} continue; }
+      const d=delta[i], sign=d>TH?1:(d<-TH?-1:0);
+      if(sign===0){ if(cur){regions.push(cur);cur=null;} continue; }
+      if(cur&&cur.sign===sign){ cur.i1=i; if(Math.abs(d)>Math.abs(cur.peak)){cur.peak=d;cur.pf=bandF[i];} }
+      else{ if(cur)regions.push(cur); cur={sign,i0:i,i1:i,peak:d,pf:bandF[i]}; }
+    }
+    if(cur)regions.push(cur);
+    regions.sort((a,b)=>Math.abs(b.peak)-Math.abs(a.peak));
+    let html='';
+    if(regions.length===0)
+      html+='<div class="sug note"><h4>เสียงแนบเป้าหมายดีแล้ว ✔</h4><p>ทุกย่านอยู่ในกรอบ ±'+TH+' dB เทียบ “'+targetNames[target]+'” — Save Preset ได้เลย แล้วลองวัดตำแหน่งฟังจุดอื่นยืนยันความสม่ำเสมอ</p></div>';
+    for(const r of regions.slice(0,5)){
+      const flo=bandF[r.i0],fhi=bandF[r.i1],amt=Math.abs(r.peak).toFixed(1),fc=nearestFc(r.pf),xo=nearXover(r.pf);
+      if(r.sign>0){
+        const q=(r.i1-r.i0)<=1?'2.0':'1.2';
+        html+='<div class="sug over"><h4>'+niceLabel(flo)+'–'+niceLabel(fhi)+' Hz <em>ดังเกิน +'+amt+' dB</em></h4>'+
+          '<p>ย่านนี้โด่งเกินเป้า มักบวม/แข็ง แนะนำตัดแบบ subtractive</p>'+
+          '<div class="fix">Blue Art → Band ว่าง · Peak(PEQ) · F='+niceLabel(fc)+'Hz · Q='+q+' · G=−'+amt+'dB</div></div>';
+      }else{
+        const isSub=fhi<80, isMidbass=(flo>=140&&fhi<=340), atX=!!xo;
+        let why= atX? 'อยู่ใกล้จุดตัดครอส '+niceLabel(xo)+'Hz — น่าจะเป็นเฟส/ดีเลย์มากกว่า EQ ลองสลับโพลาริตี้หรือปรับดีเลย์ก่อน'
+              : isMidbass? 'ย่านมิดเบสของชุดนี้ (10"ตู้ออเดอร์6 ขึ้นไม่ถึง + 4"ยังไม่เต็ม) มักตกตรงนี้ ลองขยับ LP ซับขึ้น/HP กลางลงก่อน แล้วค่อยหนุน EQ'
+              : isSub? 'ขาดพลังเบสลึก เพิ่มเกนซับหรือลดจุด LP ซับลงเล็กน้อย' : 'ค่อยเติมทีละน้อย อย่าดันจนคลิป';
+        html+='<div class="sug under"><h4>'+niceLabel(flo)+'–'+niceLabel(fhi)+' Hz <em>เบากว่า −'+amt+' dB</em></h4>'+
+          '<p>'+why+'</p><div class="fix">Blue Art → Band ว่าง · Peak(PEQ) · F='+niceLabel(fc)+'Hz · Q=1.0 · G=+'+Math.min(6,amt)+'dB</div></div>';
+      }
+    }
+    // structural notes for this rig
+    let sx=0,sc=0; for(let i=0;i<bandF.length;i++){ if(bandF[i]<40){sx+=delta[i];sc++;} }
+    if(sc&&sx/sc>5) html+='<div class="sug note"><h4>พลังงาน &lt;40Hz ล้น</h4><p>ตู้ออเดอร์ 6 อันตรายถ้าปล่อยใต้จูนตู้ — ยืนยัน subsonic HPF ~38Hz เปิดอยู่ กันดอกซับหลุด/พัง</p></div>';
+    let hx=0,hc=0; for(let i=0;i<bandF.length;i++){ if(bandF[i]>=5000&&bandF[i]<=8000){hx+=delta[i];hc++;} }
+    if(hc&&hx/hc>4) html+='<div class="sug note"><h4>แหลม 2" ช่วง 5–8kHz แข็ง/บาดหู</h4><p>2" ไวย่านนี้มาก ลดเลเวลแหลมหรือตัด PEQ ~6.3kHz ลง 1–2dB ฟังนานจะไม่ล้าหู</p></div>';
+    box.innerHTML=html;
+  }
+
+  const GRID_F=[20,50,100,200,500,1000,2000,5000,10000,20000];
+  const MONO=()=>getComputedStyle(document.body).getPropertyValue('--mono');
+  function drawBase(){
+    ctx.clearRect(0,0,W,H);
+    ctx.font='10px '+MONO(); ctx.textBaseline='middle';
+    for(let db=DB_BOT;db<=DB_TOP;db+=6){ const y=yDb(db);
+      ctx.strokeStyle=db===0?'#3a4150':'#20242e'; ctx.lineWidth=db===0?1.2:1;
+      ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(W-PAD.r,y);ctx.stroke();
+      ctx.fillStyle='#5a6172';ctx.textAlign='right';ctx.fillText((db>0?'+':'')+db,PAD.l-5,y); }
+    ctx.textAlign='center';
+    for(const f of GRID_F){ const x=xF(f);
+      ctx.strokeStyle='#20242e';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();
+      ctx.fillStyle='#5a6172';ctx.fillText(niceLabel(f),x,H-PAD.b+11); }
+    for(const xo of XMARK){ const x=xF(xo);
+      ctx.strokeStyle='rgba(120,130,150,.45)';ctx.lineWidth=1.2;ctx.setLineDash([2,3]);
+      ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]); }
+    { const x=xF(SUBMARK); ctx.strokeStyle='rgba(255,90,138,.4)';ctx.setLineDash([1,4]);
+      ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]); }
+    ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--target');
+    ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
+    let st=false; for(let f=FMIN;f<=FMAX;f*=1.05){ const x=xF(f),y=yDb(TARGETS[target](f)); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke();ctx.setLineDash([]);
+  }
+  function drawCurve(arr,color,width,dash){
+    ctx.strokeStyle=color;ctx.lineWidth=width;if(dash)ctx.setLineDash(dash);
+    ctx.beginPath();let st=false;
+    for(let i=0;i<arr.length&&i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX)continue;
+      const x=xF(bandF[i]),y=yDb(arr[i]); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);}
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  function draw(live){
+    drawBase();
+    if(abOn&&(snapA||snapB)){
+      if(snapA&&snapA.data.length===bandF.length) drawCurve(snapA.data,'#8a90a0',2,[5,3]);
+      if(snapB&&snapB.data.length===bandF.length) drawCurve(snapB.data,'#35d0c0',2.4,null);
+      ctx.textAlign='left';ctx.font='bold 10px '+MONO();
+      ctx.fillStyle='#8a90a0';ctx.fillText('Ⓐ ก่อน'+(snapA?'':' (ว่าง)'),PAD.l+2,PAD.t+8);
+      ctx.fillStyle='#35d0c0';ctx.fillText('Ⓑ หลัง'+(snapB?'':' (ว่าง)'),PAD.l+62,PAD.t+8);
+      return;
+    }
+    const data=measured?measured:(live||null);
+    if(data){
+      ctx.beginPath();let s2=false;
+      for(let i=0;i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX)continue; const x=xF(bandF[i]),y=yDb(data[i]); if(!s2){ctx.moveTo(x,y);s2=true;}else ctx.lineTo(x,y);}
+      ctx.lineTo(xF(Math.min(FMAX,bandF[bandF.length-1])),H-PAD.b);ctx.lineTo(xF(Math.max(FMIN,bandF[0])),H-PAD.b);ctx.closePath();
+      const g=ctx.createLinearGradient(0,PAD.t,0,H-PAD.b);g.addColorStop(0,'rgba(53,208,192,.35)');g.addColorStop(1,'rgba(53,208,192,.03)');ctx.fillStyle=g;ctx.fill();
+      ctx.lineWidth=2;
+      for(let i=0;i<bandF.length-1;i++){ if(bandF[i]<FMIN||bandF[i+1]>FMAX)continue;
+        let c=getComputedStyle(document.body).getPropertyValue('--spectrum');
+        if(measured){const d=data[i]-TARGETS[target](bandF[i]); c=d>3.5?'#ff6a6a':d<-3.5?'#6aa8ff':c;}
+        ctx.strokeStyle=c;ctx.beginPath();ctx.moveTo(xF(bandF[i]),yDb(data[i]));ctx.lineTo(xF(bandF[i+1]),yDb(data[i+1]));ctx.stroke(); }
+      if(holdOn&&!measured){ ctx.fillStyle='rgba(255,176,32,.9)';
+        for(let i=0;i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX||peakHold[i]<=-100)continue; ctx.fillRect(xF(bandF[i])-1.5,yDb(peakHold[i])-1.5,3,3);} }
+    }else{ ctx.fillStyle='#4a4f5c';ctx.textAlign='center';ctx.font='12px '+getComputedStyle(document.body).getPropertyValue('--sans');ctx.fillText('เริ่มวัดด้วยไมค์เพื่อดูสเปกตรัม',W/2,H/2); }
+    if(measured){ ctx.fillStyle='rgba(255,106,26,.9)';ctx.textAlign='left';ctx.font='bold 11px '+MONO();ctx.fillText('● วัดผลแล้ว',PAD.l+2,PAD.t+8); }
+  }
+
+  function levelAt(f){
+    analyser.getFloatFrequencyData(freqData);
+    const hzPerBin=audioCtx.sampleRate/analyser.fftSize, bin=Math.round(f/hzPerBin);
+    let mx=-140; for(let b=Math.max(1,bin-2);b<=bin+2;b++){ if(b<freqData.length&&freqData[b]>mx)mx=freqData[b]; } return mx;
+  }
+  function drawSweep(fNow){
+    drawBase();
+    if(sweepData.length>1){
+      let mx=-999; for(const p of sweepData) if(p.db>mx)mx=p.db;
+      ctx.strokeStyle='#ff8a3a';ctx.lineWidth=2.2;ctx.beginPath();let st=false;
+      for(const p of sweepData){ const x=xF(p.f), y=yDb(Math.max(DB_BOT,(p.db-mx)+10)); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke();
+    }
+    if(fNow){ const x=xF(fNow); ctx.strokeStyle='rgba(255,210,74,.95)';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke(); }
+    if(sweepResult&&sweepResult.peakF){ const x=xF(sweepResult.peakF);
+      ctx.strokeStyle='#ff4d4d';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,PAD.t+14);ctx.lineTo(x,H-PAD.b);ctx.stroke();
+      ctx.fillStyle='#ff9b9b';ctx.textAlign='center';ctx.font='bold 10px '+MONO();ctx.fillText('จูนตู้ '+Math.round(sweepResult.peakF)+'Hz',x,PAD.t+7); }
+    if(sweepResult&&sweepResult.subsonic){ const x=xF(sweepResult.subsonic);
+      ctx.strokeStyle='#5ad1ff';ctx.setLineDash([3,3]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,PAD.t+14);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#9bd6ff';ctx.textAlign='center';ctx.font='bold 10px '+MONO();ctx.fillText('HPF '+sweepResult.subsonic,x,H-PAD.b-6); }
+    ctx.fillStyle='rgba(255,138,58,.95)';ctx.textAlign='left';ctx.font='bold 11px '+MONO();
+    ctx.fillText(sweeping?'● กำลังกวาดเบส':'● ผลกวาดเบส',PAD.l+2,PAD.t+8);
+  }
+
+  function startSweep(){
+    if(!running||sweeping)return;
+    if(noiseOn)toggleNoise();            // noise off during sweep
+    measured=null; sweepFrozen=false; sweepData=[]; sweepPeak=null; sweepResult=null; sweeping=true;
+    const F0=20,F1=160,DUR=18000;
+    sweepOsc=audioCtx.createOscillator(); sweepOsc.type='sine';
+    const g=audioCtx.createGain(); g.gain.value=0.35;
+    sweepOsc.connect(g).connect(audioCtx.destination);
+    const t0=audioCtx.currentTime;
+    sweepOsc.frequency.setValueAtTime(F0,t0);
+    sweepOsc.frequency.exponentialRampToValueAtTime(F1,t0+DUR/1000);
+    sweepOsc.start();
+    sweepMeta={F0,F1,DUR,t0:performance.now()};
+    const btn=document.getElementById('btnSweep'); btn.classList.add('on'); btn.innerHTML='<span class="icn">🌊</span> กำลังกวาด…';
+    document.getElementById('sugBox').innerHTML='<div class="empty">กำลังกวาดความถี่เบส… เร่งเสียงระบบให้ดังพอ ถือมือถือใกล้ลำโพงซับ รอ ~18 วิ</div>';
+  }
+  function finishSweep(){
+    try{sweepOsc.stop();}catch(_){}
+    sweeping=false;
+    let pk=null; for(const p of sweepData){ if(p.f>=25&&p.f<=140){ if(!pk||p.db>pk.db)pk=p; } }
+    const box=document.getElementById('sugBox');
+    if(pk){
+      const thr=pk.db-10, below=sweepData.filter(p=>p.f<pk.f).sort((a,b)=>a.f-b.f);
+      let edge=pk.f; for(let i=below.length-1;i>=0;i--){ if(below[i].db>=thr)edge=below[i].f; else break; }
+      const subsonic=Math.max(25,Math.round(edge));
+      sweepResult={peakF:pk.f,subsonic,edge:Math.round(edge)};
+      box.innerHTML=
+        '<div class="sug note"><h4>จูนตู้ (จุดดังสุด) ≈ '+Math.round(pk.f)+' Hz</h4>'+
+        '<p>ตู้ออเดอร์ 6 ให้เอาต์พุตสูงสุดแถวนี้ = ย่านที่ตู้ทำงานจริง นอกช่วงนี้จะร่วงเร็ว เน้นเบสให้เล่นในกรอบนี้</p></div>'+
+        '<div class="sug under"><h4>ตั้ง Subsonic HPF ≈ '+subsonic+' Hz</h4>'+
+        '<p>ต่ำกว่าขอบล่าง (~'+sweepResult.edge+'Hz) ที่ตู้เริ่มหมดแรง ดอกจะไร้โหลด/สะบัดจนแตก ตั้ง HPF ชันๆ ตรงนี้กันแตก แล้วเร่งดังได้ขึ้น</p>'+
+        '<div class="fix">Blue Art (ช่องซับ) → HPF · Butterworth 18–24 · F≈'+subsonic+'Hz</div></div>'+
+        '<div class="sug over"><h4>พีคตู้ '+Math.round(pk.f)+'Hz อาจโด่ง/โหน่ง</h4>'+
+        '<p>ถ้าฟังแล้วบวมโหน่งจุดเดียว ให้ตัดพีคลงแล้วเร่งเกนซับรวม จะได้เบสอิ่มและดังสะอาดกว่าบูสต์จุดเดียว</p>'+
+        '<div class="fix">Blue Art → Band ว่าง · Peak(PEQ) · F≈'+Math.round(pk.f)+'Hz · Q=2.0 · G=−3~−5dB</div></div>';
+      sweepFrozen=true;
+    } else {
+      box.innerHTML='<div class="empty" style="color:#ffb98a">วัดสัญญาณไม่ชัด — เร่งเสียงระบบให้ดังขึ้น ปิด Pink Noise แล้วกวาดใหม่</div>';
+      sweepFrozen=false;
+    }
+    drawSweep(null);
+    const btn=document.getElementById('btnSweep'); btn.classList.remove('on'); btn.innerHTML='<span class="icn">🌊</span> Sweep เบส · หาจูนตู้ (20–160Hz)';
+  }
+
+  function loop(){
+    if(!running)return;
+    if(sweeping){
+      const el=performance.now()-sweepMeta.t0;
+      if(el<sweepMeta.DUR){
+        const fNow=sweepMeta.F0*Math.pow(sweepMeta.F1/sweepMeta.F0, el/sweepMeta.DUR), db=levelAt(fNow);
+        sweepData.push({f:fNow,db}); if(!sweepPeak||db>sweepPeak.db)sweepPeak={f:fNow,db};
+        drawSweep(fNow);
+        document.getElementById('rLevel').textContent=Math.round(fNow);
+        document.getElementById('rBand').textContent='Hz · กวาด';
+      } else finishSweep();
+      raf=requestAnimationFrame(loop); return;
+    }
+    if(phasing){
+      const el=performance.now()-phaseMeta.t0;
+      const db=levelAt(phaseMeta.f); phaseLog.push(db);
+      drawBase();
+      const x=xF(phaseMeta.f);
+      ctx.strokeStyle='#ffd24a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();
+      ctx.fillStyle='#ffd24a';ctx.textAlign='center';ctx.font='bold 11px '+MONO();
+      ctx.fillText(phaseMeta.f+'Hz',x,PAD.t+8);
+      const recent=phaseLog.slice(-30), avg=recent.reduce((a,b)=>a+b,0)/recent.length;
+      document.getElementById('rLevel').textContent=avg.toFixed(0);
+      document.getElementById('rBand').textContent='dB · เช็กเฟส '+Math.max(0,Math.ceil((phaseMeta.DUR-el)/1000))+'s';
+      ctx.textAlign='left';ctx.fillStyle='rgba(255,210,74,.95)';ctx.fillText('● เช็กเฟส — ถือนิ่งๆ',PAD.l+2,H-PAD.b-8);
+      if(el>=phaseMeta.DUR) finishPhase();
+      raf=requestAnimationFrame(loop); return;
+    }
+    if(abOn){ draw(); raf=requestAnimationFrame(loop); return; }
+    if(sweepFrozen){ drawSweep(null); raf=requestAnimationFrame(loop); return; }
+    if(!measured){ const norm=normalize(computeBands());
+      if(holdOn)for(let i=0;i<bandF.length;i++){if(norm[i]>peakHold[i])peakHold[i]=norm[i];}
+      draw(norm);
+      let mx=-999,mi=0; for(let i=0;i<bandF.length;i++){if(norm[i]>mx){mx=norm[i];mi=i;}}
+      document.getElementById('rLevel').textContent=(mx>0?'+':'')+mx.toFixed(0);
+      document.getElementById('rBand').textContent='พีค '+bandLabels[mi]+'Hz';
+    } else draw();
+    raf=requestAnimationFrame(loop);
+  }
+
+  // ---------- phase / polarity check ----------
+  function startPhase(){
+    if(!running||phasing||sweeping)return;
+    if(noiseOn)toggleNoise();
+    measured=null; sweepFrozen=false; abOn=false; phaseLog=[]; phasing=true;
+    const XF=XMARK[0]; // crossover freq to test (110Hz sub<->mid)
+    phaseOsc=audioCtx.createOscillator(); phaseOsc.type='sine'; phaseOsc.frequency.value=XF;
+    phaseGain=audioCtx.createGain(); phaseGain.gain.value=0.3;
+    phaseOsc.connect(phaseGain).connect(audioCtx.destination); phaseOsc.start();
+    phaseMeta={f:XF,t0:performance.now(),DUR:8000};
+    const b=document.getElementById('btnPhase'); b.classList.add('on'); b.innerHTML='<span class="icn">🔄</span> กำลังเช็ก…';
+    document.getElementById('sugBox').innerHTML='<div class="empty">กำลังปล่อยโทน '+XF+'Hz ที่จุดตัดครอส… <b>ถือมือถือนิ่งๆ ตำแหน่งฟัง</b> รอ 8 วิ แล้วระบบจะบอกค่าอ้างอิง<br><br>จากนั้นให้ไปสลับ Phase/Polarity ช่องซับบน Blue Art (0°↔180°) แล้วกดเช็กซ้ำ — <b>ค่าไหนดังกว่า = เฟสนั้นถูก</b></div>';
+  }
+  function finishPhase(){
+    try{phaseOsc.stop();}catch(_){}
+    phasing=false;
+    const vals=phaseLog.slice(Math.floor(phaseLog.length*0.35));
+    const avg=vals.length? vals.reduce((a,b)=>a+b,0)/vals.length : -120;
+    const prev=window.__lastPhase;
+    let html='<div class="sug note"><h4>ระดับที่จุดตัด '+phaseMeta.f+' Hz = <b>'+avg.toFixed(1)+' dB</b></h4>'+
+      '<p>จดค่านี้ไว้ แล้วไปสลับ Phase ช่องซับบน Blue Art (0° ↔ 180°) จากนั้นกด 🔄 เช็กเฟส อีกครั้งที่ตำแหน่งเดิม</p></div>';
+    if(prev!==undefined){
+      const diff=avg-prev;
+      if(Math.abs(diff)<1.5)
+        html+='<div class="sug note"><h4>ต่างกันน้อยมาก ('+diff.toFixed(1)+' dB)</h4><p>เฟสไม่ใช่ตัวปัญหาหลักตรงจุดตัดนี้ — ไปปรับ <b>ดีเลย์</b> หรือขยับจุดตัด/สโลปแทน</p></div>';
+      else if(diff>0)
+        html+='<div class="sug under"><h4>ค่าล่าสุดดังกว่าเดิม +'+diff.toFixed(1)+' dB ✔</h4><p><b>เฟสปัจจุบันถูกแล้ว</b> — คงค่านี้ไว้ เพราะเสียงรวมกันเสริม ไม่หักล้าง</p></div>';
+      else
+        html+='<div class="sug over"><h4>ค่าล่าสุดเบากว่าเดิม '+diff.toFixed(1)+' dB ✘</h4><p><b>ให้กลับไปใช้เฟสก่อนหน้า</b> — ค่าปัจจุบันทำให้เสียงหักล้างกันตรงจุดตัด</p></div>';
+    }
+    window.__lastPhase=avg;
+    document.getElementById('sugBox').innerHTML=html;
+    const b=document.getElementById('btnPhase'); b.classList.remove('on'); b.innerHTML='<span class="icn">🔄</span> เช็กเฟส/โพลาริตี้';
+  }
+
+  // ---------- A/B snapshots ----------
+  function snap(which){
+    if(!running)return;
+    const data = measured ? measured.slice() : normalize(computeBands());
+    const s={data,perOct,t:new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})};
+    if(which==='A')snapA=s; else snapB=s;
+    document.getElementById('btnAB').disabled=!(snapA||snapB);
+    document.getElementById('sugBox').innerHTML='<div class="empty">เก็บ '+(which==='A'?'Ⓐ ก่อนปรับ':'Ⓑ หลังปรับ')+' แล้ว ('+s.t+')'+
+      (snapA&&snapB?' — กด <span class="kbd">⇄ ซ้อน A/B</span> เพื่อเทียบว่าดีขึ้นจริงไหม':' — ไปปรับ DSP แล้วกลับมาเก็บอีกฝั่ง')+'</div>';
+  }
+  function toggleAB(){
+    if(!snapA&&!snapB)return;
+    abOn=!abOn;
+    document.getElementById('btnAB').classList.toggle('on',abOn);
+    if(abOn&&snapA&&snapB&&snapA.data.length===snapB.data.length){
+      let imp=0,wor=0,best={d:0,f:0},worst={d:0,f:0};
+      for(let i=0;i<bandF.length;i++){
+        const t=TARGETS[target](bandF[i]);
+        const ea=Math.abs(snapA.data[i]-t), eb=Math.abs(snapB.data[i]-t), d=ea-eb; // +ve = B closer to target
+        if(d>0.8)imp++; else if(d<-0.8)wor++;
+        if(d>best.d){best={d,f:bandF[i]};} if(d<worst.d){worst={d,f:bandF[i]};}
+      }
+      const verdict= imp>wor*1.3 ? '<div class="sug under"><h4>Ⓑ ดีขึ้นกว่า Ⓐ ✔</h4><p>เข้าใกล้เป้าหมายมากขึ้น '+imp+' ย่าน (แย่ลง '+wor+' ย่าน) — ดีขึ้นชัดสุดแถว '+niceLabel(best.f)+'Hz · เก็บค่านี้ไว้เป็นพรีเซ็ตได้</p></div>'
+        : wor>imp*1.3 ? '<div class="sug over"><h4>Ⓑ แย่ลงกว่า Ⓐ ✘</h4><p>ห่างเป้าหมายมากขึ้น '+wor+' ย่าน — แย่ลงชัดสุดแถว '+niceLabel(worst.f)+'Hz · แนะนำย้อนกลับค่าเดิม</p></div>'
+        : '<div class="sug note"><h4>Ⓐ กับ Ⓑ ต่างกันไม่มาก</h4><p>ดีขึ้น '+imp+' ย่าน / แย่ลง '+wor+' ย่าน — การปรับรอบนี้แทบไม่มีผล ลองปรับให้แรงขึ้นหรือไปแก้จุดอื่น</p></div>';
+      document.getElementById('sugBox').innerHTML=verdict;
+    } else if(!abOn){
+      document.getElementById('sugBox').innerHTML='<div class="empty">ปิดโหมดซ้อน A/B แล้ว — กลับสู่การวัดปกติ</div>';
+    }
+    if(!running)draw();
+  }
+
+  // ---------- presets ----------
+  function loadPresets(){ try{ presets=JSON.parse(localStorage.getItem('rta_presets')||'[]'); }catch(_){ presets=[]; } }
+  function savePresets(){ try{ localStorage.setItem('rta_presets',JSON.stringify(presets)); }catch(_){} }
+  function renderPresets(){
+    const list=document.getElementById('pList');
+    if(!presets.length){ list.innerHTML='<div class="empty" style="padding:4px 0 0">ยังไม่มีพรีเซ็ต — ตั้งชื่อและจดค่าที่ตั้งบน Blue Art ไว้ด้านบน แล้วกดบันทึก</div>'; return; }
+    list.innerHTML=presets.map((p,i)=>
+      '<div class="pitem"><div class="ph"><b>'+esc(p.name)+'</b><span>'+esc(p.date)+'</span>'+
+      '<button data-del="'+i+'">ลบ</button></div><pre>'+esc(p.note)+'</pre></div>').join('');
+    list.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
+      presets.splice(+b.dataset.del,1); savePresets(); renderPresets();
+    }));
+  }
+  function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function fillFromMeasurement(){
+    const ta=document.getElementById('pNote'); const lines=[];
+    lines.push('ครอส: Sub HPF '+(sweepResult?sweepResult.subsonic:X.subsonic)+' BW24 · LPF '+X.subLP+' LR24');
+    lines.push('      Mid HPF '+X.midHP+' · LPF '+(X.midLP/1000).toFixed(2)+'k');
+    lines.push('      Twe HPF '+(X.tweHP/1000).toFixed(2)+'k');
+    if(sweepResult) lines.push('จูนตู้ที่วัดได้: '+Math.round(sweepResult.peakF)+' Hz');
+    lines.push('เป้าหมาย: '+targetNames[target]);
+    if(measured){
+      const d=bandF.map((f,i)=>({f,d:measured[i]-TARGETS[target](f)})).filter(o=>Math.abs(o.d)>3.5)
+        .sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,3);
+      d.forEach(o=>lines.push('PEQ: F='+niceLabel(nearestFc(o.f))+'Hz Q=1.2 G='+(o.d>0?'-':'+')+Math.abs(o.d).toFixed(1)+'dB'));
+    }
+    ta.value=lines.join('\n');
+  }
+
+
+  document.getElementById('btnNoise').addEventListener('click',toggleNoise);
+  document.getElementById('btnMeasure').addEventListener('click',()=>{ if(!sweeping&&!phasing){abOn=false;document.getElementById('btnAB').classList.remove('on');measure();} });
+  document.getElementById('btnSweep').addEventListener('click',()=>{ if(!phasing){abOn=false;document.getElementById('btnAB').classList.remove('on');startSweep();} });
+  document.getElementById('btnHold').addEventListener('click',function(){holdOn=!holdOn;this.classList.toggle('on',holdOn);peakHold=new Array(bandF.length).fill(-120);});
+  document.getElementById('btnClear').addEventListener('click',function(){measured=null;sweepFrozen=false;sweepResult=null;sweepData=[];abOn=false;document.getElementById('btnAB').classList.remove('on');peakHold=new Array(bandF.length).fill(-120);document.getElementById('sugBox').innerHTML='<div class="empty">ล้างแล้ว — กด <span class="kbd">วัดผล</span> หรือ <span class="kbd">Sweep เบส</span> อีกครั้ง</div>';});
+  document.getElementById('segTarget').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');target=b.dataset.t;if(measured)analyze();if(!running)draw();});
+  document.getElementById('segRes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');perOct=+b.dataset.r;rebuildBands();measured=null;document.getElementById('sugBox').innerHTML='<div class="empty">เปลี่ยนความละเอียดแล้ว — กด <span class="kbd">วัดผล</span> อีกครั้ง</div>';});
+
+  document.getElementById('btnPhase').addEventListener('click',startPhase);
+  document.getElementById('btnSaveA').addEventListener('click',()=>snap('A'));
+  document.getElementById('btnSaveB').addEventListener('click',()=>snap('B'));
+  document.getElementById('btnAB').addEventListener('click',toggleAB);
+  document.getElementById('btnPreset').addEventListener('click',function(){
+    const p=document.getElementById('presetPanel'), l=document.getElementById('presetLabel');
+    const show=!p.classList.contains('show');
+    p.classList.toggle('show',show); l.style.display=show?'block':'none';
+    this.classList.toggle('on',show);
+    if(show)p.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
+  document.getElementById('pFill').addEventListener('click',fillFromMeasurement);
+  document.getElementById('pSave').addEventListener('click',function(){
+    const n=document.getElementById('pName'), t=document.getElementById('pNote');
+    if(!n.value.trim()){ n.focus(); return; }
+    presets.unshift({name:n.value.trim(),note:t.value.trim(),date:new Date().toLocaleDateString('th-TH',{day:'2-digit',month:'short'})});
+    savePresets(); renderPresets(); n.value=''; t.value='';
+  });
+
+  loadPresets(); renderPresets();
+  resize();draw();
+})();
+</script>
+</body>
+</html>
