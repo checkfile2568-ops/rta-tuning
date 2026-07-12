@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ศูนย์รวมระบบ — ศาลจังหวัดลพบุรี</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     ⚙️ ตั้งค่าลิงก์ระบบ — แก้แค่ตรง SYSTEMS ในแท็ก <script> ด้านล่าง
+     ธีมกรมท่า/ทอง · Sarabun · รองรับมือถือ · deep-link ด้วย #id
+     ============================================================ */
+  :root{
+    --navy:#0A1F38; --navy-2:#12294c; --gold:#C5B358; --gold-2:#d4b461;
+    --bg:#eef1f6; --card:#fff; --text:#1a2240; --muted:#6b7891; --line:#d1d9e6;
+    --sidebar-w:260px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+
+  /* ---------- Top bar ---------- */
+  .topbar{height:56px;background:linear-gradient(135deg,var(--navy),var(--navy-2));
+    color:#fff;display:flex;align-items:center;gap:10px;padding:0 14px;
+    border-bottom:3px solid var(--gold);position:relative;z-index:30}
+  .hamb{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;
+    width:38px;height:38px;border-radius:8px;font-size:16px;cursor:pointer;display:none;flex:0 0 auto}
+  .brand{display:flex;align-items:center;gap:9px;min-width:0}
+  .brand .emblem{width:34px;height:34px;flex:0 0 auto;border-radius:50%;
+    background:rgba(197,179,88,.15);border:2px solid var(--gold);color:var(--gold-2);
+    display:flex;align-items:center;justify-content:center;font-size:14px}
+  .brand-txt{line-height:1.15;min-width:0}
+  .brand-txt b{font-size:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand-txt small{font-size:11px;color:var(--gold-2)}
+  .cur{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0}
+  .cur-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw}
+  .cur-open{background:var(--gold);color:var(--navy);border:none;padding:7px 12px;border-radius:999px;
+    font:700 12px 'Sarabun';cursor:pointer;text-decoration:none;white-space:nowrap;display:none;align-items:center;gap:5px}
+  .cur-open:hover{filter:brightness(1.05)}
+
+  /* ---------- Layout ---------- */
+  .wrap{display:flex;height:calc(100% - 56px)}
+  .sidebar{width:var(--sidebar-w);flex:0 0 auto;background:var(--card);border-right:1px solid var(--line);
+    overflow-y:auto;padding:10px 0;transition:transform .25s}
+  .side-group{font-size:11px;font-weight:700;color:var(--muted);padding:12px 18px 5px;text-transform:uppercase;letter-spacing:.4px}
+  .nav{display:flex;align-items:center;gap:11px;padding:11px 18px;cursor:pointer;color:var(--text);
+    font-size:14px;font-weight:500;border-left:4px solid transparent;transition:.15s;text-decoration:none}
+  .nav i{width:20px;text-align:center;color:var(--gold);font-size:15px}
+  .nav:hover{background:#f4f7fb}
+  .nav.active{background:linear-gradient(90deg,rgba(10,31,56,.06),transparent);
+    border-left-color:var(--gold);font-weight:700;color:var(--navy)}
+  .nav.disabled{opacity:.5;cursor:not-allowed}
+  .nav .tag{margin-left:auto;font-size:10px;font-weight:600;color:#b87a1c;background:#fff3e0;
+    padding:1px 7px;border-radius:8px}
+
+  .main{flex:1;position:relative;background:var(--bg);min-width:0}
+  #frame{width:100%;height:100%;border:0;display:none;background:#fff}
+
+  /* ---------- Home ---------- */
+  .home{position:absolute;inset:0;overflow-y:auto;padding:26px 20px 40px;display:none}
+  .home.show{display:block}
+  .home-head{max-width:900px;margin:0 auto 20px;text-align:center}
+  .home-head .big-emblem{width:64px;height:64px;margin:0 auto 12px;border-radius:50%;
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));border:3px solid var(--gold);
+    color:var(--gold-2);display:flex;align-items:center;justify-content:center;font-size:26px}
+  .home-head h1{font-size:22px;color:var(--navy)}
+  .home-head p{color:var(--muted);font-size:13px;margin-top:4px}
+  .grid{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .tile{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--gold);
+    border-radius:12px;padding:18px;cursor:pointer;transition:.18s;text-decoration:none;color:inherit;display:block}
+  .tile:hover{box-shadow:0 10px 24px rgba(10,31,56,.1);transform:translateY(-2px)}
+  .tile.disabled{opacity:.55;cursor:not-allowed;border-top-color:var(--line)}
+  .tile .t-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--navy),var(--navy-2));
+    color:var(--gold-2);display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:12px}
+  .tile h3{font-size:15px;color:var(--navy);line-height:1.3}
+  .tile small{color:var(--muted);font-size:11px;display:block;margin-top:4px}
+  .tile .wait{color:#b87a1c;font-weight:600}
+
+  /* ---------- Placeholder (รอลิงก์) ---------- */
+  .ph{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:30px;color:var(--muted)}
+  .ph.show{display:flex}
+  .ph i{font-size:44px;color:var(--line);margin-bottom:14px}
+  .ph h2{color:var(--navy);font-size:18px;margin-bottom:6px}
+  .ph p{font-size:13px;max-width:360px}
+
+  /* ---------- Backdrop (mobile) ---------- */
+  .backdrop{position:fixed;inset:56px 0 0 0;background:rgba(10,31,56,.4);z-index:19;display:none}
+  .backdrop.show{display:block}
+
+  @media (max-width:820px){
+    .hamb{display:flex}
+    .sidebar{position:fixed;top:56px;bottom:0;left:0;z-index:20;transform:translateX(-100%);box-shadow:4px 0 20px rgba(0,0,0,.15)}
+    .sidebar.open{transform:translateX(0)}
+    .cur-name{max-width:30vw}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="hamb" onclick="toggleMenu()" aria-label="เมนู"><i class="fas fa-bars"></i></button>
+  <a href="#" class="brand" onclick="goHome();return false;" style="text-decoration:none;color:#fff">
+    <span class="emblem"><i class="fas fa-scale-balanced"></i></span>
+    <span class="brand-txt"><b>ศูนย์รวมระบบ</b><small>ศาลจังหวัดลพบุรี</small></span>
+  </a>
+  <div class="cur">
+    <span class="cur-name" id="curName"></span>
+    <a class="cur-open" id="curOpen" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> เปิดแท็บใหม่</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <nav class="sidebar" id="sidebar"></nav>
+  <div class="backdrop" id="backdrop" onclick="closeMenu()"></div>
+
+  <div class="main">
+    <iframe id="frame" title="ระบบ"></iframe>
+
+    <!-- หน้าแรก -->
+    <div class="home show" id="home">
+      <div class="home-head">
+        <div class="big-emblem"><i class="fas fa-scale-balanced"></i></div>
+        <h1>ศูนย์รวมระบบดิจิทัล</h1>
+        <p>เลือกระบบที่ต้องการ — ระบบจะเปิดในกรอบนี้ทันที</p>
+      </div>
+      <div class="grid" id="homeGrid"></div>
+    </div>
+
+    <!-- รอลิงก์ -->
+    <div class="ph" id="placeholder">
+      <i class="fas fa-link-slash"></i>
+      <h2>ยังไม่ได้ใส่ลิงก์ระบบนี้</h2>
+      <p>ระบบนี้ยังไม่ได้ตั้งค่าลิงก์ /exec — เพิ่มลิงก์ในไฟล์ linkhub.html แล้วอัปขึ้นใหม่</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ⚙️ ใส่ลิงก์ตรงนี้ที่เดียว — วางลิงก์ /exec ของแต่ละระบบในช่อง url
+   • ระบบไหนยังไม่มีลิงก์ ปล่อย url:'' ไว้ → จะขึ้น "รอลิงก์" ไม่พัง
+   • บัญชีนัดพิจารณาคดี ใช้ /exec เดียว 3 เมนู — ใส่ที่ APPT แล้วระบบเติม ?page= ให้เอง
+   ============================================================ */
+const APPT = 'https://script.google.com/macros/s/AKfycbyeAHSW2vjTf1KSV6xy-xBpeW0CGPxVJtuC2F7jQU77G7DkWdUYIDGl9-BJp2gEMUH67Q/exec';   // ← /exec ของ "บัญชีนัดพิจารณาคดี" (ได้ 3 เมนู: ประชาชน/แอดมิน/จอ TV)
+
+const SYSTEMS = [
+  { group:'บัญชีนัดพิจารณาคดี' },
+  { id:'judgment',   name:'บัญชีนัดพิจารณาคดี (ประชาชน)', icon:'fa-gavel',       url: APPT },
+  { id:'appt-admin', name:'— แอดมิน',                     icon:'fa-user-shield', url: APPT ? APPT+'?page=admin' : '' },
+  { id:'appt-tv',    name:'— จอ TV',                      icon:'fa-tv',          url: APPT ? APPT+'?page=tv' : '' },
+
+  { group:'ระบบงานคดี' },
+  { id:'duty',    name:'บัญชีนัดต่อเนื่อง / เวร',            icon:'fa-user-clock',       url:'https://script.google.com/macros/s/AKfycbxx3isdN5agUwIGBZEWpYkT5zzZiNWYjkWURUTU9YoBnrMf619nSSkhAbcWEvifdkYF/exec' },
+  { id:'docs',    name:'จัดการเอกสารรายงานศูนย์ประสานงานคดี', icon:'fa-book',           url:'https://script.google.com/macros/s/AKfycbxporNBHbEPznf6gTnSXUcQWOjcSLns8r0rfu0uEQT6QjJr-SdiWYoImdQtWOZDfIc49w/exec' },
+  { id:'map',     name:'พิกัดและค้นหาแผนที่',               icon:'fa-map-location-dot', url:'https://script.google.com/macros/s/AKfycbzkNMHOS1kli607iNvEjODOj1RUprII2l7aolDKsttd4VMHQpmQeq5ahwehH4eKNLQxgA/exec' },
+  { id:'linebot', name:'Line Bot (จัดการ)',                icon:'fa-robot',            url:'https://script.google.com/macros/s/AKfycbz1i_kLxOAtH795aNInJeReFFQgsuXbauG-A6sudGjTRscLFEbrFOtoDd013H-LwfMe/exec' },
+
+  { group:'เครื่องมืออื่น ๆ' },
+  { id:'qr',    name:'สร้าง QR Code',                icon:'fa-qrcode',      url:'https://script.google.com/macros/s/AKfycbyqfG9UFlWmXjaPz5POTyH4N8t8XvGUpCmvWufZQZ3rvargGbobcsdK0JAwONMr652K/exec' },
+  { id:'media', name:'จัดการแก้ไขวีดีโอและเสียง',     icon:'fa-wave-square', url:'https://script.google.com/macros/s/AKfycbwqyIrR6JXm9OKpUF8IBeJh7bVciZv0M8Oq8Lj0aIE3CE_l7kJdNp1JUrKb_tEwPNuE/exec' },
+  { id:'rta',   name:'RTA',                          icon:'fa-sliders',     url:'https://checkfile2568-ops.github.io/rta-tuning/' },
+];
+
+/* ---------- เรนเดอร์เมนู + การ์ดหน้าแรก ---------- */
+const items = SYSTEMS.filter(s=>s.id);
+function byId(id){ return items.find(s=>s.id===id); }
+
+function renderMenu(){
+  let html='';
+  SYSTEMS.forEach(s=>{
+    if(s.group){ html+='<div class="side-group">'+esc(s.group)+'</div>'; return; }
+    const off = !s.url;
+    html+='<a class="nav'+(off?' disabled':'')+'" data-id="'+s.id+'" href="#'+s.id+'"'
+        + (off?' onclick="return false"':'')+'>'
+        + '<i class="fas '+esc(s.icon)+'"></i><span>'+esc(s.name)+'</span>'
+        + (off?'<span class="tag">รอลิงก์</span>':'')+'</a>';
+  });
+  document.getElementById('sidebar').innerHTML=html;
+
+  let g='';
+  items.forEach(s=>{
+    const off=!s.url;
+    g+='<a class="tile'+(off?' disabled':'')+'" href="#'+s.id+'"'+(off?' onclick="return false"':'')+'>'
+      +'<div class="t-icon"><i class="fas '+esc(s.icon)+'"></i></div>'
+      +'<h3>'+esc(s.name)+'</h3>'
+      +(off?'<small class="wait">⏳ รอลิงก์</small>':'<small>แตะเพื่อเปิด →</small>')+'</a>';
+  });
+  document.getElementById('homeGrid').innerHTML=g;
+}
+
+/* ---------- เปิดระบบ ---------- */
+function openSystem(id){
+  const s=byId(id);
+  const frame=document.getElementById('frame');
+  const home=document.getElementById('home');
+  const ph=document.getElementById('placeholder');
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active', n.dataset.id===id));
+
+  if(!s){ goHome(); return; }
+  document.getElementById('curName').textContent=s.name;
+
+  if(!s.url){ // รอลิงก์
+    frame.style.display='none'; home.classList.remove('show'); ph.classList.add('show');
+    document.getElementById('curOpen').style.display='none';
+    closeMenu(); return;
+  }
+  home.classList.remove('show'); ph.classList.remove('show');
+  frame.style.display='block'; frame.src=s.url;
+  const open=document.getElementById('curOpen');
+  open.href=s.url; open.style.display='inline-flex';
+  closeMenu();
+}
+
+function goHome(){
+  location.hash='';
+  document.getElementById('frame').style.display='none';
+  document.getElementById('frame').src='about:blank';
+  document.getElementById('placeholder').classList.remove('show');
+  document.getElementById('home').classList.add('show');
+  document.getElementById('curName').textContent='';
+  document.getElementById('curOpen').style.display='none';
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
+  closeMenu();
+}
+
+/* ---------- Routing ด้วย #hash ---------- */
+function route(){
+  const id=location.hash.replace('#','').trim();
+  if(id && byId(id)) openSystem(id); else goHome();
+}
+window.addEventListener('hashchange', route);
+window.addEventListener('load', ()=>{ renderMenu(); route(); });
+
+/* ---------- เมนูมือถือ ---------- */
+function toggleMenu(){ document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('backdrop').classList.toggle('show'); }
+function closeMenu(){ document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('show'); }
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+</script>
+</body>
+</html>

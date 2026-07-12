@@ -1,0 +1,94 @@
+/* ============================================================================
+   🎨 theme.css — ธีมกลางระบบศาลจังหวัดลพบุรี  (Premium Court v3)
+   ----------------------------------------------------------------------------
+   วิธีใช้: วางบรรทัดนี้ใน <head> ของทุกระบบ (ก่อน <style> ของระบบเอง)
+     <link rel="stylesheet"
+           href="https://checkfile2568-ops.github.io/rta-tuning/theme.css">
+
+   • ตัวแปรสี (design tokens) อยู่ใน :root — แก้สีที่ไฟล์นี้ที่เดียว เปลี่ยนทุกระบบ
+   • ถ้าระบบไหนมี :root ของตัวเอง ให้ "ลบ :root เดิมออก" เพื่อให้ใช้ค่าจากไฟล์นี้
+   • คลาสสำเร็จรูปใช้ prefix .lh-  (จะไม่ชนกับคลาสเดิมของระบบ)
+   ============================================================================ */
+
+:root{
+  /* โทนหลัก — กรมท่า/ทอง */
+  --navy:#12294c;   --navy-dark:#0b1a33;   --navy-light:#1c3a68;
+  --gold:#c9a24b;   --gold-light:#e6c674;  --gold-soft:#d9bd5f;
+  /* พื้น/ตัวอักษร */
+  --bg:#eef2f8;     --card:#ffffff;        --cream:#f7f4ec;  --cream-dark:#efe8d6;
+  --text:#16203a;   --text-muted:#7a869c;  --border:#e4e9f2;  --hover:#f5f8fc;
+  /* สถานะ */
+  --success:#2d7a4f; --error:#c0392b; --warning:#b87a1c;
+  /* ระยะ/มุม/เงา */
+  --radius:14px; --radius-lg:18px;
+  --shadow-sm:0 4px 14px rgba(11,26,51,.06);
+  --shadow-md:0 14px 30px rgba(11,26,51,.12);
+  --shadow-gold:0 8px 22px rgba(201,162,75,.3);
+  --font:'Sarabun','Noto Sans Thai',sans-serif;
+}
+
+/* ---------- ฐาน ---------- */
+.lh-app{font-family:var(--font);color:var(--text);
+  background:radial-gradient(900px 400px at 100% -5%, rgba(201,162,75,.08), transparent 60%),
+             linear-gradient(180deg,#e9eef6,var(--bg) 220px);
+  min-height:100vh;line-height:1.6;margin:0}
+
+/* ---------- แถบบน ---------- */
+.lh-topbar{background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;
+  padding:14px 24px;border-bottom:3px solid var(--gold);
+  box-shadow:0 6px 22px rgba(11,26,51,.22);position:sticky;top:0;z-index:100}
+.lh-emblem{width:42px;height:42px;border-radius:50%;flex:0 0 auto;
+  background:radial-gradient(circle at 35% 30%,var(--navy-light),var(--navy-dark));
+  border:2px solid var(--gold);color:var(--gold-light);
+  display:flex;align-items:center;justify-content:center;font-size:16px}
+
+/* ---------- การ์ด ---------- */
+.lh-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);transition:.2s}
+.lh-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.lh-card--accent{border-top:3px solid var(--gold)}
+
+/* ---------- ปุ่ม ---------- */
+.lh-btn{font-family:var(--font);font-weight:600;font-size:14px;cursor:pointer;
+  border:none;border-radius:10px;padding:10px 16px;transition:.2s;
+  display:inline-flex;align-items:center;gap:7px}
+.lh-btn--navy{background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff}
+.lh-btn--navy:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(11,26,51,.28)}
+.lh-btn--gold{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-dark);
+  box-shadow:var(--shadow-gold)}
+.lh-btn--gold:hover{transform:translateY(-2px)}
+.lh-btn--ghost{background:#fff;color:var(--navy);border:1.5px solid var(--border)}
+.lh-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ---------- ช่องกรอก ---------- */
+.lh-input{width:100%;font-family:var(--font);font-size:15px;color:var(--text);
+  padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;background:var(--cream)}
+.lh-input:focus{outline:none;border-color:var(--gold);background:#fff;
+  box-shadow:0 0 0 4px rgba(201,162,75,.15)}
+
+/* ---------- ป้าย/สถานะ ---------- */
+.lh-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--cream);color:var(--navy);border:1px solid var(--gold)}
+.lh-pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;
+  padding:2px 9px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px}
+.lh-pill--online{background:rgba(45,122,79,.12);color:var(--success)}
+.lh-pill--offline{background:rgba(192,57,43,.12);color:var(--error)}
+.lh-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* ---------- โมดัล ---------- */
+.lh-modal{background:#fff;border-radius:var(--radius-lg);border:1px solid rgba(201,162,75,.35);
+  box-shadow:0 30px 80px rgba(11,26,51,.35);overflow:hidden}
+.lh-modal-head{background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;
+  border-bottom:3px solid var(--gold);padding:14px 18px;
+  display:flex;align-items:center;justify-content:space-between}
+
+/* ---------- footer ---------- */
+.lh-footer{text-align:center;padding:22px;color:var(--text-muted);font-size:12px;
+  border-top:2px solid var(--gold);background:var(--card)}
+
+/* ---------- ยูทิลิตี ---------- */
+.lh-gold{color:var(--gold)} .lh-navy{color:var(--navy)}
+.lh-spin{display:inline-block;width:32px;height:32px;border:3px solid var(--border);
+  border-top-color:var(--gold);border-radius:50%;animation:lh-spin .8s linear infinite}
+@keyframes lh-spin{to{transform:rotate(360deg)}}
+@media print{.lh-topbar,.lh-no-print{display:none!important}}
