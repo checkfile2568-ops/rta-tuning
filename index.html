@@ -290,6 +290,7 @@
     try{
       audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
       await audioCtx.resume();
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) throw new Error('เบราว์เซอร์นี้เข้าถึงไมค์ไม่ได้ (ต้องเป็นหน้า https)');
       micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
       srcNode=audioCtx.createMediaStreamSource(micStream);
       analyser=audioCtx.createAnalyser(); analyser.fftSize=16384; analyser.smoothingTimeConstant=0.7;
@@ -674,6 +675,8 @@
   }
 
 
+  /* FIX: ปุ่มไมค์ไม่เคยถูกผูก event — เป็นสาเหตุที่ทุกอย่างใช้งานไม่ได้ */
+  document.getElementById('btnMic').addEventListener('click',()=>{ running ? stopMic() : startMic(); });
   document.getElementById('btnNoise').addEventListener('click',toggleNoise);
   document.getElementById('btnMeasure').addEventListener('click',()=>{ if(!sweeping&&!phasing){abOn=false;document.getElementById('btnAB').classList.remove('on');measure();} });
   document.getElementById('btnSweep').addEventListener('click',()=>{ if(!phasing){abOn=false;document.getElementById('btnAB').classList.remove('on');startSweep();} });
