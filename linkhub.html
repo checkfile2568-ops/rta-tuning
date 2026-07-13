@@ -23,6 +23,17 @@
 <iframe id="app" src="https://script.google.com/macros/s/AKfycbz9Cfxlp8W1g2POTfw8oWKvaqXKXQO8ugZSs-6rhfjmlNoqaVQ3D_-2gsdNW5eSmJ5b-Q/exec"
   onload="var l=document.getElementById('load');if(l)l.style.opacity=0,setTimeout(function(){l.style.display='none'},300)"
   allow="clipboard-write; fullscreen" allowfullscreen></iframe>
-<script>setTimeout(function(){var l=document.getElementById('load');if(l)l.style.display='none';},6000);</script>
+<script>
+  setTimeout(function(){var l=document.getElementById('load');if(l)l.style.display='none';},6000);
+  // 🆕 รับคำสั่งเปลี่ยนหน้าจากแอปข้างใน (แก้ปัญหา sandbox ห้ามเฟรมในเปลี่ยนหน้าเฟรมแม่)
+  window.addEventListener('message', function(e){
+    var d = e.data;
+    if (d && d.type === 'lh-nav' && typeof d.url === 'string'
+        && d.url.indexOf('https://script.google.com/') === 0) {
+      var l = document.getElementById('load'); if (l){ l.style.display='flex'; l.style.opacity=1; }
+      document.getElementById('app').src = d.url;
+    }
+  });
+</script>
 </body>
 </html>
