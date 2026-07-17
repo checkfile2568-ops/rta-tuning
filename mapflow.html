@@ -391,21 +391,33 @@
 
       // แอปด้านในแจ้ง READY หลัง bootstrap สำเร็จจริง
       window.addEventListener('message', function (event) {
-        if (event.source !== frame.contentWindow) return;
-        var data = event.data || {};
-        if (data.source !== 'MAPFLOW') return;
+        window.addEventListener('message', function (event) {
+  	var data = event.data || {};
 
-        if (data.type === 'MAPFLOW_READY') {
-          ready = true;
-          clearTimeout(timeoutId);
-          fallback.classList.remove('show');
-          status.textContent = 'เปิดระบบเรียบร้อยแล้ว';
-          setTimeout(hideLoader, 220);
-        } else if (data.type === 'MAPFLOW_ERROR') {
-          ready = false;
-          showFallback('Mapflow แจ้งข้อผิดพลาด: ' + (data.detail || 'ไม่ทราบสาเหตุ'));
-        }
-      });
+  	if (data.source !== 'MAPFLOW') return;
+
+  	var allowedOrigin =
+    	event.origin.indexOf('https://script.google.com') === 0 ||
+    	event.origin.indexOf('https://script.googleusercontent.com') === 0 ||
+    	event.origin.indexOf('https://script.googleusercontent.com') !== -1;
+
+  	if (!allowedOrigin) return;
+
+  	if (data.type === 'MAPFLOW_READY') {
+    	ready = true;
+    	clearTimeout(timeoutId);
+    	fallback.classList.remove('show');
+    	status.textContent = 'เปิดระบบเรียบร้อยแล้ว';
+    	setTimeout(hideLoader, 220);
+
+  	} else if (data.type === 'MAPFLOW_ERROR') {
+    	ready = false;
+    	showFallback(
+      	'Mapflow แจ้งข้อผิดพลาด: ' +
+      	(data.detail || 'ไม่ทราบสาเหตุ')
+    	);
+  	}
+	});
 
       retryBtn.addEventListener('click', function () {
         ready = false;
