@@ -1,20 +1,16 @@
 <!DOCTYPE html>
-<!--
-  Mapflow embed host — ธีมกรมท่า-ทอง (navy/gold)
-  อัปโหลดไฟล์นี้ขึ้น repo rta-tuning โดยใช้ชื่อ "mapflow.html" (ห้ามใช้ index.html)
-  เปิดใช้งานที่: https://checkfile2568-ops.github.io/rta-tuning/mapflow.html
--->
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0b1a33">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark light">
 
   <title>Mapflow — แผนที่จุดเดินริ้วขบวน</title>
   <meta name="description" content="Mapflow ระบบจัดทำและแสดงแผนที่จุดเดินริ้วขบวนแบบเรียลไทม์ ใช้งานง่ายบนทุกอุปกรณ์">
   <meta name="author" content="Mapflow">
 
+  <!-- Social sharing (Open Graph / Twitter) -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Mapflow — แผนที่จุดเดินริ้วขบวน">
   <meta property="og:description" content="ระบบจัดทำและแสดงแผนที่จุดเดินริ้วขบวนแบบเรียลไทม์">
@@ -23,26 +19,23 @@
   <meta name="twitter:title" content="Mapflow — แผนที่จุดเดินริ้วขบวน">
   <meta name="twitter:description" content="ระบบจัดทำและแสดงแผนที่จุดเดินริ้วขบวนแบบเรียลไทม์">
 
-  <!-- Inline SVG favicon (navy/gold — ไม่ต้องมีไฟล์แยก) -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='26' fill='%230d2144'/%3E%3Cpath d='M50 20a18 18 0 0 0-18 18c0 13 18 32 18 32s18-19 18-32A18 18 0 0 0 50 20zm0 25a7 7 0 1 1 0-14 7 7 0 0 1 0 14z' fill='%23e6c674'/%3E%3C/svg%3E">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='26' fill='%230d2144'/%3E%3Cpath d='M50 20a18 18 0 0 0-18 18c0 13 18 32 18 32s18-19 18-32A18 18 0 0 0 50 20zm0 25a7 7 0 1 1 0-14 7 7 0 0 1 0 14z' fill='%23e6c674'/%3E%3C/svg%3E">
+  <!-- Inline SVG favicon (ไม่ต้องมีไฟล์แยก) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='26' fill='url(%23g)'/%3E%3Ctext x='50' y='68' font-family='Arial,sans-serif' font-size='58' font-weight='800' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='26' fill='url(%23g)'/%3E%3Ctext x='50' y='68' font-family='Arial,sans-serif' font-size='58' font-weight='800' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://script.google.com">
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --navy: #12294c;
-      --navy-deep: #0b1a33;
-      --navy-2: #0d2144;
+      --purple: #e6c674;
+      --purple-dark: #0b1a33;
+      --cyan: #1c3a68;
       --gold: #e6c674;
-      --gold-soft: #c9a24b;
-      --ink: #f4ecd6;
+      --bg: #0b1a33;
       --ease: cubic-bezier(.22, 1, .36, 1);
-      --head: "Prompt", system-ui, sans-serif;
-      --body: "Sarabun", system-ui, sans-serif;
     }
 
     * { box-sizing: border-box; }
@@ -52,8 +45,8 @@
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: var(--navy-deep);
-      font-family: var(--body);
+      background: var(--bg);
+      font-family: "Sarabun", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
@@ -77,36 +70,35 @@
       align-items: center;
       justify-content: center;
       padding: 28px;
-      color: var(--ink);
+      color: #fff;
       text-align: center;
       overflow: hidden;
-      background:
-        radial-gradient(1000px 520px at 15% -10%, rgba(201,162,75,.20), transparent 55%),
-        linear-gradient(150deg, #0b1a33, #12294c 60%, #0d2144);
+      background: radial-gradient(1000px 520px at 15% -10%, rgba(201,162,75,.20), transparent 55%), linear-gradient(150deg, #0b1a33, #12294c 60%, #0d2144);
       transition: opacity .4s var(--ease), visibility .4s var(--ease);
     }
 
-    /* แสงทองเรืองพื้นหลังเคลื่อนไหวนุ่ม ๆ */
+    /* แสงเรืองพื้นหลังแบบเคลื่อนไหวนุ่ม ๆ */
     #loader::before,
     #loader::after {
       content: "";
       position: absolute;
       border-radius: 50%;
-      filter: blur(46px);
+      filter: blur(40px);
+      opacity: .55;
       pointer-events: none;
       z-index: 0;
     }
     #loader::before {
-      width: 58vmax; height: 58vmax;
-      top: -24vmax; left: -16vmax;
+      width: 60vmax; height: 60vmax;
+      top: -22vmax; left: -14vmax;
       background: radial-gradient(circle, rgba(230,198,116,.22), transparent 62%);
-      animation: float1 12s var(--ease) infinite alternate;
+      animation: float1 11s var(--ease) infinite alternate;
     }
     #loader::after {
-      width: 50vmax; height: 50vmax;
-      bottom: -22vmax; right: -14vmax;
+      width: 52vmax; height: 52vmax;
+      bottom: -20vmax; right: -12vmax;
       background: radial-gradient(circle, rgba(28,58,104,.55), transparent 62%);
-      animation: float2 14s var(--ease) infinite alternate;
+      animation: float2 13s var(--ease) infinite alternate;
     }
 
     #loader.hide {
@@ -127,58 +119,57 @@
 
     .logo {
       position: relative;
-      width: 88px;
-      height: 88px;
+      width: 84px;
+      height: 84px;
       display: grid;
       place-items: center;
       margin-bottom: 20px;
       border-radius: 50%;
+      color: #e6c674;
+      font-size: 42px;
+      font-weight: 800;
       background: radial-gradient(circle at 35% 30%, #1c3a68, #0c1c38);
-      border: 2px solid var(--gold-soft);
-      box-shadow: 0 22px 55px rgba(0, 0, 0, .45);
+      box-shadow:
+        0 22px 55px rgba(0, 0, 0, .38),
+        inset 0 0 0 2px rgba(255, 255, 255, .28);
       animation: pop .6s var(--ease) both;
     }
-    .logo svg { width: 42px; height: 42px; }
-    /* วงแหวนทองเรืองรอบโลโก้ */
+    /* วงแหวนเรืองรอบโลโก้ */
     .logo::after {
       content: "";
       position: absolute;
       inset: -7px;
       border-radius: 50%;
-      border: 1.5px solid transparent;
+      border: 2px solid transparent;
       background: conic-gradient(from 0deg, transparent, var(--gold), transparent 55%) border-box;
       -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
       -webkit-mask-composite: xor;
       mask-composite: exclude;
-      animation: spin 4.5s linear infinite;
+      opacity: .8;
+      animation: spin 4s linear infinite;
     }
 
     h1 {
       margin: 0;
-      font-family: var(--head);
-      font-size: clamp(24px, 5.4vw, 34px);
-      font-weight: 700;
-      letter-spacing: .5px;
-      color: #fff;
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 800;
+      letter-spacing: .3px;
     }
-    h1 span { color: var(--gold); }
 
     .subtitle {
-      margin-top: 7px;
-      font-family: var(--body);
-      color: rgba(230, 198, 116, .82);
-      font-size: 14px;
-      letter-spacing: .2px;
+      margin-top: 6px;
+      color: rgba(255, 255, 255, .72);
+      font-size: 13.5px;
     }
 
-    /* แถบความคืบหน้าแบบ indeterminate (ทอง) */
+    /* แถบความคืบหน้าแบบ indeterminate */
     .progress {
       position: relative;
-      width: 210px;
+      width: 200px;
       height: 4px;
-      margin: 28px 0 14px;
+      margin: 26px 0 14px;
       border-radius: 99px;
-      background: rgba(230, 198, 116, .16);
+      background: rgba(255, 255, 255, .14);
       overflow: hidden;
     }
     .progress::before {
@@ -187,29 +178,28 @@
       inset: 0;
       width: 40%;
       border-radius: 99px;
-      background: linear-gradient(90deg, transparent, var(--gold), var(--gold-soft));
+      background: linear-gradient(90deg, transparent, var(--gold), #c9a24b);
       animation: slide 1.3s var(--ease) infinite;
     }
 
     .status {
-      color: rgba(244, 236, 214, .78);
-      font-size: 13px;
+      color: rgba(255, 255, 255, .82);
+      font-size: 12.5px;
       min-height: 1.2em;
     }
 
     /* ---------- Fallback card ---------- */
     #fallback {
       display: none;
-      max-width: 434px;
+      max-width: 430px;
       width: 100%;
       margin-top: 24px;
       padding: 18px 18px 16px;
-      border: 1px solid rgba(230, 198, 116, .28);
+      border: 1px solid rgba(255, 255, 255, .16);
       border-radius: 16px;
-      background: rgba(12, 28, 56, .55);
+      background: rgba(255, 255, 255, .07);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 18px 44px rgba(0, 0, 0, .4);
       animation: pop .4s var(--ease) both;
     }
     #fallback.show { display: block; }
@@ -219,18 +209,17 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 8px;
-      font-family: var(--head);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--gold);
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
     }
     #fallback .fb-title svg { flex: none; }
 
     #fallback p {
       margin: 0 0 14px;
-      color: rgba(244, 236, 214, .78);
-      font-size: 13px;
-      line-height: 1.65;
+      color: rgba(255, 255, 255, .78);
+      font-size: 12.5px;
+      line-height: 1.6;
     }
 
     .btn-row {
@@ -241,7 +230,7 @@
 
     .btn {
       flex: 1 1 auto;
-      min-height: 46px;
+      min-height: 44px;
       padding: 0 18px;
       display: inline-flex;
       align-items: center;
@@ -249,25 +238,24 @@
       gap: 7px;
       border: 0;
       border-radius: 12px;
-      font-family: var(--head);
-      font-size: 14px;
-      font-weight: 600;
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
       text-decoration: none;
       cursor: pointer;
-      transition: transform .15s var(--ease), box-shadow .15s var(--ease), filter .15s;
+      transition: transform .15s var(--ease), box-shadow .15s var(--ease), background .15s;
     }
     .btn-primary {
-      color: #1a1204;
-      background: linear-gradient(135deg, #f0d888, #c9a24b);
-      box-shadow: 0 10px 24px rgba(201, 162, 75, .35);
+      background: linear-gradient(135deg, #7c3aed, #5b21b6);
+      box-shadow: 0 10px 24px rgba(124, 58, 237, .4);
     }
     .btn-ghost {
       flex: 0 0 auto;
-      color: var(--ink);
-      background: rgba(230, 198, 116, .10);
-      border: 1px solid rgba(230, 198, 116, .32);
+      background: rgba(255, 255, 255, .1);
+      border: 1px solid rgba(255, 255, 255, .2);
     }
-    .btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    .btn:hover { transform: translateY(-1px); }
     .btn:active { transform: translateY(0); }
     .btn:focus-visible {
       outline: 2px solid var(--gold);
@@ -278,15 +266,20 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes slide {
       0%   { transform: translateX(-100%); }
-      100% { transform: translateX(360%); }
+      100% { transform: translateX(350%); }
     }
     @keyframes pop {
       from { opacity: 0; transform: translateY(10px) scale(.96); }
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
-    @keyframes float1 { to { transform: translate(6vmax, 4vmax) scale(1.1); } }
-    @keyframes float2 { to { transform: translate(-5vmax, -4vmax) scale(1.12); } }
+    @keyframes float1 {
+      to { transform: translate(6vmax, 4vmax) scale(1.1); }
+    }
+    @keyframes float2 {
+      to { transform: translate(-5vmax, -4vmax) scale(1.12); }
+    }
 
+    /* เคารพผู้ใช้ที่ปิดการเคลื่อนไหว */
     @media (prefers-reduced-motion: reduce) {
       #loader::before, #loader::after,
       .logo, .logo::after, .progress::before,
@@ -297,21 +290,15 @@
 <body>
   <div id="loader" role="status" aria-live="polite">
     <div class="loader-inner">
-      <div class="logo" aria-hidden="true">
-        <!-- หมุดแผนที่ทอง -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#e6c674" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"></path>
-          <circle cx="12" cy="10" r="2.6" fill="#e6c674" stroke="none"></circle>
-        </svg>
-      </div>
-      <h1>Map<span>flow</span></h1>
+      <div class="logo" aria-hidden="true">M</div>
+      <h1>Map<span style="color:#e6c674">flow</span></h1>
       <div class="subtitle">ระบบจัดทำแผนที่จุดเดินริ้วขบวน</div>
       <div class="progress" aria-hidden="true"></div>
       <div class="status" id="status">กำลังเชื่อมต่อระบบ…</div>
 
       <div id="fallback">
         <div class="fb-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e6c674" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f2cf70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -324,7 +311,7 @@
         </p>
         <div class="btn-row">
           <a class="btn btn-primary"
-             href="https://script.google.com/macros/s/AKfycbw9VMpAHf4c-gRzXgYYtYo6D-6hWzTR2xMdLfrZAQRxaM9oot57Mb4A4JN86ksaVE0o/exec"
+             href="https://script.google.com/macros/s/AKfycbzbwK-625ooqJHEDv-mNKXDy6dWyLT_NyBTlnzSxRG_1L8wmsxYrcucW5wzKnjwIUse/exec"
              target="_blank" rel="noopener">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -348,7 +335,7 @@
   <iframe
     id="app"
     title="Mapflow — แผนที่จุดเดินริ้วขบวน"
-    src="https://script.google.com/macros/s/AKfycbw9VMpAHf4c-gRzXgYYtYo6D-6hWzTR2xMdLfrZAQRxaM9oot57Mb4A4JN86ksaVE0o/exec"
+    src="https://script.google.com/macros/s/AKfycbzbwK-625ooqJHEDv-mNKXDy6dWyLT_NyBTlnzSxRG_1L8wmsxYrcucW5wzKnjwIUse/exec"
     allow="clipboard-write; fullscreen; geolocation; camera"
     referrerpolicy="no-referrer-when-downgrade"
     loading="eager"
@@ -371,61 +358,73 @@
       var status   = document.getElementById('status');
       var retryBtn = document.getElementById('retryBtn');
 
-      var loaded = false;
+      var ready = false;
       var timeoutId = null;
-      var LOAD_TIMEOUT = 12000; // 12 วินาที
+      var LOAD_TIMEOUT = 18000;
 
-      function hideLoader() { loader.classList.add('hide'); }
-      function showFallback(msg) { status.textContent = msg; fallback.classList.add('show'); }
+      function hideLoader() {
+        loader.classList.add('hide');
+      }
+
+      function showFallback(msg) {
+        status.textContent = msg;
+        fallback.classList.add('show');
+      }
 
       function startTimeout() {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(function () {
-          if (!loaded) showFallback('ยังไม่สามารถเปิดระบบภายในหน้านี้ได้');
+          if (!ready) {
+            showFallback('ระบบเปิดไม่สำเร็จ หรือ Web App ยังไม่ได้อัปเดตเป็นเวอร์ชันล่าสุด');
+          }
         }, LOAD_TIMEOUT);
       }
 
+      // load อาจเป็นหน้า Error ของ Google จึงยังไม่ซ่อน Loader
       frame.addEventListener('load', function () {
-        loaded = true;
-        clearTimeout(timeoutId);
-        status.textContent = 'เปิดระบบเรียบร้อยแล้ว';
-        setTimeout(hideLoader, 300);
+        if (!ready) status.textContent = 'กำลังเริ่มระบบ Mapflow…';
       });
 
-      // ถ้าเบราว์เซอร์บล็อก iframe จะไม่ยิง load — timeout จะจับได้
       frame.addEventListener('error', function () {
-        showFallback('ไม่สามารถโหลดระบบได้');
+        showFallback('ไม่สามารถเชื่อมต่อ Google Apps Script ได้');
       });
 
-      // ปุ่มลองใหม่: รีโหลด iframe โดยไม่ต้องรีเฟรชทั้งหน้า
+      // แอปด้านในแจ้ง READY หลัง bootstrap สำเร็จจริง
+      window.addEventListener('message', function (event) {
+        if (event.source !== frame.contentWindow) return;
+        var data = event.data || {};
+        if (data.source !== 'MAPFLOW') return;
+
+        if (data.type === 'MAPFLOW_READY') {
+          ready = true;
+          clearTimeout(timeoutId);
+          fallback.classList.remove('show');
+          status.textContent = 'เปิดระบบเรียบร้อยแล้ว';
+          setTimeout(hideLoader, 220);
+        } else if (data.type === 'MAPFLOW_ERROR') {
+          ready = false;
+          showFallback('Mapflow แจ้งข้อผิดพลาด: ' + (data.detail || 'ไม่ทราบสาเหตุ'));
+        }
+      });
+
       retryBtn.addEventListener('click', function () {
-        loaded = false;
+        ready = false;
         fallback.classList.remove('show');
         loader.classList.remove('hide');
         status.textContent = 'กำลังเชื่อมต่อระบบอีกครั้ง…';
-        var base = frame.getAttribute('src').split('#')[0].split('?_r=')[0];
-        var sep = base.indexOf('?') === -1 ? '?_r=' : '&_r=';
-        frame.setAttribute('src', base + sep + Date.now());
+
+        try {
+          var url = new URL(frame.src);
+          url.searchParams.set('_r', Date.now());
+          frame.src = url.toString();
+        } catch (error) {
+          frame.src = frame.src.split('#')[0] + (frame.src.indexOf('?') === -1 ? '?' : '&') + '_r=' + Date.now();
+        }
         startTimeout();
       });
 
-      // เมื่อกลับมาที่แท็บ ถ้ายังไม่โหลดสำเร็จให้เริ่มจับเวลาใหม่
       document.addEventListener('visibilitychange', function () {
-        if (!document.hidden && !loaded) startTimeout();
-      });
-
-      // รับคำสั่งเปลี่ยนหน้าจากแอปข้างใน (แก้ปัญหา sandbox ห้ามเฟรมในเปลี่ยนหน้าเฟรมแม่)
-      window.addEventListener('message', function (e) {
-        var d = e.data;
-        if (d && d.type === 'mf-nav' && typeof d.url === 'string'
-            && d.url.indexOf('https://script.google.com/') === 0) {
-          loaded = false;
-          loader.classList.remove('hide');
-          fallback.classList.remove('show');
-          status.textContent = 'กำลังเปลี่ยนหน้า…';
-          frame.setAttribute('src', d.url);
-          startTimeout();
-        }
+        if (!document.hidden && !ready) startTimeout();
       });
 
       startTimeout();
