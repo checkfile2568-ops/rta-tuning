@@ -7,9 +7,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
 <style>
   html,body{margin:0;padding:0;height:100%;background:#12294c;overflow:hidden}
-  #app{border:0;width:100vw;height:100vh;display:block}
+
+  /* ── v2: แก้บั๊กเมนูล่างกดไม่ได้บนมือถือ ──────────────────────────
+     ปัญหาเดิม: #app ตั้ง height:100vh
+     บนมือถือ 100vh นับ "รวม" พื้นที่ที่ถูกแถบ URL ของเบราว์เซอร์บังอยู่
+     iframe จึงสูงเกินจอจริง ดันแถบเมนูล่างของแอปข้างในลงไปใต้แถบเบราว์เซอร์
+     → มองเห็นแต่กดไม่โดน
+
+     สำคัญ: แก้แค่ข้างในแอปไม่พอ เพราะข้างใน iframe คำว่า "เต็มจอ"
+     หมายถึงเต็มความสูงของ iframe ซึ่งถูกกำหนดจากหน้านี้
+     ต้องแก้ที่นี่เท่านั้น
+
+     100dvh = ความสูงที่มองเห็นจริง หดตามแถบเบราว์เซอร์
+     บรรทัด 100vh ข้างบนคงไว้เป็นค่าสำรองให้เบราว์เซอร์รุ่นเก่า
+     ────────────────────────────────────────────────────────────── */
+  #app{
+    border:0;
+    width:100vw;
+    height:100vh;
+    height:calc(100dvh - env(safe-area-inset-bottom,0px));
+    display:block;
+  }
+
   #load{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    font-family:'Sarabun',sans-serif;color:#e6c674;
+    font-family:'Sarabun',sans-serif;color:#e6c674;transition:opacity .3s;
     background:radial-gradient(1000px 500px at 15% -10%,rgba(201,162,75,.18),transparent 55%),linear-gradient(150deg,#0b1a33,#12294c 60%,#0d2144)}
   #load .em{width:70px;height:70px;border-radius:50%;font-size:32px;display:flex;align-items:center;justify-content:center;
     background:radial-gradient(circle at 35% 30%,#1c3a68,#0c1c38);border:2px solid #c9a24b;margin-bottom:16px}
@@ -20,9 +41,29 @@
 </head>
 <body>
 <div id="load"><div class="em">⚖</div><div class="nm">พิกัดและค้นหาแผนที่</div><div class="su">ศาลจังหวัดลพบุรี</div><div class="sp"></div></div>
+
 <iframe id="app" src="https://script.google.com/macros/s/AKfycbzkNMHOS1kli607iNvEjODOj1RUprII2l7aolDKsttd4VMHQpmQeq5ahwehH4eKNLQxgA/exec"
   onload="var l=document.getElementById('load');if(l)l.style.opacity=0,setTimeout(function(){l.style.display='none'},300)"
   allow="clipboard-write; fullscreen; geolocation; camera" allowfullscreen></iframe>
-<script>setTimeout(function(){var l=document.getElementById('load');if(l)l.style.display='none';},6000);</script>
+
+<script>
+// ซ่อนหน้าจอโหลดหลัง 6 วินาที เผื่อ onload ไม่ทำงาน
+setTimeout(function(){var l=document.getElementById('load');if(l)l.style.display='none';},6000);
+
+// v2: บางเบราว์เซอร์บนมือถือยังไม่รองรับหน่วย dvh
+// กรณีนั้นให้วัดความสูงที่มองเห็นจริงด้วย JavaScript แล้วกำหนดให้ iframe เอง
+(function(){
+  if(window.CSS && CSS.supports && CSS.supports('height','100dvh')) return;
+  var app=document.getElementById('app');
+  function fit(){
+    var h=(window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    app.style.height=h+'px';
+  }
+  fit();
+  window.addEventListener('resize',fit);
+  window.addEventListener('orientationchange',function(){setTimeout(fit,300);});
+  if(window.visualViewport) window.visualViewport.addEventListener('resize',fit);
+})();
+</script>
 </body>
 </html>
