@@ -625,6 +625,8 @@
     .monthly-calendar-head strong { display: block; color: var(--wine); font-size: 17px; }
     .monthly-calendar-head span:not(.monthly-calendar-selected) { display: block; margin-top: 2px; color: var(--ink-muted); font-size: 13px; }
     .monthly-calendar-selected { flex: 0 0 auto; padding: 4px 9px; border-radius: 999px; background: var(--wine-soft); color: var(--wine); font-size: 13px; font-weight: 700; }
+    .monthly-calendar-selected.is-saved { background: #e5f3e8; color: var(--green-dark); border: 1px solid #bddfc4; }
+    .monthly-calendar-selected.is-draft { background: #fff4dc; color: #88560d; border: 1px solid #edc878; }
     .monthly-calendar-weekdays, .monthly-calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
     .monthly-calendar-weekdays { margin-bottom: 6px; color: var(--ink-muted); font-size: 13px; font-weight: 700; text-align: center; }
     .monthly-calendar-day {
@@ -633,6 +635,7 @@
     }
     .monthly-calendar-day:hover { border-color: var(--wine-light); color: var(--wine); background: var(--wine-soft); }
     .monthly-calendar-day.is-saved { border-color: var(--wine); background: var(--wine); color: #fff; }
+    .monthly-calendar-day.is-draft { border-color: #e2b155; background: #fff4dc; color: #88560d; }
     .monthly-calendar-day.is-selected { outline: 3px solid var(--gold-light); outline-offset: 1px; }
     .monthly-calendar-day.is-outside { visibility: hidden; pointer-events: none; }
     .report-summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
@@ -1884,6 +1887,7 @@
     let reportOnlineCases = [];
     let reportOnlineCandidates = [];
     let activeReportSheetIndex = 0;
+    let reportDirtyDates = new Set();
     let reportYearly = null;
     let printTarget = 'case-docs';
     let printSettings = getDefaultPrintSettings();
@@ -2575,6 +2579,7 @@
       document.getElementById('btnImportMonthlyReport').addEventListener('click', importMonthlyReport);
       document.getElementById('btnAddReportRoom').addEventListener('click', () => {
         reportRows.push(makeReportRoomRow_(reportRows.length));
+        markActiveMonthlyReportDirty_();
         renderReportRows();
       });
       document.getElementById('btnSampleReportData').addEventListener('click', applyReportSample);
@@ -2746,6 +2751,7 @@
         if (item.court) grouped[room].court += 1;
       });
       reportRows = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'th', { numeric: true })).map(key => grouped[key]);
+      markActiveMonthlyReportDirty_();
       renderReportRows();
     }
 
@@ -2759,6 +2765,7 @@
           if (report && ((report.sheets && report.sheets.length) || (report.weeks && report.weeks.length) || (report.rooms && report.rooms.length))) {
             applyMonthlyReport(report);
           } else {
+            reportDirtyDates.clear();
             reportSheets = createDefaultMonthlySheets_(reportDateForSelectedMonth_(1));
             reportPhotos = [];
             newReportPhotos = [];
@@ -2834,6 +2841,7 @@
       Promise.all(files.map(readReportPhotoFile_)).then(photos => {
         newReportPhotos = newReportPhotos.concat(photos);
         evt.target.value = '';
+        markActiveMonthlyReportDirty_();
         renderReportPhotos();
         showToast('เพิ่มรูปประกอบ ' + photos.length + ' รูปแล้ว', 'success');
       }).catch(() => {
@@ -2864,6 +2872,7 @@
       const button = evt.target.closest('[data-remove-new-report-photo]');
       if (!button) return;
       newReportPhotos.splice(parseInt(button.dataset.removeNewReportPhoto, 10), 1);
+      markActiveMonthlyReportDirty_();
       renderReportPhotos();
     }
 
@@ -2964,11 +2973,9 @@
       saveActiveMonthlySheet_();
       const month = parseInt(document.getElementById('reportMonth').value, 10);
       const year = parseInt(document.getElementById('reportYear').value, 10);
-      const allSheets = ensureMonthlyReportSheets_().map((sheet, idx) => normalizeMonthlySheet_(sheet, idx));
-      const sheets = allSheets.filter(monthlySheetHasSavedData_);
-      if (!sheets.length && allSheets[activeReportSheetIndex]) sheets.push(allSheets[activeReportSheetIndex]);
+      const sheets = ensureMonthlyReportSheets_().map((sheet, idx) => normalizeMonthlySheet_(sheet, idx));
       const activeSheet = sheets[activeReportSheetIndex] || sheets[0];
-        return {
+      return {
         month: month,
         monthName: thaiMonthNames[month - 1],
         year: year,
@@ -2988,6 +2995,7 @@
           createdAt: photo.createdAt
         })),
         evidenceFolderUrl: reportEvidenceFolderUrl,
+        dirtyDates: Array.from(reportDirtyDates),
         newPhotos: newReportPhotos.map(photo => ({ name: photo.name, mimeType: photo.mimeType, data: photo.data }))
       };
     }
@@ -3001,12 +3009,21 @@
       reportEvidenceFolderUrl = report.evidenceFolderUrl || '';
       renderReportPhotos();
       if (report.sheets && report.sheets.length) {
-        reportSheets = report.sheets.map((sheet, idx) => normalizeMonthlySheet_(sheet, idx));
+        reportSheets = report.sheets.map((sheet, idx) => {
+          const normalized = normalizeMonthlySheet_(sheet, idx);
+          if (report.isPersisted && !normalized.savedAt && monthlySheetHasData_(normalized)) normalized.savedAt = report.updatedAt || 'legacy';
+          return normalized;
+        });
       } else {
         reportSheets = createDefaultMonthlySheets_(report.reportDate || document.getElementById('reportDate').value);
         const oldRows = (report.weeks && report.weeks.length) ? report.weeks : (report.rooms || []);
         reportSheets[0].rooms = oldRows.map((row, idx) => makeReportRoomRow_(idx, row));
         if (report.reportDate) reportSheets[0].reportDate = String(report.reportDate).slice(0, 10);
+      }
+      if (report.isPersisted) {
+        reportDirtyDates.clear();
+      } else {
+        reportSheets.filter(monthlySheetHasData_).forEach(sheet => reportDirtyDates.add(String(sheet.reportDate || '')));
       }
       ensureMonthlyReportSheets_();
       activeReportSheetIndex = Math.max(0, Math.min(reportSheets.length - 1, parseInt(report.activeSheet, 10) - 1 || activeReportSheetIndex || 0));
@@ -3090,17 +3107,30 @@
         Number(match[2]) === (parseInt(document.getElementById('reportMonth').value, 10) || 0);
     }
 
-    function monthlySheetHasSavedData_(sheet) {
+    function monthlySheetHasData_(sheet) {
       if (!sheet) return false;
-      if (String(sheet.savedAt || '').trim()) return true;
       if ((sheet.onlineCases || []).length) return true;
       return (sheet.rooms || []).some(row => safeReportNumber(row.online) || safeReportNumber(row.incoming) || safeReportNumber(row.mediation) || safeReportNumber(row.court));
+    }
+
+    function monthlySheetSaveState_(sheet) {
+      const date = String((sheet || {}).reportDate || '');
+      if (date && reportDirtyDates.has(date)) return 'draft';
+      return String((sheet || {}).savedAt || '').trim() ? 'saved' : 'empty';
+    }
+
+    function markActiveMonthlyReportDirty_() {
+      const date = String((reportSheets[activeReportSheetIndex] || {}).reportDate || document.getElementById('reportDate').value || '');
+      if (date) reportDirtyDates.add(date);
+      renderMonthlyReportDateOptions_();
+      renderMonthlyCalendar_();
     }
 
     function formatMonthlySheetOption_(sheet, index) {
       const date = String((sheet || {}).reportDate || '');
       const dateLabel = date ? formatReportDateThai(date) : ('รายงานลำดับ ' + (index + 1));
-      return dateLabel + (monthlySheetHasSavedData_(sheet) ? ' • บันทึกแล้ว' : ' • กำลังกรอก');
+      const state = monthlySheetSaveState_(sheet);
+      return dateLabel + (state === 'saved' ? ' • บันทึกแล้ว' : (state === 'draft' ? ' • ยังไม่บันทึก' : ' • ยังไม่มีข้อมูล'));
     }
 
     function renderMonthlyReportDateOptions_() {
@@ -3121,19 +3151,28 @@
       const firstDay = new Date(yearAD, month - 1, 1).getDay();
       const daysInMonth = new Date(yearAD, month, 0).getDate();
       const activeDate = String((reportSheets[activeReportSheetIndex] || {}).reportDate || document.getElementById('reportDate').value || '');
-      const savedDates = new Set(reportSheets.filter(monthlySheetHasSavedData_).map(sheet => String(sheet.reportDate || '')));
+      const savedDates = new Set(reportSheets.filter(sheet => monthlySheetSaveState_(sheet) === 'saved').map(sheet => String(sheet.reportDate || '')));
+      const draftDates = new Set(reportSheets.filter(sheet => monthlySheetSaveState_(sheet) === 'draft').map(sheet => String(sheet.reportDate || '')));
       const cells = [];
       for (let empty = 0; empty < firstDay; empty++) cells.push('<span class="monthly-calendar-day is-outside" aria-hidden="true"></span>');
       for (let day = 1; day <= daysInMonth; day++) {
         const value = reportDateForSelectedMonth_(day);
         const classes = ['monthly-calendar-day'];
         if (savedDates.has(value)) classes.push('is-saved');
+        if (draftDates.has(value)) classes.push('is-draft');
         if (value === activeDate) classes.push('is-selected');
-        cells.push(`<button class="${classes.join(' ')}" type="button" role="gridcell" data-report-date="${value}" aria-label="${formatReportDateThai(value)}${savedDates.has(value) ? ' มีรายงานที่บันทึกแล้ว' : ' ยังไม่มีรายงาน'}">${day}</button>`);
+        const stateLabel = savedDates.has(value) ? ' บันทึกแล้ว' : (draftDates.has(value) ? ' มีข้อมูลที่ยังไม่บันทึก' : ' ยังไม่มีรายงาน');
+        cells.push(`<button class="${classes.join(' ')}" type="button" role="gridcell" data-report-date="${value}" aria-label="${formatReportDateThai(value)}${stateLabel}">${day}</button>`);
       }
       calendar.innerHTML = cells.join('');
       const selected = document.getElementById('monthlyCalendarSelected');
-      if (selected) selected.textContent = activeDate ? ('เลือก ' + formatReportDateThai(activeDate)) : 'เลือกวันที่';
+      if (selected) {
+        const activeState = monthlySheetSaveState_(reportSheets[activeReportSheetIndex]);
+        selected.classList.toggle('is-saved', activeState === 'saved');
+        selected.classList.toggle('is-draft', activeState === 'draft');
+        selected.textContent = !activeDate ? 'เลือกวันที่' :
+          ((activeState === 'saved' ? 'บันทึกแล้ว' : (activeState === 'draft' ? 'ยังไม่บันทึก' : 'ยังไม่มีข้อมูล')) + ' · ' + formatReportDateThai(activeDate));
+      }
     }
 
     function handleMonthlyCalendarClick_(evt) {
@@ -3156,7 +3195,7 @@
       }
       activeReportSheetIndex = index;
       loadActiveMonthlySheet_();
-      if (!monthlySheetHasSavedData_(reportSheets[index])) showToast('ยังไม่มีรายงานของวันที่เลือก เริ่มกรอกข้อมูลได้ทันที', 'success');
+      if (monthlySheetSaveState_(reportSheets[index]) !== 'saved') showToast('ยังไม่มีรายงานที่บันทึกของวันที่เลือก เริ่มกรอกข้อมูลได้ทันที', 'success');
     }
 
     function handleMonthlyReportDateChange_() {
@@ -3193,6 +3232,7 @@
         { room: 'ห้องพิจารณาคดีที่ 8', online: 0, incoming: 3, mediation: 0, court: 0 }
       ];
       reportRows = sample.map((row, idx) => makeReportRoomRow_(idx, row));
+      markActiveMonthlyReportDirty_();
       renderReportRows();
       saveActiveMonthlySheet_();
       if (showMessage) showToast('ใส่ข้อมูลตัวอย่างแล้ว สามารถแก้ไขตัวเลขได้', 'success');
@@ -3223,6 +3263,7 @@
       const field = evt.target.dataset.field;
       if (!field || !reportRows[idx]) return;
       reportRows[idx][field] = field === 'room' ? evt.target.value : safeReportNumber(evt.target.value);
+      markActiveMonthlyReportDirty_();
       updateMonthlyReportView();
     }
 
@@ -3231,6 +3272,7 @@
       if (!btn) return;
       const idx = parseInt(btn.dataset.remove, 10);
       reportRows.splice(idx, 1);
+      markActiveMonthlyReportDirty_();
       renderReportRows();
     }
 

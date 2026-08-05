@@ -1860,15 +1860,21 @@ function getMonthlyCenterReport(yearBE, month) {
   const raw = PropertiesService.getScriptProperties().getProperty(key);
   if (!raw) return null;
   try {
-    return centerNormalizeReport_(JSON.parse(raw));
+    const report = centerNormalizeReport_(JSON.parse(raw));
+    report.isPersisted = true;
+    return report;
   } catch (error) {
     return null;
   }
 }
 
 function saveMonthlyCenterReport(report) {
-  let normalized = centerNormalizeReport_(report || {}, { markActiveSheetSaved: true });
+  let normalized = centerNormalizeReport_(report || {}, {
+    markActiveSheetSaved: true,
+    markSavedDates: (report && report.dirtyDates) || []
+  });
   normalized = centerSaveReportPhotos_(normalized, (report || {}).newPhotos || []);
+  normalized.isPersisted = true;
   const key = centerReportKey_(normalized.year, normalized.month);
   PropertiesService.getScriptProperties().setProperty(key, JSON.stringify(normalized));
   return {
@@ -2154,8 +2160,15 @@ function centerNormalizeReport_(report, options) {
   if (!sheets.length) sheets.push(centerNormalizeSheet_({ reportDate: report.reportDate, rooms: [] }, 0, report.reportDate));
   const sheetCount = sheets.length;
   const activeSheet = Math.max(1, Math.min(sheetCount, parseInt(report.activeSheet, 10) || 1));
+  const savedAt = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+  const savedDates = (options.markSavedDates || []).map(String).filter(Boolean);
   if (options.markActiveSheetSaved && sheets[activeSheet - 1]) {
-    sheets[activeSheet - 1].savedAt = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+    savedDates.push(String(sheets[activeSheet - 1].reportDate || ""));
+  }
+  if (savedDates.length) {
+    sheets.forEach(function(sheet) {
+      if (savedDates.indexOf(String(sheet.reportDate || "")) !== -1) sheet.savedAt = savedAt;
+    });
   }
   const activeRows = (sheets[activeSheet - 1] && sheets[activeSheet - 1].rooms) || [];
   const normalized = {
