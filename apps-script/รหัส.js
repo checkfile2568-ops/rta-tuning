@@ -2259,15 +2259,22 @@ function centerNormalizeReport_(report, options) {
   const now = new Date();
   const month = Math.max(1, Math.min(12, parseInt(report.month, 10) || (now.getMonth() + 1)));
   const year = parseInt(report.year, 10) || (now.getFullYear() + 543);
+  const fallbackReportDate = centerReportDateForMonth_(report.reportDate, year, month);
   let rawSheets = (report.sheets && report.sheets.length) ? report.sheets : [];
   if (!rawSheets.length) {
     const legacyRows = (report.rooms && report.rooms.length) ? report.rooms : (report.weeks || []);
-    rawSheets = [{ title: "ใบที่ 1", reportDate: report.reportDate, rooms: legacyRows }];
+    rawSheets = [{ title: "ใบที่ 1", reportDate: fallbackReportDate, rooms: legacyRows }];
   }
-  const sheets = rawSheets.slice(0, CENTER_REPORT_MAX_DAYS).map(function (sheet, idx) {
-    return centerNormalizeSheet_(sheet, idx, report.reportDate);
+  let sheets = rawSheets.slice(0, CENTER_REPORT_MAX_DAYS).map(function (sheet, idx) {
+    const normalizedSheet = centerNormalizeSheet_(sheet, idx, fallbackReportDate);
+    // รายงานรายเดือนยึดเดือน/ปีในหัวรายงานเป็นหลัก เพื่อแก้ข้อมูลเดิมที่เก็บวันผิดเดือน
+    normalizedSheet.reportDate = centerReportDateForMonth_(normalizedSheet.reportDate, year, month);
+    return normalizedSheet;
   });
-  if (!sheets.length) sheets.push(centerNormalizeSheet_({ reportDate: report.reportDate, rooms: [] }, 0, report.reportDate));
+  // ตัดแผ่นว่างที่หลงเหลือจากรายงานรุ่นเดิม แต่คงวันที่ที่เคยกดบันทึกไว้แม้ยอดเป็นศูนย์
+  const meaningfulSheets = sheets.filter(centerSheetHasData_);
+  if (meaningfulSheets.length) sheets = meaningfulSheets;
+  if (!sheets.length) sheets.push(centerNormalizeSheet_({ reportDate: fallbackReportDate, rooms: [] }, 0, fallbackReportDate));
   const sheetCount = sheets.length;
   const activeSheet = Math.max(1, Math.min(sheetCount, parseInt(report.activeSheet, 10) || 1));
   const savedAt = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
@@ -2287,7 +2294,7 @@ function centerNormalizeReport_(report, options) {
     year: year,
     sheetCount: sheetCount,
     activeSheet: activeSheet,
-    reportDate: report.reportDate || (sheets[0] && sheets[0].reportDate) || Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd"),
+    reportDate: (sheets[activeSheet - 1] && sheets[activeSheet - 1].reportDate) || fallbackReportDate,
     sheets: sheets,
     rooms: activeRows,
     note: String(report.note || ""),
@@ -2327,6 +2334,31 @@ function centerNormalizeSheet_(sheet, idx, fallbackDate) {
     }),
     savedAt: String(sheet.savedAt || "")
   };
+}
+
+function centerReportDateForMonth_(value, yearBE, month) {
+  const yearAD = (parseInt(yearBE, 10) || (new Date().getFullYear() + 543)) - 543;
+  const safeMonth = Math.max(1, Math.min(12, parseInt(month, 10) || 1));
+  let day = 1;
+  const iso = String(value || "").match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (iso) {
+    day = parseInt(iso[3], 10) || 1;
+  } else if (value) {
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) day = parsed.getDate();
+  }
+  const maxDay = new Date(yearAD, safeMonth, 0).getDate();
+  day = Math.max(1, Math.min(maxDay, day));
+  return String(yearAD) + "-" + ("0" + safeMonth).slice(-2) + "-" + ("0" + day).slice(-2);
+}
+
+function centerSheetHasData_(sheet) {
+  if (!sheet) return false;
+  if (String(sheet.savedAt || "").trim()) return true;
+  if ((sheet.onlineCases || []).length || (sheet.mediationReturns || []).length) return true;
+  return (sheet.rooms || []).some(function(row) {
+    return centerNumber_(row.online) || centerNumber_(row.incoming) || centerNumber_(row.mediation) || centerNumber_(row.court);
+  });
 }
 
 function centerNormalizeOnlineCase_(item) {
