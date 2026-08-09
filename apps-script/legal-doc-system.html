@@ -608,6 +608,13 @@
       min-height: 42px; border: 1.5px solid var(--line); border-radius: 9px;
       padding: 8px 12px; font: 17px "Sarabun"; background: #fff;
     }
+    .monthly-report-status {
+      margin-top: 12px; padding: 10px 13px; border-radius: 9px;
+      background: #eef4fb; border: 1px solid #cdddf2; color: #244a86; font-size: 15px;
+    }
+    .monthly-report-status.is-empty { background: #fff8e8; border-color: #ead09a; color: #825b12; }
+    .monthly-report-status.is-loading { background: #eef4fb; border-color: #cdddf2; color: #244a86; }
+    .monthly-report-status.is-error { background: #fff0ef; border-color: #edc2bf; color: #9d2e26; }
     .report-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .report-import { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr); gap: 14px; align-items: start; }
     .report-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
@@ -1289,7 +1296,8 @@
           <div class="section-head">
             <div class="section-title"><span class="num">1</span> เลือกวันและเปิดรายงานประจำวัน</div>
             <div class="section-head-actions">
-              <button class="btn btn-secondary" type="button" id="btnLoadMonthlyReport">โหลดข้อมูลเดือนนี้</button>
+              <button class="btn btn-secondary" type="button" id="btnLoadMonthlyReport">เปิดรายงานที่บันทึก</button>
+              <button class="btn btn-primary" type="button" id="btnLoadMonthlyCasesFromSheet">โหลดรายการคดีจากชีต</button>
             </div>
           </div>
           <div class="report-toolbar">
@@ -1310,6 +1318,7 @@
               <select id="reportSheetSelect" aria-label="เลือกรายงานของวันที่"></select>
             </div>
           </div>
+          <div id="monthlyReportLoadStatus" class="monthly-report-status" role="status" aria-live="polite">เลือกเดือน/ปี แล้วกด “เปิดรายงานที่บันทึก” หรือโหลดรายการคดีจากชีตเพื่อเริ่มจัดทำรายงาน</div>
 
           <section class="monthly-calendar-card" aria-labelledby="monthlyCalendarTitle">
             <div class="monthly-calendar-head">
@@ -1960,6 +1969,7 @@
     let activeReportSheetIndex = 0;
     let reportDirtyDates = new Set();
     let reportYearly = null;
+    let monthlyReportLoadedKey = '';
     let printTarget = 'case-docs';
     let printSettings = getDefaultPrintSettings();
     let lawyerContacts = [];
@@ -2663,6 +2673,7 @@
        document.getElementById('btnSaveMonthlyReport').addEventListener('click', saveMonthlyReport);
       document.getElementById('btnCreateMonthlyReportDoc').addEventListener('click', createMonthlyReportDoc);
       document.getElementById('btnLoadMonthlyReport').addEventListener('click', loadMonthlyReport);
+      document.getElementById('btnLoadMonthlyCasesFromSheet').addEventListener('click', loadMonthlyCasesFromSheet_);
       document.getElementById('btnPrintMonthlyReport').addEventListener('click', printMonthlyChartOnly);
       document.getElementById('reportRows').addEventListener('input', handleReportTableInput);
       document.getElementById('reportRows').addEventListener('click', handleReportTableClick);
@@ -2676,6 +2687,7 @@
       }));
 
       loadActiveMonthlySheet_();
+      monthlyReportLoadedKey = monthlyReportKey_(document.getElementById('reportYear').value, document.getElementById('reportMonth').value);
       loadMonthlyReport();
     }
 
@@ -2715,7 +2727,7 @@
 
     function loadOnlineCaseCandidates_() {
       if (!cases.length) {
-        showToast('กรุณาโหลดข้อมูลจาก Google Sheet ในเมนูจัดทำรายงานกระบวนก่อน', 'warn');
+        showToast('กรุณากด “โหลดรายการคดีจากชีต” ด้านบนก่อน', 'warn');
         return;
       }
       const selectedKeys = new Set(reportOnlineCases.map(onlineCaseKey_));
@@ -2840,28 +2852,128 @@
       renderReportRows();
     }
 
+    function monthlyReportKey_(year, month) {
+      const safeYear = parseInt(year, 10) || (new Date().getFullYear() + 543);
+      const safeMonth = Math.max(1, Math.min(12, parseInt(month, 10) || 1));
+      return String(safeYear) + '-' + String(safeMonth).padStart(2, '0');
+    }
+
+    function setMonthlyReportLoadStatus_(message, type) {
+      const status = document.getElementById('monthlyReportLoadStatus');
+      if (!status) return;
+      status.className = 'monthly-report-status' + (type ? ' is-' + type : '');
+      status.textContent = message;
+    }
+
+    function hasUnsavedMonthlyDraft_() {
+      return reportDirtyDates.size > 0 || newReportPhotos.length > 0 || newMediationReturns.length > 0;
+    }
+
+    function restoreMonthlySelection_(key) {
+      const parts = String(key || '').match(/^(\d{4,})-(\d{2})$/);
+      if (!parts) return;
+      document.getElementById('reportYear').value = parts[1];
+      document.getElementById('reportMonth').value = String(parseInt(parts[2], 10));
+      renderMonthlyCalendar_();
+    }
+
+    function resetMonthlyReportForMissing_(month, year) {
+      document.getElementById('reportMonth').value = String(month);
+      document.getElementById('reportYear').value = String(year);
+      document.getElementById('reportDate').value = reportDateForSelectedMonth_(1);
+      reportDirtyDates.clear();
+      reportSheets = createDefaultMonthlySheets_(document.getElementById('reportDate').value);
+      reportPhotos = [];
+      newReportPhotos = [];
+      newMediationReturns = [];
+      reportEvidenceFolderUrl = '';
+      activeReportSheetIndex = 0;
+      renderReportPhotos();
+      renderMediationReturnControls_();
+      loadActiveMonthlySheet_();
+    }
+
+    function getMonthlySourceSheetUrl_() {
+      const input = document.getElementById('sheetUrl');
+      return String((input && input.value) || defaultSheetUrl || '').trim();
+    }
+
+    function loadMonthlyCasesFromSheet_() {
+      const sheetUrl = getMonthlySourceSheetUrl_();
+      if (!sheetUrl) {
+        setMonthlyReportLoadStatus_('ยังไม่พบลิงก์ Google Sheet กรุณารอสักครู่แล้วกดปุ่มนี้อีกครั้ง', 'error');
+        showToast('ยังไม่พบลิงก์ Google Sheet', 'warn');
+        return;
+      }
+      if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+      setReportWorking(true, 'กำลังโหลดรายการคดีจาก Google Sheet...');
+      setMonthlyReportLoadStatus_('กำลังโหลดรายการคดีจาก Google Sheet...', 'loading');
+      google.script.run
+        .withSuccessHandler(data => {
+          setReportWorking(false);
+          cases = Array.isArray(data) ? data : [];
+          if (!cases.length) {
+            setMonthlyReportLoadStatus_('ไม่พบรายการคดีใน Google Sheet ที่เลือก', 'empty');
+            showToast('ไม่พบรายการคดีใน Google Sheet', 'warn');
+            return;
+          }
+          loadOnlineCaseCandidates_();
+          const selectedDate = formatReportDateThai(document.getElementById('reportDate').value);
+          setMonthlyReportLoadStatus_('โหลดรายการคดี ' + cases.length + ' คดีแล้ว สำหรับ ' + selectedDate + ' · เลือกคดีที่ต้องการในขั้นตอนที่ 2');
+          showToast('โหลดรายการคดีจากชีต ' + cases.length + ' คดีแล้ว', 'success');
+        })
+        .withFailureHandler(err => {
+          setReportWorking(false);
+          const message = err && err.message ? err.message : String(err || 'ไม่ทราบสาเหตุ');
+          setMonthlyReportLoadStatus_('โหลดรายการคดีจากชีตไม่สำเร็จ: ' + message, 'error');
+          showToast('โหลดรายการคดีจากชีตไม่สำเร็จ: ' + message, 'error');
+        })
+        .getCasesFromSheet(sheetUrl);
+    }
+
     function loadMonthlyReport() {
       saveActiveMonthlySheet_();
       if (typeof google === 'undefined' || !google.script || !google.script.run) return;
       const month = parseInt(document.getElementById('reportMonth').value, 10);
       const year = parseInt(document.getElementById('reportYear').value, 10);
+      const requestedKey = monthlyReportKey_(year, month);
+      const isChangingMonth = !!monthlyReportLoadedKey && monthlyReportLoadedKey !== requestedKey;
+      if (isChangingMonth && hasUnsavedMonthlyDraft_()) {
+        const discard = window.confirm('มีข้อมูลรายงานที่ยังไม่ได้บันทึกอยู่ ต้องการเปลี่ยนเดือนไปเปิดรายงานอื่นหรือไม่?');
+        if (!discard) {
+          restoreMonthlySelection_(monthlyReportLoadedKey);
+          setMonthlyReportLoadStatus_('คงข้อมูลที่กำลังกรอกไว้ ยังไม่ได้เปลี่ยนเดือน', 'empty');
+          return;
+        }
+      }
+      setReportWorking(true, 'กำลังเปิดรายงานที่บันทึก...');
+      setMonthlyReportLoadStatus_('กำลังค้นหารายงานเดือน ' + month + ' ปี ' + year + '...', 'loading');
       google.script.run
         .withSuccessHandler(report => {
+          setReportWorking(false);
           if (report && ((report.sheets && report.sheets.length) || (report.weeks && report.weeks.length) || (report.rooms && report.rooms.length))) {
             applyMonthlyReport(report);
-          } else {
-            reportDirtyDates.clear();
-            reportSheets = createDefaultMonthlySheets_(reportDateForSelectedMonth_(1));
-            reportPhotos = [];
-            newReportPhotos = [];
-            newMediationReturns = [];
-            reportEvidenceFolderUrl = '';
-            renderReportPhotos();
-            renderMediationReturnControls_();
-            loadActiveMonthlySheet_();
+            monthlyReportLoadedKey = requestedKey;
+            setMonthlyReportLoadStatus_('เปิดรายงานเดือน ' + month + ' ปี ' + year + ' แล้ว · เลือกวันที่จากปฏิทินเพื่อดูรายละเอียด');
+            showToast('เปิดรายงานที่บันทึกแล้ว', 'success');
+            return;
           }
+          if (!isChangingMonth && hasUnsavedMonthlyDraft_()) {
+            setMonthlyReportLoadStatus_('ยังไม่พบรายงานที่บันทึกของเดือนนี้ · กำลังแสดงข้อมูลที่คุณยังไม่ได้บันทึก', 'empty');
+            showToast('ยังไม่พบรายงานที่บันทึก ระบบคงข้อมูลที่กำลังกรอกไว้', 'warn');
+            return;
+          }
+          resetMonthlyReportForMissing_(month, year);
+          monthlyReportLoadedKey = requestedKey;
+          setMonthlyReportLoadStatus_('ยังไม่พบรายงานที่บันทึกของเดือน ' + month + ' ปี ' + year + ' · กด “โหลดรายการคดีจากชีต” เพื่อเริ่มจัดทำ', 'empty');
+          showToast('ยังไม่พบรายงานที่บันทึกของเดือนที่เลือก', 'warn');
         })
-        .withFailureHandler(err => showToast('โหลดรายงานเดือนไม่สำเร็จ: ' + (err && err.message ? err.message : err), 'warn'))
+        .withFailureHandler(err => {
+          setReportWorking(false);
+          const message = err && err.message ? err.message : String(err || 'ไม่ทราบสาเหตุ');
+          setMonthlyReportLoadStatus_('เปิดรายงานไม่สำเร็จ: ' + message, 'error');
+          showToast('เปิดรายงานเดือนไม่สำเร็จ: ' + message, 'warn');
+        })
         .getMonthlyCenterReport(year, month);
       google.script.run
         .withSuccessHandler(renderYearlyStats)
@@ -2919,7 +3031,7 @@
 
     function loadMediationReturnCases_() {
       if (!cases.length) {
-        showToast('กรุณาโหลดข้อมูลจาก Google Sheet ในเมนูจัดทำรายงานกระบวนก่อน เพื่อแสดงเลขคดีทั้งหมด', 'warn');
+        showToast('กรุณากด “โหลดรายการคดีจากชีต” ด้านบนก่อน เพื่อแสดงเลขคดีทั้งหมด', 'warn');
         return;
       }
       const selectedKeys = new Set(mediationReturnCandidates.filter(item => item.selected).map(mediationReturnCandidateKey_));
@@ -3360,6 +3472,7 @@
     function applyMonthlyReport(report) {
       if (report.month) document.getElementById('reportMonth').value = report.month;
       if (report.year) document.getElementById('reportYear').value = report.year;
+      monthlyReportLoadedKey = monthlyReportKey_(report.year || document.getElementById('reportYear').value, report.month || document.getElementById('reportMonth').value);
       if (document.getElementById('reportDraftNote')) document.getElementById('reportDraftNote').value = report.note || '';
       reportPhotos = (report.photos || []).map(photo => Object.assign({}, photo));
       newReportPhotos = [];
@@ -3886,7 +3999,7 @@
     }
 
     function setReportWorking(isBusy, message) {
-      ['btnImportMonthlyReport','btnSaveMonthlyReport','btnCreateMonthlyReportDoc','btnLoadMonthlyReport'].forEach(id => {
+      ['btnImportMonthlyReport','btnSaveMonthlyReport','btnCreateMonthlyReportDoc','btnLoadMonthlyReport','btnLoadMonthlyCasesFromSheet'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.disabled = isBusy;
       });
