@@ -1,0 +1,9 @@
+.clasp.json
+.clasprc.json
+*.zip
+*.xlsx
+*.xls
+*.csv
+*.log
+.DS_Store
+Thumbs.db

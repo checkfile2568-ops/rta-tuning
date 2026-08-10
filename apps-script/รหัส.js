@@ -65,7 +65,7 @@ const LAWYER_SYNC_TRIGGER_HANDLER = "lawyerAutoSyncOnChange";
 function doGet(e) {
   return HtmlService.createHtmlOutputFromFile('legal-doc-system')
     .setTitle('ระบบจัดทำเอกสารคดีและจัดการหนังสือ')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.SAMEORIGIN);
 }
 
 /** URL ไฟล์แบบ (template) คดีทั่วไป */
@@ -261,6 +261,17 @@ function getCurrentDocumentDate() {
   };
 }
 
+function caseNoHasLetterE_(caseNo) {
+  return /E/i.test(String(caseNo || ""));
+}
+
+function shouldSkipProcessReport_(caseData) {
+  if (!caseData) return false;
+  if (caseData.skipProcessReport === true) return true;
+  if (caseData.skipProcessReport === false) return false;
+  return !caseNoHasLetterE_(caseData.caseNo);
+}
+
 /**
  * อ่านข้อมูลจาก Google Sheet
  * ✨ v3.0: คืนค่าเป็น "เลขอารบิก" (ไม่แปลงเป็นเลขไทยแล้ว) เพื่อให้หน้าจอแสดงเลขอารบิก
@@ -280,9 +291,10 @@ function getCasesFromSheet(sheetUrl) {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       if (!row[0] && !row[1] && !row[2]) continue; // ข้ามแถวว่าง
+      const caseNo = (row[0] || "").toString().trim();  // A: เลขที่ดำ
 
       cases.push({
-        caseNo:    (row[0] || "").toString().trim(),  // A: เลขที่ดำ
+        caseNo:    caseNo,
         plaintiff: (row[1] || "").toString().trim(),  // B: โจทก์ / ผู้ร้อง
         defendant: (row[2] || "").toString().trim(),  // C: จำเลย / ทนายผู้ร้อง
         judge:     (row[3] || "").toString().trim(),  // D: ผู้พิพากษา
@@ -290,6 +302,7 @@ function getCasesFromSheet(sheetUrl) {
         // จึงคงค่า detail ว่างไว้ เพื่อไม่ให้นำเลขบัลลังก์ไปแทน {{DETAIL}} ในเอกสาร
         detail:    "",
         benchNo:   (row[4] || "").toString().trim(),  // E: เลขบัลลังก์
+        skipProcessReport: !caseNoHasLetterE_(caseNo),
         rowIndex:  i + 1
       });
     }
@@ -330,6 +343,19 @@ function createDocsInSameFolderByDate(cases, config) {
       const caseData = cases[i];
 
       try {
+        if (shouldSkipProcessReport_(caseData)) {
+          results.push({
+            docUrl: null,
+            folderUrl: dateFolderUrl,
+            success: true,
+            alreadyExists: false,
+            skipped: true,
+            docName: "",
+            error: null
+          });
+          continue;
+        }
+
         const docName = generateDocName(caseData);
 
         // ✨ ตรวจสอบซ้ำ: หาไฟล์ชื่อเดียวกันในโฟลเดอร์วันนี้
@@ -1147,10 +1173,21 @@ function toThaiNumber(text) {
   return text.toString().replace(/\d/g, digit => thaiDigits[digit]);
 }
 
+function toArabicDigits_(text) {
+  const thaiDigits = "๐๑๒๓๔๕๖๗๘๙";
+  return String(text || "").replace(/[๐-๙]/g, digit => {
+    const index = thaiDigits.indexOf(digit);
+    return index >= 0 ? String(index) : digit;
+  });
+}
+
 function parseTime(timeStr) {
   if (!timeStr) return { hour: "", minute: "" };
-  const value = String(timeStr).trim();
-  const match = value.match(/^(\d{1,2})[.:](\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+  const value = toArabicDigits_(timeStr).trim().replace(/\s+/g, "");
+  let match = value.match(/^(\d{1,2})[.:](\d{2})(?::\d{2})?(AM|PM)?$/i);
+  if (!match) {
+    match = value.match(/^(\d{1,2})(\d{2})(AM|PM)?$/i);
+  }
   if (!match) return { hour: "", minute: "" };
   let hour = parseInt(match[1], 10);
   const minute = Math.max(0, Math.min(59, parseInt(match[2], 10) || 0));
@@ -1177,8 +1214,24 @@ function formatConfigFullDate_(config) {
 
 function formatThaiTime_(timeStr) {
   const parsed = parseTime(timeStr);
-  if (!parsed.hour) return "";
+  if (!parsed || parsed.hour === "") return "";
   return toThaiNumber(parsed.hour + "." + parsed.minute) + " น.";
+}
+
+function escapeRegex_(text) {
+  return String(text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function replacePlaceholder_(body, placeholder, value) {
+  body.replaceText(escapeRegex_(placeholder), String(value || ""));
+}
+
+function replaceTimePlaceholder_(body, placeholder, value) {
+  const pattern = escapeRegex_(placeholder);
+  const replacement = String(value || "");
+  body.replaceText(pattern + "\\s*นาฬิกา", replacement);
+  body.replaceText(pattern + "\\s*น\\.", replacement);
+  body.replaceText(pattern, replacement);
 }
 
 /** แทนที่ placeholders — เอกสารทั้งหมดเป็น "เลขไทย" */
@@ -1212,12 +1265,17 @@ function replacePlaceholders(body, caseData, config) {
 
   const startTimeText = formatThaiTime_(config.startTime);
   const endTimeText = formatThaiTime_(config.endTime);
-  body.replaceText("{{START_TIME}}\\s*นาฬิกา", startTimeText);
-  body.replaceText("{{START_TIME}}\\s*น\\.", startTimeText);
-  body.replaceText("{{START_TIME}}", startTimeText);
-  body.replaceText("{{END_TIME}}\\s*นาฬิกา", endTimeText);
-  body.replaceText("{{END_TIME}}\\s*น\\.", endTimeText);
-  body.replaceText("{{END_TIME}}", endTimeText);
+  const fullDateText = formatConfigFullDate_(config);
+  replaceTimePlaceholder_(body, "{{START_TIME}}", startTimeText);
+  replaceTimePlaceholder_(body, "{{END_TIME}}", endTimeText);
+  replaceTimePlaceholder_(body, "{{เวลาเริ่ม}}", startTimeText);
+  replaceTimePlaceholder_(body, "{{เวลาเริ่มต้น}}", startTimeText);
+  replaceTimePlaceholder_(body, "{{เวลาสิ้นสุด}}", endTimeText);
+  replacePlaceholder_(body, "{{START_DATE}}", fullDateText);
+  replacePlaceholder_(body, "{{END_DATE}}", fullDateText);
+  replacePlaceholder_(body, "{{วันที่เริ่ม}}", fullDateText);
+  replacePlaceholder_(body, "{{วันที่เริ่มต้น}}", fullDateText);
+  replacePlaceholder_(body, "{{วันที่สิ้นสุด}}", fullDateText);
   body.replaceText("{{START_HOUR}}", toThaiNumber(startParts.hour));
   body.replaceText("{{START_MIN}}", toThaiNumber(startParts.minute));
   body.replaceText("{{END_HOUR}}", toThaiNumber(endParts.hour));
@@ -2680,35 +2738,11 @@ function meetAttachEvidenceToBody_(body, caseData) {
   }
 }
 
-/**
- * ====== บล็อก OCR สำหรับแอป T.N.K. ลีก ======
- * เปิดให้แอป T.N.K. ลีก ส่งรูปมาขอ "อ่านผลฟุตบอล" ผ่าน Gemini ที่ระบบคดีตั้งค่าไว้แล้ว
- * - ใช้ GEMINI_API_KEY / รุ่นโมเดล / ตัวนับโควตาเดิมของระบบคดี (ไม่ต้องตั้งค่าใหม่)
- * - ถ้าภายหลังระบบคดีมี doPost งานอื่น ให้รวม action เพิ่มใน doPost นี้
- *
- * ขั้นตอนหลังวาง:
- *   1) ตั้ง OCR_SHARED_KEY ให้ตรงกับค่าในฝั่ง T.N.K. ลีก (ค่าเริ่มต้น TNK-OCR-2026)
- *   2) Deploy -> Manage deployments -> New version -> Deploy
- *      ตั้ง Who has access = Anyone ถ้าแอปฟุตบอลยิงเข้าจากภายนอก
- *   3) คัดลอก URL ที่ลงท้าย /exec ไปใส่ OCR_ENDPOINT_URL ในฝั่ง T.N.K. ลีก แล้ว Deploy ฝั่งฟุตบอลใหม่
- */
-const OCR_SHARED_KEY = 'TNK-OCR-2026';
-
+// External OCR is disabled. It does not belong in the court-document web app.
+// Re-enable only in a separate project with private credentials and a clearly
+// defined authentication and quota policy.
 function doPost(e) {
-  try {
-    var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-
-    if (body.action === 'ocr') {
-      if (String(body.key || '') !== OCR_SHARED_KEY) return ocrJson_({ ok: false, error: 'unauthorized' });
-      if (!body.image) return ocrJson_({ ok: false, error: 'no image' });
-      var text = footballOcrViaGemini_(body.image, body.mimeType);
-      return ocrJson_({ ok: true, text: String(text || '').trim() });
-    }
-
-    return ocrJson_({ ok: false, error: 'unknown action' });
-  } catch (err) {
-    return ocrJson_({ ok: false, error: String(err && err.message ? err.message : err) });
-  }
+  return ocrJson_({ ok: false, error: 'endpoint_disabled' });
 }
 
 /** ส่งรูปให้ Gemini อ่าน "ผลฟุตบอล" แล้วคืนข้อความบรรทัดละคู่ */
