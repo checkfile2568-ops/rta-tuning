@@ -25,8 +25,11 @@
       const loading=document.getElementById('loading');
       const app=document.getElementById('app');
       const hideLoading=()=>{loading.style.opacity='0';setTimeout(()=>{loading.hidden=true},260)};
+      const query=new URLSearchParams(window.location.search);
       const isTouchDevice=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
-      if(isTouchDevice){
+      const isMobileBrowser=/Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const forceTopLevel=query.get('open')==='mobile';
+      if(forceTopLevel||isTouchDevice||isMobileBrowser){
         // Google account confirmation is blocked inside a third-party iframe on
         // many mobile browsers.  Open the same approved app at the top level.
         window.location.replace(appUrl);
