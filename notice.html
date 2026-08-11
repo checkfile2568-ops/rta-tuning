@@ -19,19 +19,26 @@
       <div class="subtitle">กำลังตรวจสอบสิทธิ์บัญชี Google</div>
       <div class="spin" aria-hidden="true"></div>
     </div>
-    <iframe id="app" title="ศูนย์เอกสาร — ภาพบ้านจาก LINE"
-      src="https://script.google.com/macros/s/AKfycbz7nSnWLCA0Y5qdq6mL3etes9pji8e3VbyRfj91L5qMIcP_xgkTQyzvoIDKDirZORJ1WQ/exec"
-      allow="clipboard-write; fullscreen" allowfullscreen></iframe>
+    <iframe id="app" title="ศูนย์เอกสาร — ภาพบ้านจาก LINE" allow="clipboard-write; fullscreen" allowfullscreen></iframe>
     <script>
+      const appUrl='https://script.google.com/macros/s/AKfycbz7nSnWLCA0Y5qdq6mL3etes9pji8e3VbyRfj91L5qMIcP_xgkTQyzvoIDKDirZORJ1WQ/exec';
       const loading=document.getElementById('loading');
       const app=document.getElementById('app');
       const hideLoading=()=>{loading.style.opacity='0';setTimeout(()=>{loading.hidden=true},260)};
-      app.addEventListener('load',hideLoading,{once:true});
-      window.setTimeout(hideLoading,7000);
-      if(!(window.CSS&&CSS.supports&&CSS.supports('height','100dvh'))){
-        const fit=()=>{app.style.height=`${(window.visualViewport&&window.visualViewport.height)||window.innerHeight}px`};
-        fit();window.addEventListener('resize',fit);window.addEventListener('orientationchange',()=>window.setTimeout(fit,300));
-        if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
+      const isTouchDevice=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
+      if(isTouchDevice){
+        // Google account confirmation is blocked inside a third-party iframe on
+        // many mobile browsers.  Open the same approved app at the top level.
+        window.location.replace(appUrl);
+      }else{
+        app.src=appUrl;
+        app.addEventListener('load',hideLoading,{once:true});
+        window.setTimeout(hideLoading,7000);
+        if(!(window.CSS&&CSS.supports&&CSS.supports('height','100dvh'))){
+          const fit=()=>{app.style.height=`${(window.visualViewport&&window.visualViewport.height)||window.innerHeight}px`};
+          fit();window.addEventListener('resize',fit);window.addEventListener('orientationchange',()=>window.setTimeout(fit,300));
+          if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
+        }
       }
     </script>
   </body>
