@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style><?!= include('Styles'); ?></style>
+    <style>.secondary{border:1px solid #c9d7e8;border-radius:9px;padding:9px 12px;background:#fff;color:#0d2340;font:700 12px Sarabun;cursor:pointer}.secondary:hover{background:#edf3fa}.danger{border-color:#e8b4b4;color:#a13333}.danger:hover{background:#fff2f2}.health-panel{margin-bottom:22px}.health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.health-grid article{padding:14px 16px;border:1px solid #e1e8f0;border-radius:12px;background:#f8fafc}.health-grid p,.health-grid small{display:block;margin:0;color:#66768b;font-size:12px}.health-grid strong{display:block;margin:6px 0;color:#0d2340;font-size:17px}.health-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:15px}.health-result{min-height:18px;margin:12px 0 0;color:#66768b;font-size:12px;line-height:1.5}.admin-manage{margin-top:22px}.admin-add{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin-bottom:6px}.admin-add label{font:700 13px Sarabun}.admin-add input{width:100%;height:42px;margin-top:7px;padding:0 12px;border:1px solid #cbd7e4;border-radius:9px;font:inherit}.admin-add button{height:42px}#adminAccounts li button{margin-left:auto}@media(max-width:740px){.health-grid{grid-template-columns:1fr}.admin-add{grid-template-columns:1fr}}</style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand"><span>อร</span><div>เอกสารรายงาน<br><strong>การส่งหมาย</strong></div></div>
+        <nav>
+          <button class="nav active" data-page="overview">◈ <span>ภาพรวม</span></button>
+          <button class="nav" data-page="create">✦ <span>กำหนดข้อมูลและคุณภาพ</span></button>
+          <button class="nav" data-page="schedule">◷ <span>รอบการทำงานอัตโนมัติ</span></button>
+          <button class="nav" data-page="access">▣ <span>โฟลเดอร์และสิทธิ์</span></button>
+          <button class="nav" data-page="output">▤ <span>ชีตลิงก์รายวัน</span></button>
+          <button class="nav" data-page="admin">⚙ <span>การตั้งค่าผู้ดูแล</span></button>
+        </nav>
+        <div class="sidebar-footer"><i></i><span id="signedInEmail">กำลังตรวจสิทธิ์…</span></div>
+      </aside>
+
+      <main>
+        <header class="topbar"><button id="menuButton" aria-label="เปิดเมนู">☰</button><span id="pageTitle">ภาพรวม</span><span class="status"><i></i> ระบบพร้อมใช้งาน</span></header>
+
+        <section class="page visible" id="overview">
+          <div class="hero"><div><p class="eyebrow">ระบบจัดการเอกสาร</p><h1>เอกสารรายงาน<br><em>การส่งหมาย</em></h1><p>สร้าง Google Doc หน้าเดียวจากข้อมูลต้นทางแบบอ่านอย่างเดียว และเผยแพร่ลิงก์โฟลเดอร์เฉพาะบัญชีที่กำหนด</p></div><button class="primary goto-create">✦ กำหนดข้อมูล</button></div>
+          <div class="stats"><article><span>▤</span><p>เอกสารทั้งหมด</p><strong id="totalDocuments">0</strong></article><article><span>◷</span><p>รอบอัตโนมัติ</p><strong id="automationLabel">ทุกวันจันทร์ 18.00 น.</strong></article><article><span>♙</span><p>บัญชีที่ได้รับสิทธิ์</p><strong id="accountTotal">0 บัญชี</strong></article></div>
+          <section class="surface health-panel"><div class="section-title"><div><p class="eyebrow">สถานะระบบ</p><h2>ตรวจสอบก่อนประมวลผล</h2></div><button class="secondary" id="refreshHealth">↻ ตรวจสอบใหม่</button></div><div class="health-grid"><article><p>รุ่นระบบ</p><strong id="healthRelease">—</strong></article><article><p>ดัชนีโฟลเดอร์</p><strong id="healthFolders">—</strong></article><article><p>สถานะ</p><strong id="healthState">—</strong><small id="healthDetail">กำลังโหลด</small></article></div><div class="health-actions"><button class="secondary" id="auditMonthlyIndex">ตรวจดัชนีรายเดือน</button><button class="secondary" id="prepareMigration">เตรียมแท็บระบบ</button><button class="secondary danger" id="repairMonthlyIndex">ซ่อมดัชนีจาก backup</button></div><p class="health-result" id="healthResult" aria-live="polite"></p></section>
+          <section class="surface"><div class="section-title"><div><p class="eyebrow">สถิติเอกสาร</p><h2>ข้อมูลปัจจุบันและยอดรวมรายปี</h2></div><span class="tag" id="chartYear">ปี 2569</span></div><div class="chart-grid"><article class="chart-card"><h3>ข้อมูลรายวัน เดือนปัจจุบัน</h3><p id="currentMonthLabel">—</p><div class="chart-bars" id="dailyChart"></div></article><article class="chart-card"><h3>ยอดรวมรายเดือน 1 ปี</h3><p id="currentYearLabel">—</p><div class="chart-bars" id="monthlyChart"></div></article></div></section>
+          <div class="warning" id="setupWarning" hidden>ยังไม่ได้กำหนดชีตต้นทาง โปรดไปที่ “การตั้งค่าผู้ดูแล” และกรอก mapping ก่อนประมวลผล</div>
+        </section>
+
+        <section class="page" id="create">
+          <div class="page-head"><div><p class="eyebrow">กำหนดข้อมูลและคุณภาพ</p><h1>กำหนดข้อมูลและคุณภาพ</h1><p>เลือกรายการจากชีตต้นทาง แล้วสร้าง Google Doc ตามรูปแบบที่กำหนด</p></div><button class="primary" id="generateButton">✦ ประมวลผลทันที</button></div>
+          <div class="two-column"><form class="surface form-card" id="reportForm"><h2>ข้อมูลรายงาน</h2><label>ช่วงวันที่ส่งหมาย<div class="dates"><input id="fromDate" type="date"><span>ถึง</span><input id="toDate" type="date"></div><small>วันที่ที่แสดง: <b id="dateHint">—</b></small></label><label>เลขที่บ้าน (ไม่บังคับ)<input id="houseSearch" type="text" placeholder="เช่น 12/3 หมู่ 4"></label><fieldset><legend>คุณภาพรูปภาพ</legend><label class="radio"><input type="radio" name="quality" value="normal" checked> ปกติ — ใช้ไฟล์ต้นฉบับ</label><label class="radio"><input type="radio" name="quality" value="low"> ลดคุณภาพ — ใช้ thumbnail สูงสุด 1,600 px</label></fieldset><fieldset class="print-settings"><legend>รูปแบบการพิมพ์ Google Doc</legend><label>ข้อความหัวเรื่อง<input id="documentTitle" type="text"></label><div class="print-grid"><label>พื้นที่รูป (มม.)<input id="photoHeightMm" type="number" min="90" max="148"></label><label>ขนาดเลขที่บ้าน (pt)<input id="houseFontSizePt" type="number" min="20" max="60"></label></div><label>แบบอักษร<select id="documentFont"><option>TH Sarabun New</option><option>Sarabun</option></select></label><label>การวางภาพ<select id="photoFit"><option value="contain">พอดีกรอบ ไม่ตัดภาพ</option><option value="cover">เต็มกรอบ</option></select></label></fieldset></form>
+            <section class="preview-wrap"><div class="preview-meta">ตัวอย่าง Google Doc · A4 <span>หน้าเดียว</span></div><article class="a4" id="a4Preview"><h3 id="previewTitle">รายงานผลการส่งหมาย</h3><div class="photo-placeholder" id="previewPhoto">ภาพหลักฐาน<br><small>ภาพสีในกรอบครึ่งบนของ A4</small></div><p id="previewHouse">เลขที่บ้านจะแสดงบริเวณนี้</p></article></section></div>
+        </section>
+
+        <section class="page" id="schedule"><div class="page-head"><div><p class="eyebrow">รอบการทำงานอัตโนมัติ</p><h1>ตั้งรอบการสร้างเอกสาร</h1><p>ระบบโหลดค่าผู้ดูแลและสิทธิ์โฟลเดอร์ก่อนเริ่มงานทุกครั้ง</p></div><button class="primary" id="runNowButton">◷ ประมวลผลทันที</button></div><div class="two-column narrow"><section class="surface form-card"><label>รูปแบบการทำงานอัตโนมัติ<select id="automationDay"><option value="monday">ทุกวันจันทร์ เวลา 18.00 น.</option><option value="wednesday">ทุกวันพุธ เวลา 18.00 น.</option><option value="friday">ทุกวันศุกร์ เวลา 18.00 น.</option></select></label></section><section class="surface schedule-card"><p class="eyebrow">รอบที่ตั้งไว้</p><h2 id="automationSummary">ทุกวันจันทร์<br><em>เวลา 18.00 น.</em></h2><ol><li>17:59 โหลดค่าผู้ดูแลและสิทธิ์ล่าสุด</li><li>18:00 ดึงข้อมูลและสร้าง Google Doc</li><li>18:05 อัปเดตลิงก์โฟลเดอร์ในชีต</li></ol></section></div></section>
+
+        <section class="page" id="access"><div class="page-head"><div><p class="eyebrow">FOLDER ACCESS</p><h1>โฟลเดอร์และสิทธิ์</h1><p>โฟลเดอร์ผลลัพธ์เปิดให้เฉพาะบัญชีที่ผู้ดูแลกำหนด</p></div></div><div class="two-column narrow"><form class="surface form-card" id="addAccountForm"><h2>เพิ่มบัญชี</h2><label>อีเมล<input id="accountEmail" type="email" required placeholder="name@agency.go.th"></label><label>สิทธิ์<select id="accountRole"><option value="VIEWER">Viewer</option><option value="EDITOR">Editor</option></select></label><button class="primary" type="submit">＋ เพิ่มบัญชี</button></form><section class="surface"><div class="section-title"><h2>บัญชีที่ได้รับอนุญาต</h2><span class="tag" id="accessCount">0</span></div><ul class="accounts" id="accessAccounts"></ul></section></div></section>
+
+        <section class="page" id="output"><div class="page-head"><div><p class="eyebrow">ค้นหาและข้อมูลชีต</p><h1>ชีตลิงก์รายวัน</h1><p>แท็บเอาต์พุตแยก: A1 วันที่ส่งหมาย · B1 Link · C1 หมายเหตุ</p></div><button class="primary" id="refreshOutput">↻ โหลดข้อมูลใหม่</button></div><section class="surface output-surface"><div class="search"><label for="outputSearch">ค้นหาวันที่ส่งหมาย</label><div><input id="outputSearch" type="search" placeholder="10 สิงหาคม 2569, 10 ส.ค. 69 หรือ 100869"><button id="searchOutput">ค้นหา</button></div></div><div class="table-wrap"><table><thead><tr><th>วันที่ส่งหมาย</th><th>Link</th><th>หมายเหตุ</th></tr></thead><tbody id="outputRows"></tbody></table></div><p class="empty" id="outputEmpty" hidden>ไม่พบข้อมูลตามวันที่ที่ค้นหา</p></section></section>
+
+        <section class="page" id="admin"><div class="page-head"><div><p class="eyebrow">การตั้งค่าผู้ดูแล</p><h1>การตั้งค่าระบบ</h1><p>กำหนดรูปแบบวันที่ เอกสาร และ mapping สำหรับชีตต้นทาง</p></div><button class="primary" id="saveSettings">บันทึกการตั้งค่า</button></div><form class="surface form-card settings-form"><h2>รูปแบบเอกสาร</h2><div class="print-grid"><label>รูปแบบวันที่ทั้งระบบ<select id="displayDateFormat"><option value="full">10 สิงหาคม 2569</option><option value="short">10 ส.ค. 69</option><option value="compact">100869</option></select></label><label>โฟลเดอร์หลัก (Drive ID)<input id="rootFolderId" type="text"></label></div><h2>เชื่อมชีตต้นทางแบบอ่านอย่างเดียว</h2><div class="print-grid"><label>Source Spreadsheet ID<input id="sourceSpreadsheetId" type="text"></label><label>ชื่อแท็บต้นทาง<input id="sourceSheetName" type="text"></label><label>แถวหัวตาราง<input id="sourceHeaderRow" type="number" min="1"></label><label>หัวคอลัมน์วันที่ส่งหมาย<input id="sourceDateColumn" type="text"></label><label>หัวคอลัมน์เลขที่บ้าน<input id="sourceHouseColumn" type="text"></label><label>หัวคอลัมน์ Drive File ID รูป<input id="sourceImageIdColumn" type="text"></label><label>หัวคอลัมน์ URL รูป<input id="sourceImageUrlColumn" type="text"></label><label>หัวคอลัมน์ Record ID<input id="sourceRecordIdColumn" type="text"></label><label>หัวคอลัมน์ Group ID<input id="sourceGroupColumn" type="text"></label></div><p class="help">กรอกชื่อหัวคอลัมน์ให้ตรงกับชีต LINE เดิม ระบบจะอ่านข้อมูลเท่านั้นและไม่เพิ่ม/ลบ/แก้ไขแถวต้นทาง</p></form>
+          <section class="surface admin-manage"><div class="section-title"><div><p class="eyebrow">ผู้ดูแลระบบ (ADMIN)</p><h2>บัญชีผู้ดูแลและสิทธิ์เข้าถึง</h2></div><span class="tag" id="adminCount">0 บัญชี</span></div><form id="addAdminForm" class="admin-add"><label>อีเมลผู้ดูแลใหม่<input id="adminEmail" type="email" required placeholder="name@agency.go.th"></label><button class="primary" type="submit">＋ เพิ่มผู้ดูแล และแชร์สิทธิ์</button></form><p class="help">การเพิ่มผู้ดูแลจะแชร์สิทธิ์แก้ไข “ชีตตั้งค่า” และ “โฟลเดอร์หลัก” ให้อัตโนมัติ ส่วนชีตต้นทาง (LINE) ต้องให้เจ้าของแชร์สิทธิ์อ่านแยกต่างหาก · <b id="automationOwnerNote">—</b></p><ul class="accounts" id="adminAccounts"></ul></section>
+        </section>
+      </main>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script><?!= include('Client'); ?></script>
+  </body>
+</html>
+
