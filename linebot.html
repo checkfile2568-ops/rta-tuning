@@ -1,199 +1,28 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Chatbot — ศาลจังหวัดลพบุรี</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบสารสนเทศราชการ — ศาลจังหวัดลพบุรี</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --cyan:#3fe0ec; --cyan2:#5cf0fb; --deep:#1aa9bd;
-    --bg0:#050d15; --bg1:#0a1522; --bg2:#08131f;
-    --ink:#eafcff; --muted:rgba(148,208,216,.85);
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%;overflow:hidden;font-family:'Sarabun',sans-serif;background:var(--bg1);-webkit-tap-highlight-color:transparent}
-
-  /* ===== FIRST-PAINT LOADER (หน้าโหลดตอนเปิดเว็บ) ===== */
-  #boot{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
-    background:linear-gradient(160deg,var(--bg0),var(--bg1) 55%,var(--bg2));transition:opacity .6s ease,visibility .6s}
-  #boot.gone{opacity:0;visibility:hidden}
-  .ring{width:64px;height:64px;border-radius:50%;border:4px solid rgba(63,224,236,.18);border-top-color:var(--cyan);animation:spin .9s linear infinite}
-  #boot .txt{font-size:14px;letter-spacing:2px;color:var(--muted)}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* ===== BACKGROUND ===== */
-  #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;
-    background:
-      radial-gradient(1100px 640px at 50% 14%,rgba(63,224,236,.16),transparent 55%),
-      radial-gradient(820px 520px at 88% 104%,rgba(63,224,236,.10),transparent 50%),
-      linear-gradient(160deg,var(--bg0),var(--bg1) 55%,var(--bg2))}
-  /* จุดดาว/particle เบา ๆ */
-  .stars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-  .stars i{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--cyan);opacity:.35;animation:twinkle 4s infinite}
-  @keyframes twinkle{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:.6;transform:scale(1.2)}}
-
-  /* ===== CARD (glass) ===== */
-  .card{position:relative;z-index:2;width:min(92vw,420px);padding:34px 30px 30px;border-radius:26px;
-    background:linear-gradient(165deg,rgba(21,44,66,.72),rgba(9,20,33,.66));
-    border:1px solid rgba(92,240,251,.22);
-    box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);
-    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-
-  /* ===== BOT ===== */
-  .bot{position:relative;width:132px;height:132px;margin:2px auto 6px;animation:float 3s ease-in-out infinite}
-  .bot .halo{position:absolute;inset:-18px;border-radius:40px;background:radial-gradient(circle,rgba(63,224,236,.32),transparent 68%);filter:blur(6px)}
-  .bot .body{position:relative;width:132px;height:132px;border-radius:32px;background:linear-gradient(160deg,var(--cyan),var(--deep));
-    box-shadow:0 0 54px rgba(63,224,236,.5),inset 0 -12px 26px rgba(0,0,0,.18)}
-  .bot .eye{position:absolute;top:50px;width:23px;height:30px;border-radius:12px;background:var(--bg1);animation:blink 4s infinite}
-  .bot .eye.l{left:34px}.bot .eye.r{right:34px}
-  .bot .eye::after{content:"";position:absolute;top:5px;left:5px;width:7px;height:7px;border-radius:50%;background:var(--cyan2);box-shadow:0 0 8px var(--cyan2)}
-  .bot .mouth{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);width:34px;height:8px;border-radius:0 0 12px 12px;background:rgba(5,13,21,.6)}
-  .bot .ant{position:absolute;top:-22px;width:5px;height:22px;background:var(--deep);border-radius:4px}
-  .bot .ant.l{left:32px;transform:rotate(-15deg)}.bot .ant.r{right:32px;transform:rotate(15deg)}
-  .bot .ant b{position:absolute;top:-10px;left:-5px;width:15px;height:15px;border-radius:50%;background:var(--cyan2);box-shadow:0 0 14px var(--cyan2);animation:pulse 1.6s infinite}
-  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-  @keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
-
-  .brand{font-size:13px;letter-spacing:4px;color:var(--muted);margin-top:4px}
-  .title{font-size:42px;font-weight:800;letter-spacing:5px;color:var(--ink);margin-top:2px;
-    text-shadow:0 0 22px rgba(63,224,236,.55),0 0 44px rgba(63,224,236,.25)}
-  .sub{font-size:14px;color:var(--muted);margin-top:4px}
-
-  .status{display:inline-flex;align-items:center;gap:8px;margin:16px 0 6px;font-size:13px;color:#8fe6ee}
-  .status .live{width:9px;height:9px;border-radius:50%;background:#37e39b;box-shadow:0 0 0 0 rgba(55,227,155,.6);animation:live 1.8s infinite}
-  @keyframes live{0%{box-shadow:0 0 0 0 rgba(55,227,155,.55)}70%{box-shadow:0 0 0 9px rgba(55,227,155,0)}100%{box-shadow:0 0 0 0 rgba(55,227,155,0)}}
-  @keyframes pulse{0%,100%{opacity:.4;transform:scale(.85)}50%{opacity:1;transform:scale(1.12)}}
-
-  .enter{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;padding:16px 28px;
-    border:none;border-radius:16px;cursor:pointer;font:700 17px 'Sarabun';color:#042027;
-    background:linear-gradient(135deg,var(--cyan2),var(--deep));
-    box-shadow:0 16px 36px rgba(63,224,236,.38);transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden}
-  .enter:hover{transform:translateY(-2px);box-shadow:0 22px 46px rgba(63,224,236,.55)}
-  .enter:active{transform:translateY(0)}
-  .enter[disabled]{opacity:.7;cursor:default}
-  .enter .shine{position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);
-    transform:skewX(-18deg);animation:shine 3.4s infinite}
-  @keyframes shine{0%{left:-60%}55%,100%{left:130%}}
-
-  .feats{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
-  .chip{font-size:11.5px;color:#bfeef5;padding:6px 11px;border-radius:999px;background:rgba(63,224,236,.10);border:1px solid rgba(63,224,236,.22)}
-  .foot{margin-top:16px;font-size:11px;color:rgba(120,170,180,.7)}
-
-  /* ===== CLICK LOADING OVERLAY (ตอนกดเข้าระบบ) ===== */
-  #go{position:fixed;inset:0;z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;text-align:center;
-    background:linear-gradient(160deg,rgba(5,13,21,.94),rgba(8,19,31,.96));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-  #go.show{display:flex}
-  #go .ring{animation:spin .9s linear infinite}
-  #go .gtitle{font-size:19px;font-weight:700;color:var(--ink);letter-spacing:1px}
-  #go .gstep{font-size:13.5px;color:var(--muted);min-height:20px}
-  .bar{width:min(78vw,300px);height:7px;border-radius:999px;background:rgba(63,224,236,.16);overflow:hidden}
-  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--cyan2),var(--deep));transition:width .4s ease}
-  .pct{font-size:12px;color:#8fe6ee;letter-spacing:1px}
-
-  @media(max-width:420px){.title{font-size:34px}.bot,.bot .body{width:112px;height:112px}}
-  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  :root{--gold:#fbbf24;--gold-soft:#fcd34d;--blue:#60a5fa;--navy:#0a0f1e}*{box-sizing:border-box;margin:0;padding:0;font-family:Prompt,sans-serif}html,body{height:100%;overflow:hidden;background:var(--navy);-webkit-tap-highlight-color:transparent}
+  #splash{position:fixed;inset:0;z-index:20;display:grid;place-items:center;text-align:center;color:#eef2ff;transition:opacity .55s ease,visibility .55s;background:linear-gradient(160deg,#070a14,#0a0f1e 55%,#0e1430)}#splash::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(1000px 600px at 50% 8%,rgba(251,191,36,.20),transparent 56%),radial-gradient(820px 520px at 84% 104%,rgba(96,165,250,.14),transparent 52%);animation:float 9s ease-in-out infinite alternate}@keyframes float{from{transform:translateY(0)}to{transform:translateY(-16px)}}.stage{position:relative;z-index:1;width:min(90vw,420px);padding:20px}.emblem{position:relative;width:132px;height:132px;margin:0 auto 26px}.ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,var(--gold),var(--blue),var(--gold-soft),var(--gold));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));animation:spin 1.5s linear infinite;filter:drop-shadow(0 0 14px rgba(251,191,36,.4))}@keyframes spin{to{transform:rotate(360deg)}}.badge{position:absolute;inset:16px;border-radius:32px;display:grid;place-items:center;font-size:44px;background:linear-gradient(160deg,rgba(30,36,72,.9),rgba(10,15,30,.95));border:1px solid rgba(251,191,36,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}.stage h1{font-size:1.5rem;font-weight:600;letter-spacing:.4px;background:linear-gradient(90deg,var(--gold-soft),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}.sub{color:#9aa6c4;font-weight:300;font-size:.95rem;margin-top:6px}.status{display:inline-flex;align-items:center;gap:8px;margin:22px 0 10px;font-size:.85rem;color:#bcd4f5}.status .dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:live 1.6s infinite}@keyframes live{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}.bar{width:min(80vw,320px);height:7px;margin:0 auto;border-radius:999px;background:rgba(251,191,36,.15);overflow:hidden}.bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--blue));transition:width .3s ease}.pct{font-size:.78rem;color:#9aa6c4;letter-spacing:1px;margin-top:8px}
+  #app{position:fixed;inset:0;z-index:10;display:none;background:var(--navy)}#app iframe{width:100%;height:100%;border:0;display:block;background:var(--navy)}#reopen{position:fixed;right:14px;bottom:14px;z-index:15;display:none;padding:9px 14px;border-radius:11px;color:#2a1c00;background:linear-gradient(135deg,#f6b545,#f59e0b);text-decoration:none;box-shadow:0 8px 22px rgba(251,191,36,.34);font-size:.82rem}
 </style>
 </head>
 <body>
-
-<!-- โหลดตอนเปิดเว็บ -->
-<div id="boot"><div class="ring"></div><div class="txt">กำลังเตรียมระบบ…</div></div>
-
-<div id="splash">
-  <div class="stars" id="stars"></div>
-
-  <div class="card">
-    <div class="bot">
-      <span class="halo"></span>
-      <span class="ant l"><b></b></span><span class="ant r"><b></b></span>
-      <div class="body">
-        <span class="eye l"></span><span class="eye r"></span>
-        <span class="mouth"></span>
-      </div>
-    </div>
-
-    <div class="brand">ศาลจังหวัดลพบุรี</div>
-    <div class="title">CHATBOT</div>
-    <div class="sub">ระบบผู้ช่วยอัจฉริยะ · ศูนย์ข้อมูล</div>
-
-    <div class="status"><span class="live"></span> บอทออนไลน์ · พร้อมให้บริการ</div>
-
-    <button class="enter" id="enterBtn">
-      <span class="shine"></span>
-      🤖 เข้าสู่ระบบ →
-    </button>
-
-    <div class="feats">
-      <span class="chip">💬 ตอบคำถาม</span>
-      <span class="chip">📍 บันทึกพิกัด/หมาย</span>
-      <span class="chip">🕘 24 ชม.</span>
-    </div>
-
-    <div class="foot">© 2569 · ศาลจังหวัดลพบุรี</div>
-  </div>
-</div>
-
-<!-- โหลดตอนกดเข้า -->
-<div id="go">
-  <div class="ring"></div>
-  <div class="gtitle">กำลังเข้าสู่ระบบ</div>
-  <div class="gstep" id="gstep">เชื่อมต่อเซิร์ฟเวอร์…</div>
-  <div class="bar"><i id="barFill"></i></div>
-  <div class="pct" id="pct">0%</div>
-</div>
-
+  <div id="splash"><div class="stage"><div class="emblem"><div class="ring"></div><div class="badge">🤖</div></div><h1>ระบบสารสนเทศราชการ</h1><div class="sub">ศาลจังหวัดลพบุรี · LINE OA</div><div class="status"><span class="dot"></span><span id="statusText">กำลังเตรียมระบบเข้าสู่ Dashboard…</span></div><div class="bar"><i id="barFill"></i></div><div class="pct" id="pctText">0%</div></div></div>
+  <div id="app"><iframe id="appFrame" title="Dashboard" referrerpolicy="no-referrer"></iframe></div>
+  <a id="reopen" href="#" target="_blank" rel="noopener">เปิดในแท็บใหม่</a>
 <script>
-  var DASH_URL = "https://script.google.com/macros/s/AKfycbwojYt6ZB4aAI8QvKqFdFzr3_72ccwYRnhYENrAF-7PpRyr6AOBkL7NWOg5KELipznp/exec";
-
-  // สร้างดาวกระพริบแบบสุ่ม
-  (function(){
-    var box = document.getElementById('stars'), html = '';
-    for (var i=0;i<26;i++){
-      var x=Math.random()*100, y=Math.random()*100, d=(Math.random()*4).toFixed(1);
-      html += '<i style="left:'+x+'%;top:'+y+'%;animation-delay:'+d+'s"></i>';
-    }
-    box.innerHTML = html;
-  })();
-
-  // ซ่อน loader แรกเมื่อโหลดเสร็จ
-  window.addEventListener('load', function(){
-    setTimeout(function(){ document.getElementById('boot').classList.add('gone'); }, 500);
-  });
-
-  // กดเข้าสู่ระบบ → โหลดสวย ๆ แล้วเปิดแดชบอร์ดแท็บใหม่ (ปลอดภัย ไม่ฝัง iframe)
-  document.getElementById('enterBtn').addEventListener('click', function(){
-    var btn = this; btn.disabled = true;
-    var overlay = document.getElementById('go');
-    overlay.classList.add('show');
-
-    var steps = [
-      { p:25,  t:"เชื่อมต่อเซิร์ฟเวอร์…" },
-      { p:55,  t:"ยืนยันสิทธิ์การเข้าใช้งาน…" },
-      { p:80,  t:"โหลดศูนย์ข้อมูล…" },
-      { p:100, t:"พร้อมแล้ว เปิดหน้าจอ…" }
-    ];
-    var fill = document.getElementById('barFill'),
-        pct  = document.getElementById('pct'),
-        step = document.getElementById('gstep'),
-        i = 0;
-
-    function next(){
-      if (i >= steps.length){
-        var w = window.open(DASH_URL, '_blank', 'noopener');
-        // เผื่อ popup ถูกบล็อก → เปิดในแท็บเดิม
-        if (!w) window.location.href = DASH_URL;
-        return;
-      }
-      var s = steps[i++];
-      fill.style.width = s.p + '%';
-      pct.textContent  = s.p + '%';
-      step.textContent = s.t;
-      setTimeout(next, 620);
-    }
-    setTimeout(next, 300);
-  });
+  var DASH_URL="https://script.google.com/macros/s/AKfycbwojYt6ZB4aAI8QvKqFdFzr3_72ccwYRnhYENrAF-7PpRyr6AOBkL7NWOg5KELipznp/exec";
+  var splash=document.getElementById('splash'),app=document.getElementById('app'),frame=document.getElementById('appFrame'),fill=document.getElementById('barFill'),pct=document.getElementById('pctText'),reopen=document.getElementById('reopen'),statusText=document.getElementById('statusText'),progress=0,shown=false;
+  frame.src=DASH_URL;
+  frame.addEventListener('load',function(){if(shown)return;shown=true;progress=100;fill.style.width='100%';pct.textContent='100%';statusText.textContent='พร้อมใช้งาน';setTimeout(function(){splash.style.opacity='0';splash.style.visibility='hidden';app.style.display='block';reopen.href=DASH_URL;reopen.style.display='block';},350);});
+  var timer=setInterval(function(){if(shown){clearInterval(timer);return;}progress=Math.min(90,progress+(progress<60?4:1.5));fill.style.width=progress+'%';pct.textContent=Math.round(progress)+'%';},90);
+  setTimeout(function(){if(!shown){statusText.textContent='หากค้างนาน กดปุ่มมุมขวาล่างเพื่อเปิดในแท็บใหม่';reopen.href=DASH_URL;reopen.style.display='block';}},12000);
 </script>
 </body>
 </html>
