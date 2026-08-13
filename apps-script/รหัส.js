@@ -60,6 +60,15 @@ const LAWYER_SEARCH_HEADERS = ["ทนาย", "เบอร์โทร", "ห�
 const LAWYER_SYNC_TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/1JWIcKZVC2-p0Do7kozAMd3Hjyg3nww-rUpB00u7wEFQ/edit?gid=702586898#gid=702586898";
 const LAWYER_SYNC_TRIGGER_HANDLER = "lawyerAutoSyncOnChange";
 
+// ฐานข้อมูลเวรเสื้อฟ้าสำหรับค้นหาผ่าน LINE
+const BLUE_DUTY_SHEET_NAME = "เวรเสื้อฟ้า";
+const BLUE_DUTY_SHEET_URL = "https://docs.google.com/spreadsheets/d/1tdeoaZ4-vfqChLAn-gQ2OVM-ZMvTcgK0Lwj7ptPlAwo/edit?gid=995015393#gid=995015393";
+const BLUE_DUTY_HEADERS = ["เวรเสื้อฟ้า", "วัน", "วันที่", "เวลาเริ่ม", "หน้าที่"];
+const BLUE_DUTY_TYPE = "เวรเสื้อฟ้า";
+const PERSONNEL_SHEET_NAME = "รายชื่อบุคลากร";
+const PERSONNEL_HEADERS = ["รหัส ID", "ชื่อ-สกุลมาตรฐาน", "ชื่อเดิม/ชื่อ OCR", "สถานะ", "วันที่เริ่ม", "วันที่สิ้นสุด", "หมายเหตุ"];
+const PERSONNEL_ACTIVE_STATUSES = ["ใช้งาน", "ย้ายเข้า"];
+
 // ========== Main ==========
 
 function doGet(e) {
@@ -261,6 +270,17 @@ function getCurrentDocumentDate() {
   };
 }
 
+function caseNoHasLetterE_(caseNo) {
+  return /E/i.test(String(caseNo || ""));
+}
+
+function shouldSkipProcessReport_(caseData) {
+  if (!caseData) return false;
+  if (caseData.skipProcessReport === true) return true;
+  if (caseData.skipProcessReport === false) return false;
+  return !caseNoHasLetterE_(caseData.caseNo);
+}
+
 /**
  * อ่านข้อมูลจาก Google Sheet
  * ✨ v3.0: คืนค่าเป็น "เลขอารบิก" (ไม่แปลงเป็นเลขไทยแล้ว) เพื่อให้หน้าจอแสดงเลขอารบิก
@@ -280,9 +300,10 @@ function getCasesFromSheet(sheetUrl) {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       if (!row[0] && !row[1] && !row[2]) continue; // ข้ามแถวว่าง
+      const caseNo = (row[0] || "").toString().trim();  // A: เลขที่ดำ
 
       cases.push({
-        caseNo:    (row[0] || "").toString().trim(),  // A: เลขที่ดำ
+        caseNo:    caseNo,
         plaintiff: (row[1] || "").toString().trim(),  // B: โจทก์ / ผู้ร้อง
         defendant: (row[2] || "").toString().trim(),  // C: จำเลย / ทนายผู้ร้อง
         judge:     (row[3] || "").toString().trim(),  // D: ผู้พิพากษา
@@ -290,6 +311,7 @@ function getCasesFromSheet(sheetUrl) {
         // จึงคงค่า detail ว่างไว้ เพื่อไม่ให้นำเลขบัลลังก์ไปแทน {{DETAIL}} ในเอกสาร
         detail:    "",
         benchNo:   (row[4] || "").toString().trim(),  // E: เลขบัลลังก์
+        skipProcessReport: !caseNoHasLetterE_(caseNo),
         rowIndex:  i + 1
       });
     }
@@ -330,6 +352,19 @@ function createDocsInSameFolderByDate(cases, config) {
       const caseData = cases[i];
 
       try {
+        if (shouldSkipProcessReport_(caseData)) {
+          results.push({
+            docUrl: null,
+            folderUrl: dateFolderUrl,
+            success: true,
+            alreadyExists: false,
+            skipped: true,
+            docName: "",
+            error: null
+          });
+          continue;
+        }
+
         const docName = generateDocName(caseData);
 
         // ✨ ตรวจสอบซ้ำ: หาไฟล์ชื่อเดียวกันในโฟลเดอร์วันนี้
@@ -1147,10 +1182,21 @@ function toThaiNumber(text) {
   return text.toString().replace(/\d/g, digit => thaiDigits[digit]);
 }
 
+function toArabicDigits_(text) {
+  const thaiDigits = "๐๑๒๓๔๕๖๗๘๙";
+  return String(text || "").replace(/[๐-๙]/g, digit => {
+    const index = thaiDigits.indexOf(digit);
+    return index >= 0 ? String(index) : digit;
+  });
+}
+
 function parseTime(timeStr) {
   if (!timeStr) return { hour: "", minute: "" };
-  const value = String(timeStr).trim();
-  const match = value.match(/^(\d{1,2})[.:](\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+  const value = toArabicDigits_(timeStr).trim().replace(/\s+/g, "");
+  let match = value.match(/^(\d{1,2})[.:](\d{2})(?::\d{2})?(AM|PM)?$/i);
+  if (!match) {
+    match = value.match(/^(\d{1,2})(\d{2})(AM|PM)?$/i);
+  }
   if (!match) return { hour: "", minute: "" };
   let hour = parseInt(match[1], 10);
   const minute = Math.max(0, Math.min(59, parseInt(match[2], 10) || 0));
@@ -1177,8 +1223,24 @@ function formatConfigFullDate_(config) {
 
 function formatThaiTime_(timeStr) {
   const parsed = parseTime(timeStr);
-  if (!parsed.hour) return "";
+  if (!parsed || parsed.hour === "") return "";
   return toThaiNumber(parsed.hour + "." + parsed.minute) + " น.";
+}
+
+function escapeRegex_(text) {
+  return String(text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function replacePlaceholder_(body, placeholder, value) {
+  body.replaceText(escapeRegex_(placeholder), String(value || ""));
+}
+
+function replaceTimePlaceholder_(body, placeholder, value) {
+  const pattern = escapeRegex_(placeholder);
+  const replacement = String(value || "");
+  body.replaceText(pattern + "\\s*นาฬิกา", replacement);
+  body.replaceText(pattern + "\\s*น\\.", replacement);
+  body.replaceText(pattern, replacement);
 }
 
 /** แทนที่ placeholders — เอกสารทั้งหมดเป็น "เลขไทย" */
@@ -1212,12 +1274,17 @@ function replacePlaceholders(body, caseData, config) {
 
   const startTimeText = formatThaiTime_(config.startTime);
   const endTimeText = formatThaiTime_(config.endTime);
-  body.replaceText("{{START_TIME}}\\s*นาฬิกา", startTimeText);
-  body.replaceText("{{START_TIME}}\\s*น\\.", startTimeText);
-  body.replaceText("{{START_TIME}}", startTimeText);
-  body.replaceText("{{END_TIME}}\\s*นาฬิกา", endTimeText);
-  body.replaceText("{{END_TIME}}\\s*น\\.", endTimeText);
-  body.replaceText("{{END_TIME}}", endTimeText);
+  const fullDateText = formatConfigFullDate_(config);
+  replaceTimePlaceholder_(body, "{{START_TIME}}", startTimeText);
+  replaceTimePlaceholder_(body, "{{END_TIME}}", endTimeText);
+  replaceTimePlaceholder_(body, "{{เวลาเริ่ม}}", startTimeText);
+  replaceTimePlaceholder_(body, "{{เวลาเริ่มต้น}}", startTimeText);
+  replaceTimePlaceholder_(body, "{{เวลาสิ้นสุด}}", endTimeText);
+  replacePlaceholder_(body, "{{START_DATE}}", fullDateText);
+  replacePlaceholder_(body, "{{END_DATE}}", fullDateText);
+  replacePlaceholder_(body, "{{วันที่เริ่ม}}", fullDateText);
+  replacePlaceholder_(body, "{{วันที่เริ่มต้น}}", fullDateText);
+  replacePlaceholder_(body, "{{วันที่สิ้นสุด}}", fullDateText);
   body.replaceText("{{START_HOUR}}", toThaiNumber(startParts.hour));
   body.replaceText("{{START_MIN}}", toThaiNumber(startParts.minute));
   body.replaceText("{{END_HOUR}}", toThaiNumber(endParts.hour));
@@ -2692,11 +2759,274 @@ function meetAttachEvidenceToBody_(body, caseData) {
  *      ตั้ง Who has access = Anyone ถ้าแอปฟุตบอลยิงเข้าจากภายนอก
  *   3) คัดลอก URL ที่ลงท้าย /exec ไปใส่ OCR_ENDPOINT_URL ในฝั่ง T.N.K. ลีก แล้ว Deploy ฝั่งฟุตบอลใหม่
  */
+// ========== แปลงตารางเวรเสื้อฟ้า + ฐานค้นหา LINE ==========
+function parseBlueDutyDocument(request) {
+  request = request || {};
+  var attachment = request.attachment || null;
+  var sourceText = String(request.sourceText || '').trim();
+  if (!attachment && !sourceText) throw new Error('กรุณาแนบรูปภาพ/PDF หรือวางข้อความ OCR');
+  var prompt = [
+    'อ่านตารางเวรพนักงานต้อนรับภาษาไทยจากเอกสารนี้ แล้วคืน JSON เท่านั้น',
+    'รูปแบบ {"title":"","month":8,"yearBE":2569,"rows":[{"date":"2026-08-14","dayName":"ศุกร์","startTime":"08:00","endTime":"09:00","fullName":"นางสาว...","role":"พนักงานต้อนรับ","confidence":0.95}]}',
+    'แตกข้อมูลเป็นหนึ่งคนต่อหนึ่งแถว แม้หนึ่งวันมีหลายคน',
+    'จับคู่ชื่อคนแรกกับเวลาช่วงแรก และคนที่สองกับเวลาช่วงที่สอง',
+    'หัวหน้าพนักงานต้อนรับให้ role เป็น หัวหน้าพนักงานต้อนรับ และเวลา 08:00-13:30',
+    'date เป็น ค.ศ. YYYY-MM-DD โดยปี พ.ศ. ลบ 543 เวลาใช้ HH:mm เลขอารบิก',
+    'เก็บคำนำหน้าชื่อ ถ้าข้อมูลไม่ชัดให้ confidence ต่ำกว่า 0.80 และห้ามเดา',
+    'ห้ามใส่ markdown หรือคำอธิบายนอก JSON'
+  ].join('\n');
+  if (sourceText) prompt += '\n\nข้อความ OCR ประกอบ:\n' + sourceText;
+  var parts = [{ text: prompt }];
+  if (attachment && attachment.data) {
+    var mimeType = String(attachment.mimeType || '').toLowerCase();
+    if (!/^application\/pdf$/.test(mimeType) && !/^image\//.test(mimeType)) throw new Error('รองรับเฉพาะ PDF หรือรูปภาพ');
+    var sizeBytes = Math.floor(String(attachment.data).length * 3 / 4);
+    if (sizeBytes > BOOK_MANAGER_MAX_INLINE_BYTES) throw new Error('ไฟล์ใหญ่เกิน ' + Math.floor(BOOK_MANAGER_MAX_INLINE_BYTES / 1024 / 1024) + ' MB');
+    parts.push({ inlineData: { mimeType: mimeType, data: String(attachment.data) } });
+  }
+  var ai = blueDutyCallGeminiJson_(parts);
+  var parsed = blueDutyExtractJson_(ai.text);
+  var rows = (parsed.rows || []).map(blueDutyNormalizeRecord_).filter(function (row) { return row.date && row.fullName; });
+  return { success: true, title: String(parsed.title || ''), month: parseInt(parsed.month, 10) || 0,
+    yearBE: parseInt(parsed.yearBE, 10) || 0, rows: rows,
+    lowConfidenceCount: rows.filter(function (r) { return r.confidence < 0.8; }).length,
+    usageMetadata: ai.usageMetadata || {}, trackedUsage: ai.trackedUsage || bookGetTodayUsage_() };
+}
+
+/** เรียก Gemini แบบ JSON โดยเฉพาะ ป้องกันคำตอบถูกตัดหรือมีข้อความนอก JSON */
+function blueDutyCallGeminiJson_(parts) {
+  var props = PropertiesService.getScriptProperties();
+  var eff = bookEffectiveLimits_(), used = bookGetTodayUsage_();
+  if (used.requests >= eff.rpd) throw new Error('เกินโควตา Gemini ฟรีประจำวันแล้ว');
+  var apiKey = bookGetGeminiApiKey_();
+  bookAssertGeminiApiKeyLooksValid_(apiKey);
+  var model = bookNormalizeGeminiModel_(props.getProperty('GEMINI_MODEL') || BOOK_MANAGER_DEFAULT_MODEL);
+  var payload = {
+    contents: [{ role: 'user', parts: parts }],
+    generationConfig: {
+      temperature: 0,
+      maxOutputTokens: 16384,
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'OBJECT',
+        properties: {
+          title: { type: 'STRING' },
+          month: { type: 'INTEGER' },
+          yearBE: { type: 'INTEGER' },
+          rows: {
+            type: 'ARRAY',
+            items: {
+              type: 'OBJECT',
+              properties: {
+                date: { type: 'STRING' }, dayName: { type: 'STRING' },
+                startTime: { type: 'STRING' }, endTime: { type: 'STRING' },
+                fullName: { type: 'STRING' }, role: { type: 'STRING' },
+                confidence: { type: 'NUMBER' }
+              },
+              required: ['date','startTime','endTime','fullName','role','confidence']
+            }
+          }
+        },
+        required: ['rows']
+      }
+    }
+  };
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent';
+  var response = UrlFetchApp.fetch(url, { method:'post', contentType:'application/json', headers:{'x-goog-api-key':apiKey}, payload:JSON.stringify(payload), muteHttpExceptions:true });
+  var status = response.getResponseCode(), raw = response.getContentText(), data = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch (e) { throw new Error('อ่านคำตอบจาก Gemini ไม่สำเร็จ: ' + e.message); }
+  if (status < 200 || status >= 300) {
+    bookRecordUsage_(null, status, response.getAllHeaders ? response.getAllHeaders() : {});
+    throw new Error(bookFriendlyGeminiError_(status, data && data.error ? data.error.message : raw));
+  }
+  bookRecordUsage_(data.usageMetadata || {}, status, response.getAllHeaders ? response.getAllHeaders() : {});
+  var text = bookExtractGeminiText_(data);
+  var finishReason = data && data.candidates && data.candidates[0] ? data.candidates[0].finishReason : '';
+  if (!text) throw new Error('Gemini ไม่ส่งข้อมูลตารางกลับมา');
+  if (finishReason === 'MAX_TOKENS') throw new Error('ตารางมีข้อมูลมากเกินคำตอบหนึ่งครั้ง กรุณาแบ่งภาพเป็น 2 ส่วนแล้วนำเข้าทีละส่วน');
+  return { text:text, usageMetadata:data.usageMetadata || {}, trackedUsage:bookGetTodayUsage_() };
+}
+
+function saveBlueDutyRows(sheetUrl, rows, options) {
+  rows = Array.isArray(rows) ? rows : []; options = options || {};
+  if (!rows.length) throw new Error('ไม่มีข้อมูลเวรสำหรับบันทึก');
+  var sheet = getOrCreateBlueDutySheet_(sheetUrl);
+  var normalized = rows.map(blueDutyNormalizeRecord_).filter(function (row) { return row.date && row.fullName && row.verified; });
+  if (!normalized.length) throw new Error('กรุณาตรวจสอบและยืนยันข้อมูลอย่างน้อย 1 รายการ');
+  var activePeople=getPersonnelList(sheetUrl,false).rows, unknown=[];
+  normalized.forEach(function(row){var key=blueDutyNameKey_(row.fullName),person=activePeople.filter(function(p){return blueDutyNameKey_(p.fullName)===key||String(p.aliases||'').split(/[|,;\n]/).some(function(a){return blueDutyNameKey_(a)===key;});})[0];if(person){row.personId=person.id;row.fullName=person.fullName;}else unknown.push(row.fullName);});
+  if(unknown.length) throw new Error('ไม่พบชื่อในฐานบุคลากร: '+unknown.slice(0,5).join(', ')+' กรุณาเพิ่มบุคลากรหรือเลือกชื่อมาตรฐานก่อนบันทึก');
+  if (options.replaceAll && sheet.getLastRow() > 1) sheet.deleteRows(2, sheet.getLastRow() - 1);
+  if (!options.replaceAll && options.replaceMonth) {
+    var targetMonth = parseInt(options.month, 10) || parseInt(normalized[0].date.slice(5, 7), 10);
+    var targetYearAD = parseInt(options.yearAD, 10) || parseInt(normalized[0].date.slice(0, 4), 10);
+    blueDutyDeleteMonth_(sheet, targetYearAD, targetMonth);
+  }
+  var existing = blueDutyExistingKeys_(sheet), added = [], skipped = [];
+  normalized.forEach(function (row) {
+    var key = blueDutyKey_(row);
+    if (existing[key]) { skipped.push(row.fullName + ' ' + row.date); return; }
+    existing[key] = true;
+    var dateObj = new Date(row.date + 'T00:00:00+07:00');
+    added.push([row.fullName, row.dayName || blueDutyThaiDay_(dateObj), row.date,
+      row.startTime, row.role || 'พนักงานต้อนรับ']);
+  });
+  if (added.length) {
+    var start = Math.max(sheet.getLastRow() + 1, 2);
+    sheet.getRange(start, 1, added.length, BLUE_DUTY_HEADERS.length).setValues(added);
+    sheet.getRange(start, 3, added.length, 2).setNumberFormat('@');
+  }
+  blueDutyFormatSheet_(sheet);
+  return { success: true, addedCount: added.length, skippedCount: skipped.length, skipped: skipped.slice(0, 20), sheetName: sheet.getName(), sheetUrl: buildSheetTabUrl_(sheet) };
+}
+
+function getBlueDutySheetInfo(sheetUrl) {
+  var sheet = getOrCreateBlueDutySheet_(sheetUrl);
+  return { success: true, sheetName: sheet.getName(), sheetUrl: buildSheetTabUrl_(sheet), totalRows: Math.max(0, sheet.getLastRow() - 1) };
+}
+
+// ========== ฐานรายชื่อบุคลากร ==========
+function getPersonnelList(sheetUrl, includeInactive) {
+  var sheet = getOrCreatePersonnelSheet_(sheetUrl), values = sheet.getDataRange().getDisplayValues(), rows = [];
+  for (var i = 1; i < values.length; i++) {
+    var r = values[i]; if (!r[0] || !r[1]) continue;
+    var item = { rowIndex:i+1, id:r[0], fullName:r[1], aliases:r[2], status:r[3] || 'ใช้งาน', startDate:r[4], endDate:r[5], note:r[6] };
+    if (includeInactive || PERSONNEL_ACTIVE_STATUSES.indexOf(item.status) !== -1) rows.push(item);
+  }
+  return { success:true, rows:rows, totalRows:rows.length, sheetUrl:buildSheetTabUrl_(sheet) };
+}
+function savePersonnel(sheetUrl, person) {
+  person = person || {}; var sheet = getOrCreatePersonnelSheet_(sheetUrl);
+  var id = String(person.id || '').trim(), name = String(person.fullName || '').replace(/\s+/g,' ').trim();
+  if (!name) throw new Error('กรุณากรอกชื่อ-สกุลมาตรฐาน');
+  if (!id) id = nextPersonnelId_(sheet);
+  var values = sheet.getDataRange().getDisplayValues(), targetRow = 0, oldName='';
+  for (var i=1;i<values.length;i++) {
+    if (String(values[i][0]).trim() === id) { targetRow=i+1; oldName=values[i][1]; }
+    if (blueDutyNameKey_(values[i][1]) === blueDutyNameKey_(name) && String(values[i][0]).trim() !== id) throw new Error('มีชื่อนี้อยู่แล้วในรหัส ' + values[i][0]);
+  }
+  var aliases=String(person.aliases||'').trim();if(oldName&&blueDutyNameKey_(oldName)!==blueDutyNameKey_(name)&&aliases.indexOf(oldName)<0)aliases=(aliases?aliases+' | ':'')+oldName;
+  var row = [[id, name, aliases, String(person.status || 'ใช้งาน'), String(person.startDate || ''), String(person.endDate || ''), String(person.note || '')]];
+  if (targetRow) sheet.getRange(targetRow,1,1,7).setValues(row); else { targetRow=Math.max(2,sheet.getLastRow()+1); sheet.getRange(targetRow,1,1,7).setValues(row); }
+  if(oldName&&oldName!==name){var duty=getOrCreateBlueDutySheet_(sheetUrl),dv=duty.getDataRange().getDisplayValues();for(var j=1;j<dv.length;j++)if(blueDutyNameKey_(dv[j][0])===blueDutyNameKey_(oldName))duty.getRange(j+1,1).setValue(name);}
+  personnelFormatSheet_(sheet);
+  return { success:true, message:(person.id?'แก้ไข':'เพิ่ม')+'บุคลากร '+id+' แล้ว', person:{id:id,fullName:name}, list:getPersonnelList(sheetUrl,true) };
+}
+function deletePersonnel(sheetUrl, id, permanent) {
+  var sheet = getOrCreatePersonnelSheet_(sheetUrl), values = sheet.getDataRange().getDisplayValues(), rowIndex=0, name='';
+  for (var i=1;i<values.length;i++) if (String(values[i][0]).trim() === String(id).trim()) { rowIndex=i+1; name=values[i][1]; break; }
+  if (!rowIndex) throw new Error('ไม่พบรหัสบุคลากร ' + id);
+  var duty = getOrCreateBlueDutySheet_(sheetUrl), used = duty.getDataRange().getDisplayValues().some(function(r,i){ return i>0 && blueDutyNameKey_(r[0]) === blueDutyNameKey_(name); });
+  if (permanent && !used) sheet.deleteRow(rowIndex); else { sheet.getRange(rowIndex,4).setValue('พ้นหน้าที่'); sheet.getRange(rowIndex,6).setValue(Utilities.formatDate(new Date(),'Asia/Bangkok','yyyy-MM-dd')); }
+  return { success:true, archived:used || !permanent, message:used ? 'บุคลากรมีประวัติเวร จึงเปลี่ยนเป็นพ้นหน้าที่แทนการลบถาวร' : (permanent?'ลบบุคลากรแล้ว':'เปลี่ยนเป็นพ้นหน้าที่แล้ว'), list:getPersonnelList(sheetUrl,true) };
+}
+function matchBlueDutyPersonnel(sheetUrl, rows) {
+  var people = getPersonnelList(sheetUrl,false).rows;
+  return { success:true, rows:(Array.isArray(rows)?rows:[]).map(function(row){
+    row=blueDutyNormalizeRecord_(row);var raw=row.fullName,best=null,bestScore=0;
+    people.forEach(function(p){[p.fullName].concat(String(p.aliases||'').split(/[|,;\n]/)).forEach(function(n){var score=personnelSimilarity_(blueDutyNameKey_(raw),blueDutyNameKey_(n));if(score>bestScore){bestScore=score;best=p;}});});
+    row.ocrName=raw;row.personId=best&&bestScore>=.62?best.id:'';row.matchedName=best&&bestScore>=.62?best.fullName:'';row.matchScore=Math.round(bestScore*100);row.matchStatus=bestScore>=.93?'exact':bestScore>=.62?'near':'missing';
+    if(row.matchStatus==='exact'){row.fullName=row.matchedName;row.verified=true;}else row.verified=false;return row;
+  }), personnel:people };
+}
+function getOrCreatePersonnelSheet_(sheetUrl) { var ss=openSpreadsheetFromUrlOrDefault_(String(sheetUrl||'').trim()||BLUE_DUTY_SHEET_URL),sheet=ss.getSheetByName(PERSONNEL_SHEET_NAME)||ss.insertSheet(PERSONNEL_SHEET_NAME);if(sheet.getMaxColumns()<7)sheet.insertColumnsAfter(sheet.getMaxColumns(),7-sheet.getMaxColumns());if(sheet.getLastRow()===0||sheet.getRange(1,1).getDisplayValue()!==PERSONNEL_HEADERS[0])sheet.getRange(1,1,1,7).setValues([PERSONNEL_HEADERS]);personnelFormatSheet_(sheet);return sheet; }
+function personnelFormatSheet_(sheet){sheet.setFrozenRows(1);sheet.getRange(1,1,1,7).setBackground('#1b3a6b').setFontColor('#fff').setFontWeight('bold');sheet.setColumnWidth(1,90);sheet.setColumnWidth(2,240);sheet.setColumnWidth(3,240);sheet.setColumnWidth(4,130);}
+function nextPersonnelId_(sheet){var v=sheet.getRange(2,1,Math.max(1,sheet.getLastRow()-1),1).getDisplayValues(),max=0;v.forEach(function(r){var m=String(r[0]).match(/P(\d+)/i);if(m)max=Math.max(max,parseInt(m[1],10));});return 'P'+('0000'+(max+1)).slice(-4);}
+function personnelSimilarity_(a,b){if(!a||!b)return 0;if(a===b)return 1;var m=a.length,n=b.length,d=[];for(var i=0;i<=m;i++)d[i]=[i];for(var j=1;j<=n;j++)d[0][j]=j;for(i=1;i<=m;i++)for(j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return 1-d[m][n]/Math.max(m,n);}
+
+/** ดึงฐานเดิมกลับมาแสดงในหน้าตรวจสอบเพื่อแก้ไข */
+function loadBlueDutyRows(sheetUrl) {
+  var sheet = getOrCreateBlueDutySheet_(sheetUrl);
+  var values = sheet.getDataRange().getDisplayValues(), rows = [];
+  for (var i = 1; i < values.length; i++) {
+    var r = values[i]; if (!r[0] || !r[2]) continue;
+    rows.push({ fullName:r[0], dayName:r[1], date:blueDutyDisplayDateKey_(r[2]),
+      startTime:blueDutyNormalizeTime_(r[3]), endTime:'', role:r[4] || 'พนักงานต้อนรับ',
+      confidence:1, verified:false, sourceName:'ฐานข้อมูลเดิม' });
+  }
+  return { success:true, rows:rows, totalRows:rows.length, sheetUrl:buildSheetTabUrl_(sheet) };
+}
+
+function searchBlueDuty(query, sheetUrl) {
+  query = blueDutyNormalizeDigits_(String(query || '')).trim();
+  if (!query) throw new Error('กรุณาระบุวันที่หรือชื่อที่ต้องการค้นหา');
+  var sheet = getOrCreateBlueDutySheet_(sheetUrl), values = sheet.getDataRange().getDisplayValues();
+  var dateKey = blueDutyParseQueryDate_(query);
+  var nameKey = blueDutyNameKey_(query.replace(/เวรเสื้อฟ้า|เวร|วันที่|ค้นหา|วันนี้|พรุ่งนี้/gi, ''));
+  var today = new Date();
+  if (/พรุ่งนี้/.test(query)) { today.setDate(today.getDate() + 1); dateKey = Utilities.formatDate(today, 'Asia/Bangkok', 'yyyy-MM-dd'); }
+  else if (/วันนี้/.test(query)) dateKey = Utilities.formatDate(today, 'Asia/Bangkok', 'yyyy-MM-dd');
+  var matches = [];
+  for (var i = 1; i < values.length; i++) {
+    var r = values[i], rowDate = blueDutyDisplayDateKey_(r[2]);
+    if ((dateKey && rowDate === dateKey) || (!dateKey && nameKey && blueDutyNameKey_(r[0]).indexOf(nameKey) !== -1)) {
+      matches.push({ date: rowDate, dayName: r[1], startTime: r[3], endTime: '', fullName: r[0], role: r[4] });
+    }
+  }
+  matches.sort(function (a, b) { return (a.date + a.startTime).localeCompare(b.date + b.startTime); });
+  return { success: true, query: query, count: matches.length, rows: matches, text: blueDutyBuildLineText_(matches, query) };
+}
+
+function getOrCreateBlueDutySheet_(sheetUrl) {
+  var ss = openSpreadsheetFromUrlOrDefault_(String(sheetUrl || '').trim() || BLUE_DUTY_SHEET_URL);
+  var sheet = ss.getSheetByName(BLUE_DUTY_SHEET_NAME) || ss.insertSheet(BLUE_DUTY_SHEET_NAME);
+  if (sheet.getMaxColumns() < BLUE_DUTY_HEADERS.length) sheet.insertColumnsAfter(sheet.getMaxColumns(), BLUE_DUTY_HEADERS.length - sheet.getMaxColumns());
+  if (sheet.getLastRow() === 0 || sheet.getRange(1, 1).getDisplayValue() !== BLUE_DUTY_HEADERS[0]) {
+    if (sheet.getLastRow() > 0) sheet.insertRowBefore(1);
+    sheet.getRange(1, 1, 1, BLUE_DUTY_HEADERS.length).setValues([BLUE_DUTY_HEADERS]);
+  }
+  blueDutyFormatSheet_(sheet); return sheet;
+}
+function blueDutyFormatSheet_(sheet) {
+  sheet.setFrozenRows(1);
+  sheet.getRange(1, 1, 1, BLUE_DUTY_HEADERS.length).setBackground('#1b3a6b').setFontColor('#ffffff').setFontWeight('bold');
+  sheet.setColumnWidth(1, 240); sheet.setColumnWidth(2, 110); sheet.setColumnWidth(3, 130); sheet.setColumnWidth(4, 110); sheet.setColumnWidth(5, 210);
+  sheet.getRange(1, 1, Math.max(1, sheet.getMaxRows()), BLUE_DUTY_HEADERS.length).setVerticalAlignment('middle');
+}
+function blueDutyNormalizeRecord_(item) {
+  item = item || {}; var date = blueDutyNormalizeDigits_(String(item.date || '')).trim();
+  return { date: date, dayName: String(item.dayName || '').trim(), startTime: blueDutyNormalizeTime_(item.startTime), endTime: blueDutyNormalizeTime_(item.endTime),
+    fullName: String(item.fullName || item.name || '').replace(/\s+/g, ' ').trim(), role: String(item.role || 'พนักงานต้อนรับ').trim(),
+    sourceName: String(item.sourceName || '').trim(), confidence: Math.max(0, Math.min(1, Number(item.confidence == null ? 1 : item.confidence))),
+    verified: item.verified === true || String(item.verified).toUpperCase() === 'TRUE' };
+}
+function blueDutyExtractJson_(text) {
+  var clean = String(text || '').replace(/```json|```/gi, '').trim(), start = clean.indexOf('{'), end = clean.lastIndexOf('}');
+  if (start < 0 || end < start) throw new Error('Gemini อ่านเอกสารได้ แต่ไม่พบข้อมูล JSON');
+  try { return JSON.parse(clean.slice(start, end + 1)); } catch (e) { throw new Error('แปลงผลลัพธ์ตารางเวรไม่สำเร็จ: ' + e.message); }
+}
+function blueDutyNormalizeDigits_(value) { var th = '๐๑๒๓๔๕๖๗๘๙'; return String(value || '').replace(/[๐-๙]/g, function (d) { return String(th.indexOf(d)); }); }
+function blueDutyNormalizeTime_(value) { var s = blueDutyNormalizeDigits_(value).replace('.', ':').replace(/\s/g, ''), m = s.match(/(\d{1,2}):(\d{2})/); return m ? ('0' + m[1]).slice(-2) + ':' + m[2] : s; }
+function blueDutyNameKey_(value) { return String(value || '').toLowerCase().replace(/นาย|นางสาว|นาง|คุณ|เวรเสื้อฟ้า|เวร|ค้นหา|วันที่/g, '').replace(/[^ก-๙a-z0-9]/g, ''); }
+function blueDutyKey_(r) { return [r.date, r.startTime, blueDutyNameKey_(r.fullName), r.role].join('|'); }
+function blueDutyExistingKeys_(sheet) { var map = {}, v = sheet.getDataRange().getDisplayValues(); for (var i = 1; i < v.length; i++) map[blueDutyKey_({ date: blueDutyDisplayDateKey_(v[i][2]), startTime: v[i][3], fullName: v[i][0], role: v[i][4] })] = true; return map; }
+function blueDutyDeleteMonth_(sheet, yearAD, month) { var v = sheet.getDataRange().getDisplayValues(); for (var i = v.length - 1; i >= 1; i--) { var d = blueDutyDisplayDateKey_(v[i][2]); if (d.indexOf(yearAD + '-' + ('0' + month).slice(-2)) === 0) sheet.deleteRow(i + 1); } }
+function blueDutyDisplayDateKey_(value) { var s = blueDutyNormalizeDigits_(String(value || '')).trim(), m = s.match(/(\d{4})[-\/]?(\d{1,2})[-\/]?(\d{1,2})/); return m ? m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2) : s; }
+function blueDutyParseQueryDate_(q) {
+  var s = blueDutyNormalizeDigits_(q), m = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/), months = CENTER_REPORT_MONTHS;
+  if (!m) { for (var i = 0; i < months.length; i++) { var x = s.match(new RegExp('(\\d{1,2})\\s*' + months[i] + '\\s*(\\d{2,4})')); if (x) { m = [x[0], x[1], String(i + 1), x[2]]; break; } } }
+  if (!m) return ''; var y = parseInt(m[3], 10); if (y < 100) y += 2500; if (y > 2400) y -= 543;
+  return y + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+}
+function blueDutyThaiDay_(d) { return ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][d.getDay()]; }
+function blueDutyBuildLineText_(rows, query) {
+  if (!rows.length) return 'ไม่พบข้อมูลเวรเสื้อฟ้าตามคำค้น “' + query + '”\nโปรดตรวจสอบชื่อหรือวันที่แล้วลองใหม่';
+  var out = ['🔵 เวรเสื้อฟ้า'], lastDate = '';
+  rows.forEach(function (r) { if (r.date !== lastDate) { var p = r.date.split('-'); out.push('', 'วัน' + r.dayName + 'ที่ ' + parseInt(p[2],10) + ' ' + CENTER_REPORT_MONTHS[parseInt(p[1],10)-1] + ' ' + (parseInt(p[0],10)+543)); lastDate = r.date; } out.push(r.startTime + ' น.  ' + r.fullName + '\nหน้าที่: ' + r.role); });
+  return out.join('\n');
+}
+
 const OCR_SHARED_KEY = 'TNK-OCR-2026';
 
 function doPost(e) {
   try {
     var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+
+    if (body.action === 'blue_duty_search') {
+      if (String(body.key || '') !== OCR_SHARED_KEY) return ocrJson_({ ok: false, error: 'unauthorized' });
+      var result = searchBlueDuty(body.query || body.text || '', body.sheetUrl || BLUE_DUTY_SHEET_URL);
+      return ocrJson_({ ok: true, reply: result.text, count: result.count, rows: result.rows });
+    }
 
     if (body.action === 'ocr') {
       if (String(body.key || '') !== OCR_SHARED_KEY) return ocrJson_({ ok: false, error: 'unauthorized' });

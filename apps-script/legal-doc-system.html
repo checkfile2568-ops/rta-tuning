@@ -433,8 +433,10 @@
     .status-pending { color: var(--ink-muted); font-size: 16px; }
     .status-creating { color: var(--wine-light); font-size: 16px; font-weight: 600; animation: pulse 1.3s infinite; }
     .status-error { color: var(--danger); font-size: 16px; font-weight: 600; }
+    .status-skipped { color: var(--ink-muted); font-size: 15px; font-weight: 700; }
     .badge-existing { background: var(--gold-pale); color: var(--wine-dark); margin-bottom: 4px; }
     .badge-new { background: #d8ecdf; color: var(--green); margin-bottom: 4px; }
+    .badge-skipped { background: #edf1f5; color: var(--ink-muted); margin-bottom: 4px; }
     .tag-type {
       display: inline-block; margin-top: 4px; padding: 1px 8px; border-radius: 12px;
       font-size: 13px; font-weight: 600;
@@ -448,6 +450,20 @@
       background: #eef4fb; color: #244a86; border: 1px solid #cdddf2;
     }
     .estate-check input { width: 16px; height: 16px; accent-color: #244a86; cursor: pointer; }
+    .skip-process-check {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 4px 9px; border-radius: 8px; border: 1px solid #d4dce8;
+      background: #f6f8fb; color: var(--ink-muted); font-size: 13.5px; font-weight: 700; cursor: pointer;
+    }
+    .skip-process-check.auto-skip { background: #fff8e8; border-color: #ead09a; color: #825b12; }
+    .skip-process-check input { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
+    .skip-process-note { display: block; margin-top: 4px; color: var(--ink-muted); font-size: 12px; line-height: 1.25; }
+    .skip-header-control {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      color: #fff; font-size: 13px; font-weight: 700; line-height: 1.2; cursor: pointer;
+    }
+    .skip-header-control input { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; flex: 0 0 auto; }
+    .skip-header-control span { white-space: normal; }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
     .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 22px 0; }
@@ -943,7 +959,7 @@
       #tableContainer tbody { display: grid; gap: 10px; }
       #tableContainer tr.case-row {
         display: grid; grid-template-columns: 42px minmax(0, 1fr); grid-template-areas:
-          "select case" "select plaintiff" "select defendant" "select judge" "select status" "select meet";
+          "select case" "select plaintiff" "select defendant" "select judge" "select skip" "select status" "select meet";
         border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff;
       }
       #tableContainer td { display: block; min-width: 0; padding: 8px 10px; border-bottom: 1px solid var(--line-soft); }
@@ -954,10 +970,11 @@
       #tableContainer td:nth-child(3) { grid-area: plaintiff; }
       #tableContainer td:nth-child(4) { grid-area: defendant; }
       #tableContainer td:nth-child(5) { grid-area: judge; }
-      #tableContainer td:nth-child(6) { grid-area: status; }
-      #tableContainer td:nth-child(7) { grid-area: meet; border-bottom: 0; }
-      #tableContainer td:nth-child(6), #tableContainer td:nth-child(7) { text-align: left; }
-      #tableContainer td:nth-child(6) > *, #tableContainer td:nth-child(7) > * { vertical-align: middle; }
+      #tableContainer td:nth-child(6) { grid-area: skip; }
+      #tableContainer td:nth-child(7) { grid-area: status; }
+      #tableContainer td:nth-child(8) { grid-area: meet; border-bottom: 0; }
+      #tableContainer td:nth-child(6), #tableContainer td:nth-child(7), #tableContainer td:nth-child(8) { text-align: left; }
+      #tableContainer td:nth-child(6) > *, #tableContainer td:nth-child(7) > *, #tableContainer td:nth-child(8) > * { vertical-align: middle; }
       .search-row { align-items: stretch; flex-direction: column; }
       .search-count { white-space: normal; }
     }
@@ -1073,6 +1090,14 @@
     .meet-actions{ gap:6px; }
     .meet-actions .btn{ width:100%; margin-top:0; font-size:13.5px; padding:9px 10px; border-width:1px; letter-spacing:0; }
     .meet-status-line{ font-size:11.5px; }
+    .blue-duty-table-wrap{ overflow:auto; max-height:560px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+    .blue-duty-table{ width:100%; min-width:1050px; border-collapse:collapse; font-size:14px; }
+    .blue-duty-table th{ position:sticky; top:0; z-index:2; background:var(--wine); color:#fff; padding:9px 8px; border-bottom:2px solid var(--gold); }
+    .blue-duty-table td{ padding:7px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+    .blue-duty-table tr.low-confidence td{ background:#fff6d8; }
+    .blue-duty-table input[type="text"], .blue-duty-table input[type="date"], .blue-duty-table input[type="time"], .blue-duty-table select{ width:100%; min-width:90px; padding:7px; border:1px solid var(--line); border-radius:6px; font:14px "Sarabun"; }
+    .blue-duty-table .name-input{ min-width:210px; }
+    .blue-duty-line-preview{ min-height:150px; white-space:pre-wrap; background:#eef5ff; border:1px solid var(--line); border-left:4px solid #06c755; border-radius:10px; padding:16px; font:16px/1.7 "Sarabun"; color:var(--ink); }
     @media print{ .meet-drawer{ display:none !important; } }
     @media (max-width:520px){ .meet-drawer{ width:100vw; } }
   </style>
@@ -1095,22 +1120,11 @@
         <button class="app-tab" type="button" data-tab="monthly-report">รายงานประจำเดือนศูนย์ประสานงานคดี</button>
         <button class="app-tab" type="button" data-tab="book-manager">จัดทำหนังสือ</button>
         <button class="app-tab" type="button" data-tab="lawyer-phone">ระบบเบอร์โทร/ค้นหาทนาย</button>
+        <button class="app-tab" type="button" data-tab="blue-duty">แปลงเอกสาร/เวรเสื้อฟ้า</button>
         <button class="app-tab" type="button" data-tab="other-systems">ระบบงานอื่น ๆ</button>
       </div>
 
       <div class="tab-panel active" id="tab-case-docs">
-
-      <div class="print-entry-bar">
-        <div class="print-entry-copy">
-          <strong>พิมพ์รายงานกระบวนเป็น HTML A4</strong>
-          <span>ตั้งค่าแนวกระดาษ ระยะขอบ ขนาด โลโก้ และส่วนที่ต้องการพิมพ์</span>
-        </div>
-        <div class="print-entry-actions">
-          <button class="btn btn-secondary" type="button" id="btnCasePrintSettings">ตั้งค่าการพิมพ์</button>
-          <button class="btn btn-gold" type="button" id="btnPrintCaseDocs">พิมพ์หน้าระบบ A4</button>
-          <button class="btn btn-primary" type="button" id="btnPrintCaseHtmlTop">พิมพ์รายงาน HTML</button>
-        </div>
-      </div>
 
       <!-- ========== STATS ========== -->
       <div class="stats" id="statsBar" data-print-section="summary">
@@ -1261,7 +1275,6 @@
         </div>
         <div class="button-group print-ui-only" style="margin-top:14px">
           <button class="btn btn-gold" type="button" id="btnOpenMeet">📎 แนบรูป Meet</button>
-          <button class="btn btn-primary" type="button" id="btnPrintCaseHtml">พิมพ์รายงาน HTML</button>
         </div>
       </div>
 
@@ -1569,6 +1582,48 @@
               <canvas class="chart-canvas" id="monthlyReportChart" width="1000" height="620"></canvas>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-blue-duty">
+        <div class="section">
+          <div class="section-title"><span class="num">1</span> เลือกเอกสารตารางเวร</div>
+          <div class="grid-row grid-2">
+            <div class="input-group">
+              <label for="blueDutyFile">รูปภาพหรือ PDF ตารางเวร</label>
+              <div class="file-picker"><label class="file-picker-btn" for="blueDutyFile">เลือกไฟล์</label><input class="file-input-hidden" type="file" id="blueDutyFile" accept="application/pdf,image/*" /><div class="hint" id="blueDutyFileInfo">ยังไม่ได้เลือกไฟล์</div></div>
+            </div>
+            <div class="input-group"><label for="blueDutySheetUrl">Google Sheets ปลายทาง</label><input type="text" id="blueDutySheetUrl" value="https://docs.google.com/spreadsheets/d/1tdeoaZ4-vfqChLAn-gQ2OVM-ZMvTcgK0Lwj7ptPlAwo/edit?gid=995015393#gid=995015393" readonly /></div>
+          </div>
+          <div class="input-group"><label for="blueDutySourceText">ข้อความ OCR ประกอบ <span class="hint">(ไม่บังคับ)</span></label><textarea class="book-textarea" id="blueDutySourceText" rows="4" placeholder="วางข้อความเมื่อมี OCR อยู่แล้ว"></textarea></div>
+          <div class="button-group"><button class="btn btn-primary" type="button" id="btnParseBlueDuty">✨ แปลงเอกสารด้วย Gemini</button><button class="btn btn-secondary" type="button" id="btnLoadBlueDuty">ดึงข้อมูลเดิมมาแก้ไข</button><button class="btn btn-secondary" type="button" id="btnOpenBlueDutySheet">เปิดชีตเวรเสื้อฟ้า</button></div>
+          <div class="lawyer-status" id="blueDutyStatus">เลือกเอกสาร แล้วกดแปลงข้อมูล ระบบจะยังไม่บันทึกจนกว่าจะตรวจสอบและยืนยัน</div>
+        </div>
+        <div class="section" id="blueDutyReviewSection" style="display:none">
+          <div class="section-head"><div class="section-title"><span class="num">2</span> ตรวจสอบข้อมูลก่อนบันทึก</div><div class="section-head-actions"><button class="btn btn-secondary" type="button" id="btnVerifyAllBlueDuty">✓ เลือกทั้งหมด</button><button class="btn btn-secondary" type="button" id="btnUnverifyAllBlueDuty">ไม่เลือกทั้งหมด</button></div></div>
+          <p class="hint" style="margin:0 0 12px">รายการสีเหลืองมีความมั่นใจต่ำ โปรดเทียบกับเอกสารต้นฉบับและแก้ไขชื่อก่อนยืนยัน</p>
+          <div class="blue-duty-table-wrap"><table class="blue-duty-table"><thead><tr><th>ยืนยัน</th><th>วันที่</th><th>วัน</th><th>เริ่ม</th><th>สิ้นสุด</th><th>ชื่อ–สกุล</th><th>หน้าที่</th><th>ความมั่นใจ</th><th></th></tr></thead><tbody id="blueDutyRows"></tbody></table></div>
+          <div class="process-action-strip"><label><input type="checkbox" id="blueDutyReplaceMonth"> แทนที่ข้อมูลของเดือนนี้ก่อนบันทึก</label><div class="button-group"><button class="btn btn-success" type="button" id="btnSaveBlueDuty">ยืนยันและบันทึกลง Google Sheets</button></div></div>
+        </div>
+        <div class="section">
+          <div class="section-head"><div class="section-title"><span class="num">3</span> จัดการรายชื่อบุคลากรตาม ID</div><div class="section-head-actions"><button class="btn btn-secondary" type="button" id="btnLoadPersonnel">รีเฟรชรายชื่อ</button><button class="btn btn-primary" type="button" id="btnNewPersonnel">+ เพิ่มบุคลากร</button></div></div>
+          <div class="grid-row grid-2" id="personnelForm" style="display:none">
+            <div class="input-group"><label>รหัส ID</label><input type="text" id="personnelId" placeholder="ระบบออกเลขให้อัตโนมัติ" readonly></div>
+            <div class="input-group"><label>ชื่อ-สกุลมาตรฐาน</label><input type="text" id="personnelName"></div>
+            <div class="input-group"><label>ชื่อเดิม/ชื่อที่ OCR เคยอ่านผิด</label><input type="text" id="personnelAliases" placeholder="คั่นหลายชื่อด้วยเครื่องหมาย |"></div>
+            <div class="input-group"><label>สถานะ</label><select id="personnelStatus"><option>ใช้งาน</option><option>ย้ายเข้า</option><option>ย้ายออก</option><option>พ้นหน้าที่</option><option>ระงับชั่วคราว</option></select></div>
+            <div class="input-group"><label>วันที่เริ่ม</label><input type="date" id="personnelStartDate"></div>
+            <div class="input-group"><label>วันที่สิ้นสุด</label><input type="date" id="personnelEndDate"></div>
+            <div class="input-group"><label>หมายเหตุ</label><input type="text" id="personnelNote"></div>
+            <div class="button-group" style="align-self:end"><button class="btn btn-success" type="button" id="btnSavePersonnel">บันทึกบุคลากร</button><button class="btn btn-secondary" type="button" id="btnCancelPersonnel">ยกเลิก</button></div>
+          </div>
+          <div class="input-group"><input type="search" id="personnelSearch" placeholder="ค้นหาด้วย ID ชื่อ หรือสถานะ"></div>
+          <div class="blue-duty-table-wrap"><table class="blue-duty-table" style="min-width:900px"><thead><tr><th>ID</th><th>ชื่อ-สกุลมาตรฐาน</th><th>ชื่อเดิม/OCR</th><th>สถานะ</th><th>วันที่เริ่ม</th><th>วันที่สิ้นสุด</th><th>คำสั่ง</th></tr></thead><tbody id="personnelRows"></tbody></table></div>
+        </div>
+        <div class="section">
+          <div class="section-title"><span class="num">4</span> ทดสอบผลลัพธ์สำหรับ LINE</div>
+          <div class="grid-row grid-2"><div class="input-group"><label for="blueDutySearch">คำค้น</label><input type="search" id="blueDutySearch" placeholder="เช่น เวรเสื้อฟ้า 14 สิงหาคม 2569 หรือ เวรเสื้อฟ้า ชนินทร์" /></div><div class="input-group" style="align-self:end"><button class="btn btn-primary" type="button" id="btnSearchBlueDuty">ค้นหาและแสดงตัวอย่าง</button></div></div>
+          <pre class="blue-duty-line-preview" id="blueDutyLinePreview">ผลลัพธ์สำหรับ LINE จะแสดงที่นี่</pre>
         </div>
       </div>
 
@@ -1932,7 +1987,6 @@
         </div>
         <div>
           <button class="btn btn-secondary" type="button" id="btnSavePrintSettings">บันทึกค่าไว้ใช้ครั้งต่อไป</button>
-          <button class="btn btn-primary" type="button" id="btnPrintCaseHtmlFromSettings" style="display:none">พิมพ์รายงาน HTML</button>
           <button class="btn btn-primary" type="button" id="btnPrintFromSettings">พิมพ์หน้าระบบ A4</button>
         </div>
       </div>
@@ -1954,6 +2008,8 @@
     let caseHistoryDocs = [];
     let sessionCreated = 0;
     let sessionExisting = 0;
+    let pendingSkippedCount = 0;
+    let skipNonElectronicDefault = true;
     let bookAttachment = null;
     let reportAttachment = null;
     let reportPhotos = [];
@@ -2077,17 +2133,10 @@
     }
 
     function initPrintSettings() {
-      document.getElementById('btnCasePrintSettings').addEventListener('click', () => openPrintSettings('case-docs'));
-      document.getElementById('btnBookPrintSettings').addEventListener('click', () => openPrintSettings('book-manager'));
-      document.getElementById('btnPrintCaseDocs').addEventListener('click', () => printHtmlA4('case-docs', printSettings));
-      document.getElementById('btnPrintBookDraft').addEventListener('click', () => printHtmlA4('book-manager', printSettings));
-      document.getElementById('btnPrintCaseHtmlTop').addEventListener('click', printCaseReportHtml);
-      document.getElementById('btnPrintCaseHtml').addEventListener('click', printCaseReportHtml);
-      document.getElementById('btnPrintCaseHtmlFromSettings').addEventListener('click', () => {
-        printSettings = collectPrintSettingsFromForm();
-        closePrintSettings();
-        printCaseReportHtml();
-      });
+      const bookSettingsBtn = document.getElementById('btnBookPrintSettings');
+      if (bookSettingsBtn) bookSettingsBtn.addEventListener('click', () => openPrintSettings('book-manager'));
+      const bookPrintBtn = document.getElementById('btnPrintBookDraft');
+      if (bookPrintBtn) bookPrintBtn.addEventListener('click', () => printHtmlA4('book-manager', printSettings));
       document.getElementById('btnClosePrintSettings').addEventListener('click', closePrintSettings);
       document.getElementById('btnResetPrintSettings').addEventListener('click', resetPrintSettingsForm);
       document.getElementById('btnSavePrintSettings').addEventListener('click', savePrintSettingsToServer);
@@ -2136,7 +2185,6 @@
       updatePrintSectionAvailability();
       updatePrintPreview();
       document.getElementById('printTargetLabel').textContent = 'เมนู' + getPrintTargetTitle(printTarget);
-      document.getElementById('btnPrintCaseHtmlFromSettings').style.display = printTarget === 'case-docs' ? 'inline-flex' : 'none';
       document.getElementById('btnPrintFromSettings').textContent = printTarget === 'book-manager'
         ? 'พิมพ์หนังสือ A4'
         : (printTarget === 'monthly-report' ? 'พิมพ์รายงาน A4' : 'พิมพ์หน้าระบบ A4');
@@ -2378,246 +2426,6 @@
         }
       });
       document.querySelectorAll('[data-print-hidden]').forEach(element => element.removeAttribute('data-print-hidden'));
-    }
-
-    function printCaseReportHtml() {
-      const reportData = collectCasesForHtmlReport();
-      if (!reportData.items.length) {
-        showToast('ยังไม่มีรายการคดีสำหรับพิมพ์ กรุณาโหลดข้อมูลก่อน', 'warn');
-        return;
-      }
-      const settings = mergePrintSettings(printSettings);
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        showToast('เบราว์เซอร์บล็อกหน้าต่างรายงาน กรุณาอนุญาต pop-up แล้วลองใหม่', 'warn');
-        return;
-      }
-      printWindow.document.open();
-      printWindow.document.write(buildCaseHtmlReport(reportData, settings));
-      printWindow.document.close();
-      const printButton = printWindow.document.getElementById('printHtmlNow');
-      const closeButton = printWindow.document.getElementById('closeHtmlReport');
-      if (printButton) printButton.addEventListener('click', () => printWindow.print());
-      if (closeButton) closeButton.addEventListener('click', () => printWindow.close());
-      printWindow.focus();
-    }
-
-    function collectCasesForHtmlReport() {
-      const selected = [];
-      cases.forEach((item, index) => {
-        const checkbox = document.getElementById('case' + index);
-        if (checkbox && checkbox.checked) selected.push(caseForHtmlReport_(item, index));
-      });
-      if (selected.length) return { items: selected, sourceLabel: 'รายการคดีที่เลือก' };
-
-      const visible = [];
-      document.querySelectorAll('#tableContainer .case-row').forEach(row => {
-        if (row.style.display === 'none') return;
-        const index = parseInt(row.dataset.caseIndex, 10);
-        if (Number.isInteger(index) && cases[index]) visible.push(caseForHtmlReport_(cases[index], index));
-      });
-      return { items: visible, sourceLabel: 'รายการคดีที่แสดงในตาราง' };
-    }
-
-    function caseForHtmlReport_(item, index) {
-      const statusCell = document.getElementById('status' + index);
-      const status = statusCell
-        ? String(statusCell.innerText || statusCell.textContent || '').replace(/\s+/g, ' ').trim()
-        : 'รอดำเนินการ';
-      return {
-        caseNo: String(item.caseNo || '-'),
-        plaintiff: String(item.plaintiff || '-'),
-        defendant: String(item.defendant || '-'),
-        judge: String(item.judge || '-'),
-        detail: String(item.detail || ''),
-        status: status || 'รอดำเนินการ',
-        online: isOnline(item.caseNo),
-        estate: isPECase(item.caseNo),
-        rowIndex: item.rowIndex || index + 1
-      };
-    }
-
-    function reportThaiDigits_(value) {
-      const map = ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'];
-      return String(value == null ? '' : value).replace(/[0-9]/g, digit => map[parseInt(digit, 10)]);
-    }
-
-    function reportText_(value, fallback) {
-      const text = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
-      return text ? reportThaiDigits_(text) : (fallback || '');
-    }
-
-    function reportHtml_(value, fallback) {
-      return escapeHtml(reportText_(value, fallback));
-    }
-
-    function reportMultilineHtml_(value, fallback) {
-      const text = String(value == null ? '' : value).trim();
-      return escapeHtml(reportThaiDigits_(text || fallback || '')).replace(/\r?\n/g, '<br>');
-    }
-
-    function getCaseHtmlReportContext_() {
-      const day = parseInt(document.getElementById('selDay').value, 10);
-      const month = parseInt(document.getElementById('selMonth').value, 10);
-      const yearBE = parseInt(document.getElementById('selYear').value, 10);
-      const fullDate = formatFullDateThaiUi_(day, month, yearBE) || formatTodayThai().split(' - ')[0];
-      const startTime = formatThaiTimeUi_(document.getElementById('startTime').value) || '.......... น.';
-      const endTime = formatThaiTimeUi_(document.getElementById('endTime').value) || '.......... น.';
-
-      return {
-        courtName: 'ศาลจังหวัดลพบุรี',
-        officerName: 'นายชนินทร์ โพธิ์ศรี',
-        officerPosition: 'เจ้าหน้าที่ศาลยุติธรรมชำนาญงาน',
-        fullDate: reportThaiDigits_(fullDate),
-        startTime: reportThaiDigits_(startTime),
-        endTime: reportThaiDigits_(endTime)
-      };
-    }
-
-    function buildCaseProcessA4Page_(item, index, total, context) {
-      const caseNo = reportHtml_(item.caseNo, '-');
-      const plaintiff = reportHtml_(item.plaintiff, '-');
-      const defendant = reportMultilineHtml_(item.defendant, '-');
-      const judge = reportHtml_(item.judge, '-');
-      const detail = reportHtml_(item.detail, '');
-      const plaintiffLabel = item.estate ? 'ผู้ร้อง' : 'โจทก์';
-      const defendantLabel = item.estate ? 'ทนายผู้ร้อง' : 'จำเลย';
-      const meetText = item.online
-        ? `คดีนี้ มีการพิจารณาคดีผ่านระบบอิเล็กทรอนิกส์ คือ ระบบประชุมทางจอภาพ Google Meet กับทนายโจทก์ไปยังที่ทำการของคู่ความ คู่ความยืนยันว่าอยู่ในที่ทำการของตน ซึ่งข้าพเจ้าตรวจสอบบัตรประจำตัวประชาชนกับใบหน้าของคู่ความแล้วตรงกัน จึงได้บันทึกภาพใบหน้าพร้อมบัตรประจำตัวประชาชนของคู่ความไว้เป็นหลักฐานเพื่อรวมไว้ในสำนวน โดยได้ดำเนินกระบวนพิจารณาผ่านแอปพลิเคชัน Google Meet เวลาเริ่มต้น ${context.startTime} เวลาสิ้นสุด ${context.endTime}`
-        : `คดีนี้ ได้ดำเนินกระบวนพิจารณาตามข้อมูลที่บันทึกไว้ในระบบศูนย์ประสานงานคดี เวลาเริ่มต้น ${context.startTime} เวลาสิ้นสุด ${context.endTime}`;
-      const detailHtml = detail
-        ? `<p class="doc-paragraph doc-indent">รายละเอียดเพิ่มเติม ${detail}</p>`
-        : '';
-
-      return `
-  <section class="a4-page">
-    <div class="doc-mark">○ (${reportThaiDigits_(index + 1)})</div>
-    <div class="court-use">สำหรับศาลใช้</div>
-
-    <div class="doc-top-left">
-      <div>รายงานเจ้าหน้าที่</div>
-      <div class="dash-line">- &nbsp; รวม</div>
-    </div>
-
-    <div class="garuda-block" aria-label="ตราครุฑ">
-      <div class="garuda-mark">ครุฑ</div>
-    </div>
-
-    <div class="case-meta">
-      <div>คดีหมายเลขดำที่ ${caseNo}</div>
-      <div>คดีหมายเลขแดงที่</div>
-    </div>
-
-    <div class="top-signature">( ${judge} )</div>
-
-    <div class="court-heading">
-      <div>${escapeHtml(context.courtName)}</div>
-      <div>${escapeHtml(context.fullDate)}</div>
-      <div>ความแพ่ง</div>
-    </div>
-
-    <div class="party-block">
-      <div class="party-between">ระหว่าง</div>
-      <div class="party-brace">{</div>
-      <div class="party-names">
-        <div>${plaintiff}</div>
-        <div>${defendant}</div>
-      </div>
-      <div class="party-labels">
-        <div>${plaintiffLabel}</div>
-        <div>${defendantLabel}</div>
-      </div>
-    </div>
-
-    <p class="doc-paragraph">
-      ข้าพเจ้า&nbsp;&nbsp;${escapeHtml(context.officerName)}&nbsp;&nbsp;ตำแหน่ง&nbsp;&nbsp;${escapeHtml(context.officerPosition)}&nbsp;&nbsp;ขอเสนอ<br>
-      รายงานต่อท่านผู้พิพากษา มีข้อความตามที่จะกล่าวต่อไปนี้
-    </p>
-
-    <p class="doc-paragraph doc-indent">${escapeHtml(meetText)}</p>
-    ${detailHtml}
-
-    <p class="doc-paragraph doc-submit">จึงรายงานมาเพื่อโปรดทราบ</p>
-    <p class="doc-paragraph doc-closing">ควรมิควรแล้วแต่จะโปรด</p>
-
-    <div class="report-page-count">${reportThaiDigits_(index + 1)} / ${reportThaiDigits_(total)}</div>
-  </section>`;
-    }
-
-    function buildCaseHtmlReport(reportData, settings) {
-      const margins = resolvePrintMargins(settings);
-      const total = reportData.items.length;
-      const scale = settings.scale / 100;
-      const colorClass = settings.printBackground ? 'with-background' : 'no-background';
-      const context = getCaseHtmlReportContext_();
-      const pagesHtml = reportData.items
-        .map((item, index) => buildCaseProcessA4Page_(item, index, total, context))
-        .join('');
-
-      return `<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>รายงานกระบวนพิจารณาคดี</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    @page { size: A4 portrait; margin: 0; }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: #eef1f5; color: #111; font-family: "TH Sarabun New", "Sarabun", sans-serif; font-size: ${19 * scale}px; }
-    .screen-toolbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; background: #fff; border-bottom: 1px solid #d6e0ee; box-shadow: 0 3px 12px rgba(20,35,55,.09); }
-    .screen-toolbar strong { color: #1b3a6b; }
-    .toolbar-actions { display: flex; gap: 8px; }
-    button { border: 1px solid #1b3a6b; border-radius: 7px; padding: 9px 16px; font: 700 15px "Sarabun"; cursor: pointer; background: #fff; color: #1b3a6b; }
-    button.primary { background: #1b3a6b; color: #fff; }
-    .a4-page { width: 210mm; min-height: 297mm; margin: 22px auto; padding: ${margins.top}cm ${margins.right}cm ${margins.bottom}cm ${margins.left}cm; background: #fff; box-shadow: 0 8px 30px rgba(27,42,62,.16); position: relative; page-break-after: always; break-after: page; line-height: 1.55; }
-    .a4-page:last-child { page-break-after: auto; break-after: auto; }
-    .doc-mark { position: absolute; top: 30mm; left: 31mm; white-space: nowrap; }
-    .court-use { position: absolute; top: 30mm; right: 31mm; text-decoration: underline; }
-    .doc-top-left { position: absolute; top: 42mm; left: 33mm; line-height: 1.65; }
-    .dash-line { padding-left: 16mm; }
-    .garuda-block { position: absolute; top: 38mm; left: 0; right: 0; text-align: center; }
-    .garuda-mark { display: inline-flex; align-items: center; justify-content: center; width: 26mm; height: 26mm; border: 1px solid #111; border-radius: 50%; font-size: .82em; font-weight: 700; letter-spacing: 0; }
-    .case-meta { position: absolute; top: 56mm; right: 30mm; min-width: 58mm; line-height: 1.65; }
-    .top-signature { position: absolute; top: 69mm; left: 39mm; border-left: 2px solid #111; padding-left: 8mm; line-height: 1.6; }
-    .court-heading { position: absolute; top: 78mm; left: 0; right: 0; text-align: center; line-height: 1.65; }
-    .party-block { position: absolute; top: 111mm; left: 30mm; right: 28mm; min-height: 36mm; display: grid; grid-template-columns: 18mm 9mm 1fr 23mm; column-gap: 6mm; align-items: center; }
-    .party-between { align-self: center; }
-    .party-brace { align-self: stretch; display: flex; align-items: center; font-family: Georgia, serif; font-size: 64px; line-height: .8; transform: scaleX(.62); transform-origin: left center; }
-    .party-names, .party-labels { display: grid; grid-template-rows: 1fr 1fr; row-gap: 13mm; line-height: 1.35; }
-    .party-labels { text-align: center; }
-    .doc-paragraph { margin: 0 0 8mm; text-align: justify; text-justify: inter-word; line-height: 1.72; }
-    .party-block + .doc-paragraph { margin-top: 150mm; }
-    .doc-indent { text-indent: 25mm; }
-    .doc-submit { margin-top: 7mm; text-indent: 25mm; }
-    .doc-closing { margin-top: 11mm; text-align: center; }
-    .report-page-count { position: absolute; right: 16mm; bottom: 10mm; color: #777; font-size: .72em; }
-    .no-background,.no-background * { background: #fff !important; background-image: none !important; color: #111 !important; box-shadow: none !important; }
-    @media print {
-      body { background: #fff; -webkit-print-color-adjust: ${settings.printBackground ? 'exact' : 'economy'}; print-color-adjust: ${settings.printBackground ? 'exact' : 'economy'}; }
-      .screen-toolbar { display: none !important; }
-      .a4-page { width: 210mm; min-height: 297mm; margin: 0; box-shadow: none; }
-    }
-    @media (max-width: 900px) {
-      .a4-page { width: calc(100% - 20px); min-height: 0; margin: 10px; padding: 18px; }
-      .doc-mark,.court-use,.doc-top-left,.garuda-block,.case-meta,.top-signature,.court-heading,.party-block,.report-page-count { position: static; margin-bottom: 12px; }
-      .party-block { display: block; min-height: 0; }
-      .party-brace { display: none; }
-      .party-block + .doc-paragraph { margin-top: 18px; }
-      .screen-toolbar { align-items: flex-start; flex-direction: column; }
-    }
-  </style>
-</head>
-<body class="${colorClass}">
-  <div class="screen-toolbar">
-    <div><strong>รายงานกระบวน HTML A4</strong><div>${escapeHtml(reportData.sourceLabel)} ${total} คดี · ยังสร้าง Google Doc ได้ตามเดิม</div></div>
-    <div class="toolbar-actions"><button id="closeHtmlReport">ปิด</button><button class="primary" id="printHtmlNow">พิมพ์ HTML</button></div>
-  </div>
-  ${pagesHtml}
-</body>
-</html>`;
     }
 
     // ========== Monthly center report ==========
@@ -4395,9 +4203,20 @@
       return `วันที่ ${day} เดือน${thaiMonthNames[month - 1]} พุทธศักราช ${yearBE}`;
     }
 
+    function toArabicDigitsUi_(value) {
+      const thaiDigits = '๐๑๒๓๔๕๖๗๘๙';
+      return String(value || '').replace(/[๐-๙]/g, digit => {
+        const index = thaiDigits.indexOf(digit);
+        return index >= 0 ? String(index) : digit;
+      });
+    }
+
     function parseTimeUi_(timeValue) {
-      const value = String(timeValue || '').trim();
-      const match = value.match(/^(\d{1,2})[.:](\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+      const value = toArabicDigitsUi_(timeValue).trim().replace(/\s+/g, '');
+      let match = value.match(/^(\d{1,2})[.:](\d{2})(?::\d{2})?(AM|PM)?$/i);
+      if (!match) {
+        match = value.match(/^(\d{1,2})(\d{2})(AM|PM)?$/i);
+      }
       if (!match) return null;
       let hour = parseInt(match[1], 10);
       const minute = Math.max(0, Math.min(59, parseInt(match[2], 10) || 0));
@@ -4417,14 +4236,14 @@
     }
 
     function handleTimeInput_(input) {
-      const digits = String(input.value || '').replace(/\D/g, '').slice(0, 4);
+      const digits = toArabicDigitsUi_(input.value).replace(/\D/g, '').slice(0, 4);
       input.value = digits.length > 2 ? digits.slice(0, 2) + ':' + digits.slice(2) : digits;
       input.setCustomValidity('');
       onDateChange();
     }
 
     function normalizeTimeInput_(input) {
-      const digits = String(input.value || '').replace(/\D/g, '').slice(0, 4);
+      const digits = toArabicDigitsUi_(input.value).replace(/\D/g, '').slice(0, 4);
       if (!digits) {
         input.value = '';
         input.setCustomValidity('');
@@ -4540,7 +4359,28 @@
 
     function countSelected() {
       let n = 0;
-      cases.forEach((_, i) => { const cb = document.getElementById('case'+i); if (cb && cb.checked) n++; });
+      cases.forEach((_, i) => {
+        const cb = document.getElementById('case'+i);
+        if (cb && cb.checked && !isProcessReportSkipped_(i)) n++;
+      });
+      return n;
+    }
+
+    function countSelectedTotal_() {
+      let n = 0;
+      cases.forEach((_, i) => {
+        const cb = document.getElementById('case'+i);
+        if (cb && cb.checked) n++;
+      });
+      return n;
+    }
+
+    function countSelectedSkipped_() {
+      let n = 0;
+      cases.forEach((_, i) => {
+        const cb = document.getElementById('case'+i);
+        if (cb && cb.checked && isProcessReportSkipped_(i)) n++;
+      });
       return n;
     }
 
@@ -4561,6 +4401,7 @@
       setWorking(false); hideProgress();
       cases = data || [];
       sessionCreated = 0; sessionExisting = 0;
+      skipNonElectronicDefault = true;
       displayCases(cases);
       document.getElementById('caseSection').style.display = cases.length ? 'block' : 'none';
       refreshSessionStats();
@@ -4587,6 +4428,12 @@
           <th>โจทก์/ผู้ร้อง</th>
           <th>จำเลย</th>
           <th>ผู้พิพากษา</th>
+          <th style="width:190px;">
+            <label class="skip-header-control" title="ติ๊กไว้เพื่อไม่จัดทำเอกสารให้คดีที่ไม่มี E ในเลขดำทั้งหมด">
+              <input type="checkbox" id="skipNonElectronicAll" ${skipNonElectronicDefault ? 'checked' : ''} onchange="toggleNonElectronicSkip_(this.checked)">
+              <span>ยกเว้น<br>ไม่จัดทำคดีไม่มี E</span>
+            </label>
+          </th>
           <th style="width:170px;">สถานะ</th>
           <th style="width:150px;">รูป Meet</th>
         </tr></thead><tbody>`;
@@ -4595,6 +4442,8 @@
         const hay = [c.caseNo, c.plaintiff, c.defendant, c.judge].map(x => (x||'').toString().toLowerCase()).join(' ');
         const pe = isPECase(c.caseNo);
         const online = isOnline(c.caseNo);
+        const skipDefault = !online ? skipNonElectronicDefault : c.skipProcessReport === true;
+        c.skipProcessReport = skipDefault;
 
         // ป้าย "ออนไลน์" เฉพาะคดีที่มี E — สีน้ำเงิน=พE, สีเลือดหมู=อื่น ๆ
         const onlineTag = online
@@ -4605,6 +4454,15 @@
         const estateControl = pe
           ? `<label class="estate-check"><input type="checkbox" id="estate${i}" checked> คดีจัดการมรดก</label>`
           : '';
+        const skipControl = `
+          <label class="skip-process-check ${skipDefault ? 'auto-skip' : ''}">
+            <input type="checkbox" id="skipProcess${i}" ${skipDefault ? 'checked' : ''} onchange="handleProcessSkipChange(${i})">
+            ไม่จัดทำ
+          </label>
+          ${!online ? '<span class="skip-process-note">ไม่มี E ในเลขดำ</span>' : ''}`;
+        const statusHtml = skipDefault
+          ? '<span class="status-skipped">ยกเว้นอัตโนมัติ</span>'
+          : '<span class="status-pending">รอดำเนินการ</span>';
 
         html += `
           <tr class="case-row" data-case-index="${i}" data-search="${escapeHtml(hay)}">
@@ -4613,13 +4471,15 @@
             <td data-label="โจทก์/ผู้ร้อง">${escapeHtml(c.plaintiff) || "-"}</td>
             <td data-label="จำเลย">${escapeHtml(c.defendant) || "-"}</td>
             <td data-label="ผู้พิพากษา">${escapeHtml(c.judge) || "-"}</td>
-            <td class="center" data-label="สถานะ" id="status${i}"><span class="status-pending">รอดำเนินการ</span></td>
+            <td class="center" data-label="ยกเว้น">${skipControl}</td>
+            <td class="center" data-label="สถานะ" id="status${i}">${statusHtml}</td>
             <td class="center" data-label="รูป Meet" id="meet${i}"><span class="meet-badge meet-none">ยังไม่แนบรูป Meet</span></td>
           </tr>`;
       });
       html += `</tbody></table></div>`;
       container.innerHTML = html;
       updateCaseSearchCount();
+      updateNonElectronicSkipMaster_();
       meetRefreshEvidence();
     }
 
@@ -4652,6 +4512,77 @@
     }
     function isOnline(caseNo) {
       return /E/i.test((caseNo || "").toString());
+    }
+
+    function isProcessReportSkipped_(index) {
+      const checkbox = document.getElementById('skipProcess' + index);
+      if (checkbox) return checkbox.checked;
+      const c = cases[index];
+      return !!(c && c.skipProcessReport);
+    }
+
+    function handleProcessSkipChange(index) {
+      const checkbox = document.getElementById('skipProcess' + index);
+      const c = cases[index];
+      const skipped = !!(checkbox && checkbox.checked);
+      if (c) c.skipProcessReport = skipped;
+      const label = checkbox ? checkbox.closest('.skip-process-check') : null;
+      if (label) label.classList.toggle('auto-skip', skipped && !isOnline(c && c.caseNo));
+      updateProcessSkipStatus_(index, skipped, false);
+      updateNonElectronicSkipMaster_();
+      refreshSessionStats();
+    }
+
+    function toggleNonElectronicSkip_(checked) {
+      skipNonElectronicDefault = !!checked;
+      cases.forEach((c, i) => {
+        if (isOnline(c && c.caseNo)) return;
+        c.skipProcessReport = skipNonElectronicDefault;
+        const checkbox = document.getElementById('skipProcess' + i);
+        if (checkbox) {
+          checkbox.checked = skipNonElectronicDefault;
+          const label = checkbox.closest('.skip-process-check');
+          if (label) label.classList.toggle('auto-skip', skipNonElectronicDefault);
+        }
+        updateProcessSkipStatus_(i, skipNonElectronicDefault, true);
+      });
+      const master = document.getElementById('skipNonElectronicAll');
+      if (master) {
+        master.checked = skipNonElectronicDefault;
+        master.indeterminate = false;
+      }
+      refreshSessionStats();
+    }
+
+    function updateNonElectronicSkipMaster_() {
+      const master = document.getElementById('skipNonElectronicAll');
+      if (!master) return;
+      const nonElectronicIndexes = cases
+        .map((c, i) => ({ c, i }))
+        .filter(item => !isOnline(item.c && item.c.caseNo))
+        .map(item => item.i);
+      if (!nonElectronicIndexes.length) {
+        master.checked = skipNonElectronicDefault;
+        master.indeterminate = false;
+        return;
+      }
+      const checkedCount = nonElectronicIndexes.filter(i => isProcessReportSkipped_(i)).length;
+      master.checked = checkedCount === nonElectronicIndexes.length;
+      master.indeterminate = checkedCount > 0 && checkedCount < nonElectronicIndexes.length;
+      skipNonElectronicDefault = master.checked;
+    }
+
+    function updateProcessSkipStatus_(index, skipped, auto) {
+      const cell = document.getElementById('status' + index);
+      if (cell) {
+        const currentText = String(cell.textContent || '').trim();
+        const canResetStatus = !currentText || currentText === 'รอดำเนินการ' || currentText.indexOf('ยกเว้น') !== -1 || currentText.indexOf('ข้าม') !== -1;
+        if (canResetStatus) {
+          cell.innerHTML = skipped
+            ? `<span class="status-skipped">${auto ? 'ยกเว้นอัตโนมัติ' : 'ยกเว้น'}</span>`
+            : '<span class="status-pending">รอดำเนินการ</span>';
+        }
+      }
     }
 
     function escapeHtml(text) {
@@ -4691,17 +4622,34 @@
       if (!config) return;
 
       selectedCases = []; selectedIndices = [];
+      pendingSkippedCount = 0;
       cases.forEach((c, i) => {
         const cb = document.getElementById('case'+i);
         if (cb && cb.checked) {
+          if (isProcessReportSkipped_(i)) {
+            pendingSkippedCount++;
+            const skippedCell = document.getElementById('status'+i);
+            if (skippedCell) skippedCell.innerHTML = '<span class="status-skipped">ข้าม / ไม่จัดทำรายงานกระบวน</span>';
+            return;
+          }
           // ✨ v3.2: คดี พE ที่ติ๊ก "จัดการมรดก" → ใช้เทมเพลตผู้ร้อง
           const estCb = document.getElementById('estate'+i);
-          const caseForSend = Object.assign({}, c, { isEstate: !!(estCb && estCb.checked) });
+          const caseForSend = Object.assign({}, c, {
+            isEstate: !!(estCb && estCb.checked),
+            skipProcessReport: false
+          });
           selectedCases.push(caseForSend); selectedIndices.push(i);
           document.getElementById('status'+i).innerHTML = '<span class="status-creating">กำลังสร้าง...</span>';
         }
       });
-      if (!selectedCases.length) { showToast('กรุณาเลือกอย่างน้อย 1 คดี', 'warn'); return; }
+      if (!selectedCases.length) {
+        const msg = pendingSkippedCount
+          ? `เลือกไว้ ${pendingSkippedCount} คดี แต่ทั้งหมดถูกยกเว้น ไม่ได้จัดทำรายงานกระบวน`
+          : 'กรุณาเลือกอย่างน้อย 1 คดี';
+        showToast(msg, 'warn');
+        refreshSessionStats();
+        return;
+      }
 
       setWorking(true);
       startProgressAnimation();
@@ -4715,13 +4663,17 @@
       const day = parseInt(document.getElementById('selDay').value);
       const month = parseInt(document.getElementById('selMonth').value);
       const yearBE = parseInt(document.getElementById('selYear').value);
-      const startTime = document.getElementById('startTime').value.trim();
-      const endTime = document.getElementById('endTime').value.trim();
+      const startInput = document.getElementById('startTime');
+      const endInput = document.getElementById('endTime');
+      const startTime = toArabicDigitsUi_(startInput.value).trim();
+      const endTime = toArabicDigitsUi_(endInput.value).trim();
       if (!day || !month || !yearBE) { showToast('กรุณาเลือกวันที่ทำการให้ครบถ้วน', 'warn'); return null; }
       if ((startTime && !parseTimeUi_(startTime)) || (endTime && !parseTimeUi_(endTime))) {
         showToast('กรุณากรอกเวลาแบบ 24 ชั่วโมง เช่น 09:00 หรือ 16:30', 'warn');
         return null;
       }
+      startInput.value = startTime;
+      endInput.value = endTime;
       return {
         day, month, year: yearBE,
         startTime: startTime,
@@ -4754,13 +4706,16 @@
       showProgress(100, "100% - เสร็จสิ้น");
       setTimeout(hideProgress, 1200);
 
-      let newCount = 0, existCount = 0, failCount = 0;
+      let newCount = 0, existCount = 0, failCount = 0, serverSkipCount = 0;
       results.forEach((result, i) => {
         const rowIndex = selectedIndices[i];
         const cell = document.getElementById('status'+rowIndex);
         if (!cell) return;
 
-        if (result && result.success && result.docUrl) {
+        if (result && result.skipped) {
+          serverSkipCount++;
+          cell.innerHTML = '<span class="status-skipped">ข้าม / ไม่จัดทำรายงานกระบวน</span>';
+        } else if (result && result.success && result.docUrl) {
           const isExisting = !!result.alreadyExists;
           if (isExisting) existCount++; else newCount++;
           const badge = isExisting
@@ -4785,9 +4740,12 @@
       loadStats();
       loadExistingDocs();
 
+      const skippedCount = pendingSkippedCount + serverSkipCount;
       let msg = `จัดทำใหม่ ${newCount} ฉบับ`;
       if (existCount) msg += ` · มีอยู่แล้ว ${existCount}`;
+      if (skippedCount) msg += ` · ข้าม ${skippedCount}`;
       if (failCount) msg += ` · ล้มเหลว ${failCount}`;
+      pendingSkippedCount = 0;
       showToast(msg, failCount ? 'warn' : 'success');
     }
 
@@ -5215,6 +5173,8 @@
       const isCaseTab = !activeTab || activeTab.dataset.tab === 'case-docs';
       const hasCases = cases.length > 0 && document.getElementById('caseSection').style.display !== 'none';
       const selected = hasCases ? countSelected() : 0;
+      const selectedTotal = hasCases ? countSelectedTotal_() : 0;
+      const selectedSkipped = hasCases ? countSelectedSkipped_() : 0;
       const floating = document.getElementById('floatingCreateAction');
       if (floating) floating.classList.toggle('show', isCaseTab && hasCases);
       const attach = document.getElementById('floatingAttachAction');
@@ -5232,8 +5192,16 @@
       });
       const summary = document.getElementById('processActionSummary');
       if (summary) {
-        summary.textContent = !hasCases ? 'โหลดข้อมูลจากชีตก่อนจึงจะจัดทำเอกสารได้' :
-          (selected ? ('เลือกแล้ว ' + selected + ' คดี · พร้อมจัดทำเอกสาร') : 'เลือกคดีอย่างน้อย 1 คดีเพื่อจัดทำเอกสาร');
+        if (!hasCases) {
+          summary.textContent = 'โหลดข้อมูลจากชีตก่อนจึงจะจัดทำเอกสารได้';
+        } else if (!selectedTotal) {
+          summary.textContent = 'เลือกคดีอย่างน้อย 1 คดีเพื่อจัดทำเอกสาร';
+        } else if (!selected) {
+          summary.textContent = 'เลือกไว้ ' + selectedTotal + ' คดี · ทั้งหมดถูกยกเว้น';
+        } else {
+          summary.textContent = 'เลือกไว้ ' + selectedTotal + ' คดี · จะจัดทำ ' + selected + ' คดี' +
+            (selectedSkipped ? ' · ยกเว้น ' + selectedSkipped + ' คดี' : '');
+        }
       }
     }
     function showProgress(percent, text) {
@@ -5888,6 +5856,113 @@ function meetUpdateRowStatus(i) {
       "</div>";
   }
 }
+  </script>
+
+  <script>
+  // ========== เมนูแปลงเอกสารเวรเสื้อฟ้า ==========
+  (function () {
+    var blueDutyAttachment = null;
+    var blueDutyRows = [];
+    var blueDutySheetUrl = '';
+    var blueDutyEditingExisting = false;
+    var personnelRows = [];
+
+    function el(id) { return document.getElementById(id); }
+    function esc(value) { return String(value == null ? '' : value).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    function setStatus(text, kind) {
+      var box = el('blueDutyStatus'); if (!box) return;
+      box.textContent = text; box.style.color = kind === 'error' ? 'var(--danger)' : kind === 'success' ? 'var(--green)' : 'var(--ink-muted)';
+    }
+    function setBusy(busy, text) {
+      ['btnParseBlueDuty','btnSaveBlueDuty','btnSearchBlueDuty'].forEach(function(id){ var x=el(id); if(x) x.disabled=busy; });
+      if (text) setStatus(text);
+    }
+    function readFile(file, done) {
+      var reader = new FileReader();
+      reader.onload = function () { done(null, { name:file.name, mimeType:file.type || 'application/octet-stream', data:String(reader.result || '').split(',')[1] || '' }); };
+      reader.onerror = function () { done(new Error('อ่านไฟล์ไม่สำเร็จ')); }; reader.readAsDataURL(file);
+    }
+    function renderRows() {
+      var body = el('blueDutyRows'); if (!body) return;
+      body.innerHTML = blueDutyRows.map(function(r, i){
+        var low = Number(r.confidence || 0) < .8;
+        var matchLabel=r.matchStatus==='exact'?'🟢 ตรงฐาน '+(r.personId||''):r.matchStatus==='near'?'🟡 แนะนำ '+esc(r.matchedName)+' '+(r.matchScore||0)+'%':r.matchStatus==='missing'?'🔴 ไม่พบในฐาน':'';
+        return '<tr class="'+(low||r.matchStatus==='near'||r.matchStatus==='missing'?'low-confidence':'')+'" data-blue-row="'+i+'">'+
+          '<td style="text-align:center"><input type="checkbox" data-bd="verified" '+(r.verified?'checked':'')+'></td>'+
+          '<td><input type="date" data-bd="date" value="'+esc(r.date)+'"></td>'+
+          '<td><input type="text" data-bd="dayName" value="'+esc(r.dayName)+'"></td>'+
+          '<td><input type="time" data-bd="startTime" value="'+esc(r.startTime)+'"></td>'+
+          '<td><input type="time" data-bd="endTime" value="'+esc(r.endTime)+'"></td>'+
+          '<td><input class="name-input" type="text" list="personnelNameOptions" data-bd="fullName" value="'+esc(r.fullName)+'"><small>'+matchLabel+'</small></td>'+
+          '<td><select data-bd="role"><option '+(r.role==='พนักงานต้อนรับ'?'selected':'')+'>พนักงานต้อนรับ</option><option '+(r.role==='หัวหน้าพนักงานต้อนรับ'?'selected':'')+'>หัวหน้าพนักงานต้อนรับ</option></select></td>'+
+          '<td style="text-align:center">'+Math.round(Number(r.confidence || 0)*100)+'%</td>'+
+          '<td><button class="btn btn-danger" style="padding:6px 9px" type="button" data-remove-blue="'+i+'">ลบ</button></td></tr>';
+      }).join('');
+      el('blueDutyReviewSection').style.display = blueDutyRows.length ? '' : 'none';
+    }
+    function collectRows() {
+      document.querySelectorAll('[data-blue-row]').forEach(function(tr){
+        var i = parseInt(tr.dataset.blueRow,10), row = blueDutyRows[i]; if(!row) return;
+        tr.querySelectorAll('[data-bd]').forEach(function(input){ row[input.dataset.bd] = input.type === 'checkbox' ? input.checked : input.value; });
+      }); return blueDutyRows;
+    }
+    function parseDocument() {
+      var sourceText = el('blueDutySourceText').value.trim();
+      if (!blueDutyAttachment && !sourceText) { setStatus('กรุณาเลือกไฟล์หรือวางข้อความ OCR', 'error'); return; }
+      setBusy(true, 'กำลังอ่านตารางเวรด้วย Gemini โปรดรอสักครู่...');
+      google.script.run.withSuccessHandler(function(res){
+        blueDutyEditingExisting = false;
+        var parsedRows=(res.rows||[]).map(function(r){r.sourceName=blueDutyAttachment?blueDutyAttachment.name:'ข้อความ OCR';return r;});
+        google.script.run.withSuccessHandler(function(matched){blueDutyRows=matched.rows||[];renderRows();setBusy(false);setStatus('อ่านและจับคู่ฐานชื่อแล้ว '+blueDutyRows.length+' รายการ กรุณาตรวจเฉพาะสีเหลืองและสีแดง','success');})
+          .withFailureHandler(function(err){setBusy(false);setStatus('จับคู่รายชื่อไม่สำเร็จ: '+(err.message||err),'error');})
+          .matchBlueDutyPersonnel(el('blueDutySheetUrl').value.trim(),parsedRows);
+      }).withFailureHandler(function(err){ setBusy(false); setStatus('แปลงเอกสารไม่สำเร็จ: '+(err.message || err), 'error'); })
+        .parseBlueDutyDocument({ attachment:blueDutyAttachment, sourceText:sourceText });
+    }
+    function saveRows() {
+      collectRows(); var verified = blueDutyRows.filter(function(r){return r.verified;});
+      if (!verified.length) { setStatus('กรุณายืนยันอย่างน้อย 1 รายการ', 'error'); return; }
+      var d = verified[0].date.split('-');
+      setBusy(true, 'กำลังบันทึกข้อมูลลง Google Sheets...');
+      google.script.run.withSuccessHandler(function(res){
+        blueDutySheetUrl = res.sheetUrl || ''; var open=el('btnOpenBlueDutySheet'); open.disabled=!blueDutySheetUrl;
+        setBusy(false); setStatus('บันทึกสำเร็จ '+res.addedCount+' รายการ · ข้ามข้อมูลซ้ำ '+res.skippedCount+' รายการ', 'success');
+      }).withFailureHandler(function(err){ setBusy(false); setStatus('บันทึกไม่สำเร็จ: '+(err.message || err), 'error'); })
+        .saveBlueDutyRows(el('blueDutySheetUrl').value.trim(), verified, { replaceAll:blueDutyEditingExisting, replaceMonth:!blueDutyEditingExisting && el('blueDutyReplaceMonth').checked, yearAD:parseInt(d[0],10), month:parseInt(d[1],10), sourceName:blueDutyAttachment ? blueDutyAttachment.name : 'ข้อความ OCR' });
+    }
+    function searchDuty() {
+      var q=el('blueDutySearch').value.trim(); if(!q){el('blueDutyLinePreview').textContent='กรุณาพิมพ์วันที่หรือชื่อที่ต้องการค้นหา';return;}
+      setBusy(true, 'กำลังค้นหาข้อมูลเวร...');
+      google.script.run.withSuccessHandler(function(res){ setBusy(false); el('blueDutyLinePreview').textContent=res.text || 'ไม่พบข้อมูล'; setStatus('ค้นพบ '+(res.count || 0)+' รายการ'); })
+        .withFailureHandler(function(err){ setBusy(false); el('blueDutyLinePreview').textContent='ค้นหาไม่สำเร็จ: '+(err.message || err); })
+        .searchBlueDuty(q, el('blueDutySheetUrl').value.trim());
+    }
+    function renderPersonnel(){var q=(el('personnelSearch').value||'').toLowerCase();el('personnelRows').innerHTML=personnelRows.filter(function(p){return !q||[p.id,p.fullName,p.aliases,p.status].join(' ').toLowerCase().indexOf(q)>=0;}).map(function(p){return '<tr><td>'+esc(p.id)+'</td><td>'+esc(p.fullName)+'</td><td>'+esc(p.aliases)+'</td><td>'+esc(p.status)+'</td><td>'+esc(p.startDate)+'</td><td>'+esc(p.endDate)+'</td><td><button class="btn btn-secondary" style="padding:5px 8px" data-edit-person="'+esc(p.id)+'">แก้ไข</button> <button class="btn btn-danger" style="padding:5px 8px" data-delete-person="'+esc(p.id)+'">ลบ/พ้นหน้าที่</button></td></tr>';}).join('');var dl=el('personnelNameOptions');if(!dl){dl=document.createElement('datalist');dl.id='personnelNameOptions';document.body.appendChild(dl);}dl.innerHTML=personnelRows.filter(function(p){return p.status==='ใช้งาน'||p.status==='ย้ายเข้า';}).map(function(p){return '<option value="'+esc(p.fullName)+'">'+esc(p.id)+'</option>';}).join('');}
+    function loadPersonnel(){google.script.run.withSuccessHandler(function(res){personnelRows=res.rows||[];renderPersonnel();}).withFailureHandler(function(err){setStatus('โหลดรายชื่อไม่สำเร็จ: '+(err.message||err),'error');}).getPersonnelList(el('blueDutySheetUrl').value.trim(),true);}
+    function editPersonnel(id){var p=personnelRows.find(function(x){return x.id===id;})||{};el('personnelForm').style.display='grid';el('personnelId').value=p.id||'';el('personnelName').value=p.fullName||'';el('personnelAliases').value=p.aliases||'';el('personnelStatus').value=p.status||'ใช้งาน';el('personnelStartDate').value=p.startDate||'';el('personnelEndDate').value=p.endDate||'';el('personnelNote').value=p.note||'';}
+    function savePerson(){var p={id:el('personnelId').value,fullName:el('personnelName').value,aliases:el('personnelAliases').value,status:el('personnelStatus').value,startDate:el('personnelStartDate').value,endDate:el('personnelEndDate').value,note:el('personnelNote').value};google.script.run.withSuccessHandler(function(res){personnelRows=res.list.rows||[];renderPersonnel();el('personnelForm').style.display='none';setStatus(res.message,'success');}).withFailureHandler(function(err){setStatus('บันทึกบุคลากรไม่สำเร็จ: '+(err.message||err),'error');}).savePersonnel(el('blueDutySheetUrl').value.trim(),p);}
+    document.addEventListener('DOMContentLoaded', function(){
+      var file=el('blueDutyFile'); if(!file)return;
+      file.addEventListener('change', function(){ var f=file.files&&file.files[0]; if(!f)return; el('blueDutyFileInfo').textContent=f.name+' · '+Math.ceil(f.size/1024)+' KB'; readFile(f,function(err,payload){if(err){setStatus(err.message,'error');return;} blueDutyAttachment=payload;}); });
+      el('btnParseBlueDuty').addEventListener('click',parseDocument);
+      el('btnSaveBlueDuty').addEventListener('click',saveRows);
+      el('btnSearchBlueDuty').addEventListener('click',searchDuty);
+      el('blueDutySearch').addEventListener('keydown',function(e){if(e.key==='Enter')searchDuty();});
+      el('btnVerifyAllBlueDuty').addEventListener('click',function(){collectRows();blueDutyRows.forEach(function(r){r.verified=true;});renderRows();});
+      el('btnUnverifyAllBlueDuty').addEventListener('click',function(){collectRows();blueDutyRows.forEach(function(r){r.verified=false;});renderRows();});
+      el('btnLoadBlueDuty').addEventListener('click',function(){
+        setBusy(true,'กำลังดึงข้อมูลเดิมจาก Google Sheets...');
+        google.script.run.withSuccessHandler(function(res){ blueDutyRows=res.rows||[]; blueDutyEditingExisting=true; renderRows(); setBusy(false); setStatus('โหลดข้อมูลเดิม '+blueDutyRows.length+' รายการแล้ว เลือกรายการที่ต้องการเก็บ แก้ไข แล้วกดบันทึก','success'); })
+          .withFailureHandler(function(err){setBusy(false);setStatus('ดึงข้อมูลเดิมไม่สำเร็จ: '+(err.message||err),'error');})
+          .loadBlueDutyRows(el('blueDutySheetUrl').value.trim());
+      });
+      el('blueDutyRows').addEventListener('click',function(e){var i=e.target.dataset.removeBlue;if(i==null)return;collectRows();blueDutyRows.splice(parseInt(i,10),1);renderRows();});
+      el('btnOpenBlueDutySheet').addEventListener('click',function(){window.open(blueDutySheetUrl || el('blueDutySheetUrl').value.trim(),'_blank','noopener');});
+      el('btnLoadPersonnel').addEventListener('click',loadPersonnel);el('btnNewPersonnel').addEventListener('click',function(){editPersonnel('');});el('btnCancelPersonnel').addEventListener('click',function(){el('personnelForm').style.display='none';});el('btnSavePersonnel').addEventListener('click',savePerson);el('personnelSearch').addEventListener('input',renderPersonnel);
+      el('personnelRows').addEventListener('click',function(e){var edit=e.target.dataset.editPerson,del=e.target.dataset.deletePerson;if(edit)editPersonnel(edit);if(del&&confirm('ต้องการลบหรือเปลี่ยนบุคลากรนี้เป็นพ้นหน้าที่ใช่หรือไม่?'))google.script.run.withSuccessHandler(function(res){personnelRows=res.list.rows||[];renderPersonnel();setStatus(res.message,'success');}).withFailureHandler(function(err){setStatus(err.message||err,'error');}).deletePersonnel(el('blueDutySheetUrl').value.trim(),del,true);});
+      loadPersonnel();
+    });
+  })();
   </script>
 
   <script>
