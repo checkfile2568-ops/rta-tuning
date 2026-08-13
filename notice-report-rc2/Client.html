@@ -1,0 +1,365 @@
+const $ = (id) => document.getElementById(id);
+let appState = null;
+let toastTimer = null;
+
+function server(functionName, ...args) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler((error) => reject(new Error(error && error.message ? error.message : String(error))))
+      [functionName](...args);
+  });
+}
+
+function toast(message) {
+  const target = $('toast');
+  target.textContent = message;
+  target.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => target.classList.remove('show'), 3400);
+}
+
+function errorToast(error) {
+  toast(`ไม่สามารถทำรายการได้: ${error.message || error}`);
+}
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach((element) => element.classList.toggle('visible', element.id === page));
+  document.querySelectorAll('.nav').forEach((element) => element.classList.toggle('active', element.dataset.page === page));
+  $('pageTitle').textContent = ({ overview: 'ภาพรวม', create: 'กำหนดข้อมูลและคุณภาพ', schedule: 'รอบอัตโนมัติ', access: 'โฟลเดอร์และสิทธิ์', output: 'ชีตลิงก์รายวัน', admin: 'การตั้งค่าผู้ดูแล' })[page];
+  $('sidebar').classList.remove('open');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function thaiDate(iso, format) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const thaiYear = year + 543;
+  const longMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  const shortMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  if (format === 'compact') return `${String(day).padStart(2, '0')}${String(month).padStart(2, '0')}${String(thaiYear).slice(-2)}`;
+  if (format === 'short') return `${day} ${shortMonths[month - 1]} ${String(thaiYear).slice(-2)}`;
+  return `${day} ${longMonths[month - 1]} ${thaiYear}`;
+}
+
+function currentIso() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function setInitialDates() {
+  const today = currentIso();
+  if (!$('fromDate').value) $('fromDate').value = today;
+  if (!$('toDate').value) $('toDate').value = today;
+}
+
+function renderBars(id, data, labels, type) {
+  const container = $(id);
+  container.replaceChildren();
+  const largest = Math.max(1, ...data);
+  if (!data.some(Boolean)) {
+    const empty = document.createElement('span');
+    empty.textContent = 'ยังไม่มีข้อมูล';
+    empty.style.color = '#7a899c';
+    empty.style.fontSize = '12px';
+    container.append(empty);
+    return;
+  }
+  data.forEach((value, index) => {
+    const item = document.createElement('div');
+    item.className = `bar ${type || ''}`;
+    const column = document.createElement('i');
+    column.style.height = `${Math.max(3, Math.round((value / largest) * 100))}%`;
+    column.setAttribute('aria-label', `${labels[index]}: ${value} เอกสาร`);
+    const label = document.createElement('span');
+    label.textContent = labels[index];
+    item.append(column, label);
+    container.append(item);
+  });
+}
+
+function renderDashboard(dashboard) {
+  $('totalDocuments').textContent = dashboard.totalDocuments;
+  $('chartYear').textContent = `ปี ${dashboard.thaiYear}`;
+  $('currentMonthLabel').textContent = `${dashboard.currentMonth} ${dashboard.thaiYear}`;
+  $('currentYearLabel').textContent = `ปี ${dashboard.thaiYear}`;
+  const dailyLabels = dashboard.daily.map((item) => item.day);
+  renderBars('dailyChart', dashboard.daily.map((item) => item.count), dailyLabels, '');
+  renderBars('monthlyChart', dashboard.monthly, ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], 'month');
+}
+
+function renderHealth(health) {
+  $('healthRelease').textContent = health.releaseVersion || '—';
+  $('healthFolders').textContent = `${health.monthlyFolderCount || 0} เดือน · ${health.dailyFolderCount || 0} วัน`;
+  $('healthState').textContent = health.ready ? 'พร้อมประมวลผล' : 'ต้องเตรียมข้อมูล';
+  const issues = [];
+  if (health.missingSheets && health.missingSheets.length) issues.push(`ขาด ${health.missingSheets.length} แท็บ`);
+  if (health.schemaReady === false) issues.push('ต้องตรวจดัชนีรายเดือน');
+  if (health.duplicateMonthKeys && health.duplicateMonthKeys.length) issues.push(`พบเดือนซ้ำ ${health.duplicateMonthKeys.length} เดือน`);
+  if (health.errors24h) issues.push(`ข้อผิดพลาดล่าสุด ${health.errors24h} รายการ`);
+  $('healthDetail').textContent = issues.length ? issues.join(' · ') : (health.lastEvent ? `ล่าสุด: ${health.lastEvent.event}` : 'ยังไม่มีเหตุการณ์ผิดพลาด');
+}
+
+function renderAccounts(accounts) {
+  $('accountTotal').textContent = `${accounts.length} บัญชี`;
+  $('accessCount').textContent = `${accounts.length} บัญชี`;
+  const list = $('accessAccounts');
+  list.replaceChildren();
+  accounts.forEach((account) => {
+    const item = document.createElement('li');
+    item.dataset.initial = account.email.charAt(0).toUpperCase();
+    item.innerHTML = `<div><strong>${escapeHtml(account.email)}</strong><small>${account.role === 'EDITOR' ? 'แก้ไขโฟลเดอร์ได้' : 'ดูและดาวน์โหลดได้'}</small></div><span class="tag">${account.role}</span>`;
+    list.append(item);
+  });
+}
+
+function renderAdmins(admins) {
+  $('adminCount').textContent = `${admins.length} บัญชี`;
+  const list = $('adminAccounts');
+  list.replaceChildren();
+  admins.forEach((admin) => {
+    const item = document.createElement('li');
+    item.dataset.initial = admin.email.charAt(0).toUpperCase();
+    const info = document.createElement('div');
+    const strong = document.createElement('strong'); strong.textContent = admin.email;
+    const small = document.createElement('small');
+    const isSelf = appState && admin.email === appState.userEmail;
+    const isOwner = appState && appState.automationOwner && admin.email === appState.automationOwner;
+    small.textContent = [isSelf ? 'บัญชีของคุณ' : 'ผู้ดูแลระบบ', isOwner ? 'เจ้าของรอบอัตโนมัติ' : ''].filter(Boolean).join(' · ');
+    info.append(strong, small);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'secondary danger';
+    remove.textContent = 'ถอนสิทธิ์';
+    remove.dataset.email = admin.email;
+    if (isSelf) { remove.disabled = true; remove.style.opacity = '.45'; remove.style.cursor = 'not-allowed'; }
+    item.append(info, remove);
+    list.append(item);
+  });
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+}
+
+function renderOutput(rows) {
+  const body = $('outputRows');
+  body.replaceChildren();
+  $('outputEmpty').hidden = rows.length !== 0;
+  rows.forEach((row) => {
+    const tr = document.createElement('tr');
+    const date = document.createElement('td'); date.textContent = row.date;
+    const link = document.createElement('td');
+    const anchor = document.createElement('a'); anchor.href = row.link; anchor.target = '_blank'; anchor.rel = 'noopener'; anchor.textContent = row.link;
+    link.append(anchor);
+    const note = document.createElement('td'); note.textContent = row.note;
+    tr.append(date, link, note);
+    body.append(tr);
+  });
+}
+
+function updatePreview() {
+  const height = Math.max(90, Math.min(148, Number($('photoHeightMm').value) || 148));
+  const fontSize = Math.max(20, Math.min(60, Number($('houseFontSizePt').value) || 42));
+  $('previewTitle').textContent = $('documentTitle').value.trim() || 'รายงานผลการส่งหมาย';
+  $('previewPhoto').style.height = `${Math.round(height * 2.2)}px`;
+  $('previewHouse').style.fontSize = `${Math.round(fontSize * .64)}px`;
+}
+
+function setSettings(settings) {
+  $('displayDateFormat').value = settings.displayDateFormat;
+  $('documentTitle').value = settings.documentTitle;
+  $('documentFont').value = settings.documentFont;
+  $('photoHeightMm').value = settings.photoHeightMm;
+  $('houseFontSizePt').value = settings.houseFontSizePt;
+  $('photoFit').value = settings.photoFit;
+  $('automationDay').value = settings.automationDay;
+  $('automationLabel').textContent = automationText(settings.automationDay);
+  $('automationSummary').innerHTML = `${automationText(settings.automationDay).replace(' เวลา 18.00 น.', '')}<br><em>เวลา 18.00 น.</em>`;
+  $('dateHint').textContent = thaiDate($('fromDate').value || currentIso(), settings.displayDateFormat);
+  updatePreview();
+}
+
+function automationText(day) {
+  return ({ monday: 'ทุกวันจันทร์ เวลา 18.00 น.', wednesday: 'ทุกวันพุธ เวลา 18.00 น.', friday: 'ทุกวันศุกร์ เวลา 18.00 น.' })[day] || 'ทุกวันจันทร์ เวลา 18.00 น.';
+}
+
+function fillMapping(settings) {
+  $('displayDateFormat').value = settings.displayDateFormat;
+  $('rootFolderId').value = settings.rootFolderId || '';
+  $('sourceSpreadsheetId').value = settings.sourceSpreadsheetId || '';
+  $('sourceSheetName').value = settings.sourceSheetName || '';
+  $('sourceHeaderRow').value = settings.sourceHeaderRow || 1;
+  $('sourceDateColumn').value = settings.sourceDateColumn || '';
+  $('sourceHouseColumn').value = settings.sourceHouseColumn || '';
+  $('sourceImageIdColumn').value = settings.sourceImageFileIdColumn || '';
+  $('sourceImageUrlColumn').value = settings.sourceImageUrlColumn || '';
+  $('sourceRecordIdColumn').value = settings.sourceRecordIdColumn || '';
+  $('sourceGroupColumn').value = settings.sourceGroupColumn || '';
+}
+
+function documentPatch() {
+  return {
+    DOCUMENT_TITLE: $('documentTitle').value.trim(),
+    DOCUMENT_FONT: $('documentFont').value,
+    PHOTO_HEIGHT_MM: $('photoHeightMm').value,
+    HOUSE_FONT_SIZE_PT: $('houseFontSizePt').value,
+    PHOTO_FIT: $('photoFit').value
+  };
+}
+
+async function bootstrap() {
+  try {
+    appState = await server('getBootstrap');
+    setInitialDates();
+    $('signedInEmail').textContent = appState.userEmail;
+    setSettings(appState.settings);
+    fillMapping(appState.settings);
+    renderDashboard(appState.dashboard);
+    renderHealth(appState.health);
+    renderAccounts(appState.accounts);
+    renderAdmins(appState.admins || []);
+    $('automationOwnerNote').textContent = appState.automationOwner
+      ? `เจ้าของรอบอัตโนมัติ: ${appState.automationOwner}`
+      : 'ยังไม่ได้กำหนดเจ้าของรอบอัตโนมัติ';
+    renderOutput(appState.outputRows);
+    $('setupWarning').hidden = appState.configured;
+  } catch (error) {
+    $('signedInEmail').textContent = 'ไม่สามารถยืนยันสิทธิ์';
+    errorToast(error);
+  }
+}
+
+document.querySelectorAll('.nav').forEach((button) => button.addEventListener('click', () => showPage(button.dataset.page)));
+document.querySelector('.goto-create').addEventListener('click', () => showPage('create'));
+$('menuButton').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+$('fromDate').addEventListener('change', () => { if (appState) $('dateHint').textContent = thaiDate($('fromDate').value, $('displayDateFormat').value); });
+['documentTitle', 'photoHeightMm', 'houseFontSizePt', 'documentFont', 'photoFit'].forEach((id) => $(id).addEventListener('input', updatePreview));
+['documentFont', 'photoFit'].forEach((id) => $(id).addEventListener('change', updatePreview));
+
+$('generateButton').addEventListener('click', async () => {
+  try {
+    await server('saveAdminSettings', documentPatch());
+    const quality = document.querySelector('input[name="quality"]:checked').value;
+    const result = await server('runImmediate', { from: $('fromDate').value, to: $('toDate').value, houseNumber: $('houseSearch').value, quality: quality });
+    toast(`${result.message}${result.errors.length ? ` · ผิดพลาด ${result.errors.length} รายการ` : ''}`);
+    await bootstrap();
+  } catch (error) { errorToast(error); }
+});
+
+$('automationDay').addEventListener('change', async () => {
+  try {
+    const result = await server('saveAutomationDay', $('automationDay').value);
+    $('automationLabel').textContent = result.label;
+    $('automationSummary').innerHTML = `${result.label.replace(' เวลา 18.00 น.', '')}<br><em>เวลา 18.00 น.</em>`;
+    toast(result.applied === false ? result.message : 'บันทึกรอบการทำงานอัตโนมัติแล้ว');
+  } catch (error) { errorToast(error); }
+});
+
+$('runNowButton').addEventListener('click', async () => {
+  try {
+    const today = currentIso();
+    const result = await server('runImmediate', { from: today, to: today, quality: 'normal' });
+    toast(result.message);
+    await bootstrap();
+  } catch (error) { errorToast(error); }
+});
+
+$('addAccountForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  try {
+    const accounts = await server('addAuthorizedAccount', { email: $('accountEmail').value, role: $('accountRole').value });
+    renderAccounts(accounts);
+    $('accountEmail').value = '';
+    toast('เพิ่มบัญชีที่ได้รับสิทธิ์แล้ว');
+  } catch (error) { errorToast(error); }
+});
+
+$('addAdminForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  try {
+    const admins = await server('addAdministrator', { email: $('adminEmail').value });
+    appState.admins = admins;
+    renderAdmins(admins);
+    $('adminEmail').value = '';
+    toast('เพิ่มผู้ดูแลและแชร์สิทธิ์แล้ว');
+  } catch (error) { errorToast(error); }
+});
+
+$('adminAccounts').addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-email]');
+  if (!button || button.disabled) return;
+  if (!window.confirm(`ถอนสิทธิ์ผู้ดูแล ${button.dataset.email}? (จะไม่ยกเลิกสิทธิ์ Drive ที่เคยแชร์)`)) return;
+  try {
+    const admins = await server('removeAdministrator', button.dataset.email);
+    appState.admins = admins;
+    renderAdmins(admins);
+    toast('ถอนสิทธิ์ผู้ดูแลแล้ว');
+  } catch (error) { errorToast(error); }
+});
+
+async function loadOutput() {
+  try { renderOutput(await server('searchOutputRows', $('outputSearch').value)); }
+  catch (error) { errorToast(error); }
+}
+$('searchOutput').addEventListener('click', loadOutput);
+$('outputSearch').addEventListener('input', loadOutput);
+$('refreshOutput').addEventListener('click', async () => { $('outputSearch').value = ''; await loadOutput(); toast('โหลดข้อมูลชีตใหม่แล้ว'); });
+$('refreshHealth').addEventListener('click', async () => {
+  try {
+    appState.health = await server('getSystemHealth');
+    renderHealth(appState.health);
+    toast('ตรวจสอบสถานะระบบแล้ว');
+  } catch (error) { errorToast(error); }
+});
+$('auditMonthlyIndex').addEventListener('click', async () => {
+  try {
+    const audit = await server('auditMonthlyFolderIndex');
+    $('healthResult').textContent = audit.requiresRepair
+      ? `พบ ${audit.duplicateMonths.length} เดือนที่ต้องซ่อม จากทั้งหมด ${audit.indexedMonths} เดือน — โปรดตรวจผลก่อนกดซ่อม`
+      : `ดัชนีรายเดือนพร้อมใช้งาน: ${audit.indexedMonths} เดือน`;
+    toast('ตรวจดัชนีรายเดือนแล้ว');
+  } catch (error) { errorToast(error); }
+});
+$('prepareMigration').addEventListener('click', async () => {
+  if (!window.confirm('ระบบจะสร้างเฉพาะแท็บสนับสนุนที่หายไป และจะไม่เขียนทับข้อมูลเดิม ต้องการดำเนินการหรือไม่?')) return;
+  try {
+    const result = await server('prepareReleaseCandidateMigration', 'PREPARE_NOTICE_RC');
+    $('healthResult').textContent = result.created.length ? `สร้างแท็บแล้ว: ${result.created.join(', ')}` : 'ไม่พบแท็บที่ต้องสร้างเพิ่ม';
+    await bootstrap();
+    toast('เตรียมโครงสร้างระบบแล้ว');
+  } catch (error) { errorToast(error); }
+});
+$('repairMonthlyIndex').addEventListener('click', async () => {
+  if (!window.confirm('ระบบจะสำรองแท็บโฟลเดอร์รายเดือนก่อน แล้วรวมดัชนีให้เหลือหนึ่งโฟลเดอร์ต่อเดือน ต้องการซ่อมดัชนีหรือไม่?')) return;
+  try {
+    const result = await server('repairMonthlyFolderIndex', 'REBUILD_MONTHLY_INDEX');
+    $('healthResult').textContent = result.repaired ? `ซ่อม ${result.repaired} เดือนแล้ว · สำรองข้อมูลที่ ${result.backupSheet}` : result.message;
+    await bootstrap();
+    toast('ซ่อมดัชนีรายเดือนแล้ว');
+  } catch (error) { errorToast(error); }
+});
+
+$('saveSettings').addEventListener('click', async () => {
+  try {
+    const patch = {
+      DISPLAY_DATE_FORMAT: $('displayDateFormat').value,
+      ROOT_FOLDER_ID: $('rootFolderId').value.trim(),
+      SOURCE_SPREADSHEET_ID: $('sourceSpreadsheetId').value.trim(),
+      SOURCE_SHEET_NAME: $('sourceSheetName').value.trim(),
+      SOURCE_HEADER_ROW: $('sourceHeaderRow').value,
+      SOURCE_DATE_COLUMN: $('sourceDateColumn').value.trim(),
+      SOURCE_HOUSE_COLUMN: $('sourceHouseColumn').value.trim(),
+      SOURCE_IMAGE_FILE_ID_COLUMN: $('sourceImageIdColumn').value.trim(),
+      SOURCE_IMAGE_URL_COLUMN: $('sourceImageUrlColumn').value.trim(),
+      SOURCE_RECORD_ID_COLUMN: $('sourceRecordIdColumn').value.trim(),
+      SOURCE_GROUP_COLUMN: $('sourceGroupColumn').value.trim()
+    };
+    appState = await server('saveAdminSettings', patch);
+    setSettings(appState.settings);
+    toast('บันทึกการตั้งค่าผู้ดูแลแล้ว');
+  } catch (error) { errorToast(error); }
+});
+
+bootstrap();
+
