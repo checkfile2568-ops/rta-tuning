@@ -1,0 +1,233 @@
+<!-- ============================================================
+ DASHBOARD TAIL COMBINED v12.2
+ ใช้แทนตั้งแต่ Dashboard Guide Patch v3 เดิมจนถึงท้ายไฟล์
+ ประกอบด้วย:
+ 1) Dashboard Guide Patch v3
+ 2) Login Gate v12.2 Soft Pastel + Walking Robot 5s/3s
+ 3) Theme v12.2 Soft Pastel Modern (Theme Only)
+ 4) </body></html>
+ ============================================================ -->
+
+<!-- ============================================================
+ LINE OA Lopburi — Dashboard Guide Patch v3
+ Updated: 2026-08-14
+ วางก่อน </body> ใน Dashboard.html
+ ต้องมี getUnifiedUsageGuide() จาก help_command_patch_v3.gs
+ ============================================================ -->
+<style id="dashboard-help-v3-style">
+  #dashboard-help-v3{font-family:'Prompt','Sarabun',sans-serif;color:#eef2ff}
+  #dashboard-help-v3 *{box-sizing:border-box}
+  #dashboard-help-v3 .hv3-wrap{display:grid;gap:16px}
+  #dashboard-help-v3 .hv3-hero{padding:18px;border:1px solid rgba(251,191,36,.24);border-radius:16px;background:linear-gradient(135deg,rgba(251,191,36,.10),rgba(96,165,250,.08))}
+  #dashboard-help-v3 .hv3-hero h2{margin:0 0 6px;color:#fff5db;font-size:1.15rem}
+  #dashboard-help-v3 .hv3-hero p{margin:0;color:#9aa6c4;font-size:.9rem;line-height:1.6}
+  #dashboard-help-v3 .hv3-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  #dashboard-help-v3 .hv3-card{padding:16px;border:1px solid rgba(255,255,255,.11);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));box-shadow:0 10px 28px rgba(0,0,0,.25)}
+  #dashboard-help-v3 .hv3-card h3{margin:0 0 10px;color:#fcd34d;font-size:1rem}
+  #dashboard-help-v3 .hv3-card ul{margin:0;padding-left:20px;color:#d8e1f1;line-height:1.7;font-size:.9rem}
+  #dashboard-help-v3 .hv3-code{display:block;margin:7px 0;padding:9px 10px;border:1px solid rgba(96,165,250,.20);border-radius:9px;background:rgba(0,0,0,.28);color:#dbeafe;font-family:Consolas,'Courier New',monospace;font-size:.84rem;overflow-wrap:anywhere}
+  #dashboard-help-v3 .hv3-note{padding:12px 14px;border-left:4px solid #fbbf24;border-radius:8px;background:rgba(251,191,36,.09);color:#ffe9b0;line-height:1.6;font-size:.88rem}
+  #dashboard-help-v3 .hv3-table-wrap{overflow-x:auto;border:1px solid rgba(255,255,255,.10);border-radius:12px}
+  #dashboard-help-v3 table{width:100%;border-collapse:collapse;min-width:680px;font-size:.86rem}
+  #dashboard-help-v3 th{padding:10px;background:rgba(96,165,250,.14);color:#dbe7ff;text-align:left}
+  #dashboard-help-v3 td{padding:10px;border-top:1px solid rgba(255,255,255,.07);color:#cdd7ea}
+  #dashboard-help-v3 .hv3-on{color:#7ff0c8;font-weight:600}
+  #dashboard-help-v3 .hv3-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  #dashboard-help-v3 .hv3-badge{padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);color:#d8e1f1;font-size:.78rem}
+  #dashboard-help-v3 .hv3-footer{font-size:.78rem;color:#7f8aa5;text-align:right}
+  @media(max-width:760px){#dashboard-help-v3 .hv3-grid{grid-template-columns:1fr}}
+
+  #hv3-float{position:fixed;right:16px;bottom:72px;z-index:2147482000;border:0;border-radius:999px;padding:10px 14px;background:linear-gradient(135deg,#f6b545,#f59e0b);color:#2a1c00;font:600 14px 'Prompt','Sarabun',sans-serif;box-shadow:0 10px 24px rgba(251,191,36,.30);cursor:pointer;display:none}
+  #hv3-modal{position:fixed;inset:0;z-index:2147482500;background:rgba(3,5,12,.72);backdrop-filter:blur(6px);padding:18px;overflow:auto;display:none}
+  #hv3-modal.show{display:block}
+  #hv3-modal .hv3-modal-card{max-width:980px;margin:20px auto;padding:18px;border-radius:18px;background:#0e1430;border:1px solid rgba(251,191,36,.22);box-shadow:0 28px 70px rgba(0,0,0,.55)}
+  #hv3-modal .hv3-modal-head{display:flex;justify-content:flex-end;margin-bottom:8px}
+  #hv3-close{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#eef2ff;border-radius:9px;padding:7px 11px;cursor:pointer}
+</style>
+
+<template id="dashboard-help-v3-template">
+  <section id="dashboard-help-v3">
+    <div class="hv3-wrap">
+      <div class="hv3-hero">
+        <h2>📖 คู่มือการใช้งาน LINE Bot — ศาลจังหวัดลพบุรี</h2>
+        <p>อัปเดตรูปแบบการค้นหาให้แยกชัดเจนระหว่างแชทส่วนตัวกับกลุ่ม LINE และรวมบัญชีนัด ฐานความรู้ และฐานค้นหาที่เปิดใช้งานไว้ในคู่มือเดียวกัน</p>
+      </div>
+      <div class="hv3-grid">
+        <article class="hv3-card">
+          <h3>💬 แชทส่วนตัว</h3>
+          <ul id="hv3-private-lines"></ul>
+          <div id="hv3-private-examples"></div>
+        </article>
+        <article class="hv3-card">
+          <h3>👥 กลุ่ม LINE</h3>
+          <ul id="hv3-group-lines"></ul>
+          <div id="hv3-group-examples"></div>
+        </article>
+      </div>
+      <div class="hv3-note"><strong>⚖️ บัญชีนัดในกลุ่ม:</strong> พิมพ์ <b>บัญชีนัด วันนี้</b>, <b>บัญชีนัด พรุ่งนี้</b> หรือ <b>บัญชีนัด 14 สิงหาคม 2569</b> ได้ทันที — <strong>ไม่ต้องใช้ “บอท” นำหน้า</strong></div>
+      <article class="hv3-card">
+        <h3>🔎 แหล่งข้อมูลที่ระบบค้นหา</h3>
+        <div class="hv3-table-wrap">
+          <table><thead><tr><th>#</th><th>ฐาน</th><th>ชีตต้นทาง</th><th>สิทธิ์</th><th>สถานะ</th></tr></thead><tbody id="hv3-db-rows"></tbody></table>
+        </div>
+        <div class="hv3-badges" id="hv3-extra-sources"></div>
+      </article>
+      <article class="hv3-card">
+        <h3>🔐 ระดับสิทธิ์</h3>
+        <div class="hv3-badges" id="hv3-permissions"></div>
+        <div class="hv3-note" style="margin-top:12px">หากผู้ใช้ไม่มีสิทธิ์ ระบบต้องไม่แสดงข้อมูลจากฐาน Internal/Admin แม้คำค้นจะตรงกันก็ตาม</div>
+      </article>
+      <article class="hv3-card">
+        <h3>🆘 คำสั่งช่วยเหลือ</h3>
+        <span class="hv3-code">/ช่วยเหลือ</span>
+        <span class="hv3-code">/help</span>
+        <p style="margin:8px 0 0;color:#9aa6c4;font-size:.86rem">คำสั่งนี้ควรแสดงคู่มือฉบับย่อชุดเดียวกับข้อมูลในหน้านี้</p>
+      </article>
+      <div class="hv3-footer" id="hv3-version"></div>
+    </div>
+  </section>
+</template>
+
+<button id="hv3-float" type="button">📖 คู่มือการใช้งาน</button>
+<div id="hv3-modal" aria-hidden="true"><div class="hv3-modal-card"><div class="hv3-modal-head"><button id="hv3-close" type="button">✕ ปิด</button></div><div id="hv3-modal-body"></div></div></div>
+
+<script id="dashboard-help-v3-script">
+(function(){
+  'use strict';
+  const FALLBACK={
+    version:'2026-08-14-v3',
+    privateSearch:{lines:['ค้นหาทั่วไป/ฐานความรู้: ค้นหา <คำค้น>','เจาะฐานโดยตรง: ค้นหา [ชื่อฐาน] <คำค้น>','บัญชีนัด: บัญชีนัด วันนี้ | พรุ่งนี้ | มะรืน | 14 สิงหาคม 2569','ศูนย์ประสานงานคดีออนไลน์: ศูนย์ประสานงานคดี','ดูคู่มือฉบับย่อ: /ช่วยเหลือ หรือ /help'],examples:['ค้นหา ลิงก์ห้อง','ค้นหา [เวรเสื้อฟ้า] ชนินทร์','ค้นหา [เขตส่งหมาย] ถนนใหญ่','บัญชีนัด วันนี้','บัญชีนัด 14 สิงหาคม 2569']},
+    groupSearch:{lines:['ฐานความรู้/ฐานค้นหา: /บอท ค้นหา <คำค้น>','เจาะฐานโดยตรง: /บอท ค้นหา [ชื่อฐาน] <คำค้น>','บัญชีนัด: เรียกตรงได้ ไม่ต้องใช้คำว่า “บอท” นำหน้า','บางกลุ่มภารกิจส่งหมายอาจถูกตั้งให้รับเฉพาะพิกัด/รูป จึงปิด KB+DB Search ตามการตั้งค่าของกลุ่ม'],examples:['/บอท ค้นหา ลิงก์ห้อง','/บอท ค้นหา [เวรเสื้อฟ้า] ชนินทร์','/บอท ค้นหา [เขตส่งหมาย] ท่าแค','/บอท ค้นหา [ส่งหมาย] สิงหาคม','บัญชีนัด วันนี้','บัญชีนัด 14 สิงหาคม 2569']},
+    databases:[
+      {no:1,icon:'📞',name:'ผู้ใหญ่บ้าน',sheet:'Village',access:'Admin',status:'ON'},
+      {no:2,icon:'📄',name:'ต่อเนื่อง',sheet:'sheets1',access:'Internal',status:'ON'},
+      {no:3,icon:'📤',name:'คำขอคัดถ่าย',sheet:'ขอคัดถ่าย',access:'Internal',status:'ON'},
+      {no:4,icon:'📞',name:'เบอร์ทนาย',sheet:'ค้นหาทนาย',access:'Internal',status:'ON'},
+      {no:5,icon:'📤',name:'ส่งหมาย',sheet:'LINE-ค้นหาส่งหมายรายเดือน',access:'Admin',status:'ON'},
+      {no:6,icon:'📤',name:'เวรเสื้อฟ้า',sheet:'เวรเสื้อฟ้า',access:'Internal',status:'ON'},
+      {no:7,icon:'🗺️',name:'เขตส่งหมาย',sheet:'LINE-ค้นหาพื้นที่หมาย',access:'Internal',status:'ON'}
+    ],
+    extraSources:[{icon:'⚖️',name:'บัญชีนัด',detail:'Database + Database_LastWeek',access:'VIP/Admin'},{icon:'📚',name:'ฐานความรู้',detail:'ชีต ความรู้',access:'ตามสิทธิ์รายการ'}],
+    permissions:[{level:'Public/User',detail:'ใช้ข้อมูล Public'},{level:'Internal/VIP',detail:'ใช้ข้อมูล Internal และ Public'},{level:'Admin',detail:'ใช้ข้อมูล Admin, Internal และ Public'}]
+  };
+  function esc(s){return String(s==null?'':s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]||c));}
+  function templateClone(){return document.getElementById('dashboard-help-v3-template').content.cloneNode(true);}
+  function render(root,g){
+    root.querySelector('#hv3-private-lines').innerHTML=(g.privateSearch.lines||[]).map(x=>'<li>'+esc(x)+'</li>').join('');
+    root.querySelector('#hv3-group-lines').innerHTML=(g.groupSearch.lines||[]).map(x=>'<li>'+esc(x)+'</li>').join('');
+    root.querySelector('#hv3-private-examples').innerHTML=(g.privateSearch.examples||[]).map(x=>'<span class="hv3-code">'+esc(x)+'</span>').join('');
+    root.querySelector('#hv3-group-examples').innerHTML=(g.groupSearch.examples||[]).map(x=>'<span class="hv3-code">'+esc(x)+'</span>').join('');
+    root.querySelector('#hv3-db-rows').innerHTML=(g.databases||[]).map(d=>'<tr><td>'+esc(d.no)+'</td><td>'+esc(d.icon+' '+d.name)+'</td><td>'+esc(d.sheet)+'</td><td>'+esc(d.access)+'</td><td class="hv3-on">🟢 '+esc(d.status)+'</td></tr>').join('');
+    root.querySelector('#hv3-extra-sources').innerHTML=(g.extraSources||[]).map(x=>'<span class="hv3-badge">'+esc(x.icon+' '+x.name+' · '+x.detail+' · '+x.access)+'</span>').join('');
+    root.querySelector('#hv3-permissions').innerHTML=(g.permissions||[]).map(x=>'<span class="hv3-badge">'+esc(x.level+' — '+x.detail)+'</span>').join('');
+    root.querySelector('#hv3-version').textContent='คู่มือเวอร์ชัน '+(g.version||'2026-08-14-v3');
+  }
+  function locateTarget(){
+    const selectors=['#helpContent','#guideContent','#help-content','#guide-content','#page-help .card-body','#page-guide .card-body','.help-page','.guide-page'];
+    for(const s of selectors){const el=document.querySelector(s);if(el)return el;}
+    const candidates=[...document.querySelectorAll('h1,h2,h3,h4,.page-title,.card-header')];
+    const h=candidates.find(el=>/คู่มือการใช้งาน/.test((el.textContent||'').trim()));
+    if(h){return h.closest('.card,.help-card,section,.page')||h.parentElement;}
+    return null;
+  }
+  function mount(g){
+    const target=locateTarget();
+    if(target){
+      const old=target.querySelector('#dashboard-help-v3'); if(old) old.remove();
+      const frag=templateClone(); target.appendChild(frag); render(target,g); document.getElementById('hv3-float').style.display='none';
+    }else{
+      const body=document.getElementById('hv3-modal-body'); body.innerHTML=''; body.appendChild(templateClone()); render(body,g); document.getElementById('hv3-float').style.display='block';
+    }
+  }
+  function load(){
+    if(window.google&&google.script&&google.script.run){
+      google.script.run.withSuccessHandler(g=>mount(g||FALLBACK)).withFailureHandler(()=>mount(FALLBACK)).getUnifiedUsageGuide();
+    }else mount(FALLBACK);
+  }
+  const modal=document.getElementById('hv3-modal');
+  document.getElementById('hv3-float').addEventListener('click',()=>{modal.classList.add('show');modal.setAttribute('aria-hidden','false');});
+  document.getElementById('hv3-close').addEventListener('click',()=>{modal.classList.remove('show');modal.setAttribute('aria-hidden','true');});
+  modal.addEventListener('click',e=>{if(e.target===modal)document.getElementById('hv3-close').click();});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load);else load();
+})();
+</script>
+
+<!-- ═══ Chatbot ศูนย์ข้อมูล v12.2 — Pastel Login + Walking Robot ═══ -->
+<div id="dash-gate">
+  <div class="dg-scene">
+    <div class="dg-walkbot" aria-hidden="true">
+      <img src="https://checkfile2568-ops.github.io/rta-tuning/assets/chatbot-v11.png" alt="">
+      <i class="dg-lid dg-lid-l"></i><i class="dg-lid dg-lid-r"></i>
+    </div>
+    <div class="dg-card">
+      <div class="dg-chat-icon">💬</div>
+      <h2>Chatbot <span>ศูนย์ข้อมูล</span></h2>
+      <div class="dg-sub">v11 Github</div>
+      <div class="dg-divider"><i></i><b>✦</b><i></i></div>
+      <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ</p>
+      <div class="dg-inwrap">
+        <span class="dg-lock">🔒</span>
+        <input id="dg-code" type="text" inputmode="text" enterkeyhint="go" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="รหัสผ่าน" aria-label="รหัสผ่าน รองรับตัวอักษรและตัวเลข">
+        <button id="dg-eye" type="button" aria-label="ดูรหัส" title="กดดูรหัส">👁</button>
+      </div>
+      <button id="dg-btn" type="button">เข้าสู่ระบบ</button>
+      <div id="dg-msg"></div>
+    </div>
+  </div>
+</div>
+<style id="dash-gate-v12-walk-style">
+#dash-gate{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:12px;overflow:hidden;font-family:'Prompt','Sarabun',sans-serif;transition:opacity .45s ease;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)}
+#dash-gate:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 18%,rgba(255,143,168,.24),transparent 28%),radial-gradient(circle at 92% 22%,rgba(101,185,243,.20),transparent 30%),radial-gradient(circle at 42% 100%,rgba(255,181,197,.18),transparent 34%)}
+#dash-gate .dg-scene{position:relative;width:min(98vw,650px);height:min(88vh,700px);min-height:520px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#dash-gate .dg-card{position:relative;z-index:3;width:min(82vw,380px);height:100%;min-height:520px;padding:42px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#24364b;background:#fff;border:1px solid #e7eef5;border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13);overflow:hidden}
+#dash-gate .dg-card:before{content:"";position:absolute;left:-22%;right:-22%;bottom:-10%;height:27%;border-radius:50% 50% 0 0;background:linear-gradient(135deg,rgba(255,181,197,.25),rgba(255,255,255,0))}
+#dash-gate .dg-card:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-78px;top:54px;background:rgba(191,229,255,.30)}
+#dash-gate .dg-walkbot{position:absolute;z-index:5;left:50%;bottom:13%;width:150px;height:210px;pointer-events:none;filter:drop-shadow(0 15px 24px rgba(54,84,108,.18));animation:dgBotWalk 8s linear infinite;transform-origin:50% 100%}
+#dash-gate .dg-walkbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+#dash-gate .dg-lid{position:absolute;z-index:6;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center;animation:dgBotBlink 8s linear infinite}
+#dash-gate .dg-lid-l{left:35.3%}#dash-gate .dg-lid-r{left:55%}
+@keyframes dgBotWalk{0%{opacity:0;transform:translateX(-470px) translateY(0) rotate(-3deg)}1%{opacity:1}8%{transform:translateX(-330px) translateY(-5px) rotate(3deg)}16%{transform:translateX(-220px) translateY(0) rotate(-3deg)}24%{transform:translateX(-120px) translateY(-5px) rotate(3deg)}25%{transform:translateX(-55px) translateY(0) rotate(0deg)}43.75%{transform:translateX(-55px) translateY(0) rotate(0deg)}50%{transform:translateX(65px) translateY(-5px) rotate(-3deg)}56%{transform:translateX(190px) translateY(0) rotate(3deg)}61%{opacity:1;transform:translateX(350px) translateY(-5px) rotate(-3deg)}62.5%,100%{opacity:0;transform:translateX(470px) translateY(0) rotate(0deg)}}
+@keyframes dgBotBlink{0%,28%,31%,35%,38%,41%,44%,100%{opacity:0;transform:scaleY(.05)}29%,36%,42%{opacity:1;transform:scaleY(1)}}
+#dash-gate .dg-chat-icon{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin-bottom:16px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:34px;position:relative;z-index:1}
+#dash-gate h2{margin:0;font-size:1.45rem;font-weight:600;color:#24364b;line-height:1.22;position:relative;z-index:1}#dash-gate h2 span{color:#ff8fa8}
+#dash-gate .dg-sub{color:#58aee8;font-size:.86rem;margin-top:8px;padding:5px 12px;border-radius:999px;background:#eef8ff;position:relative;z-index:1}
+#dash-gate .dg-divider{width:100%;display:flex;align-items:center;gap:12px;margin:25px 0 13px;color:#ffb1c3;position:relative;z-index:1}#dash-gate .dg-divider i{height:1px;background:#edf1f5;flex:1}#dash-gate .dg-divider b{font-size:13px;font-weight:400}
+#dash-gate p{font-size:.88rem;color:#40536a;margin:0 0 18px;position:relative;z-index:1}
+#dash-gate .dg-inwrap{position:relative;width:100%;z-index:1}#dash-gate .dg-lock{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:2;font-size:15px;opacity:.72}
+#dash-gate #dg-code{width:100%;padding:14px 48px 14px 42px;border-radius:14px;font-size:1.02rem;text-align:left;letter-spacing:1px;background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;caret-color:#ff7f9d;border:1px solid #f0dce2;outline:none;font-family:inherit;box-shadow:0 8px 22px rgba(74,102,126,.05);-webkit-text-security:disc}
+#dash-gate #dg-code.dg-show{-webkit-text-security:none}#dash-gate #dg-code::placeholder{color:#9aa6b5;-webkit-text-fill-color:#9aa6b5;letter-spacing:normal}#dash-gate #dg-code:focus{border-color:#ff9db4;box-shadow:0 0 0 3px rgba(255,143,168,.14)}
+#dash-gate #dg-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;border-radius:10px;background:#f5f8fb;color:#7d8b9a;font-size:16px;cursor:pointer;line-height:1}#dash-gate #dg-eye.on{background:#fff0f4;color:#ff7897}
+#dash-gate #dg-btn{width:100%;margin-top:16px;padding:14px;border:none;border-radius:14px;font-family:inherit;font-weight:600;font-size:1rem;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ffabc0,#ff7f9d);box-shadow:0 10px 24px rgba(255,127,157,.24);position:relative;z-index:1}#dash-gate #dg-btn:disabled{opacity:.62;cursor:default}
+#dash-gate #dg-msg{min-height:20px;margin-top:12px;font-size:.82rem;color:#e66b7b;position:relative;z-index:1}
+@media(max-width:480px){#dash-gate .dg-scene{width:99vw;height:86vh;min-height:500px}#dash-gate .dg-card{width:78vw;min-height:500px;padding:32px 18px;border-radius:26px}#dash-gate .dg-walkbot{width:118px;height:168px;bottom:15%}#dash-gate .dg-chat-icon{width:68px;height:68px;font-size:30px}#dash-gate h2{font-size:1.28rem}}
+@media(max-height:620px){#dash-gate .dg-scene{height:94vh;min-height:440px}#dash-gate .dg-card{min-height:440px;padding:22px 16px}#dash-gate .dg-walkbot{width:104px;height:148px;bottom:9%}#dash-gate .dg-chat-icon{width:58px;height:58px;margin-bottom:10px}#dash-gate .dg-divider{margin:17px 0 9px}#dash-gate p{margin-bottom:11px}}
+@media(prefers-reduced-motion:reduce){#dash-gate .dg-walkbot,#dash-gate .dg-lid{animation:none!important}#dash-gate .dg-walkbot{opacity:1;transform:translateX(-55px)}}
+</style>
+<script id="dash-gate-v12-walk-script">
+(function(){
+var gate=document.getElementById('dash-gate'),inp=document.getElementById('dg-code'),btn=document.getElementById('dg-btn'),eye=document.getElementById('dg-eye'),msg=document.getElementById('dg-msg'),html=document.documentElement,oldOverflow=html.style.overflow;html.style.overflow='hidden';
+eye.addEventListener('click',function(){var show=!inp.classList.contains('dg-show');inp.classList.toggle('dg-show',show);eye.classList.toggle('on',show);eye.textContent=show?'🙈':'👁';inp.focus()});
+function unlock(){gate.style.opacity='0';html.style.overflow=oldOverflow;setTimeout(function(){if(gate&&gate.parentNode)gate.parentNode.removeChild(gate)},440)}
+function fail(t){msg.style.color='#e66b7b';msg.textContent=t||'รหัสไม่ถูกต้อง';inp.value='';inp.focus();btn.disabled=false}
+function submit(){var code=(inp.value||'').trim();if(!code){inp.focus();return}btn.disabled=true;msg.style.color='#7e8da0';msg.textContent='กำลังตรวจสอบ...';if(!(window.google&&google.script&&google.script.run)){fail('ต้องเปิดผ่านระบบ Apps Script เท่านั้น');return}google.script.run.withSuccessHandler(function(r){if(r&&r.ok)unlock();else fail((r&&r.error)||'รหัสไม่ถูกต้อง')}).withFailureHandler(function(e){fail('ตรวจสอบไม่ได้: '+((e&&e.message)||e))}).verifyDashboardCode(code)}
+btn.addEventListener('click',submit);inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();submit()}});setTimeout(function(){try{inp.focus()}catch(e){}},200)
+})();
+</script>
+
+<!-- CHATBOT THEME v12.2 — SOFT PASTEL MODERN / THEME ONLY -->
+<style id="chatbot-theme-v12-2-soft-pastel">
+:root{--p12-pink:#ff829f;--p12-pink-soft:#fff0f5;--p12-pink-line:#ffd8e3;--p12-blue:#69bff1;--p12-blue-soft:#eef8ff;--p12-blue-line:#d8edfb;--p12-mint:#62cfa5;--p12-ink:#27384c;--p12-text:#4f6479;--p12-muted:#8797a8;--p12-card:#ffffff;--p12-line:#e8eef4;--p12-bg:#fbfdff;--primary:var(--p12-pink)!important;--primary-light:var(--p12-blue)!important;--accent:var(--p12-blue)!important;--text-main:var(--p12-ink)!important;--text-dim:var(--p12-muted)!important;--card-bg:var(--p12-card)!important;--border:var(--p12-line)!important}
+html,body{background:radial-gradient(circle at 7% 10%,rgba(255,130,159,.10),transparent 27%),radial-gradient(circle at 93% 13%,rgba(105,191,241,.11),transparent 29%),linear-gradient(135deg,#fff8fa 0%,#fcfdff 47%,#f2f9ff 100%)!important;color:var(--p12-ink)!important}
+aside,.sidebar{background:rgba(255,255,255,.94)!important;border-right-color:var(--p12-line)!important;box-shadow:8px 0 28px rgba(70,96,120,.055)!important;backdrop-filter:blur(18px) saturate(130%)!important}.sidebar-header{border-bottom-color:#edf2f6!important}.sidebar-header h1,.sidebar-header h2{color:var(--p12-ink)!important;background:none!important;-webkit-text-fill-color:var(--p12-ink)!important}.sidebar-header p{color:var(--p12-muted)!important}.sidebar-menu li a,.nav-item,.sidebar a{color:#53697e!important}.sidebar-menu li.active a,.sidebar-menu li a:hover,.nav-item.active,.nav-item:hover{background:linear-gradient(90deg,rgba(255,130,159,.12),rgba(105,191,241,.075))!important;color:var(--p12-ink)!important;border-left-color:var(--p12-pink)!important;box-shadow:none!important}
+header.topbar,.topbar{background:rgba(255,255,255,.87)!important;border-bottom-color:#eaf0f5!important;box-shadow:0 7px 24px rgba(73,99,123,.045)!important;backdrop-filter:blur(16px) saturate(130%)!important}header.topbar h1,.topbar h1,.page-title,.card-header,.help-card h3,.health-cat-title,.ms-group-title,.ms-item-label,.perm-key,.perm-result-card h3{color:var(--p12-ink)!important;-webkit-text-fill-color:initial!important}.user-profile,.stat-label,.stat-change,.ms-item-desc,.help-card td,.ms-status-text,.perm-value,.health-check-row{color:var(--p12-muted)!important}.page-title{border-bottom-color:#edf1f5!important}.hamburger{background:var(--p12-pink-soft)!important;border-color:var(--p12-pink-line)!important;color:#f76f92!important}
+.stat-card,.glass-card,.chart-card,.card,.card-body,.card-header,.help-card,.health-cat,.perm-result-card,.guide-box,.ms-group,.online-field-panel,.online-topic-card,.online-pro-card,.smoke-summary,.smoke-modal,.toast,.tab-pane,.lead-day-chip{background:rgba(255,255,255,.965)!important;border-color:var(--p12-line)!important;color:var(--p12-ink)!important;border-radius:18px!important;box-shadow:0 12px 32px rgba(65,91,116,.07),inset 0 1px 0 rgba(255,255,255,.95)!important}.stat-card::before{background:linear-gradient(90deg,#ff9ab2,#ff7898)!important}.stat-card:nth-child(even)::before{background:linear-gradient(90deg,#94d7fb,#69bff1)!important}.stat-value,.stat-card .number{color:#f97496!important}.stat-card:nth-child(even) .stat-value,.stat-card:nth-child(even) .number{color:#55afe6!important}
+.form-input,.form-select,.form-textarea,input[type="text"],input[type="search"],input[type="number"],input[type="email"],input[type="tel"],input[type="url"],input[type="password"],input:not([type]),textarea,select{background:#fff!important;color:var(--p12-ink)!important;-webkit-text-fill-color:var(--p12-ink)!important;caret-color:var(--p12-pink)!important;border-color:#e3ebf2!important;border-radius:13px!important;box-shadow:inset 0 1px 2px rgba(65,91,116,.025)!important}input::placeholder,textarea::placeholder,.form-input::placeholder,.form-textarea::placeholder{color:#9aa8b7!important;-webkit-text-fill-color:#9aa8b7!important;opacity:1!important}select option{background:#fff!important;color:var(--p12-ink)!important}.form-input:focus,.form-select:focus,.form-textarea:focus,input:focus,textarea:focus,select:focus{border-color:#ff9bb3!important;box-shadow:0 0 0 3px rgba(255,130,159,.115)!important}
+.btn{background:linear-gradient(135deg,#ffabc0 0%,#ff819f 100%)!important;color:#fff!important;border:none!important;border-radius:13px!important;box-shadow:0 8px 20px rgba(255,129,159,.20)!important}.btn:hover{filter:brightness(1.015)!important}.btn-warning{background:linear-gradient(135deg,#95d9fb,#69bff1)!important;color:#fff!important}.tab-btn{color:var(--p12-muted)!important}.tab-btn.active{color:#f36f91!important;background:var(--p12-pink-soft)!important}.badge-new{background:linear-gradient(135deg,#ff95ae,#73c7f4)!important;color:#fff!important}table th{background:#f5f9fc!important;color:#41576c!important;border-color:#eaf0f5!important}table td{border-color:#edf2f6!important;color:#53697e!important}.help-card .cmd{background:#f8fafc!important;color:#e16c88!important}.guide-box{background:#fff5f8!important;color:#6c5660!important;border-left-color:var(--p12-pink)!important}.perm-result-card{background:#f4faff!important;border-color:var(--p12-blue-line)!important}.ms-toggle{background:#dfe8ef!important}.ms-toggle.on{background:linear-gradient(135deg,var(--p12-pink),var(--p12-blue))!important}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#dce6ed;border-radius:10px}::-webkit-scrollbar-track{background:transparent}
+#dash-gate{background:radial-gradient(circle at 8% 14%,rgba(255,130,159,.13),transparent 27%),radial-gradient(circle at 93% 17%,rgba(105,191,241,.14),transparent 29%),linear-gradient(135deg,#fff5f8 0%,#fcfdff 50%,#eef8ff 100%)!important}#dash-gate .dg-card{background:#fff!important;border-color:#e7eef5!important;color:var(--p12-ink)!important;border-radius:28px!important;box-shadow:0 25px 62px rgba(65,91,116,.12)!important}#dash-gate h2{color:var(--p12-ink)!important;background:none!important;-webkit-text-fill-color:var(--p12-ink)!important}#dash-gate h2 span{color:var(--p12-pink)!important}#dash-gate p{color:#455a70!important}#dash-gate #dg-code{background:#fff!important;color:var(--p12-ink)!important;-webkit-text-fill-color:var(--p12-ink)!important;border-color:#efdfe5!important;caret-color:var(--p12-pink)!important}#dash-gate #dg-code:focus{border-color:#ff9bb3!important;box-shadow:0 0 0 3px rgba(255,130,159,.12)!important}#dash-gate #dg-btn{background:linear-gradient(135deg,#ffabc0,#ff819f)!important;color:#fff!important;box-shadow:0 10px 24px rgba(255,129,159,.22)!important}#dash-gate #dg-eye{background:#f5f8fb!important;color:#7d8b9a!important}
+#dashboard-help-v3{color:var(--p12-ink)!important}#dashboard-help-v3 .hv3-hero{border-color:var(--p12-pink-line)!important;background:linear-gradient(135deg,#fff1f5,#eef8ff)!important;box-shadow:0 10px 28px rgba(70,96,120,.06)!important}#dashboard-help-v3 .hv3-hero h2{color:var(--p12-ink)!important}#dashboard-help-v3 .hv3-hero p{color:var(--p12-muted)!important}#dashboard-help-v3 .hv3-card{border-color:var(--p12-line)!important;background:#fff!important;box-shadow:0 10px 28px rgba(70,96,120,.065)!important;color:var(--p12-ink)!important}#dashboard-help-v3 .hv3-card h3{color:#ef7795!important}#dashboard-help-v3 .hv3-card ul{color:var(--p12-text)!important}#dashboard-help-v3 .hv3-code{border-color:var(--p12-blue-line)!important;background:#f7fbff!important;color:#45667f!important}#dashboard-help-v3 .hv3-note{border-left-color:var(--p12-pink)!important;background:#fff4f7!important;color:#6b5660!important}#dashboard-help-v3 .hv3-table-wrap{border-color:var(--p12-line)!important;background:#fff!important}#dashboard-help-v3 th{background:#f1f8fd!important;color:#3f596d!important}#dashboard-help-v3 td{border-top-color:#edf2f6!important;color:#53697e!important}#dashboard-help-v3 .hv3-on{color:#2ba77b!important}#dashboard-help-v3 .hv3-badge{background:#f7fafd!important;border-color:#e5edf3!important;color:#53697e!important}#dashboard-help-v3 .hv3-footer{color:#93a0ae!important}#hv3-float{background:linear-gradient(135deg,#ffabc0,#ff819f)!important;color:#fff!important;box-shadow:0 10px 24px rgba(255,129,159,.22)!important}#hv3-modal{background:rgba(238,246,252,.80)!important;backdrop-filter:blur(8px)!important}#hv3-modal .hv3-modal-card{background:#fff!important;border-color:var(--p12-line)!important;box-shadow:0 28px 70px rgba(70,96,120,.16)!important}#hv3-close{border-color:#e4ebf1!important;background:#f7f9fb!important;color:#53697e!important}
+@media(max-width:480px){.stat-card,.glass-card,.chart-card,.card,.help-card,.ms-group{border-radius:16px!important}}
+</style>
+
+</body>
+</html>
