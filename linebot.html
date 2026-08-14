@@ -7,15 +7,67 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--gold:#fbbf24;--gold-soft:#fcd34d;--blue:#60a5fa;--navy:#0a0f1e}*{box-sizing:border-box;margin:0;padding:0;font-family:Prompt,sans-serif}html,body{height:100%;overflow:hidden;background:var(--navy);-webkit-tap-highlight-color:transparent}
-  #splash{position:fixed;inset:0;z-index:20;display:grid;place-items:center;text-align:center;color:#eef2ff;transition:opacity .55s ease,visibility .55s;background:linear-gradient(160deg,#070a14,#0a0f1e 55%,#0e1430)}#splash::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(1000px 600px at 50% 8%,rgba(251,191,36,.20),transparent 56%),radial-gradient(820px 520px at 84% 104%,rgba(96,165,250,.14),transparent 52%);animation:float 9s ease-in-out infinite alternate}@keyframes float{from{transform:translateY(0)}to{transform:translateY(-16px)}}.stage{position:relative;z-index:1;width:min(90vw,420px);padding:20px}.mascot{position:relative;width:clamp(174px,42vw,212px);margin:0 auto 20px;line-height:0;filter:drop-shadow(0 14px 26px rgba(7,16,39,.45))}.mascot img{display:block;width:100%;height:auto;background:transparent}.eyelid{position:absolute;top:22.7%;width:13%;height:9.6%;border-radius:50%;background:radial-gradient(ellipse at 50% 20%,#0d3479 0,#061632 68%);opacity:0;transform:scaleY(.08);transform-origin:center;animation:blink 5s infinite}.eyelid--left{left:35.1%}.eyelid--right{left:55.1%}@keyframes blink{0%,94%,100%{opacity:0;transform:scaleY(.08)}95%{opacity:1;transform:scaleY(.72)}96%{opacity:1;transform:scaleY(1)}97%{opacity:0;transform:scaleY(.08)}}.stage h1{font-size:1.5rem;font-weight:600;letter-spacing:.2px;background:linear-gradient(90deg,var(--gold-soft),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}.sub{color:#9aa6c4;font-weight:300;font-size:.95rem;margin-top:6px}.status{display:inline-flex;align-items:center;gap:8px;margin:22px 0 10px;font-size:.85rem;color:#bcd4f5}.status .dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:live 1.6s infinite}@keyframes live{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}.bar{width:min(80vw,320px);height:7px;margin:0 auto;border-radius:999px;background:rgba(251,191,36,.15);overflow:hidden}.bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--blue));transition:width .3s ease}.pct{font-size:.78rem;color:#9aa6c4;letter-spacing:1px;margin-top:8px}
-  #app{position:fixed;inset:0;z-index:10;display:none;background:var(--navy)}#app iframe{width:100%;height:100%;border:0;display:block;background:var(--navy)}#reopen{position:fixed;right:14px;bottom:14px;z-index:15;display:none;padding:9px 14px;border-radius:11px;color:#2a1c00;background:linear-gradient(135deg,#f6b545,#f59e0b);text-decoration:none;box-shadow:0 8px 22px rgba(251,191,36,.34);font-size:.82rem}
+  :root{--gold:#fbbf24;--gold-soft:#fcd34d;--blue:#60a5fa;--navy:#0a0f1e}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:Prompt,sans-serif}
+  html,body{height:100%;overflow:hidden;background:var(--navy);-webkit-tap-highlight-color:transparent}
+
+  #splash{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;text-align:center;color:#eef2ff;transition:opacity .55s ease,visibility .55s;background:linear-gradient(160deg,#070a14,#0a0f1e 55%,#0e1430)}
+  #splash::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(1000px 600px at 50% 8%,rgba(251,191,36,.20),transparent 56%),radial-gradient(820px 520px at 84% 104%,rgba(96,165,250,.14),transparent 52%);animation:float 9s ease-in-out infinite alternate}
+  @keyframes float{from{transform:translateY(0)}to{transform:translateY(-16px)}}
+
+  /* ขนาดเดียวกับหน้ากรอกรหัส */
+  .stage{position:relative;z-index:1;width:min(92vw,380px);min-height:480px;padding:36px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.12);border-radius:22px;backdrop-filter:blur(20px) saturate(150%);box-shadow:0 26px 64px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.09)}
+
+  .mascot{position:relative;width:160px;height:160px;margin:0 auto 18px;line-height:0;display:grid;place-items:center;filter:drop-shadow(0 14px 26px rgba(7,16,39,.45))}
+  .mascot img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;background:transparent}
+  .eyelid{position:absolute;top:22.7%;width:13%;height:9.6%;border-radius:50%;background:radial-gradient(ellipse at 50% 20%,#0d3479 0,#061632 68%);opacity:0;transform:scaleY(.08);transform-origin:center;animation:blink 5s infinite}
+  .eyelid--left{left:35.1%}.eyelid--right{left:55.1%}
+  @keyframes blink{0%,94%,100%{opacity:0;transform:scaleY(.08)}95%{opacity:1;transform:scaleY(.72)}96%{opacity:1;transform:scaleY(1)}97%{opacity:0;transform:scaleY(.08)}}
+
+  .stage h1{font-size:1.32rem;font-weight:600;letter-spacing:.2px;background:linear-gradient(90deg,var(--gold-soft),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:#9aa6c4;font-weight:300;font-size:.9rem;margin-top:6px}
+  .status{display:inline-flex;align-items:center;gap:8px;margin:22px 0 10px;font-size:.82rem;color:#bcd4f5}
+  .status .dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:live 1.6s infinite}
+  @keyframes live{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+  .bar{width:100%;max-width:320px;height:7px;margin:0 auto;border-radius:999px;background:rgba(251,191,36,.15);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--blue));transition:width .3s ease}
+  .pct{font-size:.78rem;color:#9aa6c4;letter-spacing:1px;margin-top:8px}
+
+  #app{position:fixed;inset:0;z-index:10;display:none;background:var(--navy)}
+  #app iframe{width:100%;height:100%;border:0;display:block;background:var(--navy)}
+  #reopen{position:fixed;right:14px;bottom:14px;z-index:15;display:none;padding:9px 14px;border-radius:11px;color:#2a1c00;background:linear-gradient(135deg,#f6b545,#f59e0b);text-decoration:none;box-shadow:0 8px 22px rgba(251,191,36,.34);font-size:.82rem}
+
+  @media(max-width:480px){
+    #splash{padding:14px}
+    .stage{width:min(94vw,380px);min-height:460px;padding:30px 22px}
+    .mascot{width:150px;height:150px;margin-bottom:16px}
+  }
+  @media(max-height:620px){
+    .stage{min-height:auto;padding:22px}
+    .mascot{width:132px;height:132px;margin-bottom:12px}
+    .status{margin:15px 0 8px}
+  }
 </style>
 </head>
 <body>
-  <div id="splash"><div class="stage"><div class="mascot"><img src="assets/chatbot-v11.png" alt="Chatbot ศูนย์ข้อมูล"><i class="eyelid eyelid--left" aria-hidden="true"></i><i class="eyelid eyelid--right" aria-hidden="true"></i></div><h1>Chatbot ศูนย์ข้อมูล</h1><div class="sub">v11 Github</div><div class="status"><span class="dot"></span><span id="statusText">กำลังเตรียมระบบเข้าสู่ Dashboard...</span></div><div class="bar"><i id="barFill"></i></div><div class="pct" id="pctText">0%</div></div></div>
+  <div id="splash">
+    <div class="stage">
+      <div class="mascot">
+        <img src="assets/chatbot-v11.png" alt="Chatbot ศูนย์ข้อมูล">
+        <i class="eyelid eyelid--left" aria-hidden="true"></i>
+        <i class="eyelid eyelid--right" aria-hidden="true"></i>
+      </div>
+      <h1>Chatbot ศูนย์ข้อมูล</h1>
+      <div class="sub">v11 Github</div>
+      <div class="status"><span class="dot"></span><span id="statusText">กำลังเตรียมระบบเข้าสู่ Dashboard...</span></div>
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="pct" id="pctText">0%</div>
+    </div>
+  </div>
+
   <div id="app"><iframe id="appFrame" title="Dashboard" referrerpolicy="no-referrer"></iframe></div>
   <a id="reopen" href="#" target="_blank" rel="noopener">เปิดในแท็บใหม่</a>
+
 <script>
   var DASH_URL="https://script.google.com/macros/s/AKfycbwojYt6ZB4aAI8QvKqFdFzr3_72ccwYRnhYENrAF-7PpRyr6AOBkL7NWOg5KELipznp/exec";
   var splash=document.getElementById('splash'),app=document.getElementById('app'),frame=document.getElementById('appFrame'),fill=document.getElementById('barFill'),pct=document.getElementById('pctText'),reopen=document.getElementById('reopen'),statusText=document.getElementById('statusText'),progress=0,shown=false;
