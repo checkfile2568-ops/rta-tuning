@@ -1,0 +1,184 @@
+<!-- ═══ Chatbot ศูนย์ข้อมูล v11 — Login Gate (มือถือรองรับข้อความ+ตัวเลข) ═══
+วางก่อน </body> ใน Dashboard.html ของ Apps Script
+ต้องมี verifyDashboardCode(code) ฝั่ง .gs
+-->
+<div id="dash-gate">
+  <div class="dg-glow"></div>
+  <div class="dg-card">
+    <div class="dg-bot">
+      <img src="https://checkfile2568-ops.github.io/rta-tuning/assets/chatbot-v11.png" alt="Chatbot ศูนย์ข้อมูล">
+    </div>
+
+    <h2>Chatbot ศูนย์ข้อมูล</h2>
+    <div class="dg-sub">v11 Github</div>
+    <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ</p>
+
+    <div class="dg-inwrap">
+      <input
+        id="dg-code"
+        type="password"
+        inputmode="text"
+        enterkeyhint="go"
+        autocapitalize="none"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="รหัสผ่าน"
+        aria-label="รหัสผ่าน รองรับตัวอักษรและตัวเลข">
+      <button id="dg-eye" type="button" aria-label="ดูรหัส" title="กดดูรหัส">👁</button>
+    </div>
+
+    <button id="dg-btn" type="button">เข้าสู่ระบบ</button>
+    <div id="dg-msg"></div>
+  </div>
+</div>
+
+<style id="dash-gate-v11-unified-style">
+  #dash-gate{
+    position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;
+    padding:20px;overflow:auto;font-family:'Prompt','Sarabun',sans-serif;
+    transition:opacity .45s ease;
+    background:linear-gradient(160deg,#070a14,#0a0f1e 55%,#0e1430);
+  }
+  #dash-gate .dg-glow{
+    position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(1000px 600px at 50% 8%,rgba(251,191,36,.20),transparent 56%),
+      radial-gradient(820px 520px at 84% 104%,rgba(96,165,250,.14),transparent 52%);
+    animation:dgFloat 9s ease-in-out infinite alternate;
+  }
+  @keyframes dgFloat{from{transform:translateY(0)}to{transform:translateY(-16px)}}
+
+  /* ขนาดเดียวกับหน้า Loading บน GitHub */
+  #dash-gate .dg-card{
+    position:relative;z-index:1;width:min(92vw,380px);min-height:480px;
+    padding:36px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;color:#eef2ff;
+    background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.12);border-radius:22px;
+    backdrop-filter:blur(20px) saturate(150%);
+    box-shadow:0 26px 64px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.09);
+  }
+
+  /* ใช้รูปบอทตัวเดียว + ขนาดเดียวกับหน้า Loading */
+  #dash-gate .dg-bot{
+    width:160px;height:160px;margin:0 auto 18px;display:grid;place-items:center;
+    filter:drop-shadow(0 14px 26px rgba(7,16,39,.45));
+  }
+  #dash-gate .dg-bot img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;background:transparent}
+
+  #dash-gate h2{
+    margin:0;font-size:1.32rem;font-weight:600;
+    background:linear-gradient(90deg,#fcd34d,#60a5fa);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  #dash-gate .dg-sub{color:#9aa6c4;font-size:.9rem;font-weight:300;margin-top:6px}
+  #dash-gate p{font-size:.85rem;color:#b9c3d8;margin:22px 0 18px;font-weight:300}
+
+  #dash-gate .dg-inwrap{position:relative;width:100%}
+  #dash-gate #dg-code{
+    width:100%;padding:13px 46px 13px 15px;border-radius:12px;font-size:1.05rem;
+    text-align:center;letter-spacing:1px;
+    background:rgba(255,255,255,.06)!important;color:#eef2ff!important;
+    -webkit-text-fill-color:#eef2ff!important;caret-color:#fbbf24;
+    border:1px solid rgba(251,191,36,.42);outline:none;font-family:inherit;
+  }
+  #dash-gate #dg-code::placeholder{color:#8792ad;-webkit-text-fill-color:#8792ad;letter-spacing:normal}
+  #dash-gate #dg-code:focus{border-color:rgba(251,191,36,.75);box-shadow:0 0 0 3px rgba(251,191,36,.18)}
+
+  #dash-gate #dg-eye{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    width:34px;height:34px;border:none;border-radius:9px;
+    background:rgba(255,255,255,.08);color:#cbd5e6;font-size:16px;
+    cursor:pointer;line-height:1;opacity:.8;
+  }
+  #dash-gate #dg-eye.on{background:rgba(251,191,36,.28);color:#ffe29a;opacity:1}
+
+  #dash-gate #dg-btn{
+    width:100%;margin-top:14px;padding:13px;border:none;border-radius:12px;
+    font-family:inherit;font-weight:600;font-size:1rem;cursor:pointer;
+    color:#2a1c00;background:linear-gradient(135deg,#f6b545,#f59e0b);
+    box-shadow:0 8px 22px rgba(251,191,36,.32);
+  }
+  #dash-gate #dg-btn:disabled{opacity:.6;cursor:default}
+  #dash-gate #dg-msg{min-height:20px;margin-top:12px;font-size:.85rem;color:#fca5a5}
+
+  @media(max-width:480px){
+    #dash-gate{padding:14px}
+    #dash-gate .dg-card{width:min(94vw,380px);min-height:460px;padding:30px 22px}
+    #dash-gate .dg-bot{width:150px;height:150px;margin-bottom:16px}
+  }
+  @media(max-height:620px){
+    #dash-gate .dg-card{min-height:auto;padding:22px}
+    #dash-gate .dg-bot{width:132px;height:132px;margin-bottom:12px}
+    #dash-gate p{margin:15px 0 14px}
+  }
+</style>
+
+<script id="dash-gate-v11-unified-script">
+(function(){
+  var gate=document.getElementById('dash-gate');
+  var inp=document.getElementById('dg-code');
+  var btn=document.getElementById('dg-btn');
+  var eye=document.getElementById('dg-eye');
+  var msg=document.getElementById('dg-msg');
+  var html=document.documentElement;
+  var oldOverflow=html.style.overflow;
+  html.style.overflow='hidden';
+
+  eye.addEventListener('click',function(){
+    var show=inp.type==='password';
+    inp.type=show?'text':'password';
+    eye.classList.toggle('on',show);
+    eye.textContent=show?'🙈':'👁';
+    inp.focus();
+  });
+
+  function unlock(){
+    gate.style.opacity='0';
+    html.style.overflow=oldOverflow;
+    setTimeout(function(){
+      if(gate&&gate.parentNode)gate.parentNode.removeChild(gate);
+    },440);
+  }
+
+  function fail(t){
+    msg.style.color='#fca5a5';
+    msg.textContent=t||'รหัสไม่ถูกต้อง';
+    inp.value='';
+    inp.focus();
+    btn.disabled=false;
+  }
+
+  function submit(){
+    var code=(inp.value||'').trim();
+    if(!code){inp.focus();return;}
+    btn.disabled=true;
+    msg.style.color='#9aa6c4';
+    msg.textContent='กำลังตรวจสอบ...';
+
+    if(!(window.google&&google.script&&google.script.run)){
+      fail('ต้องเปิดผ่านระบบ Apps Script เท่านั้น');
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(r){
+        if(r&&r.ok)unlock();
+        else fail((r&&r.error)||'รหัสไม่ถูกต้อง');
+      })
+      .withFailureHandler(function(e){
+        fail('ตรวจสอบไม่ได้: '+((e&&e.message)||e));
+      })
+      .verifyDashboardCode(code);
+  }
+
+  btn.addEventListener('click',submit);
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+      e.preventDefault();
+      submit();
+    }
+  });
+  setTimeout(function(){try{inp.focus()}catch(e){}},200);
+})();
+</script>
