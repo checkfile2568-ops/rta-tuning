@@ -23,16 +23,16 @@
   .peekbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
   .peekbot .lid{position:absolute;z-index:5;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center}
   .peekbot .lid.l{left:35.3%}.peekbot .lid.r{left:55.0%}
-  .peekbot.peek-active{animation:peekCycle 8.4s ease-in-out both}
-  .peekbot.peek-active .lid{animation:blinkTwice 8.4s linear both}
+  .peekbot.peek-active{animation:peekCycle 8s ease-in-out both}
+  .peekbot.peek-active .lid{animation:blinkTwice 8s linear both}
   @keyframes peekCycle{
-    0%,10%{transform:translate(-78%,-50%) rotate(-2deg)}
-    24%,76%{transform:translate(-8%,-50%) rotate(0deg)}
-    88%,100%{transform:translate(-78%,-50%) rotate(-2deg)}
+    0%,6%{transform:translate(-78%,-50%) rotate(-2deg)}
+    25%,87.5%{transform:translate(-8%,-50%) rotate(0deg)}
+    100%{transform:translate(-78%,-50%) rotate(-2deg)}
   }
   @keyframes blinkTwice{
-    0%,34%,37%,41%,50%,53%,57%,100%{opacity:0;transform:scaleY(.05)}
-    35.2%,39.2%,51.2%,55.2%{opacity:1;transform:scaleY(1)}
+    0%,34%,37%,43%,54%,57%,63%,100%{opacity:0;transform:scaleY(.05)}
+    35%,40%,55%,60%{opacity:1;transform:scaleY(1)}
   }
 
   .brand-icon{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:38px}
@@ -83,14 +83,16 @@
 <script>
   var DASH_URL="https://script.google.com/macros/s/AKfycbwojYt6ZB4aAI8QvKqFdFzr3_72ccwYRnhYENrAF-7PpRyr6AOBkL7NWOg5KELipznp/exec";
   var splash=document.getElementById('splash'),app=document.getElementById('app'),frame=document.getElementById('appFrame'),fill=document.getElementById('barFill'),pct=document.getElementById('pctText'),reopen=document.getElementById('reopen'),statusText=document.getElementById('statusText'),peekBot=document.getElementById('peekBot');
-  var progress=0,shown=false,ready=false,startAt=Date.now(),MIN_SPLASH_MS=8400;
+  var progress=0,shown=false,ready=false,startAt=Date.now(),MIN_SPLASH_MS=10000;
 
   function playPeek(){
     if(!peekBot)return;
     peekBot.classList.remove('peek-active');void peekBot.offsetWidth;peekBot.classList.add('peek-active');
   }
-  setTimeout(playPeek,2000);
-  setInterval(playPeek,5*60*1000);
+  setTimeout(function(){
+    playPeek();
+    setInterval(playPeek,5*60*1000);
+  },2000);
 
   function revealApp(){
     if(shown||!ready)return;
