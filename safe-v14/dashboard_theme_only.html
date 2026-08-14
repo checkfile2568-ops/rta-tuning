@@ -1,0 +1,29 @@
+<!-- SAFE v14 — DASHBOARD THEME ONLY
+วางท้าย Dashboard.html ก่อน </body>
+ไม่มี JavaScript / event / token / login / handler
+เปลี่ยนเฉพาะสี พื้นหลัง การ์ด ปุ่ม ตาราง ช่องกรอก และ responsive
+-->
+<style id="safe-v14-dashboard-theme-only">
+:root{
+  --sv14-pink:#ff829f;--sv14-pink-soft:#fff0f5;--sv14-pink-line:#ffd8e3;
+  --sv14-blue:#69bff1;--sv14-blue-soft:#eef8ff;--sv14-blue-line:#d8edfb;
+  --sv14-ink:#27384c;--sv14-text:#53697e;--sv14-muted:#8797a8;
+  --sv14-card:#fff;--sv14-line:#e8eef4;--sv14-bg:#fbfdff;
+  --primary:var(--sv14-pink)!important;--primary-light:var(--sv14-blue)!important;--accent:var(--sv14-blue)!important;
+  --text-main:var(--sv14-ink)!important;--text-dim:var(--sv14-muted)!important;--card-bg:var(--sv14-card)!important;--border:var(--sv14-line)!important;
+}
+html,body{background:radial-gradient(circle at 7% 10%,rgba(255,130,159,.10),transparent 27%),radial-gradient(circle at 93% 13%,rgba(105,191,241,.11),transparent 29%),linear-gradient(135deg,#fff8fa 0%,#fcfdff 47%,#f2f9ff 100%)!important;color:var(--sv14-ink)!important}
+aside,.sidebar{background:rgba(255,255,255,.96)!important;border-right-color:var(--sv14-line)!important;box-shadow:8px 0 28px rgba(70,96,120,.055)!important}
+.sidebar-header{border-bottom-color:#edf2f6!important}.sidebar-header h1,.sidebar-header h2{color:var(--sv14-ink)!important;background:none!important;-webkit-text-fill-color:var(--sv14-ink)!important}.sidebar-header p{color:var(--sv14-muted)!important}
+.sidebar-menu li a,.nav-item,.sidebar a{color:#53697e!important}.sidebar-menu li.active a,.sidebar-menu li a:hover,.nav-item.active,.nav-item:hover{background:linear-gradient(90deg,rgba(255,130,159,.12),rgba(105,191,241,.075))!important;color:var(--sv14-ink)!important;border-left-color:var(--sv14-pink)!important;box-shadow:none!important}
+header.topbar,.topbar{background:rgba(255,255,255,.91)!important;border-bottom-color:#eaf0f5!important;box-shadow:0 7px 24px rgba(73,99,123,.045)!important}
+header.topbar h1,.topbar h1,.page-title,.card-header{color:var(--sv14-ink)!important;-webkit-text-fill-color:initial!important}
+.stat-card,.glass-card,.chart-card,.card,.card-body,.card-header,.help-card,.health-cat,.perm-result-card,.guide-box,.ms-group,.online-field-panel,.online-topic-card,.online-pro-card,.smoke-summary,.smoke-modal,.toast,.tab-pane,.lead-day-chip{background:rgba(255,255,255,.97)!important;border-color:var(--sv14-line)!important;color:var(--sv14-ink)!important;border-radius:18px!important;box-shadow:0 12px 32px rgba(65,91,116,.07)!important}
+.stat-card::before{background:linear-gradient(90deg,#ff9ab2,#ff7898)!important}.stat-card:nth-child(even)::before{background:linear-gradient(90deg,#94d7fb,#69bff1)!important}.stat-value,.stat-card .number{color:#f97496!important}.stat-card:nth-child(even) .stat-value,.stat-card:nth-child(even) .number{color:#55afe6!important}
+.form-input,.form-select,.form-textarea,input[type="text"],input[type="search"],input[type="number"],input[type="email"],input[type="tel"],input[type="url"],input[type="password"],textarea,select{background:#fff!important;color:var(--sv14-ink)!important;-webkit-text-fill-color:var(--sv14-ink)!important;caret-color:var(--sv14-pink)!important;border-color:#e3ebf2!important;border-radius:13px!important}
+input::placeholder,textarea::placeholder{color:#9aa8b7!important;-webkit-text-fill-color:#9aa8b7!important;opacity:1!important}.form-input:focus,.form-select:focus,.form-textarea:focus,input:focus,textarea:focus,select:focus{border-color:#ff9bb3!important;box-shadow:0 0 0 3px rgba(255,130,159,.115)!important}
+.btn{background:linear-gradient(135deg,#ffabc0 0%,#ff819f 100%)!important;color:#fff!important;border:none!important;border-radius:13px!important;box-shadow:0 8px 20px rgba(255,129,159,.20)!important}.btn-warning{background:linear-gradient(135deg,#95d9fb,#69bff1)!important;color:#fff!important}.tab-btn.active{color:#f36f91!important;background:var(--sv14-pink-soft)!important}
+table th{background:#f5f9fc!important;color:#41576c!important;border-color:#eaf0f5!important}table td{border-color:#edf2f6!important;color:#53697e!important}
+#dashboard-help-v3{color:var(--sv14-ink)!important}#dashboard-help-v3 .hv3-hero{border-color:var(--sv14-pink-line)!important;background:linear-gradient(135deg,#fff1f5,#eef8ff)!important}#dashboard-help-v3 .hv3-hero h2{color:var(--sv14-ink)!important}#dashboard-help-v3 .hv3-hero p{color:var(--sv14-muted)!important}#dashboard-help-v3 .hv3-card{border-color:var(--sv14-line)!important;background:#fff!important;color:var(--sv14-ink)!important;box-shadow:0 10px 28px rgba(70,96,120,.065)!important}#dashboard-help-v3 .hv3-card h3{color:#ef7795!important}#dashboard-help-v3 .hv3-card ul{color:var(--sv14-text)!important}#dashboard-help-v3 .hv3-code{border-color:var(--sv14-blue-line)!important;background:#f7fbff!important;color:#45667f!important}#dashboard-help-v3 .hv3-note{border-left-color:var(--sv14-pink)!important;background:#fff4f7!important;color:#6b5660!important}#dashboard-help-v3 th{background:#f1f8fd!important;color:#3f596d!important}#dashboard-help-v3 td{border-top-color:#edf2f6!important;color:#53697e!important}#hv3-float{background:linear-gradient(135deg,#ffabc0,#ff819f)!important;color:#fff!important}#hv3-modal{background:rgba(238,246,252,.80)!important}#hv3-modal .hv3-modal-card{background:#fff!important;border-color:var(--sv14-line)!important}#hv3-close{border-color:#e4ebf1!important;background:#f7f9fb!important;color:#53697e!important}
+@media(max-width:480px){.stat-card,.glass-card,.chart-card,.card,.help-card,.ms-group{border-radius:16px!important}}
+</style>
