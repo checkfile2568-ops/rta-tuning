@@ -42,10 +42,10 @@
   #dash-gate .dg-peekbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
   #dash-gate .dg-lid{position:absolute;z-index:5;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center}
   #dash-gate .dg-lid-l{left:35.3%}#dash-gate .dg-lid-r{left:55.0%}
-  #dash-gate .dg-peekbot.dg-peek-active{animation:dgPeekCycle 8.4s ease-in-out both}
-  #dash-gate .dg-peekbot.dg-peek-active .dg-lid{animation:dgBlinkTwice 8.4s linear both}
-  @keyframes dgPeekCycle{0%,10%{transform:translate(-78%,-50%) rotate(-2deg)}24%,76%{transform:translate(-8%,-50%) rotate(0deg)}88%,100%{transform:translate(-78%,-50%) rotate(-2deg)}}
-  @keyframes dgBlinkTwice{0%,34%,37%,41%,50%,53%,57%,100%{opacity:0;transform:scaleY(.05)}35.2%,39.2%,51.2%,55.2%{opacity:1;transform:scaleY(1)}}
+  #dash-gate .dg-peekbot.dg-peek-active{animation:dgPeekCycle 8s ease-in-out both}
+  #dash-gate .dg-peekbot.dg-peek-active .dg-lid{animation:dgBlinkTwice 8s linear both}
+  @keyframes dgPeekCycle{0%,6%{transform:translate(-78%,-50%) rotate(-2deg)}25%,87.5%{transform:translate(-8%,-50%) rotate(0deg)}100%{transform:translate(-78%,-50%) rotate(-2deg)}}
+  @keyframes dgBlinkTwice{0%,34%,37%,43%,54%,57%,63%,100%{opacity:0;transform:scaleY(.05)}35%,40%,55%,60%{opacity:1;transform:scaleY(1)}}
 
   #dash-gate .dg-chat-icon{width:82px;height:82px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:36px}
   #dash-gate h2{margin:0;font-size:1.5rem;font-weight:600;color:#24364b;line-height:1.22;position:relative;z-index:1}
@@ -86,8 +86,10 @@
   html.style.overflow='hidden';
 
   function playPeek(){if(!bot)return;bot.classList.remove('dg-peek-active');void bot.offsetWidth;bot.classList.add('dg-peek-active');}
-  setTimeout(playPeek,2000);
-  setInterval(playPeek,5*60*1000);
+  setTimeout(function(){
+    playPeek();
+    setInterval(playPeek,5*60*1000);
+  },2000);
 
   eye.addEventListener('click',function(){var show=!inp.classList.contains('dg-show');inp.classList.toggle('dg-show',show);eye.classList.toggle('on',show);eye.textContent=show?'🙈':'👁';inp.focus();});
   function unlock(){gate.style.opacity='0';html.style.overflow=oldOverflow;setTimeout(function(){if(gate&&gate.parentNode)gate.parentNode.removeChild(gate);},440);}
