@@ -1,9 +1,8 @@
-<!-- ═══ Chatbot ศูนย์ข้อมูล v12.3 — Pastel Login + Forced Walking Robot ═══
+<!-- ═══ Chatbot ศูนย์ข้อมูล v13 — Pastel Login + Token Redirect + Forced Walking Robot ═══
 วางเป็นเนื้อหาทั้งหมดของ gate_login.html ใน Apps Script
-ต้องมี verifyDashboardCode(code) ฝั่ง .gs
-คงข้อความและการทำงานเดิม เปลี่ยนเฉพาะธีม/ลูกเล่นบอท
+ต้องมี verifyDashboardCode(code) ฝั่ง .gs เวอร์ชันที่คืน redirectUrl
 รอบบอท: ทำงาน 5 วินาที + พัก 3 วินาที = 8 วินาที
-หมายเหตุ: บังคับให้ animation ทำงานแม้เครื่องตั้งค่า Reduce Motion
+หลังรหัสถูก: redirect ไป Web App พร้อม accessToken เพื่อให้ doGet() เปิด Dashboard
 -->
 <div id="dash-gate">
   <div class="dg-scene">
@@ -27,37 +26,19 @@
     </div>
   </div>
 </div>
-<style id="dash-gate-v12-walk-style">
+<style id="dash-gate-v13-walk-style">
 #dash-gate{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:12px;overflow:hidden;font-family:'Prompt','Sarabun',sans-serif;transition:opacity .45s ease;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)}
 #dash-gate:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 18%,rgba(255,143,168,.24),transparent 28%),radial-gradient(circle at 92% 22%,rgba(101,185,243,.20),transparent 30%),radial-gradient(circle at 42% 100%,rgba(255,181,197,.18),transparent 34%)}
 #dash-gate .dg-scene{position:relative;width:min(98vw,650px);height:min(88vh,700px);min-height:520px;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #dash-gate .dg-card{position:relative;z-index:3;width:min(82vw,380px);height:100%;min-height:520px;padding:42px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#24364b;background:#fff;border:1px solid #e7eef5;border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13);overflow:hidden}
 #dash-gate .dg-card:before{content:"";position:absolute;left:-22%;right:-22%;bottom:-10%;height:27%;border-radius:50% 50% 0 0;background:linear-gradient(135deg,rgba(255,181,197,.25),rgba(255,255,255,0))}
 #dash-gate .dg-card:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-78px;top:54px;background:rgba(191,229,255,.30)}
-
-/* 0–5 วิ: เดินจากขอบซ้าย → หยุดหันหน้า/กระพริบ 2 ครั้ง → เดินออกขวา | 5–8 วิ: ซ่อน/พัก */
 #dash-gate .dg-walkbot{position:absolute;z-index:5;left:50%;bottom:5%;width:132px;height:186px;pointer-events:none;filter:drop-shadow(0 15px 24px rgba(54,84,108,.18));animation-name:dgBotWalk!important;animation-duration:8s!important;animation-timing-function:linear!important;animation-iteration-count:infinite!important;animation-play-state:running!important;transform-origin:50% 100%;will-change:transform,opacity}
 #dash-gate .dg-walkbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
 #dash-gate .dg-lid{position:absolute;z-index:6;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center;animation-name:dgBotBlink!important;animation-duration:8s!important;animation-timing-function:linear!important;animation-iteration-count:infinite!important;animation-play-state:running!important;will-change:opacity,transform}
 #dash-gate .dg-lid-l{left:35.3%}#dash-gate .dg-lid-r{left:55%}
-@keyframes dgBotWalk{
-  0%{opacity:0;transform:translateX(-470px) translateY(0) rotate(-3deg)}
-  1%{opacity:1}
-  8%{transform:translateX(-330px) translateY(-5px) rotate(3deg)}
-  16%{transform:translateX(-220px) translateY(0) rotate(-3deg)}
-  24%{transform:translateX(-120px) translateY(-5px) rotate(3deg)}
-  25%{opacity:1;transform:translateX(-55px) translateY(0) rotate(0deg)}
-  43.75%{opacity:1;transform:translateX(-55px) translateY(0) rotate(0deg)}
-  50%{transform:translateX(65px) translateY(-5px) rotate(-3deg)}
-  56%{transform:translateX(190px) translateY(0) rotate(3deg)}
-  61%{opacity:1;transform:translateX(350px) translateY(-5px) rotate(-3deg)}
-  62.5%,100%{opacity:0;transform:translateX(470px) translateY(0) rotate(0deg)}
-}
-@keyframes dgBotBlink{
-  0%,29%,31%,36%,38%,100%{opacity:0;transform:scaleY(.05)}
-  30%,37%{opacity:1;transform:scaleY(1)}
-}
-
+@keyframes dgBotWalk{0%{opacity:0;transform:translateX(-470px) translateY(0) rotate(-3deg)}1%{opacity:1}8%{transform:translateX(-330px) translateY(-5px) rotate(3deg)}16%{transform:translateX(-220px) translateY(0) rotate(-3deg)}24%{transform:translateX(-120px) translateY(-5px) rotate(3deg)}25%{opacity:1;transform:translateX(-55px) translateY(0) rotate(0deg)}43.75%{opacity:1;transform:translateX(-55px) translateY(0) rotate(0deg)}50%{transform:translateX(65px) translateY(-5px) rotate(-3deg)}56%{transform:translateX(190px) translateY(0) rotate(3deg)}61%{opacity:1;transform:translateX(350px) translateY(-5px) rotate(-3deg)}62.5%,100%{opacity:0;transform:translateX(470px) translateY(0) rotate(0deg)}}
+@keyframes dgBotBlink{0%,29%,31%,36%,38%,100%{opacity:0;transform:scaleY(.05)}30%,37%{opacity:1;transform:scaleY(1)}}
 #dash-gate .dg-chat-icon{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin-bottom:16px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:34px;position:relative;z-index:1}
 #dash-gate h2{margin:0;font-size:1.45rem;font-weight:600;color:#24364b;line-height:1.22;position:relative;z-index:1}#dash-gate h2 span{color:#ff8fa8}
 #dash-gate .dg-sub{color:#58aee8;font-size:.86rem;margin-top:8px;padding:5px 12px;border-radius:999px;background:#eef8ff;position:relative;z-index:1}
@@ -72,13 +53,12 @@
 @media(max-width:480px){#dash-gate .dg-scene{width:99vw;height:86vh;min-height:500px}#dash-gate .dg-card{width:78vw;min-height:500px;padding:32px 18px;border-radius:26px}#dash-gate .dg-walkbot{width:108px;height:154px;bottom:4%}#dash-gate .dg-chat-icon{width:68px;height:68px;font-size:30px}#dash-gate h2{font-size:1.28rem}}
 @media(max-height:620px){#dash-gate .dg-scene{height:94vh;min-height:440px}#dash-gate .dg-card{min-height:440px;padding:22px 16px}#dash-gate .dg-walkbot{width:96px;height:136px;bottom:2%}#dash-gate .dg-chat-icon{width:58px;height:58px;margin-bottom:10px}#dash-gate .dg-divider{margin:17px 0 9px}#dash-gate p{margin-bottom:11px}}
 </style>
-<script id="dash-gate-v12-walk-script">
+<script id="dash-gate-v13-token-script">
 (function(){
-var gate=document.getElementById('dash-gate'),inp=document.getElementById('dg-code'),btn=document.getElementById('dg-btn'),eye=document.getElementById('dg-eye'),msg=document.getElementById('dg-msg'),html=document.documentElement,oldOverflow=html.style.overflow;html.style.overflow='hidden';
+var inp=document.getElementById('dg-code'),btn=document.getElementById('dg-btn'),eye=document.getElementById('dg-eye'),msg=document.getElementById('dg-msg');
 eye.addEventListener('click',function(){var show=!inp.classList.contains('dg-show');inp.classList.toggle('dg-show',show);eye.classList.toggle('on',show);eye.textContent=show?'🙈':'👁';inp.focus()});
-function unlock(){gate.style.opacity='0';html.style.overflow=oldOverflow;setTimeout(function(){if(gate&&gate.parentNode)gate.parentNode.removeChild(gate)},440)}
 function fail(t){msg.style.color='#e66b7b';msg.textContent=t||'รหัสไม่ถูกต้อง';inp.value='';inp.focus();btn.disabled=false}
-function submit(){var code=(inp.value||'').trim();if(!code){inp.focus();return}btn.disabled=true;msg.style.color='#7e8da0';msg.textContent='กำลังตรวจสอบ...';if(!(window.google&&google.script&&google.script.run)){fail('ต้องเปิดผ่านระบบ Apps Script เท่านั้น');return}google.script.run.withSuccessHandler(function(r){if(r&&r.ok)unlock();else fail((r&&r.error)||'รหัสไม่ถูกต้อง')}).withFailureHandler(function(e){fail('ตรวจสอบไม่ได้: '+((e&&e.message)||e))}).verifyDashboardCode(code)}
+function submit(){var code=(inp.value||'').trim();if(!code){inp.focus();return}btn.disabled=true;msg.style.color='#7e8da0';msg.textContent='กำลังตรวจสอบ...';if(!(window.google&&google.script&&google.script.run)){fail('ต้องเปิดผ่านระบบ Apps Script เท่านั้น');return}google.script.run.withSuccessHandler(function(r){if(r&&r.ok&&r.redirectUrl){msg.style.color='#54a985';msg.textContent='รหัสถูกต้อง กำลังเข้าสู่ระบบ...';window.location.replace(r.redirectUrl);return}fail((r&&r.error)||'ไม่สามารถเข้าสู่ Dashboard ได้')}).withFailureHandler(function(e){fail('ตรวจสอบไม่ได้: '+((e&&e.message)||e))}).verifyDashboardCode(code)}
 btn.addEventListener('click',submit);inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();submit()}});setTimeout(function(){try{inp.focus()}catch(e){}},200)
 })();
 </script>
