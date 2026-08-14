@@ -1,9 +1,10 @@
-// Chatbot ศูนย์ข้อมูล v12 — Dashboard Gate Code (sheet-first)
-// ใช้ค่า WEB_ADMIN_KEY จากชีตตั้งค่าโดยตรงก่อน เพื่อกันค่า cache/getConfig เก่าทับรหัสจริง
+// Chatbot ศูนย์ข้อมูล v13 — Dashboard Gate Code (sheet-first + access token)
+// อ่าน WEB_ADMIN_KEY จากชีตตั้งค่าโดยตรง และเมื่อรหัสถูกจะออก accessToken ให้ doGet() เปิด Dashboard
 
 const DASH_GATE_CONFIG_SPREADSHEET_ID = '166-AGSJrP4o9ltxCobd--mB6oObViDKdKELc9sipYJ4';
 const DASH_GATE_CONFIG_SHEET = 'ตั้งค่า';
 const DASH_GATE_CONFIG_KEY = 'WEB_ADMIN_KEY';
+const DASH_GATE_TOKEN_TTL_SECONDS = 1800; // 30 นาที
 
 function _normalizeDashboardGateCodes_(value) {
   return String(value == null ? '' : value)
@@ -35,7 +36,7 @@ function _getDashboardGateCodes_() {
     var sheetCodes = _readDashboardGateCodesFromSheet_();
     if (sheetCodes.length) return sheetCodes;
   } catch (sheetErr) {
-    // ค่อย fallback ด้านล่าง
+    Logger.log('Dashboard gate sheet read failed: ' + sheetErr.message);
   }
 
   // 2) fallback ไป getConfig() เฉพาะเมื่ออ่านชีตโดยตรงไม่ได้/ไม่มีค่า
@@ -45,9 +46,28 @@ function _getDashboardGateCodes_() {
       var configCodes = _normalizeDashboardGateCodes_(fromConfig);
       if (configCodes.length) return configCodes;
     }
-  } catch (e) {}
+  } catch (e) {
+    Logger.log('Dashboard gate getConfig fallback failed: ' + e.message);
+  }
 
   return [];
+}
+
+function _issueDashboardAccessToken_() {
+  var token = Utilities.getUuid().replace(/-/g, ''); // 32 ตัว ตรง regex เดิม
+  CacheService.getScriptCache().put(
+    'dashboard-access:' + token,
+    'ok',
+    DASH_GATE_TOKEN_TTL_SECONDS
+  );
+
+  var webAppUrl = String(ScriptApp.getService().getUrl() || '').trim();
+  if (!webAppUrl) throw new Error('ไม่พบ Web App URL ของ Apps Script');
+
+  return {
+    token: token,
+    redirectUrl: webAppUrl + (webAppUrl.indexOf('?') >= 0 ? '&' : '?') + 'accessToken=' + encodeURIComponent(token)
+  };
 }
 
 function verifyDashboardCode(code) {
@@ -60,9 +80,17 @@ function verifyDashboardCode(code) {
       return { ok: false, error: 'ยังไม่ได้ตั้งค่า WEB_ADMIN_KEY' };
     }
 
-    return codes.indexOf(input) !== -1
-      ? { ok: true }
-      : { ok: false, error: 'รหัสไม่ถูกต้อง' };
+    if (codes.indexOf(input) === -1) {
+      return { ok: false, error: 'รหัสไม่ถูกต้อง' };
+    }
+
+    // รหัสถูก: สร้าง token ให้ doGet() ตรวจผ่าน _isDashboardAccessTokenAuthorized_(e)
+    var access = _issueDashboardAccessToken_();
+    return {
+      ok: true,
+      accessToken: access.token,
+      redirectUrl: access.redirectUrl
+    };
 
   } catch (err) {
     return { ok: false, error: 'ตรวจสอบไม่ได้: ' + (err && err.message ? err.message : err) };
