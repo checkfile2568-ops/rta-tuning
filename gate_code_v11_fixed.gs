@@ -1,6 +1,5 @@
-// Chatbot ศูนย์ข้อมูล v11 — Dashboard Gate Code (fixed)
-// แก้ ReferenceError: _getDashboardGateCodes_ is not defined
-// ใช้ค่า WEB_ADMIN_KEY จากชีต ตั้งค่า
+// Chatbot ศูนย์ข้อมูล v12 — Dashboard Gate Code (sheet-first)
+// ใช้ค่า WEB_ADMIN_KEY จากชีตตั้งค่าโดยตรงก่อน เพื่อกันค่า cache/getConfig เก่าทับรหัสจริง
 
 const DASH_GATE_CONFIG_SPREADSHEET_ID = '166-AGSJrP4o9ltxCobd--mB6oObViDKdKELc9sipYJ4';
 const DASH_GATE_CONFIG_SHEET = 'ตั้งค่า';
@@ -13,19 +12,7 @@ function _normalizeDashboardGateCodes_(value) {
     .filter(function(s){ return !!s; });
 }
 
-function _getDashboardGateCodes_() {
-  // 1) ถ้าระบบเดิมมี getConfig() ให้ใช้ก่อน
-  try {
-    if (typeof getConfig === 'function') {
-      var fromConfig = getConfig(DASH_GATE_CONFIG_KEY);
-      var configCodes = _normalizeDashboardGateCodes_(fromConfig);
-      if (configCodes.length) return configCodes;
-    }
-  } catch (e) {
-    // fallback ไปอ่านชีตโดยตรง
-  }
-
-  // 2) อ่านชีตตั้งค่าโดยตรง
+function _readDashboardGateCodesFromSheet_() {
   var ss = SpreadsheetApp.openById(DASH_GATE_CONFIG_SPREADSHEET_ID);
   var sh = ss.getSheetByName(DASH_GATE_CONFIG_SHEET);
   if (!sh) throw new Error('ไม่พบชีต "' + DASH_GATE_CONFIG_SHEET + '"');
@@ -39,6 +26,26 @@ function _getDashboardGateCodes_() {
       return _normalizeDashboardGateCodes_(values[i][1]);
     }
   }
+  return [];
+}
+
+function _getDashboardGateCodes_() {
+  // 1) ยึดค่าจากชีตจริงก่อนเสมอ
+  try {
+    var sheetCodes = _readDashboardGateCodesFromSheet_();
+    if (sheetCodes.length) return sheetCodes;
+  } catch (sheetErr) {
+    // ค่อย fallback ด้านล่าง
+  }
+
+  // 2) fallback ไป getConfig() เฉพาะเมื่ออ่านชีตโดยตรงไม่ได้/ไม่มีค่า
+  try {
+    if (typeof getConfig === 'function') {
+      var fromConfig = getConfig(DASH_GATE_CONFIG_KEY);
+      var configCodes = _normalizeDashboardGateCodes_(fromConfig);
+      if (configCodes.length) return configCodes;
+    }
+  } catch (e) {}
 
   return [];
 }
@@ -53,8 +60,7 @@ function verifyDashboardCode(code) {
       return { ok: false, error: 'ยังไม่ได้ตั้งค่า WEB_ADMIN_KEY' };
     }
 
-    var ok = codes.indexOf(input) !== -1;
-    return ok
+    return codes.indexOf(input) !== -1
       ? { ok: true }
       : { ok: false, error: 'รหัสไม่ถูกต้อง' };
 
@@ -68,6 +74,7 @@ function checkDashboardGate() {
   var result = {
     ok: codes.length > 0,
     codeCount: codes.length,
+    masked: codes.map(function(c){ return c.length <= 2 ? '**' : c.substring(0,1) + '***' + c.substring(c.length-1); }),
     message: codes.length ? 'Dashboard Gate พร้อมใช้งาน' : 'ยังไม่พบ WEB_ADMIN_KEY'
   };
   Logger.log(JSON.stringify(result));
