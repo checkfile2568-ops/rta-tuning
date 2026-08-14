@@ -1,107 +1,83 @@
-<!-- ═══ Chatbot ศูนย์ข้อมูล v12 — Pastel Login Gate + Peeking Robot ═══
+<!-- ═══ Chatbot ศูนย์ข้อมูล v12.1 — Pastel Login + Walking Robot ═══
 วางก่อน </body> ใน Dashboard.html ของ Apps Script
 ต้องมี verifyDashboardCode(code) ฝั่ง .gs
-คงข้อความ/การทำงานเดิม เปลี่ยนเฉพาะธีมและลูกเล่นบอท
+คงข้อความและการทำงานเดิม เปลี่ยนเฉพาะธีม/ลูกเล่นบอท
 -->
 <div id="dash-gate">
   <div class="dg-scene">
-    <div class="dg-peekbot" id="dg-peekbot" aria-hidden="true">
+    <div class="dg-walkbot" aria-hidden="true">
       <img src="https://checkfile2568-ops.github.io/rta-tuning/assets/chatbot-v11.png" alt="">
       <i class="dg-lid dg-lid-l"></i><i class="dg-lid dg-lid-r"></i>
     </div>
-
     <div class="dg-card">
       <div class="dg-chat-icon">💬</div>
       <h2>Chatbot <span>ศูนย์ข้อมูล</span></h2>
       <div class="dg-sub">v11 Github</div>
       <div class="dg-divider"><i></i><b>✦</b><i></i></div>
       <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ</p>
-
       <div class="dg-inwrap">
         <span class="dg-lock">🔒</span>
         <input id="dg-code" type="text" inputmode="text" enterkeyhint="go" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="รหัสผ่าน" aria-label="รหัสผ่าน รองรับตัวอักษรและตัวเลข">
         <button id="dg-eye" type="button" aria-label="ดูรหัส" title="กดดูรหัส">👁</button>
       </div>
-
       <button id="dg-btn" type="button">เข้าสู่ระบบ</button>
       <div id="dg-msg"></div>
     </div>
   </div>
 </div>
+<style id="dash-gate-v12-walk-style">
+#dash-gate{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:12px;overflow:hidden;font-family:'Prompt','Sarabun',sans-serif;transition:opacity .45s ease;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)}
+#dash-gate:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 18%,rgba(255,143,168,.24),transparent 28%),radial-gradient(circle at 92% 22%,rgba(101,185,243,.20),transparent 30%),radial-gradient(circle at 42% 100%,rgba(255,181,197,.18),transparent 34%)}
+#dash-gate .dg-scene{position:relative;width:min(98vw,650px);height:min(88vh,700px);min-height:520px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#dash-gate .dg-card{position:relative;z-index:3;width:min(82vw,380px);height:100%;min-height:520px;padding:42px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#24364b;background:#fff;border:1px solid #e7eef5;border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13);overflow:hidden}
+#dash-gate .dg-card:before{content:"";position:absolute;left:-22%;right:-22%;bottom:-10%;height:27%;border-radius:50% 50% 0 0;background:linear-gradient(135deg,rgba(255,181,197,.25),rgba(255,255,255,0))}
+#dash-gate .dg-card:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-78px;top:54px;background:rgba(191,229,255,.30)}
 
-<style id="dash-gate-v12-pastel-style">
-  #dash-gate{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:16px;overflow:auto;font-family:'Prompt','Sarabun',sans-serif;transition:opacity .45s ease;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)}
-  #dash-gate::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 18%,rgba(255,143,168,.24),transparent 28%),radial-gradient(circle at 92% 22%,rgba(101,185,243,.20),transparent 30%),radial-gradient(circle at 42% 100%,rgba(255,181,197,.20),transparent 34%)}
+/* 5 วินาที: เดินออกจากขอบซ้าย → หยุดหันหน้า/กระพริบ 2 ครั้ง → เดินออกขวา ; 3 วินาทีพักแล้วเริ่มใหม่ */
+#dash-gate .dg-walkbot{position:absolute;z-index:5;left:50%;bottom:13%;width:150px;height:210px;pointer-events:none;filter:drop-shadow(0 15px 24px rgba(54,84,108,.18));animation:dgBotWalk 8s linear infinite;transform-origin:50% 100%}
+#dash-gate .dg-walkbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+#dash-gate .dg-lid{position:absolute;z-index:6;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center;animation:dgBotBlink 8s linear infinite}
+#dash-gate .dg-lid-l{left:35.3%}#dash-gate .dg-lid-r{left:55%}
+@keyframes dgBotWalk{
+  0%{opacity:0;transform:translateX(-470px) translateY(0) rotate(-3deg)}
+  2%{opacity:1}
+  8%{transform:translateX(-320px) translateY(-5px) rotate(3deg)}
+  16%{transform:translateX(-220px) translateY(0) rotate(-3deg)}
+  24%{transform:translateX(-125px) translateY(-5px) rotate(3deg)}
+  31%{transform:translateX(-55px) translateY(0) rotate(0deg)}
+  56%{transform:translateX(-55px) translateY(0) rotate(0deg)}
+  64%{transform:translateX(55px) translateY(-5px) rotate(-3deg)}
+  72%{transform:translateX(175px) translateY(0) rotate(3deg)}
+  79%{opacity:1;transform:translateX(330px) translateY(-5px) rotate(-3deg)}
+  81%,100%{opacity:0;transform:translateX(470px) translateY(0) rotate(0deg)}
+}
+@keyframes dgBotBlink{
+  0%,34%,37%,41%,45%,48%,52%,100%{opacity:0;transform:scaleY(.05)}
+  35%,39%,46%,50%{opacity:1;transform:scaleY(1)}
+}
 
-  #dash-gate .dg-scene{position:relative;width:min(95vw,470px);height:min(88vh,700px);min-height:520px;display:flex;align-items:center;justify-content:flex-end}
-  #dash-gate .dg-card{position:relative;z-index:3;width:min(84vw,380px);height:100%;min-height:520px;padding:44px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#24364b;background:#fff;border:1px solid rgba(224,232,240,.9);border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13),inset 0 1px 0 rgba(255,255,255,.95);overflow:hidden}
-  #dash-gate .dg-card::before{content:"";position:absolute;inset:auto -24% -11% -24%;height:28%;background:linear-gradient(135deg,rgba(255,181,197,.25),rgba(255,255,255,0));border-radius:50% 50% 0 0;pointer-events:none}
-  #dash-gate .dg-card::after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-78px;top:54px;background:rgba(191,229,255,.30);pointer-events:none}
-
-  #dash-gate .dg-peekbot{position:absolute;z-index:2;left:-12px;top:50%;width:190px;height:260px;transform:translate(-78%,-50%) rotate(-2deg);transform-origin:70% 50%;filter:drop-shadow(0 16px 28px rgba(61,94,119,.18));pointer-events:none}
-  #dash-gate .dg-peekbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
-  #dash-gate .dg-lid{position:absolute;z-index:5;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center}
-  #dash-gate .dg-lid-l{left:35.3%}#dash-gate .dg-lid-r{left:55.0%}
-  #dash-gate .dg-peekbot.dg-peek-active{animation:dgPeekCycle 8s ease-in-out both}
-  #dash-gate .dg-peekbot.dg-peek-active .dg-lid{animation:dgBlinkTwice 8s linear both}
-  @keyframes dgPeekCycle{0%,6%{transform:translate(-78%,-50%) rotate(-2deg)}25%,87.5%{transform:translate(-8%,-50%) rotate(0deg)}100%{transform:translate(-78%,-50%) rotate(-2deg)}}
-  @keyframes dgBlinkTwice{0%,34%,37%,43%,54%,57%,63%,100%{opacity:0;transform:scaleY(.05)}35%,40%,55%,60%{opacity:1;transform:scaleY(1)}}
-
-  #dash-gate .dg-chat-icon{width:82px;height:82px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:36px}
-  #dash-gate h2{margin:0;font-size:1.5rem;font-weight:600;color:#24364b;line-height:1.22;position:relative;z-index:1}
-  #dash-gate h2 span{color:#ff8fa8}
-  #dash-gate .dg-sub{color:#58aee8;font-size:.88rem;font-weight:400;margin-top:8px;padding:5px 12px;border-radius:999px;background:#eef8ff;position:relative;z-index:1}
-  #dash-gate .dg-divider{width:100%;display:flex;align-items:center;gap:12px;margin:28px 0 14px;color:#ffb1c3;position:relative;z-index:1}
-  #dash-gate .dg-divider i{height:1px;background:#edf1f5;flex:1}#dash-gate .dg-divider b{font-size:13px;font-weight:400}
-  #dash-gate p{font-size:.9rem;color:#40536a;margin:0 0 18px;font-weight:400;position:relative;z-index:1}
-
-  #dash-gate .dg-inwrap{position:relative;width:100%;z-index:1}
-  #dash-gate .dg-lock{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:2;font-size:15px;opacity:.72}
-  #dash-gate #dg-code{width:100%;padding:14px 48px 14px 42px;border-radius:14px;font-size:1.02rem;text-align:left;letter-spacing:1px;background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;caret-color:#ff7f9d;border:1px solid #f0dce2;outline:none;font-family:inherit;box-shadow:0 8px 22px rgba(74,102,126,.05),inset 0 1px 0 rgba(255,255,255,.95);-webkit-text-security:disc}
-  #dash-gate #dg-code.dg-show{-webkit-text-security:none}
-  #dash-gate #dg-code::placeholder{color:#9aa6b5;-webkit-text-fill-color:#9aa6b5;letter-spacing:normal}
-  #dash-gate #dg-code:focus{border-color:#ff9db4;box-shadow:0 0 0 3px rgba(255,143,168,.14),0 8px 22px rgba(74,102,126,.05)}
-  #dash-gate #dg-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;border-radius:10px;background:#f5f8fb;color:#7d8b9a;font-size:16px;cursor:pointer;line-height:1}
-  #dash-gate #dg-eye.on{background:#fff0f4;color:#ff7897}
-
-  #dash-gate #dg-btn{width:100%;margin-top:16px;padding:14px;border:none;border-radius:14px;font-family:inherit;font-weight:600;font-size:1rem;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ffabc0,#ff7f9d);box-shadow:0 10px 24px rgba(255,127,157,.24);position:relative;z-index:1}
-  #dash-gate #dg-btn:disabled{opacity:.62;cursor:default}
-  #dash-gate #dg-msg{min-height:20px;margin-top:12px;font-size:.82rem;color:#e66b7b;position:relative;z-index:1}
-
-  @media(max-width:480px){#dash-gate{padding:12px}#dash-gate .dg-scene{width:96vw;height:86vh;min-height:500px}#dash-gate .dg-card{width:82vw;min-height:500px;padding:34px 20px;border-radius:26px}#dash-gate .dg-peekbot{left:-4px;width:164px;height:230px}#dash-gate .dg-chat-icon{width:74px;height:74px;font-size:32px}#dash-gate h2{font-size:1.36rem}#dash-gate .dg-divider{margin-top:24px}}
-  @media(max-height:620px){#dash-gate .dg-scene{height:94vh;min-height:440px}#dash-gate .dg-card{min-height:440px;padding:24px 18px}#dash-gate .dg-chat-icon{width:62px;height:62px;margin-bottom:12px}#dash-gate .dg-divider{margin:18px 0 10px}#dash-gate p{margin-bottom:12px}#dash-gate .dg-peekbot{width:142px;height:202px}}
-  @media(prefers-reduced-motion:reduce){#dash-gate .dg-peekbot.dg-peek-active,#dash-gate .dg-peekbot.dg-peek-active .dg-lid{animation:none!important}#dash-gate .dg-peekbot{transform:translate(-16%,-50%)}}
+#dash-gate .dg-chat-icon{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin-bottom:16px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:34px;position:relative;z-index:1}
+#dash-gate h2{margin:0;font-size:1.45rem;font-weight:600;color:#24364b;line-height:1.22;position:relative;z-index:1}#dash-gate h2 span{color:#ff8fa8}
+#dash-gate .dg-sub{color:#58aee8;font-size:.86rem;margin-top:8px;padding:5px 12px;border-radius:999px;background:#eef8ff;position:relative;z-index:1}
+#dash-gate .dg-divider{width:100%;display:flex;align-items:center;gap:12px;margin:25px 0 13px;color:#ffb1c3;position:relative;z-index:1}#dash-gate .dg-divider i{height:1px;background:#edf1f5;flex:1}#dash-gate .dg-divider b{font-size:13px;font-weight:400}
+#dash-gate p{font-size:.88rem;color:#40536a;margin:0 0 18px;position:relative;z-index:1}
+#dash-gate .dg-inwrap{position:relative;width:100%;z-index:1}#dash-gate .dg-lock{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:2;font-size:15px;opacity:.72}
+#dash-gate #dg-code{width:100%;padding:14px 48px 14px 42px;border-radius:14px;font-size:1.02rem;text-align:left;letter-spacing:1px;background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;caret-color:#ff7f9d;border:1px solid #f0dce2;outline:none;font-family:inherit;box-shadow:0 8px 22px rgba(74,102,126,.05);-webkit-text-security:disc}
+#dash-gate #dg-code.dg-show{-webkit-text-security:none}#dash-gate #dg-code::placeholder{color:#9aa6b5;-webkit-text-fill-color:#9aa6b5;letter-spacing:normal}#dash-gate #dg-code:focus{border-color:#ff9db4;box-shadow:0 0 0 3px rgba(255,143,168,.14)}
+#dash-gate #dg-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;border-radius:10px;background:#f5f8fb;color:#7d8b9a;font-size:16px;cursor:pointer;line-height:1}#dash-gate #dg-eye.on{background:#fff0f4;color:#ff7897}
+#dash-gate #dg-btn{width:100%;margin-top:16px;padding:14px;border:none;border-radius:14px;font-family:inherit;font-weight:600;font-size:1rem;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ffabc0,#ff7f9d);box-shadow:0 10px 24px rgba(255,127,157,.24);position:relative;z-index:1}#dash-gate #dg-btn:disabled{opacity:.62;cursor:default}
+#dash-gate #dg-msg{min-height:20px;margin-top:12px;font-size:.82rem;color:#e66b7b;position:relative;z-index:1}
+@media(max-width:480px){#dash-gate .dg-scene{width:99vw;height:86vh;min-height:500px}#dash-gate .dg-card{width:78vw;min-height:500px;padding:32px 18px;border-radius:26px}#dash-gate .dg-walkbot{width:118px;height:168px;bottom:15%}#dash-gate .dg-chat-icon{width:68px;height:68px;font-size:30px}#dash-gate h2{font-size:1.28rem}}
+@media(max-height:620px){#dash-gate .dg-scene{height:94vh;min-height:440px}#dash-gate .dg-card{min-height:440px;padding:22px 16px}#dash-gate .dg-walkbot{width:104px;height:148px;bottom:9%}#dash-gate .dg-chat-icon{width:58px;height:58px;margin-bottom:10px}#dash-gate .dg-divider{margin:17px 0 9px}#dash-gate p{margin-bottom:11px}}
+@media(prefers-reduced-motion:reduce){#dash-gate .dg-walkbot,#dash-gate .dg-lid{animation:none!important}#dash-gate .dg-walkbot{opacity:1;transform:translateX(-55px)}}
 </style>
-
-<script id="dash-gate-v12-pastel-script">
+<script id="dash-gate-v12-walk-script">
 (function(){
-  var gate=document.getElementById('dash-gate');
-  var inp=document.getElementById('dg-code');
-  var btn=document.getElementById('dg-btn');
-  var eye=document.getElementById('dg-eye');
-  var msg=document.getElementById('dg-msg');
-  var bot=document.getElementById('dg-peekbot');
-  var html=document.documentElement;
-  var oldOverflow=html.style.overflow;
-  html.style.overflow='hidden';
-
-  function playPeek(){if(!bot)return;bot.classList.remove('dg-peek-active');void bot.offsetWidth;bot.classList.add('dg-peek-active');}
-  setTimeout(function(){
-    playPeek();
-    setInterval(playPeek,5*60*1000);
-  },2000);
-
-  eye.addEventListener('click',function(){var show=!inp.classList.contains('dg-show');inp.classList.toggle('dg-show',show);eye.classList.toggle('on',show);eye.textContent=show?'🙈':'👁';inp.focus();});
-  function unlock(){gate.style.opacity='0';html.style.overflow=oldOverflow;setTimeout(function(){if(gate&&gate.parentNode)gate.parentNode.removeChild(gate);},440);}
-  function fail(t){msg.style.color='#e66b7b';msg.textContent=t||'รหัสไม่ถูกต้อง';inp.value='';inp.focus();btn.disabled=false;}
-  function submit(){
-    var code=(inp.value||'').trim();if(!code){inp.focus();return;}
-    btn.disabled=true;msg.style.color='#7e8da0';msg.textContent='กำลังตรวจสอบ...';
-    if(!(window.google&&google.script&&google.script.run)){fail('ต้องเปิดผ่านระบบ Apps Script เท่านั้น');return;}
-    google.script.run.withSuccessHandler(function(r){if(r&&r.ok)unlock();else fail((r&&r.error)||'รหัสไม่ถูกต้อง');}).withFailureHandler(function(e){fail('ตรวจสอบไม่ได้: '+((e&&e.message)||e));}).verifyDashboardCode(code);
-  }
-  btn.addEventListener('click',submit);
-  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();submit();}});
-  setTimeout(function(){try{inp.focus()}catch(e){}},200);
+var gate=document.getElementById('dash-gate'),inp=document.getElementById('dg-code'),btn=document.getElementById('dg-btn'),eye=document.getElementById('dg-eye'),msg=document.getElementById('dg-msg'),html=document.documentElement,oldOverflow=html.style.overflow;html.style.overflow='hidden';
+eye.addEventListener('click',function(){var show=!inp.classList.contains('dg-show');inp.classList.toggle('dg-show',show);eye.classList.toggle('on',show);eye.textContent=show?'🙈':'👁';inp.focus()});
+function unlock(){gate.style.opacity='0';html.style.overflow=oldOverflow;setTimeout(function(){if(gate&&gate.parentNode)gate.parentNode.removeChild(gate)},440)}
+function fail(t){msg.style.color='#e66b7b';msg.textContent=t||'รหัสไม่ถูกต้อง';inp.value='';inp.focus();btn.disabled=false}
+function submit(){var code=(inp.value||'').trim();if(!code){inp.focus();return}btn.disabled=true;msg.style.color='#7e8da0';msg.textContent='กำลังตรวจสอบ...';if(!(window.google&&google.script&&google.script.run)){fail('ต้องเปิดผ่านระบบ Apps Script เท่านั้น');return}google.script.run.withSuccessHandler(function(r){if(r&&r.ok)unlock();else fail((r&&r.error)||'รหัสไม่ถูกต้อง')}).withFailureHandler(function(e){fail('ตรวจสอบไม่ได้: '+((e&&e.message)||e))}).verifyDashboardCode(code)}
+btn.addEventListener('click',submit);inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();submit()}});setTimeout(function(){try{inp.focus()}catch(e){}},200)
 })();
 </script>
