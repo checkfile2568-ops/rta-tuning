@@ -7,106 +7,65 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--pink:#ff8fa8;--pink2:#ffb5c5;--blue:#65b9f3;--blue2:#bfe5ff;--ink:#24364b;--muted:#8090a2;--panel:#fff}
-  *{box-sizing:border-box;margin:0;padding:0;font-family:Prompt,sans-serif}
-  html,body{height:100%;overflow:hidden;background:#f8fbff;-webkit-tap-highlight-color:transparent}
+:root{--pink:#ff8fa8;--pink2:#ffb5c5;--blue:#65b9f3;--ink:#24364b;--muted:#8090a2}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Prompt,sans-serif}
+html,body{height:100%;overflow:hidden;background:#f8fbff;-webkit-tap-highlight-color:transparent}
+#splash{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;transition:opacity .55s ease,visibility .55s;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)}
+#splash:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 18%,rgba(255,143,168,.23),transparent 28%),radial-gradient(circle at 92% 22%,rgba(101,185,243,.18),transparent 30%)}
+.scene{position:relative;z-index:1;width:min(96vw,620px);height:min(88vh,700px);min-height:520px;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.stage{position:relative;z-index:3;width:min(82vw,380px);height:100%;min-height:520px;padding:42px 26px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#fff;border:1px solid #e7eef5;border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13);overflow:hidden}
+.stage:before{content:"";position:absolute;left:-20%;right:-20%;bottom:-9%;height:25%;border-radius:50% 50% 0 0;background:linear-gradient(135deg,rgba(255,181,197,.26),rgba(255,255,255,0))}
+.stage:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-78px;top:55px;background:rgba(191,229,255,.30)}
 
-  #splash{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;transition:opacity .55s ease,visibility .55s;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)}
-  #splash::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 18%,rgba(255,143,168,.24),transparent 28%),radial-gradient(circle at 92% 22%,rgba(101,185,243,.20),transparent 30%),radial-gradient(circle at 42% 100%,rgba(255,181,197,.20),transparent 34%)}
+/* Robot: 5 วินาทีเดิน/หยุด/กระพริบ/เดินออก + 3 วินาทีซ่อน แล้วเริ่มใหม่ */
+.walkbot{position:absolute;z-index:5;left:50%;bottom:17%;width:150px;height:210px;pointer-events:none;filter:drop-shadow(0 15px 24px rgba(54,84,108,.18));animation:botWalkLoop 8s linear infinite;transform-origin:50% 100%}
+.walkbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+.walkbot .lid{position:absolute;z-index:6;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center;animation:botBlinkLoop 8s linear infinite}
+.walkbot .lid.l{left:35.3%}.walkbot .lid.r{left:55%}
+@keyframes botWalkLoop{
+  0%{opacity:0;transform:translateX(-430px) translateY(0) rotate(-3deg)}
+  2%{opacity:1}
+  8%{transform:translateX(-300px) translateY(-5px) rotate(3deg)}
+  16%{transform:translateX(-210px) translateY(0) rotate(-3deg)}
+  24%{transform:translateX(-120px) translateY(-5px) rotate(3deg)}
+  31%{transform:translateX(-55px) translateY(0) rotate(0deg)}
+  56%{transform:translateX(-55px) translateY(0) rotate(0deg)}
+  64%{transform:translateX(45px) translateY(-5px) rotate(-3deg)}
+  72%{transform:translateX(155px) translateY(0) rotate(3deg)}
+  79%{opacity:1;transform:translateX(300px) translateY(-5px) rotate(-3deg)}
+  81%,100%{opacity:0;transform:translateX(430px) translateY(0) rotate(0deg)}
+}
+@keyframes botBlinkLoop{
+  0%,34%,37%,41%,45%,48%,52%,100%{opacity:0;transform:scaleY(.05)}
+  35%,39%,46%,50%{opacity:1;transform:scaleY(1)}
+}
 
-  .scene{position:relative;z-index:1;width:min(95vw,470px);height:min(88vh,700px);min-height:520px;display:flex;align-items:center;justify-content:flex-end}
-  .stage{position:relative;z-index:3;width:min(84vw,380px);height:100%;min-height:520px;padding:44px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#fff;border:1px solid rgba(224,232,240,.9);border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13),inset 0 1px 0 rgba(255,255,255,.95);overflow:hidden}
-  .stage::before{content:"";position:absolute;inset:auto -24% -11% -24%;height:28%;background:linear-gradient(135deg,rgba(255,181,197,.26),rgba(255,255,255,0));border-radius:50% 50% 0 0;pointer-events:none}
-  .stage::after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-78px;top:54px;background:rgba(191,229,255,.32);pointer-events:none}
-
-  .peekbot{position:absolute;z-index:2;left:-12px;top:50%;width:190px;height:260px;transform:translate(-78%,-50%) rotate(-2deg);transform-origin:70% 50%;filter:drop-shadow(0 16px 28px rgba(61,94,119,.18));pointer-events:none;opacity:1}
-  .peekbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
-  .peekbot .lid{position:absolute;z-index:5;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center}
-  .peekbot .lid.l{left:35.3%}.peekbot .lid.r{left:55.0%}
-  .peekbot.peek-active{animation:peekCycle 8s ease-in-out both}
-  .peekbot.peek-active .lid{animation:blinkTwice 8s linear both}
-  @keyframes peekCycle{
-    0%,6%{transform:translate(-78%,-50%) rotate(-2deg)}
-    25%,87.5%{transform:translate(-8%,-50%) rotate(0deg)}
-    100%{transform:translate(-78%,-50%) rotate(-2deg)}
-  }
-  @keyframes blinkTwice{
-    0%,34%,37%,43%,54%,57%,63%,100%{opacity:0;transform:scaleY(.05)}
-    35%,40%,55%,60%{opacity:1;transform:scaleY(1)}
-  }
-
-  .brand-icon{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:38px}
-  .stage h1{font-size:1.48rem;font-weight:600;line-height:1.25;color:var(--ink)}
-  .stage h1 span{color:var(--pink)}
-  .sub{display:inline-block;color:#58aee8;font-size:.88rem;margin-top:8px;padding:5px 12px;border-radius:999px;background:#eef8ff}
-  .status{display:inline-flex;align-items:center;gap:8px;margin:32px 0 12px;font-size:.9rem;color:var(--ink)}
-  .status .dot{width:8px;height:8px;border-radius:50%;background:#54c79b;box-shadow:0 0 0 0 rgba(84,199,155,.45);animation:live 1.6s infinite}
-  @keyframes live{0%{box-shadow:0 0 0 0 rgba(84,199,155,.45)}70%{box-shadow:0 0 0 9px rgba(84,199,155,0)}100%{box-shadow:0 0 0 0 rgba(84,199,155,0)}}
-  .bar{width:100%;max-width:300px;height:9px;margin:0 auto;border-radius:999px;background:#eef2f6;overflow:hidden;box-shadow:inset 0 1px 2px rgba(62,85,105,.08)}
-  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#ff9db4,#ff7999 58%,#65b9f3);transition:width .3s ease}
-  .pct{font-size:.78rem;color:#8291a2;letter-spacing:.7px;margin-top:8px}
-  .wait-note{margin-top:28px;width:100%;max-width:300px;padding:14px 16px;border-radius:16px;background:#fbfdff;border:1px solid #edf1f5;color:#607286;font-size:.78rem;line-height:1.55;box-shadow:0 8px 22px rgba(69,96,121,.06)}
-
-  #app{position:fixed;inset:0;z-index:10;display:none;background:#f8fbff}#app iframe{width:100%;height:100%;border:0;display:block;background:#f8fbff}
-  #reopen{position:fixed;right:14px;bottom:14px;z-index:15;display:none;padding:9px 14px;border-radius:11px;color:#fff;background:linear-gradient(135deg,#ffabc0,#ff7f9d);text-decoration:none;box-shadow:0 8px 22px rgba(255,127,157,.28);font-size:.82rem}
-
-  @media(max-width:480px){
-    #splash{padding:12px}.scene{width:96vw;height:86vh;min-height:500px}.stage{width:82vw;min-height:500px;padding:34px 20px;border-radius:26px}
-    .peekbot{left:-4px;width:164px;height:230px}.brand-icon{width:76px;height:76px;font-size:34px}.stage h1{font-size:1.34rem}.status{margin-top:26px}
-  }
-  @media(max-height:620px){.scene{height:94vh;min-height:440px}.stage{min-height:440px;padding:24px 18px}.brand-icon{width:64px;height:64px;margin-bottom:12px}.status{margin:20px 0 10px}.wait-note{margin-top:18px}.peekbot{width:142px;height:202px}}
-  @media(prefers-reduced-motion:reduce){.peekbot.peek-active,.peekbot.peek-active .lid,.status .dot{animation:none!important}.peekbot{transform:translate(-16%,-50%)}}
+.brand-icon{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin-bottom:16px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:34px}
+.stage h1{font-size:1.45rem;font-weight:600;color:var(--ink);line-height:1.25;position:relative;z-index:1}.stage h1 span{color:var(--pink)}
+.sub{color:#58aee8;font-size:.86rem;margin-top:8px;padding:5px 12px;border-radius:999px;background:#eef8ff;position:relative;z-index:1}
+.status{display:inline-flex;align-items:center;gap:8px;margin:28px 0 11px;font-size:.87rem;color:var(--ink);position:relative;z-index:1}.status .dot{width:8px;height:8px;border-radius:50%;background:#54c79b;animation:live 1.6s infinite}
+@keyframes live{0%{box-shadow:0 0 0 0 rgba(84,199,155,.45)}70%{box-shadow:0 0 0 9px rgba(84,199,155,0)}100%{box-shadow:0 0 0 0 rgba(84,199,155,0)}}
+.bar{width:100%;max-width:300px;height:9px;border-radius:999px;background:#eef2f6;overflow:hidden;position:relative;z-index:1}.bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#ff9db4,#ff7999 58%,#65b9f3);transition:width .3s ease}.pct{font-size:.76rem;color:#8291a2;margin-top:8px;position:relative;z-index:1}.wait-note{margin-top:24px;width:100%;max-width:300px;padding:13px 15px;border-radius:16px;background:#fbfdff;border:1px solid #edf1f5;color:#607286;font-size:.75rem;line-height:1.5;position:relative;z-index:1}
+#app{position:fixed;inset:0;z-index:10;display:none;background:#f8fbff}#app iframe{width:100%;height:100%;border:0;display:block;background:#f8fbff}#reopen{position:fixed;right:14px;bottom:14px;z-index:15;display:none;padding:9px 14px;border-radius:11px;color:#fff;background:linear-gradient(135deg,#ffabc0,#ff7f9d);text-decoration:none;box-shadow:0 8px 22px rgba(255,127,157,.28);font-size:.82rem}
+@media(max-width:480px){#splash{padding:10px}.scene{width:98vw;height:86vh;min-height:500px}.stage{width:78vw;min-height:500px;padding:32px 18px}.walkbot{width:122px;height:174px;bottom:19%}.brand-icon{width:70px;height:70px;font-size:30px}.stage h1{font-size:1.25rem}.wait-note{font-size:.68rem}}
+@media(max-height:620px){.scene{height:94vh;min-height:440px}.stage{min-height:440px;padding:22px 16px}.walkbot{width:108px;height:154px;bottom:14%}.brand-icon{width:58px;height:58px;margin-bottom:10px}.status{margin:18px 0 9px}.wait-note{margin-top:15px}}
+@media(prefers-reduced-motion:reduce){.walkbot,.walkbot .lid,.status .dot{animation:none!important}.walkbot{opacity:1;transform:translateX(-55px)}}
 </style>
 </head>
 <body>
-  <div id="splash">
-    <div class="scene">
-      <div class="peekbot" id="peekBot" aria-hidden="true">
-        <img src="assets/chatbot-v11.png" alt="">
-        <i class="lid l"></i><i class="lid r"></i>
-      </div>
-      <div class="stage">
-        <div class="brand-icon">💬</div>
-        <h1>Chatbot <span>ศูนย์ข้อมูล</span></h1>
-        <div class="sub">v11 Github</div>
-        <div class="status"><span class="dot"></span><span id="statusText">กำลังเตรียมระบบเข้าสู่ Dashboard...</span></div>
-        <div class="bar"><i id="barFill"></i></div>
-        <div class="pct" id="pctText">0%</div>
-        <div class="wait-note">เรากำลังเตรียมพร้อม เพื่อมอบประสบการณ์ที่ดีที่สุดให้กับคุณ</div>
-      </div>
-    </div>
-  </div>
-
-  <div id="app"><iframe id="appFrame" title="Dashboard" referrerpolicy="no-referrer"></iframe></div>
-  <a id="reopen" href="#" target="_blank" rel="noopener">เปิดในแท็บใหม่</a>
-
+<div id="splash"><div class="scene">
+  <div class="walkbot" aria-hidden="true"><img src="assets/chatbot-v11.png" alt=""><i class="lid l"></i><i class="lid r"></i></div>
+  <div class="stage"><div class="brand-icon">💬</div><h1>Chatbot <span>ศูนย์ข้อมูล</span></h1><div class="sub">v11 Github</div><div class="status"><span class="dot"></span><span id="statusText">กำลังเตรียมระบบเข้าสู่ Dashboard...</span></div><div class="bar"><i id="barFill"></i></div><div class="pct" id="pctText">0%</div><div class="wait-note">เรากำลังเตรียมพร้อม เพื่อมอบประสบการณ์ที่ดีที่สุดให้กับคุณ</div></div>
+</div></div>
+<div id="app"><iframe id="appFrame" title="Dashboard" referrerpolicy="no-referrer"></iframe></div>
+<a id="reopen" href="#" target="_blank" rel="noopener">เปิดในแท็บใหม่</a>
 <script>
-  var DASH_URL="https://script.google.com/macros/s/AKfycbwojYt6ZB4aAI8QvKqFdFzr3_72ccwYRnhYENrAF-7PpRyr6AOBkL7NWOg5KELipznp/exec";
-  var splash=document.getElementById('splash'),app=document.getElementById('app'),frame=document.getElementById('appFrame'),fill=document.getElementById('barFill'),pct=document.getElementById('pctText'),reopen=document.getElementById('reopen'),statusText=document.getElementById('statusText'),peekBot=document.getElementById('peekBot');
-  var progress=0,shown=false,ready=false,startAt=Date.now(),MIN_SPLASH_MS=10000;
-
-  function playPeek(){
-    if(!peekBot)return;
-    peekBot.classList.remove('peek-active');void peekBot.offsetWidth;peekBot.classList.add('peek-active');
-  }
-  setTimeout(function(){
-    playPeek();
-    setInterval(playPeek,5*60*1000);
-  },2000);
-
-  function revealApp(){
-    if(shown||!ready)return;
-    var wait=Math.max(0,MIN_SPLASH_MS-(Date.now()-startAt));
-    setTimeout(function(){
-      if(shown)return;shown=true;progress=100;fill.style.width='100%';pct.textContent='100%';statusText.textContent='พร้อมใช้งาน';
-      setTimeout(function(){splash.style.opacity='0';splash.style.visibility='hidden';app.style.display='block';reopen.href=DASH_URL;reopen.style.display='block';},350);
-    },wait);
-  }
-
-  frame.src=DASH_URL;
-  frame.addEventListener('load',function(){ready=true;revealApp();});
-  var timer=setInterval(function(){if(shown){clearInterval(timer);return;}progress=Math.min(94,progress+(progress<60?3.5:1.1));fill.style.width=progress+'%';pct.textContent=Math.round(progress)+'%';},100);
-  setTimeout(function(){if(!ready){statusText.textContent='กำลังเชื่อมต่อระบบ...';reopen.href=DASH_URL;reopen.style.display='block';}},12000);
+var DASH_URL="https://script.google.com/macros/s/AKfycbwojYt6ZB4aAI8QvKqFdFzr3_72ccwYRnhYENrAF-7PpRyr6AOBkL7NWOg5KELipznp/exec";
+var splash=document.getElementById('splash'),app=document.getElementById('app'),frame=document.getElementById('appFrame'),fill=document.getElementById('barFill'),pct=document.getElementById('pctText'),reopen=document.getElementById('reopen'),statusText=document.getElementById('statusText');
+var progress=0,shown=false,ready=false,startAt=Date.now(),MIN_SPLASH_MS=8200;
+function revealApp(){if(shown||!ready)return;var wait=Math.max(0,MIN_SPLASH_MS-(Date.now()-startAt));setTimeout(function(){if(shown)return;shown=true;fill.style.width='100%';pct.textContent='100%';statusText.textContent='พร้อมใช้งาน';setTimeout(function(){splash.style.opacity='0';splash.style.visibility='hidden';app.style.display='block';reopen.href=DASH_URL;reopen.style.display='block'},350)},wait)}
+frame.src=DASH_URL;frame.addEventListener('load',function(){ready=true;revealApp()});
+var timer=setInterval(function(){if(shown){clearInterval(timer);return}progress=Math.min(94,progress+(progress<60?3.5:1.1));fill.style.width=progress+'%';pct.textContent=Math.round(progress)+'%'},100);
+setTimeout(function(){if(!ready){statusText.textContent='กำลังเชื่อมต่อระบบ...';reopen.href=DASH_URL;reopen.style.display='block'}},12000);
 </script>
-</body>
-</html>
+</body></html>
