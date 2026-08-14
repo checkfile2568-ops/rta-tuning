@@ -1,8 +1,9 @@
-<!-- ═══ Chatbot ศูนย์ข้อมูล v12.2 — Pastel Login + Walking Robot ═══
-วางก่อน </body> ใน Dashboard.html ของ Apps Script
+<!-- ═══ Chatbot ศูนย์ข้อมูล v12.3 — Pastel Login + Forced Walking Robot ═══
+วางเป็นเนื้อหาทั้งหมดของ gate_login.html ใน Apps Script
 ต้องมี verifyDashboardCode(code) ฝั่ง .gs
 คงข้อความและการทำงานเดิม เปลี่ยนเฉพาะธีม/ลูกเล่นบอท
 รอบบอท: ทำงาน 5 วินาที + พัก 3 วินาที = 8 วินาที
+หมายเหตุ: บังคับให้ animation ทำงานแม้เครื่องตั้งค่า Reduce Motion
 -->
 <div id="dash-gate">
   <div class="dg-scene">
@@ -34,10 +35,10 @@
 #dash-gate .dg-card:before{content:"";position:absolute;left:-22%;right:-22%;bottom:-10%;height:27%;border-radius:50% 50% 0 0;background:linear-gradient(135deg,rgba(255,181,197,.25),rgba(255,255,255,0))}
 #dash-gate .dg-card:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-78px;top:54px;background:rgba(191,229,255,.30)}
 
-/* 0–5 วิ: เดินจากซ้าย → หยุด/กระพริบ 2 ครั้ง → เดินออกขวา | 5–8 วิ: ซ่อน/พัก */
-#dash-gate .dg-walkbot{position:absolute;z-index:5;left:50%;bottom:13%;width:150px;height:210px;pointer-events:none;filter:drop-shadow(0 15px 24px rgba(54,84,108,.18));animation:dgBotWalk 8s linear infinite;transform-origin:50% 100%}
+/* 0–5 วิ: เดินจากขอบซ้าย → หยุดหันหน้า/กระพริบ 2 ครั้ง → เดินออกขวา | 5–8 วิ: ซ่อน/พัก */
+#dash-gate .dg-walkbot{position:absolute;z-index:5;left:50%;bottom:5%;width:132px;height:186px;pointer-events:none;filter:drop-shadow(0 15px 24px rgba(54,84,108,.18));animation-name:dgBotWalk!important;animation-duration:8s!important;animation-timing-function:linear!important;animation-iteration-count:infinite!important;animation-play-state:running!important;transform-origin:50% 100%;will-change:transform,opacity}
 #dash-gate .dg-walkbot img{position:absolute;inset:0;margin:auto;display:block;max-width:100%;max-height:100%;width:auto;height:auto}
-#dash-gate .dg-lid{position:absolute;z-index:6;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center;animation:dgBotBlink 8s linear infinite}
+#dash-gate .dg-lid{position:absolute;z-index:6;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center;animation-name:dgBotBlink!important;animation-duration:8s!important;animation-timing-function:linear!important;animation-iteration-count:infinite!important;animation-play-state:running!important;will-change:opacity,transform}
 #dash-gate .dg-lid-l{left:35.3%}#dash-gate .dg-lid-r{left:55%}
 @keyframes dgBotWalk{
   0%{opacity:0;transform:translateX(-470px) translateY(0) rotate(-3deg)}
@@ -45,16 +46,16 @@
   8%{transform:translateX(-330px) translateY(-5px) rotate(3deg)}
   16%{transform:translateX(-220px) translateY(0) rotate(-3deg)}
   24%{transform:translateX(-120px) translateY(-5px) rotate(3deg)}
-  25%{transform:translateX(-55px) translateY(0) rotate(0deg)}
-  43.75%{transform:translateX(-55px) translateY(0) rotate(0deg)}
+  25%{opacity:1;transform:translateX(-55px) translateY(0) rotate(0deg)}
+  43.75%{opacity:1;transform:translateX(-55px) translateY(0) rotate(0deg)}
   50%{transform:translateX(65px) translateY(-5px) rotate(-3deg)}
   56%{transform:translateX(190px) translateY(0) rotate(3deg)}
   61%{opacity:1;transform:translateX(350px) translateY(-5px) rotate(-3deg)}
   62.5%,100%{opacity:0;transform:translateX(470px) translateY(0) rotate(0deg)}
 }
 @keyframes dgBotBlink{
-  0%,28%,31%,35%,38%,41%,44%,100%{opacity:0;transform:scaleY(.05)}
-  29%,36%,42%{opacity:1;transform:scaleY(1)}
+  0%,29%,31%,36%,38%,100%{opacity:0;transform:scaleY(.05)}
+  30%,37%{opacity:1;transform:scaleY(1)}
 }
 
 #dash-gate .dg-chat-icon{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin-bottom:16px;background:radial-gradient(circle at 35% 30%,#fff,#fff5f8 58%,#eaf6ff);box-shadow:0 10px 30px rgba(255,143,168,.16);font-size:34px;position:relative;z-index:1}
@@ -68,9 +69,8 @@
 #dash-gate #dg-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;border-radius:10px;background:#f5f8fb;color:#7d8b9a;font-size:16px;cursor:pointer;line-height:1}#dash-gate #dg-eye.on{background:#fff0f4;color:#ff7897}
 #dash-gate #dg-btn{width:100%;margin-top:16px;padding:14px;border:none;border-radius:14px;font-family:inherit;font-weight:600;font-size:1rem;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ffabc0,#ff7f9d);box-shadow:0 10px 24px rgba(255,127,157,.24);position:relative;z-index:1}#dash-gate #dg-btn:disabled{opacity:.62;cursor:default}
 #dash-gate #dg-msg{min-height:20px;margin-top:12px;font-size:.82rem;color:#e66b7b;position:relative;z-index:1}
-@media(max-width:480px){#dash-gate .dg-scene{width:99vw;height:86vh;min-height:500px}#dash-gate .dg-card{width:78vw;min-height:500px;padding:32px 18px;border-radius:26px}#dash-gate .dg-walkbot{width:118px;height:168px;bottom:15%}#dash-gate .dg-chat-icon{width:68px;height:68px;font-size:30px}#dash-gate h2{font-size:1.28rem}}
-@media(max-height:620px){#dash-gate .dg-scene{height:94vh;min-height:440px}#dash-gate .dg-card{min-height:440px;padding:22px 16px}#dash-gate .dg-walkbot{width:104px;height:148px;bottom:9%}#dash-gate .dg-chat-icon{width:58px;height:58px;margin-bottom:10px}#dash-gate .dg-divider{margin:17px 0 9px}#dash-gate p{margin-bottom:11px}}
-@media(prefers-reduced-motion:reduce){#dash-gate .dg-walkbot,#dash-gate .dg-lid{animation:none!important}#dash-gate .dg-walkbot{opacity:1;transform:translateX(-55px)}}
+@media(max-width:480px){#dash-gate .dg-scene{width:99vw;height:86vh;min-height:500px}#dash-gate .dg-card{width:78vw;min-height:500px;padding:32px 18px;border-radius:26px}#dash-gate .dg-walkbot{width:108px;height:154px;bottom:4%}#dash-gate .dg-chat-icon{width:68px;height:68px;font-size:30px}#dash-gate h2{font-size:1.28rem}}
+@media(max-height:620px){#dash-gate .dg-scene{height:94vh;min-height:440px}#dash-gate .dg-card{min-height:440px;padding:22px 16px}#dash-gate .dg-walkbot{width:96px;height:136px;bottom:2%}#dash-gate .dg-chat-icon{width:58px;height:58px;margin-bottom:10px}#dash-gate .dg-divider{margin:17px 0 9px}#dash-gate p{margin-bottom:11px}}
 </style>
 <script id="dash-gate-v12-walk-script">
 (function(){
