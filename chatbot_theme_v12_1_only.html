@@ -1,0 +1,68 @@
+<!-- CHATBOT THEME v12.1 — THEME ONLY
+วางท้าย Dashboard.html ก่อน </body> หลัง Gate ล่าสุด
+- เปลี่ยนเฉพาะธีม Dashboard + สีของ Gate
+- ไม่เพิ่มบอท ไม่เพิ่ม event listener ไม่เปลี่ยนเมนู/ข้อมูล/handler
+- ใช้คู่กับ gate_login_v11_unified.html เพื่อไม่ให้บอทซ้ำ
+-->
+<style id="chatbot-theme-v12-1-only">
+:root{
+  --p12-pink:#ff8fa8;--p12-pink2:#ffb5c5;--p12-blue:#65b9f3;--p12-blue2:#bfe5ff;
+  --p12-ink:#24364b;--p12-muted:#7e8da0;--p12-bg:#f8fbff;--p12-border:#e7eef5;
+  --primary:#ff8fa8!important;--primary-light:#65b9f3!important;--accent:#65b9f3!important;
+  --text-main:#24364b!important;--text-dim:#7e8da0!important;--card-bg:#fff!important;--border:#e7eef5!important;
+}
+html,body{background:linear-gradient(135deg,#fff3f6 0%,#fbfdff 48%,#eef8ff 100%)!important;color:var(--p12-ink)!important;}
+body::before{content:""!important;position:fixed!important;inset:0!important;pointer-events:none!important;z-index:0!important;width:auto!important;height:auto!important;transform:none!important;filter:none!important;background:radial-gradient(circle at 8% 16%,rgba(255,143,168,.18),transparent 28%),radial-gradient(circle at 92% 20%,rgba(101,185,243,.14),transparent 30%),radial-gradient(circle at 50% 100%,rgba(255,181,197,.10),transparent 36%)!important;}
+.container,.sidebar,.main,aside,main{position:relative;z-index:1;}
+
+/* Sidebar */
+aside,.sidebar{background:rgba(255,255,255,.93)!important;border-right:1px solid #edf1f6!important;backdrop-filter:blur(18px) saturate(135%)!important;box-shadow:8px 0 30px rgba(74,107,136,.06)!important;}
+.sidebar-header{border-bottom-color:#edf1f6!important;}
+.sidebar-header h1,.sidebar-header h2{color:#24364b!important;background:none!important;-webkit-text-fill-color:#24364b!important;}
+.sidebar-header p{color:#8b98a7!important;}
+.sidebar-menu li a,.nav-item,.sidebar a{color:#52667b!important;}
+.sidebar-menu li.active a,.sidebar-menu li a:hover,.nav-item.active,.nav-item:hover{background:linear-gradient(90deg,#fff0f4,#f2f9ff)!important;color:#24364b!important;border-left-color:#ff8fa8!important;box-shadow:inset 0 0 22px rgba(255,143,168,.06)!important;}
+
+/* Topbar */
+header.topbar,.topbar{background:rgba(255,255,255,.86)!important;border-bottom:1px solid #eaf0f5!important;backdrop-filter:blur(16px) saturate(135%)!important;box-shadow:0 6px 22px rgba(73,99,123,.05)!important;}
+header.topbar h1,.topbar h1,.page-title,h1,h2,h3,h4,.card-header,.help-card h3,.health-cat-title,.ms-group-title,.ms-item-label,.perm-key,.perm-result-card h3{color:#24364b!important;-webkit-text-fill-color:initial!important;}
+.user-profile,.stat-label,.stat-change,.ms-item-desc,.help-card td,.ms-status-text,.perm-value,.health-check-row{color:#7e8da0!important;}
+.page-title{border-bottom-color:#edf1f5!important;}
+.hamburger{background:#fff0f4!important;border-color:#ffd7e1!important;color:#ff7696!important;}
+
+/* Cards */
+.stat-card,.glass-card,.chart-card,.card,.card-body,.card-header,.help-card,.health-cat,.perm-result-card,.guide-box,.ms-group,.online-field-panel,.online-topic-card,.online-pro-card,.smoke-summary,.smoke-modal,.toast,.tab-pane,.lead-day-chip{background:rgba(255,255,255,.95)!important;border-color:#e7eef5!important;color:#24364b!important;backdrop-filter:blur(14px) saturate(125%)!important;box-shadow:0 12px 34px rgba(69,96,121,.08),inset 0 1px 0 rgba(255,255,255,.95)!important;}
+.stat-card::before{background:linear-gradient(90deg,#ff9db4,#ff7f9d)!important;}
+.stat-card:nth-child(even)::before{background:linear-gradient(90deg,#8fd0fa,#65b9f3)!important;}
+.stat-value,.stat-card .number{color:#ff7898!important;}
+.stat-card:nth-child(even) .stat-value,.stat-card:nth-child(even) .number{color:#58aee8!important;}
+
+/* Inputs */
+.form-input,.form-select,.form-textarea,input[type="text"],input[type="search"],input[type="number"],input[type="email"],input[type="tel"],input[type="url"],input[type="password"],input:not([type]),textarea,select{background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;caret-color:#ff7898!important;border-color:#e4ebf1!important;box-shadow:inset 0 1px 2px rgba(65,91,116,.03)!important;}
+input::placeholder,textarea::placeholder,.form-input::placeholder,.form-textarea::placeholder{color:#9aa6b5!important;-webkit-text-fill-color:#9aa6b5!important;opacity:1!important;}
+select option{background:#fff!important;color:#24364b!important;}
+.form-input:focus,.form-select:focus,.form-textarea:focus,input:focus,textarea:focus{border-color:#ff9db4!important;box-shadow:0 0 0 3px rgba(255,143,168,.13)!important;}
+
+/* Buttons / tables */
+.btn{background:linear-gradient(135deg,#ffabc0,#ff7f9d)!important;color:#fff!important;border:none!important;box-shadow:0 8px 22px rgba(255,127,157,.22)!important;}
+.btn-warning{background:linear-gradient(135deg,#91d3fb,#65b9f3)!important;color:#fff!important;}
+.tab-btn{color:#7e8da0!important;}.tab-btn.active{color:#ff7898!important;background:#fff0f4!important;}
+.badge-new{background:linear-gradient(135deg,#ff9db4,#72c3f5)!important;color:#fff!important;}
+table th{background:#f4f9fd!important;color:#40566d!important;}table td{border-color:#edf1f5!important;color:#52667b!important;}
+.help-card .cmd{background:#f7f9fc!important;color:#e26c88!important;}
+.guide-box{background:#fff3f6!important;color:#6d4f59!important;border-left-color:#ff8fa8!important;}
+.perm-result-card{background:#f3f9ff!important;border-color:#dbeeff!important;}
+.ms-toggle{background:#dfe7ee!important;}.ms-toggle.on{background:linear-gradient(135deg,#ff8fa8,#65b9f3)!important;}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#d9e4ec;border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+
+/* Gate: สีเดียวกับหน้าโหลด แต่ไม่แตะ animation/robot */
+#dash-gate{background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)!important;}
+#dash-gate .dg-card{background:#fff!important;border-color:#e7eef5!important;color:#24364b!important;box-shadow:0 26px 64px rgba(65,91,116,.13)!important;}
+#dash-gate h2{color:#24364b!important;background:none!important;-webkit-text-fill-color:#24364b!important;}
+#dash-gate h2 span{color:#ff8fa8!important;}
+#dash-gate p{color:#40536a!important;}
+#dash-gate #dg-code{background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;border-color:#f0dce2!important;caret-color:#ff7f9d!important;}
+#dash-gate #dg-code:focus{border-color:#ff9db4!important;box-shadow:0 0 0 3px rgba(255,143,168,.14)!important;}
+#dash-gate #dg-btn{background:linear-gradient(135deg,#ffabc0,#ff7f9d)!important;color:#fff!important;box-shadow:0 10px 24px rgba(255,127,157,.24)!important;}
+#dash-gate #dg-eye{background:#f5f8fb!important;color:#7d8b9a!important;}
+</style>
