@@ -1,0 +1,26 @@
+<!-- SAFE v14 — Login THEME ONLY
+วางท้าย gate_login.html เดิมที่ใช้งานได้จริง ก่อน </body>
+ไฟล์นี้ไม่มี JavaScript และไม่เปลี่ยน verifyDashboardCode / token / redirect / session
+เอาบอทและ animation ออกทั้งหมดด้วย CSS เท่านั้น
+-->
+<style id="safe-v14-login-theme-only">
+:root{--sv14-pink:#ff8fa8;--sv14-blue:#65b9f3;--sv14-ink:#24364b;--sv14-muted:#8090a2;--sv14-line:#e7eef5}
+html,body{background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)!important;color:var(--sv14-ink)!important;font-family:'Prompt','Sarabun',sans-serif!important}
+#dash-gate{background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)!important;padding:16px!important}
+#dash-gate:before,#dash-gate:after,#dash-gate .dg-glow{animation:none!important;transform:none!important}
+#dash-gate .dg-bot,#dash-gate .dg-walkbot,#dash-gate .dg-lid,#dash-gate .eyelid{display:none!important;animation:none!important}
+#dash-gate .dg-card{width:min(92vw,390px)!important;min-height:440px!important;padding:40px 28px!important;background:#fff!important;border:1px solid var(--sv14-line)!important;border-radius:28px!important;box-shadow:0 26px 64px rgba(65,91,116,.13)!important;color:var(--sv14-ink)!important;backdrop-filter:none!important}
+#dash-gate .dg-card:before,#dash-gate .dg-card:after{animation:none!important}
+#dash-gate h1,#dash-gate h2{color:var(--sv14-ink)!important;background:none!important;-webkit-text-fill-color:var(--sv14-ink)!important;font-weight:600!important}
+#dash-gate h1 span,#dash-gate h2 span{color:var(--sv14-pink)!important;-webkit-text-fill-color:var(--sv14-pink)!important}
+#dash-gate .dg-sub{color:#58aee8!important;background:#eef8ff!important;padding:5px 12px!important;border-radius:999px!important}
+#dash-gate p{color:#50657a!important}
+#dash-gate .dg-inwrap{width:100%!important}
+#dash-gate #dg-code{width:100%!important;background:#fff!important;color:var(--sv14-ink)!important;-webkit-text-fill-color:var(--sv14-ink)!important;border:1px solid #efdfe5!important;border-radius:14px!important;caret-color:var(--sv14-pink)!important;box-shadow:0 8px 22px rgba(74,102,126,.05)!important}
+#dash-gate #dg-code::placeholder{color:#9aa8b7!important;-webkit-text-fill-color:#9aa8b7!important}
+#dash-gate #dg-code:focus{border-color:#ff9db4!important;box-shadow:0 0 0 3px rgba(255,143,168,.14)!important}
+#dash-gate #dg-eye{background:#f5f8fb!important;color:#7d8b9a!important;border-radius:10px!important}
+#dash-gate #dg-btn{width:100%!important;background:linear-gradient(135deg,#ffabc0,#ff7f9d)!important;color:#fff!important;border:none!important;border-radius:14px!important;box-shadow:0 10px 24px rgba(255,127,157,.24)!important}
+#dash-gate #dg-msg{color:#e66b7b!important}
+@media(max-width:480px){#dash-gate{padding:10px!important}#dash-gate .dg-card{width:min(94vw,390px)!important;min-height:420px!important;padding:30px 20px!important;border-radius:24px!important}}
+</style>
