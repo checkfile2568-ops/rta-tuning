@@ -1,125 +1,35 @@
-<!-- ============================================================
- CHATBOT PASTEL PATCH v12 — ONE SHOT
- วางท้าย Dashboard.html ก่อน </body> เพียงครั้งเดียว
- - เปลี่ยนเฉพาะธีม/สี/หน้าตา
- - คงเมนู ข้อความ handler ฟังก์ชัน และข้อมูลเดิม
- - ปรับ Gate เดิมให้เป็นขาว-ชมพู-ฟ้า
- - ย้ายบอทออกมาจับขอบฉากแบบ 3D โดยไม่ทำลาย event listener เดิม
- - ครั้งแรกเริ่มหลัง 2 วินาที, โผล่+จับขอบ, ค้าง 5 วินาที, กระพริบตา 2 ครั้ง, กลับเข้า
- - เล่นซ้ำทุก 5 นาที
- ============================================================ -->
-<style id="chatbot-pastel-one-shot-v12">
-:root{
-  --p12-pink:#ff8fa8;--p12-pink2:#ffb5c5;--p12-blue:#65b9f3;--p12-blue2:#bfe5ff;
-  --p12-ink:#24364b;--p12-muted:#7e8da0;--p12-bg:#f8fbff;--p12-border:#e7eef5;
-  --primary:#ff8fa8!important;--primary-light:#65b9f3!important;--accent:#65b9f3!important;
-  --text-main:#24364b!important;--text-dim:#7e8da0!important;--card-bg:#fff!important;--border:#e7eef5!important;
-}
-html,body{background:linear-gradient(135deg,#fff3f6 0%,#fbfdff 48%,#eef8ff 100%)!important;color:var(--p12-ink)!important;}
-body::before{content:""!important;position:fixed!important;inset:0!important;pointer-events:none!important;z-index:0!important;background:radial-gradient(circle at 8% 16%,rgba(255,143,168,.18),transparent 28%),radial-gradient(circle at 92% 20%,rgba(101,185,243,.14),transparent 30%),radial-gradient(circle at 50% 100%,rgba(255,181,197,.12),transparent 36%)!important;filter:none!important;transform:none!important;width:auto!important;height:auto!important;}
-body::after{content:""!important;position:fixed!important;left:-8%!important;bottom:-22%!important;width:55vw!important;height:40vh!important;pointer-events:none!important;z-index:0!important;border-radius:50%!important;background:linear-gradient(145deg,rgba(255,181,197,.20),rgba(255,255,255,0))!important;filter:blur(6px)!important;transform:none!important;top:auto!important;}
-.container,.sidebar,.main,aside,main{position:relative;z-index:1;}
+<!-- CHATBOT PASTEL ONE-SHOT PATCH v12.1
+วางท้าย Dashboard.html ก่อน </body>
+- ไม่เปลี่ยนเมนู/ข้อมูล/handler เดิม
+- restyle Dashboard + Gate เป็นขาว ชมพู ฟ้า
+- ซ่อนบอทเก่า แล้วเพิ่มบอทเดิน: 5 วิ + พัก 3 วิ วนซ้ำ
+-->
+<style id="chatbot-pastel-one-shot-v121">
+:root{--p12-pink:#ff8fa8;--p12-blue:#65b9f3;--p12-ink:#24364b;--p12-muted:#7e8da0;--p12-border:#e7eef5;--primary:#ff8fa8!important;--primary-light:#65b9f3!important;--accent:#65b9f3!important;--text-main:#24364b!important;--text-dim:#7e8da0!important;--card-bg:#fff!important;--border:#e7eef5!important}
+html,body{background:linear-gradient(135deg,#fff3f6 0%,#fbfdff 48%,#eef8ff 100%)!important;color:#24364b!important}
+body:before{content:""!important;position:fixed!important;inset:0!important;pointer-events:none!important;z-index:0!important;width:auto!important;height:auto!important;transform:none!important;filter:none!important;background:radial-gradient(circle at 8% 16%,rgba(255,143,168,.18),transparent 28%),radial-gradient(circle at 92% 20%,rgba(101,185,243,.14),transparent 30%)!important}
+.container,.sidebar,.main,aside,main{position:relative;z-index:1}
+aside,.sidebar{background:rgba(255,255,255,.92)!important;border-right:1px solid #edf1f6!important;backdrop-filter:blur(18px)!important;box-shadow:8px 0 30px rgba(74,107,136,.06)!important}.sidebar-header{border-bottom-color:#edf1f6!important}.sidebar-header h1,.sidebar-header h2{color:#24364b!important;background:none!important;-webkit-text-fill-color:#24364b!important}.sidebar-header p{color:#8b98a7!important}.sidebar-menu li a,.nav-item,.sidebar a{color:#52667b!important}.sidebar-menu li.active a,.sidebar-menu li a:hover,.nav-item.active,.nav-item:hover{background:linear-gradient(90deg,#fff0f4,#f2f9ff)!important;color:#24364b!important;border-left-color:#ff8fa8!important;box-shadow:none!important}
+header.topbar,.topbar{background:rgba(255,255,255,.85)!important;border-bottom:1px solid #eaf0f5!important;backdrop-filter:blur(16px)!important;box-shadow:0 6px 22px rgba(73,99,123,.05)!important}header.topbar h1,.topbar h1,.page-title,h1,h2,h3,h4,.card-header{color:#24364b!important;-webkit-text-fill-color:initial!important}.user-profile,.stat-label,.stat-change{color:#7e8da0!important}.page-title{border-bottom-color:#edf1f5!important}.hamburger{background:#fff0f4!important;border-color:#ffd7e1!important;color:#ff7696!important}
+.stat-card,.glass-card,.chart-card,.card,.card-body,.card-header,.help-card,.health-cat,.perm-result-card,.guide-box,.ms-group,.online-field-panel,.online-topic-card,.online-pro-card,.smoke-summary,.smoke-modal,.toast,.tab-pane,.lead-day-chip{background:rgba(255,255,255,.95)!important;border-color:#e7eef5!important;color:#24364b!important;box-shadow:0 12px 34px rgba(69,96,121,.08)!important}.stat-card::before{background:linear-gradient(90deg,#ff9db4,#ff7f9d)!important}.stat-card:nth-child(even)::before{background:linear-gradient(90deg,#8fd0fa,#65b9f3)!important}.stat-value,.stat-card .number{color:#ff7898!important}.stat-card:nth-child(even) .stat-value,.stat-card:nth-child(even) .number{color:#58aee8!important}
+.form-input,.form-select,.form-textarea,input[type="text"],input[type="search"],input[type="number"],input[type="email"],input[type="tel"],input[type="url"],input[type="password"],input:not([type]),textarea,select{background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;caret-color:#ff7898!important;border-color:#e4ebf1!important}.form-input:focus,.form-select:focus,.form-textarea:focus,input:focus,textarea:focus{border-color:#ff9db4!important;box-shadow:0 0 0 3px rgba(255,143,168,.13)!important}input::placeholder,textarea::placeholder{color:#9aa6b5!important;-webkit-text-fill-color:#9aa6b5!important}select option{background:#fff!important;color:#24364b!important}.btn{background:linear-gradient(135deg,#ffabc0,#ff7f9d)!important;color:#fff!important;border:none!important;box-shadow:0 8px 22px rgba(255,127,157,.22)!important}.btn-warning{background:linear-gradient(135deg,#91d3fb,#65b9f3)!important;color:#fff!important}table th{background:#f4f9fd!important;color:#40566d!important}table td{border-color:#edf1f5!important;color:#52667b!important}
 
-/* ===== Dashboard: เปลี่ยนธีมเท่านั้น ===== */
-aside,.sidebar{background:rgba(255,255,255,.92)!important;border-right:1px solid #edf1f6!important;backdrop-filter:blur(18px) saturate(135%)!important;box-shadow:8px 0 30px rgba(74,107,136,.06)!important;}
-.sidebar-header{border-bottom-color:#edf1f6!important;}
-.sidebar-header h1,.sidebar-header h2{color:#24364b!important;background:none!important;-webkit-text-fill-color:#24364b!important;}
-.sidebar-header p{color:#8b98a7!important;}
-.sidebar-menu li a,.nav-item,.sidebar a{color:#52667b!important;}
-.sidebar-menu li.active a,.sidebar-menu li a:hover,.nav-item.active,.nav-item:hover{background:linear-gradient(90deg,#fff0f4,#f2f9ff)!important;color:#24364b!important;border-left-color:#ff8fa8!important;box-shadow:inset 0 0 22px rgba(255,143,168,.07)!important;}
-header.topbar,.topbar{background:rgba(255,255,255,.82)!important;border-bottom:1px solid #eaf0f5!important;backdrop-filter:blur(16px) saturate(135%)!important;box-shadow:0 6px 22px rgba(73,99,123,.05)!important;}
-header.topbar h1,.topbar h1,.page-title,h1,h2,h3,h4,.card-header,.help-card h3,.health-cat-title,.ms-group-title,.ms-item-label,.perm-key,.perm-result-card h3{color:#24364b!important;-webkit-text-fill-color:initial!important;}
-.user-profile,.stat-label,.stat-change,.ms-item-desc,.help-card td,.ms-status-text,.perm-value,.health-check-row{color:#7e8da0!important;}
-.page-title{border-bottom-color:#edf1f5!important;}
-.hamburger{background:#fff0f4!important;border-color:#ffd7e1!important;color:#ff7696!important;}
-
-.stat-card,.glass-card,.chart-card,.card,.card-body,.card-header,.help-card,.health-cat,.perm-result-card,.guide-box,.ms-group,.online-field-panel,.online-topic-card,.online-pro-card,.smoke-summary,.smoke-modal,.toast,.tab-pane,.lead-day-chip{
-  background:rgba(255,255,255,.94)!important;border-color:#e7eef5!important;color:#24364b!important;backdrop-filter:blur(14px) saturate(125%)!important;box-shadow:0 12px 34px rgba(69,96,121,.08),inset 0 1px 0 rgba(255,255,255,.95)!important;
-}
-.stat-card::before{background:linear-gradient(90deg,#ff9db4,#ff7f9d)!important;}
-.stat-card:nth-child(even)::before{background:linear-gradient(90deg,#8fd0fa,#65b9f3)!important;}
-.stat-value,.stat-card .number{color:#ff7898!important;}
-.stat-card:nth-child(even) .stat-value,.stat-card:nth-child(even) .number{color:#58aee8!important;}
-
-.form-input,.form-select,.form-textarea,input[type="text"],input[type="search"],input[type="number"],input[type="email"],input[type="tel"],input[type="url"],input[type="password"],input:not([type]),textarea,select{background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;caret-color:#ff7898!important;border-color:#e4ebf1!important;box-shadow:inset 0 1px 2px rgba(65,91,116,.03)!important;}
-input::placeholder,textarea::placeholder,.form-input::placeholder,.form-textarea::placeholder{color:#9aa6b5!important;-webkit-text-fill-color:#9aa6b5!important;opacity:1!important;}
-select option{background:#fff!important;color:#24364b!important;}
-.form-input:focus,.form-select:focus,.form-textarea:focus,input:focus,textarea:focus{border-color:#ff9db4!important;box-shadow:0 0 0 3px rgba(255,143,168,.13)!important;}
-.btn{background:linear-gradient(135deg,#ffabc0,#ff7f9d)!important;color:#fff!important;border:none!important;box-shadow:0 8px 22px rgba(255,127,157,.22)!important;}
-.btn-warning{background:linear-gradient(135deg,#91d3fb,#65b9f3)!important;color:#fff!important;}
-.tab-btn{color:#7e8da0!important;}.tab-btn.active{color:#ff7898!important;background:#fff0f4!important;}
-.badge-new{background:linear-gradient(135deg,#ff9db4,#72c3f5)!important;color:#fff!important;}
-table th{background:#f4f9fd!important;color:#40566d!important;}table td{border-color:#edf1f5!important;color:#52667b!important;}
-.help-card .cmd{background:#f7f9fc!important;color:#e26c88!important;}
-.guide-box{background:#fff3f6!important;color:#6d4f59!important;border-left-color:#ff8fa8!important;}
-.perm-result-card{background:#f3f9ff!important;border-color:#dbeeff!important;}
-.ms-toggle{background:#dfe7ee!important;}.ms-toggle.on{background:linear-gradient(135deg,#ff8fa8,#65b9f3)!important;}
-::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#d9e4ec;border-radius:8px}::-webkit-scrollbar-track{background:transparent}
-
-/* ===== Gate เดิม: restyle โดยไม่แก้ handler ===== */
-#dash-gate{background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)!important;padding:12px!important;}
-#dash-gate .dg-glow{display:none!important;}
-#dash-gate .p12-scene{position:relative!important;width:min(96vw,470px)!important;height:min(88vh,700px)!important;min-height:500px!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;}
-#dash-gate .dg-card{position:relative!important;z-index:3!important;width:min(82vw,380px)!important;height:100%!important;min-height:500px!important;padding:34px 22px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;color:#24364b!important;background:#fff!important;border:1px solid #e4ebf1!important;border-radius:28px!important;box-shadow:0 26px 64px rgba(65,91,116,.13),inset 0 1px 0 rgba(255,255,255,.95)!important;backdrop-filter:none!important;overflow:hidden!important;}
-#dash-gate .dg-card::before{content:"";position:absolute;inset:auto -24% -11% -24%;height:28%;background:linear-gradient(135deg,rgba(255,181,197,.25),rgba(255,255,255,0));border-radius:50% 50% 0 0;pointer-events:none;}
-#dash-gate .dg-card h2{color:#24364b!important;-webkit-text-fill-color:#24364b!important;background:none!important;font-size:1.42rem!important;}
-#dash-gate .dg-sub{color:#58aee8!important;background:#eef8ff!important;padding:5px 12px!important;border-radius:999px!important;margin-top:7px!important;}
-#dash-gate .dg-card p{color:#40536a!important;}
-#dash-gate .dg-inwrap{width:100%!important;}
-#dash-gate #dg-code{background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;border-color:#f0dce2!important;caret-color:#ff7898!important;}
-#dash-gate #dg-code::placeholder{color:#9aa6b5!important;-webkit-text-fill-color:#9aa6b5!important;}
-#dash-gate #dg-eye{background:#f5f8fb!important;color:#7d8b9a!important;}
-#dash-gate #dg-btn{background:linear-gradient(135deg,#ffabc0,#ff7f9d)!important;color:#fff!important;box-shadow:0 10px 24px rgba(255,127,157,.24)!important;}
-#dash-gate #dg-msg{color:#e66b7b!important;}
-
-#dash-gate .p12-peek{position:absolute!important;z-index:2!important;left:-4px!important;top:50%!important;width:164px!important;height:230px!important;margin:0!important;transform:translate(-82%,-50%) rotate(-2deg)!important;transform-origin:70% 50%!important;filter:drop-shadow(0 16px 28px rgba(61,94,119,.18))!important;pointer-events:none!important;display:block!important;}
-#dash-gate .p12-peek img{position:absolute!important;inset:0!important;margin:auto!important;display:block!important;max-width:100%!important;max-height:100%!important;width:auto!important;height:auto!important;background:transparent!important;}
-#dash-gate .p12-lid{position:absolute;z-index:5;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center;}
-#dash-gate .p12-lid-l{left:35.3%}#dash-gate .p12-lid-r{left:55.0%}
-#dash-gate .p12-peek.p12-active{animation:p12Peek 8s ease-in-out both!important;}
-#dash-gate .p12-peek.p12-active .p12-lid{animation:p12Blink 8s linear both!important;}
-@keyframes p12Peek{0%,6%{transform:translate(-82%,-50%) rotate(-2deg)}25%,87.5%{transform:translate(-8%,-50%) rotate(0)}100%{transform:translate(-82%,-50%) rotate(-2deg)}}
-@keyframes p12Blink{0%,34%,37%,43%,54%,57%,63%,100%{opacity:0;transform:scaleY(.05)}35%,40%,55%,60%{opacity:1;transform:scaleY(1)}}
-@media(min-width:481px){#dash-gate .p12-peek{left:-12px!important;width:190px!important;height:260px!important}}
-@media(max-height:620px){#dash-gate .p12-scene{height:94vh!important;min-height:440px!important}#dash-gate .dg-card{min-height:440px!important;padding:24px 18px!important}#dash-gate .p12-peek{width:142px!important;height:202px!important}}
-@media(prefers-reduced-motion:reduce){#dash-gate .p12-peek.p12-active,#dash-gate .p12-peek.p12-active .p12-lid{animation:none!important}#dash-gate .p12-peek{transform:translate(-16%,-50%)!important}}
+/* Gate เดิม */
+#dash-gate{background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%)!important;padding:12px!important;overflow:hidden!important}#dash-gate .dg-glow{background:radial-gradient(circle at 10% 18%,rgba(255,143,168,.22),transparent 28%),radial-gradient(circle at 92% 22%,rgba(101,185,243,.18),transparent 30%)!important}#dash-gate .dg-card{width:min(78vw,380px)!important;min-height:500px!important;padding:34px 22px!important;background:#fff!important;border:1px solid #e7eef5!important;border-radius:28px!important;color:#24364b!important;box-shadow:0 26px 64px rgba(65,91,116,.13)!important;position:relative!important;z-index:3!important}#dash-gate .dg-bot{display:none!important}#dash-gate h2{color:#24364b!important;background:none!important;-webkit-text-fill-color:#24364b!important}#dash-gate p{color:#40536a!important}#dash-gate #dg-code{background:#fff!important;color:#24364b!important;-webkit-text-fill-color:#24364b!important;border-color:#f0dce2!important;caret-color:#ff7f9d!important}#dash-gate #dg-btn{background:linear-gradient(135deg,#ffabc0,#ff7f9d)!important;color:#fff!important;box-shadow:0 10px 24px rgba(255,127,157,.24)!important}#dash-gate #dg-eye{background:#f5f8fb!important;color:#7d8b9a!important}
+#dash-gate .p12-walkbot{position:absolute;z-index:4;left:50%;bottom:12%;width:125px;height:178px;pointer-events:none;filter:drop-shadow(0 15px 24px rgba(54,84,108,.18));animation:p12Walk 8s linear infinite;transform-origin:50% 100%}#dash-gate .p12-walkbot img{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%}#dash-gate .p12-lid{position:absolute;z-index:5;top:27%;width:12.5%;height:8.5%;border-radius:50%;background:#0b2731;opacity:0;transform:scaleY(.05);transform-origin:center;animation:p12Blink 8s linear infinite}#dash-gate .p12-lid.l{left:35.3%}#dash-gate .p12-lid.r{left:55%}
+@keyframes p12Walk{0%{opacity:0;transform:translateX(-470px) rotate(-3deg)}2%{opacity:1}8%{transform:translateX(-320px) translateY(-5px) rotate(3deg)}16%{transform:translateX(-220px) rotate(-3deg)}24%{transform:translateX(-125px) translateY(-5px) rotate(3deg)}31%,56%{transform:translateX(-55px) rotate(0)}64%{transform:translateX(55px) translateY(-5px) rotate(-3deg)}72%{transform:translateX(175px) rotate(3deg)}79%{opacity:1;transform:translateX(330px) translateY(-5px) rotate(-3deg)}81%,100%{opacity:0;transform:translateX(470px) rotate(0)}}
+@keyframes p12Blink{0%,34%,37%,41%,45%,48%,52%,100%{opacity:0;transform:scaleY(.05)}35%,39%,46%,50%{opacity:1;transform:scaleY(1)}}
+@media(max-width:480px){#dash-gate .dg-card{width:76vw!important;min-height:500px!important}#dash-gate .p12-walkbot{width:108px;height:154px;bottom:13%}}
 </style>
-<script id="chatbot-pastel-one-shot-v12-script">
+<script id="chatbot-pastel-one-shot-v121-script">
 (function(){
-  function patchCharts(){
-    try{
-      if(!window.Chart)return;
-      Chart.defaults.color='#66788b';
-      Chart.defaults.borderColor='rgba(95,120,143,.12)';
-      if(Chart.defaults.plugins&&Chart.defaults.plugins.legend&&Chart.defaults.plugins.legend.labels)Chart.defaults.plugins.legend.labels.color='#52667b';
-      var reg=Chart.instances;if(reg){Object.keys(reg).forEach(function(k){try{reg[k].update()}catch(e){}})}
-    }catch(e){}
+  function addWalker(){
+    var gate=document.getElementById('dash-gate');if(!gate||gate.querySelector('.p12-walkbot'))return;
+    var bot=document.createElement('div');bot.className='p12-walkbot';bot.setAttribute('aria-hidden','true');
+    bot.innerHTML='<img src="https://checkfile2568-ops.github.io/rta-tuning/assets/chatbot-v11.png" alt=""><i class="p12-lid l"></i><i class="p12-lid r"></i>';
+    gate.appendChild(bot);
   }
-
-  function patchGate(){
-    var gate=document.getElementById('dash-gate');if(!gate)return;
-    var card=gate.querySelector('.dg-card');if(!card)return;
-    var scene=gate.querySelector('.p12-scene');
-    if(!scene){
-      scene=document.createElement('div');scene.className='p12-scene';
-      card.parentNode.insertBefore(scene,card);scene.appendChild(card);
-    }
-
-    var bot=gate.querySelector('.p12-peek')||gate.querySelector('.dg-peekbot')||gate.querySelector('.dg-bot');
-    if(bot){
-      bot.classList.add('p12-peek');
-      if(bot.parentNode!==scene)scene.insertBefore(bot,card);
-      if(!bot.querySelector('.p12-lid-l')){
-        var l=document.createElement('i');l.className='p12-lid p12-lid-l';
-        var r=document.createElement('i');r.className='p12-lid p12-lid-r';
-        bot.appendChild(l);bot.appendChild(r);
-      }
-      function play(){bot.classList.remove('p12-active');void bot.offsetWidth;bot.classList.add('p12-active')}
-      setTimeout(function(){play();setInterval(play,5*60*1000)},2000);
-    }
-  }
-
-  function run(){patchGate();patchCharts();setTimeout(patchCharts,500);setTimeout(patchCharts,1500)}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addWalker);else addWalker();
+  setTimeout(addWalker,500);
 })();
 </script>
