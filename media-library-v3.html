@@ -238,7 +238,7 @@ async function splitAndUpload(file){
     setStatus('อัปโหลดครบทุก Part','พร้อมส่งต่อเข้าขั้นตอนวิเคราะห์','good',100,'ชุดงานยังเก็บไว้ตามนโยบายที่เลือก');
     await loadAll();toast('อัปโหลดชุด Part สำเร็จ');
   }catch(e){
-    await MA('mark-media-set-ready-to-purge',{id:setId}).catch(()=>{});
+    await MA('purge-media-set',{id:setId,reason:'split_or_upload_failed'}).catch(()=>{});
     throw e;
   }
 }
