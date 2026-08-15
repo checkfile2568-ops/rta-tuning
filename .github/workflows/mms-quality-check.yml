@@ -34,11 +34,16 @@ jobs:
           print('\n'.join(str(x) for x in out.glob('*.js')))
           PY
           for f in /tmp/mms-js/*.js; do node --check "$f"; done
-      - name: Required integration files
+      - name: Required integration files and navigation
         run: |
           test -f mms-shell-bridge.js
           test -f mms-workflow-client.js
           test -f video-studio-v3.html
+          for f in media-library.html video-studio-v3.html cctv-analysis.html cctv-player.html job-center.html projects.html admin-settings-v4.html; do
+            grep -q "mms-shell-bridge.js" "$f"
+            grep -q "data-mms-back" "$f"
+          done
+          grep -q "BACK_TO_MENU" media.html
           grep -q "cctv_analyze" media-system/worker/worker.py
           grep -q "video_export" media-system/worker/worker.py
           grep -q "mms-workflow-api" mms-workflow-client.js
