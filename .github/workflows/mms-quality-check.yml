@@ -1,0 +1,44 @@
+name: MMs Quality Check
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - '*.js'
+      - '*.css'
+      - 'media-system/worker/**'
+      - '.github/workflows/mms-quality-check.yml'
+  workflow_dispatch:
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python worker syntax
+        run: python -m py_compile media-system/worker/worker.py
+      - name: Extract and check inline JavaScript
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re,pathlib
+          pages=['media.html','media-library.html','video-studio-v3.html','cctv-analysis.html','cctv-player.html','job-center.html','projects.html','admin-settings-v4.html']
+          out=pathlib.Path('/tmp/mms-js');out.mkdir(exist_ok=True)
+          for page in pages:
+              text=pathlib.Path(page).read_text(encoding='utf-8')
+              scripts=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',text,re.S|re.I)
+              for i,s in enumerate(scripts):
+                  (out/f'{pathlib.Path(page).stem}-{i}.js').write_text(s,encoding='utf-8')
+          print('\n'.join(str(x) for x in out.glob('*.js')))
+          PY
+          for f in /tmp/mms-js/*.js; do node --check "$f"; done
+      - name: Required integration files
+        run: |
+          test -f mms-shell-bridge.js
+          test -f mms-workflow-client.js
+          test -f video-studio-v3.html
+          grep -q "cctv_analyze" media-system/worker/worker.py
+          grep -q "video_export" media-system/worker/worker.py
+          grep -q "mms-workflow-api" mms-workflow-client.js
