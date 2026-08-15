@@ -68,7 +68,7 @@
     <div><h2>คลังไฟล์</h2><div id="summary" class="sub">กำลังโหลด...</div></div><div class="spacer"></div>
     <select id="filter"><option value="all">ทั้งหมด</option><option value="video">Video</option><option value="audio">Audio</option><option value="document">Document</option><option value="cctv">CCTV</option></select>
   </div>
-  <div class="actions" style="margin:8px 0 4px"><button id="clearFailedBtn" class="btn danger-link">ลบรายการล้มเหลวทั้งหมด</button></div>
+  <div class="helpnote" style="margin:8px 0 4px">คลังไฟล์เป็นหลักฐาน: ไม่อนุญาตให้ลบหรือแก้ไขย้อนหลังจากหน้านี้</div>
   <div id="files" class="list"><div class="empty">กำลังโหลด...</div></div>
 </section>
 </main>
@@ -140,14 +140,11 @@ function render(){
   if(f==='cctv')a=a.filter(x=>x.source_kind==='cctv');else if(f!=='all')a=a.filter(x=>x.media_type===f);
   const ready=DATA.filter(x=>x.upload_status==='ready').length,failed=DATA.filter(x=>x.upload_status==='failed').length;
   $('#summary').textContent=`${DATA.length} รายการ • พร้อมใช้ ${ready} • ล้มเหลว ${failed} • Private Storage`;
-  $('#clearFailedBtn').disabled=failed===0;
   $('#files').innerHTML=a.length?a.map(x=>{
     const s=stateFor(x.id),[lab,cls]=statusLabel(x),p=Math.max(0,Math.min(100,Number(s.upload_progress||0)));
     const err=s.upload_error?P.esc(String(s.upload_error).slice(0,110)):'';
     const progress=x.upload_status!=='ready'?`<div class="itembar"><i style="width:${p}%"></i></div><div class="meta" style="margin-top:5px">${p>0?`${p.toFixed(1)}% • ${P.bytes(s.upload_bytes||0)} / ${P.bytes(x.size_bytes)}`:'ยังไม่มีไฟล์ที่อัปโหลดสำเร็จ'}${err?' • '+err:''}</div>`:'';
-    const safeName=encodeURIComponent(x.original_name);
-    const del=x.legal_hold?'':`<button class="btn danger-link" onclick="window.deleteMedia('${x.id}','${safeName}')">${x.upload_status==='ready'?'ลบหากไม่ใช้':'ลบรายการ'}</button>`;
-    return `<article class="item"><div class="item-head"><div style="font-size:26px">${typeIcon(x)}</div><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.esc(x.media_type)} • ${P.bytes(x.size_bytes)} • ${P.dt(x.created_at)}</div></div><span class="badge ${cls}">${lab}</span></div>${progress}<div class="row" style="margin-top:8px"><span class="badge">Variants ${V.filter(v=>v.media_file_id===x.id&&v.status==='ready').length}</span>${x.source_kind==='cctv'?'<span class="badge">CCTV</span>':''}${x.legal_hold?'<span class="badge bad">LEGAL HOLD</span>':''}<div class="spacer"></div>${x.upload_status==='ready'?`<button class="btn" onclick="window.downloadMedia('${x.id}')">ดาวน์โหลด</button>`:''}${del}</div></article>`;
+    return `<article class="item"><div class="item-head"><div style="font-size:26px">${typeIcon(x)}</div><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.esc(x.media_type)} • ${P.bytes(x.size_bytes)} • ${P.dt(x.created_at)}</div></div><span class="badge ${cls}">${lab}</span></div>${progress}<div class="row" style="margin-top:8px"><span class="badge">Variants ${V.filter(v=>v.media_file_id===x.id&&v.status==='ready').length}</span>${x.source_kind==='cctv'?'<span class="badge">CCTV</span>':''}${x.legal_hold?'<span class="badge bad">LEGAL HOLD</span>':''}<div class="spacer"></div>${x.upload_status==='ready'?`<button class="btn" onclick="window.downloadMedia('${x.id}')">ดาวน์โหลด</button>`:''}</div></article>`;
   }).join(''):'<div class="empty">ยังไม่มีไฟล์ในหมวดนี้</div>';
 }
 async function refreshWorkspace(){
@@ -288,21 +285,12 @@ window.deleteMedia=async(id,encodedName)=>{
   const d=await MA('delete-media',{id});if(!d.ok)return toast(d.error||'ลบไม่ได้');
   clearResumeById(id);toast('ลบรายการแล้ว');await loadAll();
 };
-async function clearFailed(){
-  const failed=DATA.filter(x=>x.upload_status==='failed');if(!failed.length)return toast('ไม่มีรายการล้มเหลว');
-  if(!confirm(`ลบประวัติอัปโหลดที่ล้มเหลว ${failed.length} รายการหรือไม่?`))return;
-  $('#clearFailedBtn').disabled=true;let ok=0;
-  for(const f of failed){const d=await MA('delete-media',{id:f.id});if(d.ok){ok++;clearResumeById(f.id)}}
-  toast(`ลบแล้ว ${ok} รายการ`);await loadAll();$('#clearFailedBtn').disabled=false;
-}
-
 $('#file').addEventListener('change',()=>setMode($('#file').files[0]));
 $('#uploadBtn').addEventListener('click',startUpload);
 $('#pauseBtn').addEventListener('click',pauseUpload);
 $('#resumeBtn').addEventListener('click',resumeUpload);
 $('#cancelBtn').addEventListener('click',cancelUpload);
 $('#filter').addEventListener('change',render);
-$('#clearFailedBtn').addEventListener('click',clearFailed);
 setMode(null);loadAll();setInterval(()=>refreshWorkspace().catch(()=>{}),60000);
 </script>
 </body></html>
