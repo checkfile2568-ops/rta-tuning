@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Python worker syntax
-        run: python -m py_compile media-system/worker/worker.py
+        run: python -m py_compile media-system/worker/worker.py media-system/worker/health_runner.py
       - name: Extract and check inline JavaScript
         shell: bash
         run: |
@@ -39,6 +39,7 @@ jobs:
           test -f mms-shell-bridge.js
           test -f mms-workflow-client.js
           test -f video-studio-v3.html
+          test -f media-system/worker/health_runner.py
           for f in media-library.html video-studio-v3.html cctv-analysis.html cctv-player.html job-center.html projects.html admin-settings-v4.html; do
             grep -q "mms-shell-bridge.js" "$f"
             grep -q "data-mms-back" "$f"
@@ -47,3 +48,5 @@ jobs:
           grep -q "cctv_analyze" media-system/worker/worker.py
           grep -q "video_export" media-system/worker/worker.py
           grep -q "mms-workflow-api" mms-workflow-client.js
+          grep -q "media-ensure-jobs" media-library.html
+          grep -q "job-result-url" job-center.html
