@@ -1,0 +1,29 @@
+<!-- ก๊อป <script>...</script> ไปวางก่อน </body> ของไฟล์ที่ระบุ -->
+
+<!-- แปะในไฟล์: index  →  ไป media.html -->
+<script>
+(function(){
+  var NAME   = 'จัดการแก้ไขวีดีโอและเสียง';
+  var TARGET = 'https://checkfile2568-ops.github.io/rta-tuning/media.html';
+  if (window.parent !== window.top) return;
+  var g=document.createElement('div'); g.setAttribute('data-enter-gate','');
+  g.innerHTML='<div class="eg-card"><div class="eg-em">\u2696</div>'+
+    '<div class="eg-su">\u0e28\u0e32\u0e25\u0e08\u0e31\u0e07\u0e2b\u0e27\u0e31\u0e14\u0e25\u0e1e\u0e1a\u0e38\u0e23\u0e35</div>'+
+    '<div class="eg-nm">'+NAME+'</div>'+
+    '<a class="eg-btn" href="'+TARGET+'" target="_top" rel="noopener">\u0e40\u0e02\u0e49\u0e32\u0e2a\u0e39\u0e48\u0e23\u0e30\u0e1a\u0e1a \u2192</a>'+
+    '<div class="eg-skip" onclick="this.closest(\'[data-enter-gate]\').remove()">\u0e43\u0e0a\u0e49\u0e2b\u0e19\u0e49\u0e32\u0e19\u0e35\u0e49\u0e15\u0e48\u0e2d</div></div>';
+  g.style.cssText='position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;'+
+    "font-family:'Sarabun',sans-serif;"+
+    'background:radial-gradient(1000px 500px at 15% -10%,rgba(201,162,75,.18),transparent 55%),linear-gradient(150deg,#0b1a33,#12294c 60%,#0d2144);'+
+    '-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)';
+  var s=document.createElement('style');
+  s.textContent='[data-enter-gate] .eg-card{background:rgba(255,255,255,.06);backdrop-filter:blur(16px);border:1px solid rgba(201,162,75,.4);border-radius:22px;padding:40px 34px;max-width:360px;width:100%;text-align:center;color:#fff;box-shadow:0 30px 80px rgba(0,0,0,.5)}'+
+    '[data-enter-gate] .eg-em{width:74px;height:74px;margin:0 auto 16px;border-radius:50%;font-size:34px;display:flex;align-items:center;justify-content:center;color:#e6c674;background:radial-gradient(circle at 35% 30%,#1c3a68,#0c1c38);border:2px solid #c9a24b}'+
+    '[data-enter-gate] .eg-su{font-size:12px;color:rgba(230,198,116,.9);margin-bottom:6px}'+
+    '[data-enter-gate] .eg-nm{font-size:21px;font-weight:700;margin-bottom:22px;line-height:1.3}'+
+    '[data-enter-gate] .eg-btn{display:block;padding:15px;border-radius:12px;text-decoration:none;font-weight:700;font-size:16px;color:#0c1c38;background:linear-gradient(135deg,#e6c674,#c9a24b);box-shadow:0 12px 30px rgba(201,162,75,.4)}'+
+    '[data-enter-gate] .eg-skip{margin-top:16px;font-size:12px;color:rgba(234,240,251,.5);cursor:pointer;text-decoration:underline}'+
+    '@media print{[data-enter-gate]{display:none!important}}';
+  document.head.appendChild(s); document.body.appendChild(g);
+})();
+</script>
