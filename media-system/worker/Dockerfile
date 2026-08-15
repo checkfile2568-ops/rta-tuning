@@ -3,6 +3,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certi
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY worker.py .
-ENV PYTHONUNBUFFERED=1 PIP_DISABLE_PIP_VERSION_CHECK=1 YOLO_CONFIG_DIR=/tmp/Ultralytics
-CMD ["python","worker.py"]
+ENV PYTHONUNBUFFERED=1 PIP_DISABLE_PIP_VERSION_CHECK=1 YOLO_CONFIG_DIR=/tmp/Ultralytics YOLO_MODEL=/app/yolo11n.pt PORT=8080
+RUN python -c "from ultralytics import YOLO; YOLO('yolo11n.pt')" && test -f yolo11n.pt
+COPY worker.py health_runner.py ./
+EXPOSE 8080
+CMD ["python","health_runner.py"]
