@@ -198,7 +198,7 @@ async function requestInfo(file,partContext=null){
   const payload={name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_kind:$('#source').value,project_id:$('#project').value||null};
   if(partContext){payload.media_set_id=partContext.setId;payload.segment_index=partContext.index}
   const d=await MA('request-upload',payload);
-  if(!d.ok)throw new Error(d.error||d.detail||'ขอสิทธิ์อัปโหลดไม่สำเร็จ');
+  if(!d.ok)throw new Error([d.error,d.detail].filter(Boolean).join(' • ')||'ขอสิทธิ์อัปโหลดไม่สำเร็จ');
   return d;
 }
 async function finish(info,file,partContext=null){
@@ -223,7 +223,7 @@ async function standardUpload(file,partContext=null){
 async function splitAndUpload(file){
   setStatus('กำลังแบ่งไฟล์','กำลังอ่านไฟล์และสร้าง Part ที่ไม่เกิน 45 MB (เป้าหมาย 40 MB)','busy',0,'ระหว่างทำงานไม่ต้องอัปโหลดไฟล์ต้นฉบับไปที่อื่น',true);
   const created=await MA('create-media-set',{original_name:file.name,source_size_bytes:file.size,mime_type:file.type||'video/mp4',source_kind:$('#source').value,project_id:$('#project').value||null,retention_mode:$('#retention').value});
-  if(!created.ok)throw new Error(created.error||'สร้างชุดงานไม่สำเร็จ');
+  if(!created.ok)throw new Error([created.error,created.detail].filter(Boolean).join(' • ')||'สร้างชุดงานไม่สำเร็จ');
   const setId=created.set.id;
   try{
     const result=await Splitter.splitVideo(file,{targetBytes:PART_TARGET,maxPartBytes:STORAGE_MAX-5*1024*1024,onProgress:info=>setStatus('กำลังแบ่งไฟล์',info.phase||'กำลังแบ่งไฟล์','busy',Math.round((info.progress||0)*30),'ระบบจะตรวจทุก Part ก่อนส่ง',false)});
