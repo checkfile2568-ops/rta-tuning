@@ -22,6 +22,7 @@
 .helpnote{margin-top:10px;padding:10px 11px;border-radius:13px;background:#fff8e9;color:#785f31;font-size:11px}
 .danger-link{border:1px solid #f1cbd1;background:#fff6f7;color:#b64f5d}.danger-link:disabled{opacity:.45}
 .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.actions .btn{min-height:40px}
+.quota{margin:10px 0;padding:11px;border:1px solid #dfe9f5;border-radius:14px;background:#f8fbff}.quota-head{display:flex;gap:8px;align-items:center;font-size:12px;font-weight:800}.quota-track{height:9px;background:#e9eff7;border-radius:99px;overflow:hidden;margin:8px 0}.quota-track i{display:block;height:100%;background:#32b77d;border-radius:99px;transition:width .25s}.quota.warn .quota-track i{background:#f2a33f}.quota.bad .quota-track i{background:#e55f70}.split-plan{display:none;margin-top:10px;padding:11px;border:1px dashed #9bb7df;border-radius:14px;background:#f7fbff}.split-plan.show{display:block}.part-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}.part{padding:7px;border-radius:10px;background:#fff;border:1px solid #e5edf6;font-size:11px}.set-list{display:grid;gap:8px;margin-top:8px}.set-card{padding:10px;border:1px solid #e0e9f4;border-radius:14px;background:#fbfdff}.set-card b{word-break:break-word}.set-card .meta{font-size:11px;color:#718099;margin-top:3px}
 @media(max-width:700px){.actions .btn{flex:1}.top .title small{display:none}}
 </style>
 </head>
@@ -43,6 +44,8 @@
     <select id="source"><option value="upload">ไฟล์ทั่วไป</option><option value="cctv">CCTV / NVR Export</option><option value="import">นำเข้าระบบเดิม</option></select>
   </div>
   <div class="field" style="margin-top:8px"><label>Project</label><select id="project"><option value="">ไม่ระบุ Project</option></select></div>
+  <div class="field" style="margin-top:8px"><label>หลังประมวลผล</label><select id="retention"><option value="auto_24h">24 ชั่วโมง • ลบอัตโนมัติ</option><option value="manual">กดลบเอง</option><option value="save_device">Save ลงเครื่อง แล้วลบใน 24 ชั่วโมง</option></select></div>
+  <div id="splitPlan" class="split-plan"><b>โหมดแบ่งไฟล์</b><div id="splitText" class="small"></div><div id="partGrid" class="part-grid"></div><div class="small">ระบบตรวจทุก Part ไม่ให้เกิน 45 MB ก่อนอัปโหลด</div></div>
   <button id="uploadBtn" class="btn primary" style="width:100%;margin-top:10px">อัปโหลด</button>
   <div class="status">
     <div class="state"><i id="dot" class="dot"></i><strong id="statusTitle">พร้อมอัปโหลด</strong><div class="spacer"></div><span id="mode" class="mode">รอเลือกไฟล์</span></div>
@@ -52,11 +55,16 @@
       <button id="pauseBtn" class="btn">พัก</button><button id="resumeBtn" class="btn" style="display:none">ทำต่อ</button><button id="cancelBtn" class="btn danger-link">ยกเลิก</button>
     </div>
   </div>
-  <div class="helpnote">แผนปัจจุบันรับไฟล์ได้สูงสุด 50 MB • ไฟล์ภายในขนาดนี้ใช้ Signed Standard Upload • เมื่ออัปเกรดเป็น Pro ระบบจะเปิดใช้ TUS Resume 6 MB/chunk สำหรับไฟล์ใหญ่ • หลังขึ้น “100% พร้อมใช้” จึงสามารถออกจากหน้าได้</div>
+  <div class="helpnote">ไฟล์ ≤ 50 MB ใช้รูปแบบเดิม • ไฟล์ใหญ่ใช้โหมดแบ่งไฟล์ Part ละไม่เกิน 45 MB • ระบบล้างรายการค้างและลบ Part ตามนโยบายที่เลือก</div>
 </section>
 
 <section class="panel glass col-8">
   <div class="row">
+    <div><h2>พื้นที่และชุดงาน</h2><div id="quotaSummary" class="sub">กำลังตรวจพื้นที่...</div></div><div class="spacer"></div>
+  </div>
+  <div id="quotaBox" class="quota"><div class="quota-head"><span>พื้นที่ระบบมัลติมีเดีย</span><span class="spacer"></span><span id="quotaValue">—</span></div><div class="quota-track"><i id="quotaBar"></i></div><div id="quotaDetail" class="small">กำลังโหลด...</div></div>
+  <div id="setList" class="set-list"><div class="empty">กำลังโหลดชุดงาน...</div></div>
+  <div class="row" style="margin-top:16px">
     <div><h2>คลังไฟล์</h2><div id="summary" class="sub">กำลังโหลด...</div></div><div class="spacer"></div>
     <select id="filter"><option value="all">ทั้งหมด</option><option value="video">Video</option><option value="audio">Audio</option><option value="document">Document</option><option value="cctv">CCTV</option></select>
   </div>
@@ -72,6 +80,7 @@
 <script src="mms-shell-bridge.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import * as Splitter from './mms-splitter.js';
 
 const P=window.MmsPro;
 const SB_URL='https://hwzadnpaxiacucvjxmor.supabase.co';
@@ -80,8 +89,10 @@ const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken
 const MEDIA_API=SB_URL+'/functions/v1/mms-media-api';
 const UPLOAD_API=SB_URL+'/functions/v1/mms-upload-api';
 const SESSION=localStorage.getItem('mms_session')||'';
-const STORAGE_MAX=50*1024*1024; // Supabase Free project limit\nconst SMALL=STORAGE_MAX;
-let DATA=[],V=[],STATES=[],PROJECTS=[],activeTus=null,activeInfo=null,activeFile=null,paused=false,lastSync=0;
+const STORAGE_MAX=50*1024*1024;
+const PART_TARGET=45*1024*1024;
+const SMALL=STORAGE_MAX;
+let DATA=[],V=[],STATES=[],PROJECTS=[],SETS=[],USAGE=null,activeTus=null,activeInfo=null,activeFile=null,paused=false,lastSync=0;
 const $=s=>document.querySelector(s);
 
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2800)}
@@ -95,22 +106,16 @@ function setStatus(title,detail='',kind='',pct=0,extra='',ind=false){
   if(!ind)$('#bar i').style.width=Math.max(0,Math.min(100,pct||0))+'%';
 }
 function setMode(file){
-  if(!file){
-    $('#mode').textContent='รอเลือกไฟล์';
-    $('#fileHint').textContent='เลือกไฟล์เพื่อดูวิธีอัปโหลด';
-    $('#uploadBtn').disabled=false;
-    return;
+  const planBox=$('#splitPlan');
+  if(!file){$('#mode').textContent='รอเลือกไฟล์';$('#fileHint').textContent='เลือกไฟล์เพื่อดูวิธีอัปโหลด';planBox.classList.remove('show');$('#uploadBtn').disabled=false;return}
+  if(file.size>STORAGE_MAX){
+    const plan=Splitter.plan(file,PART_TARGET);
+    $('#mode').textContent='โหมดแบ่งไฟล์';$('#fileHint').textContent=P.bytes(file.size)+' • จะแบ่งเป็น '+plan.count+' Part และอัปโหลดอัตโนมัติ';
+    $('#splitText').textContent='แผนแบ่งไฟล์: '+plan.count+' Part • ใช้พื้นที่ชั่วคราวประมาณ '+P.bytes(file.size);
+    $('#partGrid').innerHTML=plan.items.map(x=>'<div class="part">Part '+x.index+'<br><b>ประมาณ '+P.bytes(x.estimatedBytes)+'</b></div>').join('');
+    planBox.classList.add('show');$('#uploadBtn').disabled=false;return;
   }
-  const overLimit=file.size>STORAGE_MAX;
-  $('#uploadBtn').disabled=overLimit;
-  if(overLimit){
-    $('#mode').textContent='เกินข้อจำกัด • 50 MB';
-    $('#fileHint').textContent=`${P.bytes(file.size)} • แผนปัจจุบันรับได้สูงสุด 50 MB — ต้องอัปเกรดเป็น Pro จึงจะใช้ Resume ได้`;
-    return;
-  }
-  const small=file.size<=SMALL;
-  $('#mode').textContent=small?'ส่งตรง • เสถียร':'Resume • ไฟล์ใหญ่';
-  $('#fileHint').textContent=`${P.bytes(file.size)} • ${small?'Signed Standard Upload':'TUS Resume 6 MB/chunk'}`;
+  planBox.classList.remove('show');$('#mode').textContent='ส่งตรง • เสถียร';$('#fileHint').textContent=P.bytes(file.size)+' • Signed Standard Upload';$('#uploadBtn').disabled=false;
 }
 function showControls(show){
   $('#activeActions').style.display=show?'flex':'none';
