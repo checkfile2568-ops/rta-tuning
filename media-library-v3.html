@@ -45,7 +45,7 @@
   </div>
   <div class="field" style="margin-top:8px"><label>Project</label><select id="project"><option value="">ไม่ระบุ Project</option></select></div>
   <div class="field" style="margin-top:8px"><label>หลังประมวลผล</label><select id="retention"><option value="auto_24h">24 ชั่วโมง • ลบอัตโนมัติ</option><option value="manual">กดลบเอง</option><option value="save_device">Save ลงเครื่อง แล้วลบใน 24 ชั่วโมง</option></select></div>
-  <div id="splitPlan" class="split-plan"><b>โหมดแบ่งไฟล์</b><div id="splitText" class="small"></div><div id="partGrid" class="part-grid"></div><div class="small">ระบบตรวจทุก Part ไม่ให้เกิน 45 MB ก่อนอัปโหลด</div></div>
+  <div id="splitPlan" class="split-plan"><b>โหมดแบ่งไฟล์</b><div id="splitText" class="small"></div><div id="partGrid" class="part-grid"></div><div class="small">ระบบตั้งเป้า Part ละ 40 MB และตรวจไม่ให้เกิน 45 MB ก่อนอัปโหลด</div></div>
   <button id="uploadBtn" class="btn primary" style="width:100%;margin-top:10px">อัปโหลด</button>
   <div class="status">
     <div class="state"><i id="dot" class="dot"></i><strong id="statusTitle">พร้อมอัปโหลด</strong><div class="spacer"></div><span id="mode" class="mode">รอเลือกไฟล์</span></div>
@@ -90,7 +90,7 @@ const MEDIA_API=SB_URL+'/functions/v1/mms-media-api';
 const UPLOAD_API=SB_URL+'/functions/v1/mms-upload-api';
 const SESSION=localStorage.getItem('mms_session')||'';
 const STORAGE_MAX=50*1024*1024;
-const PART_TARGET=45*1024*1024;
+const PART_TARGET=40*1024*1024;
 const SMALL=STORAGE_MAX;
 let DATA=[],V=[],STATES=[],PROJECTS=[],SETS=[],USAGE=null,activeTus=null,activeInfo=null,activeFile=null,paused=false,lastSync=0;
 const $=s=>document.querySelector(s);
@@ -221,12 +221,12 @@ async function standardUpload(file,partContext=null){
   return finish(info,file,partContext);
 }
 async function splitAndUpload(file){
-  setStatus('กำลังแบ่งไฟล์','กำลังอ่านไฟล์และสร้าง Part ที่ไม่เกิน 45 MB','busy',0,'ระหว่างทำงานไม่ต้องอัปโหลดไฟล์ต้นฉบับไปที่อื่น',true);
+  setStatus('กำลังแบ่งไฟล์','กำลังอ่านไฟล์และสร้าง Part ที่ไม่เกิน 45 MB (เป้าหมาย 40 MB)','busy',0,'ระหว่างทำงานไม่ต้องอัปโหลดไฟล์ต้นฉบับไปที่อื่น',true);
   const created=await MA('create-media-set',{original_name:file.name,source_size_bytes:file.size,mime_type:file.type||'video/mp4',source_kind:$('#source').value,project_id:$('#project').value||null,retention_mode:$('#retention').value});
   if(!created.ok)throw new Error(created.error||'สร้างชุดงานไม่สำเร็จ');
   const setId=created.set.id;
   try{
-    const result=await Splitter.splitVideo(file,{targetBytes:PART_TARGET,onProgress:info=>setStatus('กำลังแบ่งไฟล์',info.phase||'กำลังแบ่งไฟล์','busy',Math.round((info.progress||0)*30),'ระบบจะตรวจทุก Part ก่อนส่ง',false)});
+    const result=await Splitter.splitVideo(file,{targetBytes:PART_TARGET,maxPartBytes:STORAGE_MAX-5*1024*1024,onProgress:info=>setStatus('กำลังแบ่งไฟล์',info.phase||'กำลังแบ่งไฟล์','busy',Math.round((info.progress||0)*30),'ระบบจะตรวจทุก Part ก่อนส่ง',false)});
     const manifest={target_bytes:PART_TARGET,duration_ms:result.durationMs,parts:result.parts.map((p,i)=>({index:i+1,name:p.name,size_bytes:p.size}))};
     const saved=await MA('set-media-set-manifest',{id:setId,manifest});
     if(!saved.ok)throw new Error(saved.error||'บันทึกข้อมูลชุดงานไม่สำเร็จ');
