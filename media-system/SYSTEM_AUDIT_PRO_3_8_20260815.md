@@ -100,7 +100,7 @@ Still enabled:
 - วิเคราะห์เสียง — Legacy Apps Script
 - วิเคราะห์เอกสาร — Legacy Apps Script (must remain during migration)
 - ประวัติการวิเคราะห์ — Legacy Apps Script
-- Admin Settings v3
+- Admin Settings v4 — identity calls moved behind Edge Function
 
 New enabled modules:
 - Media Library
@@ -112,11 +112,12 @@ New enabled modules:
 
 ## Security
 - New Pro data tables have RLS enabled and direct `anon/authenticated` table access revoked.
-- Browser calls Edge Function using existing high-entropy MMs session; service-role secret remains server-side only.
+- Browser calls Edge Functions using existing high-entropy MMs session; service-role secret remains server-side only.
 - `mms_claim_processing_job` and stale-recovery RPC are service-role only.
 - Private Storage bucket is used.
-- Current Supabase Security Advisor INFO about RLS-without-policy is expected for the server-mediated design.
-- Two pre-existing Admin identity RPCs still produce Security Advisor WARN because Admin Settings v3 uses custom MMs-session validation via anon PostgREST RPC. These should be moved behind Edge Function in a later hardening pass.
+- Admin email/identity management now uses `mms-identity-api` Edge Function (`admin-settings-v4.html`).
+- Direct browser execute rights on the old Admin identity Postgres RPCs were revoked.
+- Current Supabase Security Advisor now reports only RLS-without-policy INFO entries; there are no remaining SECURITY DEFINER web-executable WARN entries from the Admin identity path.
 
 ## Performance
 All new foreign-key covering-index warnings were resolved. Remaining Advisor notices are unused-index INFO because production tables are currently empty/new; retain until real workload statistics exist.
