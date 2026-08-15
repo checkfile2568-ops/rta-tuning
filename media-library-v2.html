@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7fbff">
+<title>MMs Media Library v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="mms-pro.css">
+<style>
+:root{--blue:#3d91ff;--pink:#ed59bc;--green:#2fb77d;--red:#e55f70;--muted:#718099}
+*{box-sizing:border-box}body{font-family:Sarabun,sans-serif}.uploadbox{padding:15px;border:1px solid #e2ebf4;border-radius:18px;background:rgba(255,255,255,.72)}.mode{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:99px;background:#eef6ff;color:#376da7;font-size:11px;font-weight:700}.status{margin-top:12px;padding:14px;border:1px solid #e1e9f4;border-radius:18px;background:#f9fcff}.state{display:flex;align-items:center;gap:9px}.dot{width:10px;height:10px;border-radius:50%;background:#a7b3c4;box-shadow:0 0 0 5px rgba(167,179,196,.13)}.dot.busy{background:var(--blue);box-shadow:0 0 0 5px rgba(61,145,255,.12);animation:pulse 1.2s infinite}.dot.good{background:var(--green);box-shadow:0 0 0 5px rgba(47,183,125,.12)}.dot.bad{background:var(--red);box-shadow:0 0 0 5px rgba(229,95,112,.12)}@keyframes pulse{50%{opacity:.45}}.bar{height:8px;border-radius:99px;background:#eaf0f7;overflow:hidden;margin-top:11px}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),#8a68ff,var(--pink));border-radius:99px;transition:width .25s}.bar.ind i{width:35%!important;animation:slide 1.25s infinite ease-in-out}@keyframes slide{0%{transform:translateX(-110%)}100%{transform:translateX(300%)}}.small{font-size:11px;color:var(--muted);margin-top:6px}.hint2{margin-top:10px;padding:10px 11px;border-radius:13px;background:#fff8e9;color:#785f31;font-size:11px}.itembar{height:5px;border-radius:99px;background:#edf2f8;overflow:hidden;margin-top:7px}.itembar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--pink))}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top glass"><div class="brand">MMs</div><div class="title">MEDIA LIBRARY<small>Original • Proxy • Output • Private Storage</small></div><div class="spacer"></div><button class="btn" onclick="loadAll()">↻</button><button class="btn" data-mms-back>↑ เมนู</button></header>
+<main class="grid">
+<section class="panel glass col-4">
+<h2>อัปโหลดไฟล์</h2>
+<div class="help">ไฟล์เล็กส่งตรงเพื่อความเสถียร • ไฟล์ใหญ่ใช้ Resume</div>
+<div class="drop" style="margin-top:9px"><input id="file" type="file" style="max-width:100%"><p class="meta" id="fileHint">เลือกไฟล์เพื่อดูโหมดอัปโหลด</p></div>
+<div class="field" style="margin-top:9px"><label>ประเภทแหล่งข้อมูล</label><select id="source"><option value="upload">ไฟล์ทั่วไป</option><option value="cctv">CCTV / NVR Export</option><option value="import">นำเข้าระบบเดิม</option></select></div>
+<div class="field" style="margin-top:8px"><label>Project</label><select id="project"><option value="">ไม่ระบุ Project</option></select></div>
+<button id="uploadBtn" class="btn primary" style="width:100%;margin-top:10px" onclick="startUpload()">อัปโหลด</button>
+<div class="status"><div class="state"><i id="dot" class="dot"></i><strong id="title">พร้อมอัปโหลด</strong><div class="spacer"></div><span id="mode" class="mode">รอเลือกไฟล์</span></div><div id="bar" class="bar"><i></i></div><div id="detail" class="small">ระบบจะแสดงสถานะจริง ไม่ใช้เปอร์เซ็นต์จำลอง</div><div id="extra" class="small"></div></div>
+<div class="hint2">ก่อนอัปโหลดสำเร็จควรเปิดหน้านี้ไว้ • หลังขึ้น “100% พร้อมใช้” สามารถออกจากหน้าได้ งาน Proxy / CCTV / FFmpeg จะไปต่อใน Background Queue</div>
+</section>
+<section class="panel glass col-8"><div class="row"><div><h2>คลังไฟล์</h2><div id="summary" class="sub">กำลังโหลด...</div></div><div class="spacer"></div><select id="filter" onchange="render()"><option value="all">ทั้งหมด</option><option value="video">Video</option><option value="audio">Audio</option><option value="document">Document</option><option value="cctv">CCTV</option></select></div><div id="files" class="list"><div class="empty">กำลังโหลด...</div></div></section>
+</main></div>
+<div id="toast" class="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js"></script>
+<script src="mms-pro-client.js"></script><script src="mms-shell-bridge.js"></script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const SB_URL='https://hwzadnpaxiacucvjxmor.supabase.co';
+const SB_KEY='sb_publishable_ofkj6scwMvafGILbD2vGMQ_1yuh7L0e';
+const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+const P=window.MmsPro, UAPI='https://hwzadnpaxiacucvjxmor.supabase.co/functions/v1/mms-upload-api', SESSION=localStorage.getItem('mms_session')||'';
+const SMALL=50*1024*1024; let DATA=[],V=[],STATES=[],PROJECTS=[],activeTus=null;
+const $=s=>document.querySelector(s);
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2500)}
+async function U(action,payload={}){const r=await fetch(UAPI,{method:'POST',headers:{'Content-Type':'application/json','x-mms-session':SESSION},body:JSON.stringify({action,...payload})});return r.json().catch(()=>({ok:false,error:'UPLOAD_API_ERROR'}))}
+function show(title,detail,kind='busy',pct=null,extra='',ind=false){$('#title').textContent=title;$('#detail').textContent=detail||'';$('#extra').textContent=extra||'';$('#dot').className='dot '+kind;$('#bar').className='bar'+(ind?' ind':'');if(!ind)$('#bar i').style.width=(pct==null?0:Math.max(0,Math.min(100,pct)))+'%'}
+function setMode(file){if(!file){$('#mode').textContent='รอเลือกไฟล์';return}const small=file.size<=SMALL;$('#mode').textContent=small?'ส่งตรง • เสถียร':'Resume • ไฟล์ใหญ่';$('#fileHint').textContent=`${P.bytes(file.size)} • ${small?'ใช้ Signed Standard Upload':'ใช้ TUS Resumable Upload'}`}
+$('#file').addEventListener('change',()=>setMode($('#file').files[0]));
+function typeIcon(f){return f.source_kind==='cctv'?'◉':f.media_type==='video'?'▶':f.media_type==='audio'?'♫':f.media_type==='document'?'▤':'▣'}
+function stateFor(id){return STATES.find(x=>x.id===id)||{}}
+function statusLabel(x){if(x.upload_status==='ready')return['พร้อมใช้','good'];if(x.upload_status==='failed')return['อัปโหลดไม่สำเร็จ','bad'];const s=stateFor(x.id),p=Number(s.upload_progress||0);if(x.upload_status==='uploading'&&p>0)return[`กำลังอัปโหลด ${p.toFixed(0)}%`,'warn'];if(x.upload_status==='uploading')return['ยังส่งไม่สำเร็จ','warn'];return[x.upload_status||'รอตรวจ','warn']}
+function render(){const f=$('#filter').value;let a=DATA;if(f==='cctv')a=a.filter(x=>x.source_kind==='cctv');else if(f!=='all')a=a.filter(x=>x.media_type===f);const ready=DATA.filter(x=>x.upload_status==='ready').length;$('#summary').textContent=`${DATA.length} รายการ • พร้อมใช้ ${ready} • Private Storage`;$('#files').innerHTML=a.length?a.map(x=>{const s=stateFor(x.id),[lab,cls]=statusLabel(x),p=Math.max(0,Math.min(100,Number(s.upload_progress||0))),err=s.upload_error?P.esc(String(s.upload_error).slice(0,120)):'';return `<article class="item"><div class="item-head"><div style="font-size:26px">${typeIcon(x)}</div><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.esc(x.media_type)} • ${P.bytes(x.size_bytes)} • ${P.dt(x.created_at)}</div></div><span class="badge ${cls}">${lab}</span></div>${x.upload_status!=='ready'?`<div class="itembar"><i style="width:${p}%"></i></div><div class="meta" style="margin-top:5px">${p>0?`${p.toFixed(1)}% • ${P.bytes(s.upload_bytes||0)} / ${P.bytes(x.size_bytes)}`:'ยังไม่มีข้อมูลถูกส่งครบ'}${err?' • '+err:''}</div>`:''}<div class="row" style="margin-top:8px"><span class="badge">Variants ${V.filter(v=>v.media_file_id===x.id&&v.status==='ready').length}</span>${x.source_kind==='cctv'?'<span class="badge">CCTV</span>':''}<div class="spacer"></div>${x.upload_status==='ready'?`<button class="btn" onclick="window.downloadMedia('${x.id}')">ดาวน์โหลด</button>`:''}</div></article>`}).join(''):'<div class="empty">ยังไม่มีไฟล์ในหมวดนี้</div>'}
+async function loadAll(){try{const [l,p,s]=await Promise.all([P.api('library-list',{limit:200}),P.api('projects-list'),U('state-list')]);if(!l.ok)throw new Error(l.error);DATA=l.files||[];V=l.variants||[];PROJECTS=p.projects||[];STATES=s.states||[];$('#project').innerHTML='<option value="">ไม่ระบุ Project</option>'+PROJECTS.map(x=>`<option value="${P.esc(x.id)}">${P.esc(x.title)}</option>`).join('');render()}catch(e){$('#files').innerHTML='<div class="empty">กรุณาเข้าสู่ระบบใหม่ หรือกดรีเฟรช</div>'}}
+window.downloadMedia=async id=>{const d=await P.api('media-download-url',{id});if(!d.ok)return toast(d.error||'ดาวน์โหลดไม่ได้');window.open(d.url,'_blank','noopener')};
+async function newInfo(file){const d=await P.api('library-request-upload',{name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_kind:$('#source').value,project_id:$('#project').value||null});if(!d.ok)throw new Error(d.error||'ขอสิทธิ์อัปโหลดไม่สำเร็จ');return d}
+async function complete(info,file){const c=await P.api('library-complete-upload',{id:info.file.id});if(!c.ok)throw new Error(c.error||'ตรวจไฟล์หลังอัปโหลดไม่สำเร็จ');await U('completed',{id:info.file.id});show('100% • อัปโหลดสำเร็จ','ไฟล์อยู่ใน Private Storage และพร้อมใช้งาน','good',100,'สามารถออกจากหน้านี้ได้');await loadAll();toast('อัปโหลดสำเร็จ')}
+async function standardUpload(file){show('กำลังเตรียมสิทธิ์','กำลังสร้าง Signed Upload ใหม่','busy',null,'ไฟล์เล็กจะไม่ใช้ TUS',true);const info=await newInfo(file);await U('resume',{id:info.file.id});show('กำลังส่งไฟล์','กำลังส่งข้อมูลไป Private Storage โดยตรง','busy',null,`${P.bytes(file.size)} • รอจนขึ้น 100%`,true);const {error}=await sb.storage.from(info.bucket).uploadToSignedUrl(info.path,info.token,file,{contentType:file.type||'application/octet-stream'});if(error){await U('failed',{id:info.file.id,error:'Standard upload failed: '+error.message});throw error}await complete(info,file)}
+function errStatus(err){try{return Number(err?.originalResponse?.getStatus?.()||0)}catch{return 0}}
+async function tusUpload(file){show('กำลังเตรียม Resume','กำลังสร้าง Signed Upload ใหม่','busy',0,'ไฟล์ใหญ่ • เปอร์เซ็นต์เป็นข้อมูลจริง');const info=await newInfo(file);await U('resume',{id:info.file.id});return new Promise((resolve,reject)=>{let lastSync=0;activeTus=new tus.Upload(file,{endpoint:info.tus_endpoint,retryDelays:[0,3000,5000,10000],headers:{'x-signature':info.token},uploadDataDuringCreation:true,removeFingerprintOnSuccess:true,chunkSize:6*1024*1024,metadata:{bucketName:info.bucket,objectName:info.path,contentType:file.type||'application/octet-stream',cacheControl:'3600'},onProgress:(b,t)=>{const p=t?b/t*100:0;show('กำลังอัปโหลด',`${p.toFixed(1)}% • ${P.bytes(b)} / ${P.bytes(t)}`,'busy',p,'ไฟล์ใหญ่ใช้ Resume');if(Date.now()-lastSync>1800||b===t){lastSync=Date.now();U('progress',{id:info.file.id,bytes:b,progress:p}).catch(()=>{})}},onError:async e=>{const st=errStatus(e);await U('failed',{id:info.file.id,error:`TUS HTTP ${st||0}`}).catch(()=>{});reject(new Error(st===400||st===401||st===403?'สิทธิ์ Resume ไม่ผ่าน กรุณาลองใหม่':'การเชื่อมต่ออัปโหลดขัดข้อง'))},onSuccess:async()=>{try{await complete(info,file);resolve(true)}catch(e){reject(e)}}});activeTus.start()})}
+window.startUpload=async()=>{const file=$('#file').files[0];if(!file)return toast('กรุณาเลือกไฟล์');$('#uploadBtn').disabled=true;try{if(file.size<=SMALL)await standardUpload(file);else await tusUpload(file)}catch(e){show('อัปโหลดไม่สำเร็จ',String(e?.message||e),'bad',0,'กรุณากดอัปโหลดใหม่ ระบบจะสร้างสิทธิ์ใหม่');toast('อัปโหลดไม่สำเร็จ')}finally{$('#uploadBtn').disabled=false;activeTus=null;await loadAll().catch(()=>{})}};
+window.loadAll=loadAll;loadAll();
+</script>
+</body></html>
