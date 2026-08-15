@@ -214,6 +214,10 @@ async function finish(info,file,partContext=null){
   showControls(false);await loadAll();toast('อัปโหลดสำเร็จ');
 }
 async function standardUpload(file,partContext=null){
+  if(partContext){
+    $('#mode').textContent='โหมดแบ่งไฟล์ • Part '+partContext.index;
+    setStatus('โหมดแบ่งไฟล์ • กำลังส่ง Part '+partContext.index,'ส่ง Part ที่ตรวจขนาดแล้ว '+P.bytes(file.size),'busy',null,'ไฟล์ต้นฉบับยังอยู่ในขั้นตอนแบ่งไฟล์ ไม่ได้เปลี่ยนเป็นการอัปโหลดปกติ',true);
+  }
   const info=await requestInfo(file,partContext);activeInfo=info;activeFile=file;
   await U('resume',{id:info.file.id});
   const {error}=await sb.storage.from(info.bucket).uploadToSignedUrl(info.path,info.token,file,{contentType:file.type||'application/octet-stream'});
@@ -221,6 +225,7 @@ async function standardUpload(file,partContext=null){
   return finish(info,file,partContext);
 }
 async function splitAndUpload(file){
+  $('#mode').textContent='โหมดแบ่งไฟล์ • กำลังทำงาน';
   setStatus('กำลังแบ่งไฟล์','กำลังอ่านไฟล์และสร้าง Part ที่ไม่เกิน 45 MB (เป้าหมาย 40 MB)','busy',0,'ระหว่างทำงานไม่ต้องอัปโหลดไฟล์ต้นฉบับไปที่อื่น',true);
   const created=await MA('create-media-set',{original_name:file.name,source_size_bytes:file.size,mime_type:file.type||'video/mp4',source_kind:$('#source').value,project_id:$('#project').value||null,retention_mode:$('#retention').value});
   if(!created.ok)throw new Error([created.error,created.detail].filter(Boolean).join(' • ')||'สร้างชุดงานไม่สำเร็จ');
@@ -235,6 +240,7 @@ async function splitAndUpload(file){
       setStatus('กำลังอัปโหลด Part '+(i+1)+' / '+result.parts.length,progress+'% • '+P.bytes(part.size),'busy',progress,'ล้างข้อมูลชั่วคราวของ Part ทันทีเมื่อส่งสำเร็จ');
       await standardUpload(part,{setId,index:i+1});
     }
+    $('#mode').textContent='โหมดแบ่งไฟล์ • เสร็จสิ้น';
     setStatus('อัปโหลดครบทุก Part','พร้อมส่งต่อเข้าขั้นตอนวิเคราะห์','good',100,'ชุดงานยังเก็บไว้ตามนโยบายที่เลือก');
     await loadAll();toast('อัปโหลดชุด Part สำเร็จ');
   }catch(e){
