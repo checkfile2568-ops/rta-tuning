@@ -25,9 +25,10 @@ function extOf(file){
 }
 export function plan(file,targetBytes=TARGET_BYTES){
   const count=Math.max(2,Math.ceil(file.size/targetBytes*1.12));
+  const base=Math.floor(file.size/count), remainder=file.size-base*count;
   const items=Array.from({length:count},(_,i)=>({
     index:i+1,
-    estimatedBytes:i===count-1?Math.max(0,file.size-targetBytes*(count-1)):Math.ceil(file.size/count)
+    estimatedBytes:base+(i<remainder?1:0)
   }));
   return {targetBytes,count,items};
 }
