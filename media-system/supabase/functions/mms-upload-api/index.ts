@@ -1,0 +1,16 @@
+import { createClient } from 'npm:@supabase/supabase-js@2';
+const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,x-mms-session,apikey,authorization','Access-Control-Allow-Methods':'POST,OPTIONS','Content-Type':'application/json; charset=utf-8'};
+const URL=Deno.env.get('SUPABASE_URL')!,SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const db=createClient(URL,SERVICE,{auth:{persistSession:false,autoRefreshToken:false}}),enc=new TextEncoder();
+const out=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:cors});
+const hex=(b:Uint8Array)=>[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+async function sha256(s:string){return hex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(s))))}
+async function ctx(req:Request,body:any){const raw=req.headers.get('x-mms-session')||body?.session||'';if(!raw)return null;const h=await sha256(raw);const{data:s}=await db.from('mms_sessions').select('id,user_id,expires_at').eq('token_hash',h).gt('expires_at',new Date().toISOString()).maybeSingle();if(!s)return null;const{data:u}=await db.from('mms_users').select('id,role,active').eq('id',s.user_id).maybeSingle();return u?.active?{user:u}:null}
+function owned(q:any,c:any){return c.user.role==='admin'?q:q.eq('owner_id',c.user.id)}
+Deno.serve(async(req:Request)=>{if(req.method==='OPTIONS')return new Response('ok',{headers:cors});try{const body=await req.json().catch(()=>({})),c=await ctx(req,body);if(!c)return out({ok:false,error:'UNAUTHORIZED'},401);const action=String(body.action||'state-list');
+if(action==='state-list'){let q=db.from('media_files').select('id,upload_status,upload_bytes,upload_progress,upload_error,upload_started_at,upload_completed_at,last_upload_activity_at').order('created_at',{ascending:false}).limit(300);q=owned(q,c);const{data,error}=await q;if(error)throw error;return out({ok:true,states:data||[]})}
+const id=String(body.id||'');if(!id)return out({ok:false,error:'MISSING_ID'},400);let q=db.from('media_files').select('id,owner_id,size_bytes,upload_status').eq('id',id);q=owned(q,c);const{data:f}=await q.maybeSingle();if(!f)return out({ok:false,error:'NOT_FOUND'},404);const now=new Date().toISOString();
+if(action==='progress'){const bytes=Math.max(0,Math.min(Number(body.bytes)||0,Number(f.size_bytes)||Number.MAX_SAFE_INTEGER)),pct=Math.max(0,Math.min(100,Number(body.progress)||0));const{error}=await db.from('media_files').update({upload_bytes:Math.round(bytes),upload_progress:pct,upload_error:null,upload_started_at:body.started_at||now,last_upload_activity_at:now}).eq('id',id);if(error)throw error;return out({ok:true})}
+if(action==='failed'){const message=String(body.error||'Upload failed').slice(0,800);const{error}=await db.from('media_files').update({upload_status:'failed',upload_error:message,last_upload_activity_at:now}).eq('id',id);if(error)throw error;return out({ok:true})}
+if(action==='resume'){const{error}=await db.from('media_files').update({upload_status:'uploading',upload_error:null,last_upload_activity_at:now,upload_started_at:now}).eq('id',id);if(error)throw error;return out({ok:true})}
+return out({ok:false,error:'UNKNOWN_ACTION'},400)}catch(e){console.error(e);return out({ok:false,error:'SYSTEM_ERROR',detail:e instanceof Error?e.message:String(e)},500)}});
