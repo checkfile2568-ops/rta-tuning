@@ -44,7 +44,7 @@
     <select id="source"><option value="upload">ไฟล์ทั่วไป</option><option value="cctv">CCTV / NVR Export</option><option value="import">นำเข้าระบบเดิม</option></select>
   </div>
   <div class="field" style="margin-top:8px"><label>Project</label><select id="project"><option value="">ไม่ระบุ Project</option></select></div>
-  <div class="field" style="margin-top:8px"><label>หลังประมวลผล</label><select id="retention"><option value="auto_24h">24 ชั่วโมง • ลบอัตโนมัติ</option><option value="manual">กดลบเอง</option><option value="save_device">Save ลงเครื่อง แล้วลบใน 24 ชั่วโมง</option></select></div>
+  <div class="field" style="margin-top:8px"><label>หลังประมวลผล</label><select id="retention"><option value="auto_24h">ลบไฟล์อัตโนมัติหลัง 24 ชั่วโมง</option><option value="immediate">ลบไฟล์ทันทีเมื่อประมวลผลเสร็จ</option></select></div>
   <div id="splitPlan" class="split-plan"><b>โหมดแบ่งไฟล์</b><div id="splitText" class="small"></div><div id="partGrid" class="part-grid"></div><div class="small">ระบบตั้งเป้า Part ละ 40 MB และตรวจไม่ให้เกิน 45 MB ก่อนอัปโหลด</div></div>
   <button id="uploadBtn" class="btn primary" style="width:100%;margin-top:10px">อัปโหลด</button>
   <div class="status">
@@ -55,7 +55,7 @@
       <button id="pauseBtn" class="btn">พัก</button><button id="resumeBtn" class="btn" style="display:none">ทำต่อ</button><button id="cancelBtn" class="btn danger-link">ยกเลิก</button>
     </div>
   </div>
-  <div class="helpnote">ไฟล์ ≤ 50 MB ใช้รูปแบบเดิม • ไฟล์ใหญ่ใช้โหมดแบ่งไฟล์ โดยตั้งเป้า Part ละ 40 MB และไม่เกิน 45 MB • Part จะไม่ถูกรวมกลับ • เมื่อมีระบบตัดคลิป จะตัดจาก Part เดียวและได้ผลลัพธ์ 1 ไฟล์ • ระบบล้างรายการค้างและลบ Part ตามนโยบายที่เลือก</div>
+  <div class="helpnote">ไฟล์ ≤ 50 MB ใช้รูปแบบเดิม • ไฟล์ใหญ่ใช้โหมดแบ่งไฟล์ โดยตั้งเป้า Part ละ 40 MB และไม่เกิน 45 MB • Part จะไม่ถูกรวมกลับ • ตั้งได้เพียง 2 นโยบาย: ลบอัตโนมัติหลัง 24 ชั่วโมง หรือ ลบทันทีเมื่อประมวลผลเสร็จ • Part จะล้างตามนโยบายที่เลือก</div>
 </section>
 
 <section class="panel glass col-8">
@@ -143,8 +143,9 @@ function render(){
   $('#files').innerHTML=a.length?a.map(x=>{
     const s=stateFor(x.id),[lab,cls]=statusLabel(x),p=Math.max(0,Math.min(100,Number(s.upload_progress||0)));
     const err=s.upload_error?P.esc(String(s.upload_error).slice(0,110)):'';
+    const safeName=encodeURIComponent(x.original_name||'').replace(/'/g,'%27');
     const progress=x.upload_status!=='ready'?`<div class="itembar"><i style="width:${p}%"></i></div><div class="meta" style="margin-top:5px">${p>0?`${p.toFixed(1)}% • ${P.bytes(s.upload_bytes||0)} / ${P.bytes(x.size_bytes)}`:'ยังไม่มีไฟล์ที่อัปโหลดสำเร็จ'}${err?' • '+err:''}</div>`:'';
-    return `<article class="item"><div class="item-head"><div style="font-size:26px">${typeIcon(x)}</div><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.esc(x.media_type)} • ${P.bytes(x.size_bytes)} • ${P.dt(x.created_at)}</div></div><span class="badge ${cls}">${lab}</span></div>${progress}<div class="row" style="margin-top:8px"><span class="badge">Variants ${V.filter(v=>v.media_file_id===x.id&&v.status==='ready').length}</span>${x.source_kind==='cctv'?'<span class="badge">CCTV</span>':''}${x.legal_hold?'<span class="badge bad">LEGAL HOLD</span>':''}<div class="spacer"></div>${x.upload_status==='ready'?`<button class="btn" onclick="window.downloadMedia('${x.id}')">ดาวน์โหลด</button>`:''}</div></article>`;
+    return `<article class="item"><div class="item-head"><div style="font-size:26px">${typeIcon(x)}</div><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.esc(x.media_type)} • ${P.bytes(x.size_bytes)} • ${P.dt(x.created_at)}</div></div><span class="badge ${cls}">${lab}</span></div>${progress}<div class="row" style="margin-top:8px"><span class="badge">Variants ${V.filter(v=>v.media_file_id===x.id&&v.status==='ready').length}</span>${x.source_kind==='cctv'?'<span class="badge">CCTV</span>':''}${x.legal_hold?'<span class="badge bad">LEGAL HOLD</span>':''}<div class="spacer"></div>${x.upload_status==='ready'?`<button class="btn" onclick="window.downloadMedia('${x.id}')">ดาวน์โหลด</button>${!x.media_set_id&&!x.legal_hold&&x.upload_status!=='purged'?`<button class="btn danger-link" onclick="window.deleteMedia('${x.id}','${safeName}')">ลบไฟล์</button>`:''}`:''}</div></article>`;
   }).join(''):'<div class="empty">ยังไม่มีไฟล์ในหมวดนี้</div>';
 }
 async function refreshWorkspace(){
@@ -152,7 +153,7 @@ async function refreshWorkspace(){
   if(!d.ok)throw new Error(d.error||'โหลดพื้นที่ไม่สำเร็จ');
   SETS=d.sets||[];USAGE=d.usage||null;renderQuota();renderSets();
 }
-function retentionLabel(mode){return ({auto_24h:'24 ชั่วโมง • ลบอัตโนมัติ',manual:'กดลบเอง',save_device:'Save ลงเครื่อง แล้วลบใน 24 ชั่วโมง'})[mode]||mode||'—'}
+function retentionLabel(mode){return ({auto_24h:'ลบอัตโนมัติหลัง 24 ชั่วโมง',immediate:'ลบทันทีเมื่อประมวลผลเสร็จ'})[mode]||mode||'—'}
 function setStatusLabel(status){return ({planned:'รอเริ่ม',splitting:'กำลังแบ่งไฟล์',uploading:'กำลังอัปโหลด Part',analyzing:'อัปโหลดครบ • รอวิเคราะห์',awaiting_selection:'รอเลือกช่วงเวลา',ready_to_purge:'พร้อมลบต้นฉบับ',purged:'ล้างแล้ว',failed:'ไม่สำเร็จ'})[status]||status}
 function renderQuota(){
   if(!USAGE)return;
@@ -172,7 +173,7 @@ function renderSets(){
     const expiry=x.expires_at?(' • ลบได้/ลบอัตโนมัติ '+P.dt(x.expires_at)):'';
     const manual=x.retention_mode==='manual';
     const safe=encodeURIComponent(x.original_name||'');
-    return `<article class="set-card"><div class="row"><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.bytes(x.source_size_bytes)} • ${uploaded}/${total} Part • ${setStatusLabel(x.status)}</div></div><span class="badge ${x.status==='ready_to_purge'?'warn':''}">${retentionLabel(x.retention_mode)}</span></div><div class="itembar"><i style="width:${pct}%"></i></div><div class="meta">ใช้พื้นที่ Part แล้ว ${P.bytes(x.uploaded_bytes||0)} • ยังจอง ${P.bytes(x.reserved_bytes||0)}${expiry}${x.legal_hold?' • LEGAL HOLD':''}</div><div class="actions"><select class="btn" onchange="window.changeSetRetention('${x.id}',this.value)"><option value="auto_24h" ${x.retention_mode==='auto_24h'?'selected':''}>24 ชั่วโมง • ลบอัตโนมัติ</option><option value="manual" ${manual?'selected':''}>กดลบเอง</option><option value="save_device" ${x.retention_mode==='save_device'?'selected':''}>Save ลงเครื่อง แล้วลบใน 24 ชั่วโมง</option></select>${x.retention_mode==='save_device'?'<button class="btn" onclick="window.saveSet(\''+x.id+'\',\''+safe+'\')">Save</button>':''}${x.status!=='ready_to_purge'&&x.status!=='purged'?'<button class="btn" onclick="window.markSetPurge(\''+x.id+'\')">ตั้งเป็นพร้อมลบ</button>':''}${!x.legal_hold&&x.status!=='purged'?'<button class="btn danger-link" onclick="window.purgeSet(\''+x.id+'\',\''+safe+'\')">ล้าง Part ตอนนี้</button>':''}</div></article>`;
+    return `<article class="set-card"><div class="row"><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.bytes(x.source_size_bytes)} • ${uploaded}/${total} Part • ${setStatusLabel(x.status)}</div></div><span class="badge ${x.status==='ready_to_purge'?'warn':''}">${retentionLabel(x.retention_mode)}</span></div><div class="itembar"><i style="width:${pct}%"></i></div><div class="meta">ใช้พื้นที่ Part แล้ว ${P.bytes(x.uploaded_bytes||0)} • ยังจอง ${P.bytes(x.reserved_bytes||0)}${expiry}${x.legal_hold?' • LEGAL HOLD':''}</div><div class="actions"><select class="btn" onchange="window.changeSetRetention('${x.id}',this.value)"><option value="auto_24h" ${x.retention_mode==='auto_24h'?'selected':''}>ลบอัตโนมัติหลัง 24 ชั่วโมง</option><option value="immediate" ${x.retention_mode==='immediate'?'selected':''}>ลบทันทีเมื่อประมวลผลเสร็จ</option></select>${x.status!=='ready_to_purge'&&x.status!=='purged'?'<button class="btn" onclick="window.markSetPurge(\''+x.id+'\')">ตั้งเป็นพร้อมลบ</button>':''}${!x.legal_hold&&x.status!=='purged'?'<button class="btn danger-link" onclick="window.purgeSet(\''+x.id+'\',\''+safe+'\')">ล้าง Part ตอนนี้</button>':''}</div></article>`;
   }).join('');
 }
 async function loadAll(){
@@ -192,7 +193,7 @@ window.purgeSet=async(id,safeName)=>{const name=decodeURIComponent(safeName);if(
 window.saveSet=async(id,safeName)=>{const files=DATA.filter(x=>x.media_set_id===id&&x.upload_status==='ready');if(!files.length)return toast('ยังไม่มี Part ที่พร้อม Save');if(!confirm('Save '+files.length+' Part ลงเครื่อง แล้วเริ่มนับเวลาลบ 24 ชั่วโมงหรือไม่?'))return;for(const file of files){const d=await P.api('media-download-url',{id:file.id});if(d.ok){const a=document.createElement('a');a.href=d.url;a.download=file.original_name||decodeURIComponent(safeName);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}}const ready=await MA('mark-media-set-ready-to-purge',{id});if(!ready.ok)return toast(ready.error||'Save แล้ว แต่ตั้งเวลาลบไม่ได้');toast('เริ่ม Save แล้ว และตั้งลบอัตโนมัติใน 24 ชั่วโมง');await refreshWorkspace()};
 
 async function requestInfo(file,partContext=null){
-  const payload={name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_kind:$('#source').value,project_id:$('#project').value||null};
+  const payload={name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_kind:$('#source').value,project_id:$('#project').value||null,retention_mode:$('#retention').value};
   if(partContext){payload.media_set_id=partContext.setId;payload.segment_index=partContext.index}
   const d=await MA('request-upload',payload);
   if(!d.ok)throw new Error([d.error,d.detail].filter(Boolean).join(' • ')||'ขอสิทธิ์อัปโหลดไม่สำเร็จ');
