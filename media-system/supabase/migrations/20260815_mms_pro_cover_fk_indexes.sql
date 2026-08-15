@@ -1,0 +1,14 @@
+create index if not exists idx_mms_ai_findings_media on public.mms_ai_findings(media_file_id);
+create index if not exists idx_mms_ai_findings_project on public.mms_ai_findings(project_id);
+create index if not exists idx_mms_ai_findings_reviewer on public.mms_ai_findings(reviewed_by);
+create index if not exists idx_mms_audit_actor on public.mms_audit_events(actor_id);
+create index if not exists idx_mms_audit_project on public.mms_audit_events(project_id);
+create index if not exists idx_mms_cctv_events_camera on public.mms_cctv_events(camera_id);
+create index if not exists idx_mms_cctv_events_project on public.mms_cctv_events(project_id);
+create index if not exists idx_mms_cctv_events_reviewer on public.mms_cctv_events(reviewed_by);
+create index if not exists idx_mms_cctv_sources_owner on public.mms_cctv_sources(owner_id);
+create index if not exists idx_mms_processing_jobs_media on public.mms_processing_jobs(media_file_id);
+create index if not exists idx_mms_processing_jobs_project on public.mms_processing_jobs(project_id);
+create index if not exists idx_mms_project_versions_creator on public.mms_project_versions(created_by);
+create index if not exists idx_mms_projects_owner on public.mms_projects(owner_id);
+create index if not exists idx_mms_worker_current_job on public.mms_worker_nodes(current_job_id);
