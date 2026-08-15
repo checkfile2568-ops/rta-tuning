@@ -1,0 +1,20 @@
+services:
+  mms-media-worker:
+    build: .
+    image: mms-media-worker:latest
+    restart: unless-stopped
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      MEDIA_BUCKET: mms-media
+      WORKER_ID: ${WORKER_ID:-mms-worker-prod-01}
+      POLL_SECONDS: ${POLL_SECONDS:-2}
+      PORT: 8080
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
