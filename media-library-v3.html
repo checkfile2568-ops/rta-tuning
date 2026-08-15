@@ -52,7 +52,7 @@
       <button id="pauseBtn" class="btn">พัก</button><button id="resumeBtn" class="btn" style="display:none">ทำต่อ</button><button id="cancelBtn" class="btn danger-link">ยกเลิก</button>
     </div>
   </div>
-  <div class="helpnote">ไฟล์ ≤ 50 MB ใช้ Signed Standard Upload • ไฟล์ใหญ่ใช้ TUS Resume 6 MB/chunk • หลังขึ้น “100% พร้อมใช้” จึงสามารถออกจากหน้าได้</div>
+  <div class="helpnote">แผนปัจจุบันรับไฟล์ได้สูงสุด 50 MB • ไฟล์ภายในขนาดนี้ใช้ Signed Standard Upload • เมื่ออัปเกรดเป็น Pro ระบบจะเปิดใช้ TUS Resume 6 MB/chunk สำหรับไฟล์ใหญ่ • หลังขึ้น “100% พร้อมใช้” จึงสามารถออกจากหน้าได้</div>
 </section>
 
 <section class="panel glass col-8">
@@ -80,7 +80,7 @@ const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken
 const MEDIA_API=SB_URL+'/functions/v1/mms-media-api';
 const UPLOAD_API=SB_URL+'/functions/v1/mms-upload-api';
 const SESSION=localStorage.getItem('mms_session')||'';
-const SMALL=50*1024*1024;
+const STORAGE_MAX=50*1024*1024; // Supabase Free project limit\nconst SMALL=STORAGE_MAX;
 let DATA=[],V=[],STATES=[],PROJECTS=[],activeTus=null,activeInfo=null,activeFile=null,paused=false,lastSync=0;
 const $=s=>document.querySelector(s);
 
@@ -95,7 +95,19 @@ function setStatus(title,detail='',kind='',pct=0,extra='',ind=false){
   if(!ind)$('#bar i').style.width=Math.max(0,Math.min(100,pct||0))+'%';
 }
 function setMode(file){
-  if(!file){$('#mode').textContent='รอเลือกไฟล์';$('#fileHint').textContent='เลือกไฟล์เพื่อดูวิธีอัปโหลด';return}
+  if(!file){
+    $('#mode').textContent='รอเลือกไฟล์';
+    $('#fileHint').textContent='เลือกไฟล์เพื่อดูวิธีอัปโหลด';
+    $('#uploadBtn').disabled=false;
+    return;
+  }
+  const overLimit=file.size>STORAGE_MAX;
+  $('#uploadBtn').disabled=overLimit;
+  if(overLimit){
+    $('#mode').textContent='เกินข้อจำกัด • 50 MB';
+    $('#fileHint').textContent=`${P.bytes(file.size)} • แผนปัจจุบันรับได้สูงสุด 50 MB — ต้องอัปเกรดเป็น Pro จึงจะใช้ Resume ได้`;
+    return;
+  }
   const small=file.size<=SMALL;
   $('#mode').textContent=small?'ส่งตรง • เสถียร':'Resume • ไฟล์ใหญ่';
   $('#fileHint').textContent=`${P.bytes(file.size)} • ${small?'Signed Standard Upload':'TUS Resume 6 MB/chunk'}`;
@@ -200,6 +212,11 @@ async function tusUpload(file){
 }
 async function startUpload(){
   const file=$('#file').files[0];if(!file)return toast('กรุณาเลือกไฟล์ก่อน');
+  if(file.size>STORAGE_MAX){
+    setStatus('เกินขนาดสูงสุด',\`ไฟล์ ${P.bytes(file.size)} เกินข้อจำกัดของแผนปัจจุบัน\`,'bad',0,'อัปเกรด Supabase เป็น Pro ก่อนจึงจะอัปโหลดไฟล์เกิน 50 MB ได้');
+    toast('ไฟล์เกิน 50 MB');
+    return;
+  }
   $('#uploadBtn').disabled=true;
   try{if(file.size<=SMALL)await standardUpload(file);else await tusUpload(file)}
   catch(e){setStatus('อัปโหลดไม่สำเร็จ','ระบบหยุดเพื่อป้องกันข้อมูลผิดพลาด','bad',0,String(e?.message||e));toast('อัปโหลดไม่สำเร็จ');await loadAll()}
