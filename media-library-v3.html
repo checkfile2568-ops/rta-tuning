@@ -150,52 +150,97 @@ function render(){
     return `<article class="item"><div class="item-head"><div style="font-size:26px">${typeIcon(x)}</div><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.esc(x.media_type)} • ${P.bytes(x.size_bytes)} • ${P.dt(x.created_at)}</div></div><span class="badge ${cls}">${lab}</span></div>${progress}<div class="row" style="margin-top:8px"><span class="badge">Variants ${V.filter(v=>v.media_file_id===x.id&&v.status==='ready').length}</span>${x.source_kind==='cctv'?'<span class="badge">CCTV</span>':''}${x.legal_hold?'<span class="badge bad">LEGAL HOLD</span>':''}<div class="spacer"></div>${x.upload_status==='ready'?`<button class="btn" onclick="window.downloadMedia('${x.id}')">ดาวน์โหลด</button>`:''}${del}</div></article>`;
   }).join(''):'<div class="empty">ยังไม่มีไฟล์ในหมวดนี้</div>';
 }
+async function refreshWorkspace(){
+  const d=await MA('list-media-sets');
+  if(!d.ok)throw new Error(d.error||'โหลดพื้นที่ไม่สำเร็จ');
+  SETS=d.sets||[];USAGE=d.usage||null;renderQuota();renderSets();
+}
+function retentionLabel(mode){return ({auto_24h:'24 ชั่วโมง • ลบอัตโนมัติ',manual:'กดลบเอง',save_device:'Save ลงเครื่อง แล้วลบใน 24 ชั่วโมง'})[mode]||mode||'—'}
+function setStatusLabel(status){return ({planned:'รอเริ่ม',splitting:'กำลังแบ่งไฟล์',uploading:'กำลังอัปโหลด Part',analyzing:'อัปโหลดครบ • รอวิเคราะห์',awaiting_selection:'รอเลือกช่วงเวลา',ready_to_purge:'พร้อมลบต้นฉบับ',purged:'ล้างแล้ว',failed:'ไม่สำเร็จ'})[status]||status}
+function renderQuota(){
+  if(!USAGE)return;
+  const used=Number(USAGE.effective_bytes||0),limit=Number(USAGE.work_limit_bytes||0),pct=limit?Math.min(100,used/limit*100):0;
+  $('#quotaSummary').textContent='ใช้จริง '+P.bytes(USAGE.actual_bytes||0)+' • จองงาน '+P.bytes(USAGE.reserved_bytes||0)+' • เหลือ '+P.bytes(USAGE.available_bytes||0);
+  $('#quotaValue').textContent=P.bytes(used)+' / '+P.bytes(limit);
+  $('#quotaBar').style.width=pct+'%';
+  $('#quotaBox').className='quota'+(pct>=90?' bad':pct>=70?' warn':'');
+  $('#quotaDetail').textContent='โควตางาน 500 MB • กันพื้นที่ 100 MB • ใช้งานได้สูงสุด 400 MB • Storage จริง '+P.bytes(USAGE.actual_bytes||0)+' • '+(USAGE.object_count||0)+' ไฟล์';
+}
+function renderSets(){
+  const list=$('#setList');
+  const active=SETS.filter(x=>x.status!=='purged');
+  if(!active.length){list.innerHTML='<div class="empty">ไม่มีชุด Part ค้างอยู่ • พื้นที่จะถูกติดตามที่นี่</div>';return}
+  list.innerHTML=active.map(x=>{
+    const uploaded=Number(x.uploaded_parts||0),total=Number(x.total_parts||0), pct=total?Math.min(100,uploaded/total*100):0;
+    const expiry=x.expires_at?(' • ลบได้/ลบอัตโนมัติ '+P.dt(x.expires_at)):'';
+    const manual=x.retention_mode==='manual';
+    const safe=encodeURIComponent(x.original_name||'');
+    return `<article class="set-card"><div class="row"><div class="grow"><b>${P.esc(x.original_name)}</b><div class="meta">${P.bytes(x.source_size_bytes)} • ${uploaded}/${total} Part • ${setStatusLabel(x.status)}</div></div><span class="badge ${x.status==='ready_to_purge'?'warn':''}">${retentionLabel(x.retention_mode)}</span></div><div class="itembar"><i style="width:${pct}%"></i></div><div class="meta">ใช้พื้นที่ Part แล้ว ${P.bytes(x.uploaded_bytes||0)} • ยังจอง ${P.bytes(x.reserved_bytes||0)}${expiry}${x.legal_hold?' • LEGAL HOLD':''}</div><div class="actions"><select class="btn" onchange="window.changeSetRetention('${x.id}',this.value)"><option value="auto_24h" ${x.retention_mode==='auto_24h'?'selected':''}>24 ชั่วโมง • ลบอัตโนมัติ</option><option value="manual" ${manual?'selected':''}>กดลบเอง</option><option value="save_device" ${x.retention_mode==='save_device'?'selected':''}>Save ลงเครื่อง แล้วลบใน 24 ชั่วโมง</option></select>${x.retention_mode==='save_device'?'<button class="btn" onclick="window.saveSet(\''+x.id+'\',\''+safe+'\')">Save</button>':''}${x.status!=='ready_to_purge'&&x.status!=='purged'?'<button class="btn" onclick="window.markSetPurge(\''+x.id+'\')">ตั้งเป็นพร้อมลบ</button>':''}${!x.legal_hold&&x.status!=='purged'?'<button class="btn danger-link" onclick="window.purgeSet(\''+x.id+'\',\''+safe+'\')">ล้าง Part ตอนนี้</button>':''}</div></article>`;
+  }).join('');
+}
 async function loadAll(){
   try{
-    const [l,p,s]=await Promise.all([P.api('library-list',{limit:300}),P.api('projects-list'),U('state-list')]);
+    const [l,p,st]=await Promise.all([P.api('library-list',{limit:300}),P.api('projects-list'),U('state-list'),refreshWorkspace()]);
     if(!l.ok)throw new Error(l.error||'LOAD_FAILED');
-    DATA=l.files||[];V=l.variants||[];STATES=s.states||[];PROJECTS=p.projects||[];
+    DATA=l.files||[];V=l.variants||[];STATES=st.states||[];PROJECTS=p.projects||[];
     $('#project').innerHTML='<option value="">ไม่ระบุ Project</option>'+PROJECTS.map(x=>`<option value="${P.esc(x.id)}">${P.esc(x.title)}</option>`).join('');
     render();
-  }catch(e){$('#files').innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่หรือกดรีเฟรช</div>'}
+  }catch(e){$('#files').innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่หรือกดรีเฟรช</div>';$('#quotaSummary').textContent='ตรวจพื้นที่ไม่สำเร็จ'}
 }
 window.loadAll=loadAll;
 window.downloadMedia=async id=>{const d=await P.api('media-download-url',{id});if(!d.ok)return toast(d.error||'ดาวน์โหลดไม่ได้');window.open(d.url,'_blank','noopener')};
+window.changeSetRetention=async(id,retention_mode)=>{const d=await MA('set-media-set-retention',{id,retention_mode});if(!d.ok)return toast(d.error||'ตั้งค่าไม่ได้');toast('บันทึกนโยบายเก็บไฟล์แล้ว');await refreshWorkspace()};
+window.markSetPurge=async id=>{if(!confirm('ยืนยันว่าผลวิเคราะห์และคลิปที่เลือกพร้อมใช้งานแล้วหรือไม่?\nระบบจะเริ่มนับเวลาลบตามนโยบายที่เลือก'))return;const d=await MA('mark-media-set-ready-to-purge',{id});if(!d.ok)return toast(d.error||'ตั้งสถานะไม่ได้');toast('ตั้งสถานะพร้อมลบต้นฉบับแล้ว');await refreshWorkspace()};
+window.purgeSet=async(id,safeName)=>{const name=decodeURIComponent(safeName);if(!confirm('ล้าง Part ต้นฉบับของ “'+name+'” ตอนนี้หรือไม่?\nการล้างคืนพื้นที่และจะวิเคราะห์ซ้ำไม่ได้จนกว่าจะนำเข้าใหม่'))return;const d=await MA('purge-media-set',{id,reason:'manual_user'});if(!d.ok)return toast(d.error||'ล้างไม่ได้');toast('ล้าง Part และคืนพื้นที่แล้ว');await loadAll()};
+window.saveSet=async(id,safeName)=>{const files=DATA.filter(x=>x.media_set_id===id&&x.upload_status==='ready');if(!files.length)return toast('ยังไม่มี Part ที่พร้อม Save');if(!confirm('Save '+files.length+' Part ลงเครื่อง แล้วเริ่มนับเวลาลบ 24 ชั่วโมงหรือไม่?'))return;for(const file of files){const d=await P.api('media-download-url',{id:file.id});if(d.ok){const a=document.createElement('a');a.href=d.url;a.download=file.original_name||decodeURIComponent(safeName);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}}const ready=await MA('mark-media-set-ready-to-purge',{id});if(!ready.ok)return toast(ready.error||'Save แล้ว แต่ตั้งเวลาลบไม่ได้');toast('เริ่ม Save แล้ว และตั้งลบอัตโนมัติใน 24 ชั่วโมง');await refreshWorkspace()};
 
-async function requestInfo(file){
-  if(file.size>SMALL){
-    const k=resumeKey(file);
-    try{
-      const old=JSON.parse(localStorage.getItem(k)||'null');
-      if(old?.id){
-        const refreshed=await MA('refresh-upload',{id:old.id});
-        if(refreshed.ok)return refreshed;
-        localStorage.removeItem(k);
-      }
-    }catch{localStorage.removeItem(k)}
-  }
-  const d=await MA('request-upload',{name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_kind:$('#source').value,project_id:$('#project').value||null});
+async function requestInfo(file,partContext=null){
+  const payload={name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_kind:$('#source').value,project_id:$('#project').value||null};
+  if(partContext){payload.media_set_id=partContext.setId;payload.segment_index=partContext.index}
+  const d=await MA('request-upload',payload);
   if(!d.ok)throw new Error(d.error||d.detail||'ขอสิทธิ์อัปโหลดไม่สำเร็จ');
-  if(file.size>SMALL)localStorage.setItem(resumeKey(file),JSON.stringify({id:d.file.id,path:d.path,created_at:Date.now()}));
   return d;
 }
-async function finish(info,file){
-  setStatus('กำลังตรวจไฟล์','อัปโหลดครบแล้ว กำลังยืนยันกับ Storage','busy',100,'อีกสักครู่จะพร้อมใช้',true);
+async function finish(info,file,partContext=null){
   const c=await P.api('library-complete-upload',{id:info.file.id});
   if(!c.ok)throw new Error(c.error||'ตรวจไฟล์หลังอัปโหลดไม่สำเร็จ');
   await U('completed',{id:info.file.id});
-  localStorage.removeItem(resumeKey(file));
+  if(partContext){
+    const setResult=await MA('segment-completed',{id:info.file.id});
+    if(!setResult.ok)throw new Error(setResult.error||'บันทึกสถานะ Part ไม่สำเร็จ');
+    return setResult;
+  }
   setStatus('100% • พร้อมใช้','อัปโหลดสำเร็จและบันทึกใน Private Storage แล้ว','good',100,'สามารถออกจากหน้านี้ได้');
   showControls(false);await loadAll();toast('อัปโหลดสำเร็จ');
 }
-async function standardUpload(file){
-  setStatus('กำลังเตรียมสิทธิ์','กำลังสร้าง Storage key ที่ปลอดภัย','busy',0,'ชื่อไฟล์ไทยยังคงแสดงเหมือนเดิม',true);
-  const info=await requestInfo(file);activeInfo=info;activeFile=file;
+async function standardUpload(file,partContext=null){
+  const info=await requestInfo(file,partContext);activeInfo=info;activeFile=file;
   await U('resume',{id:info.file.id});
-  setStatus('กำลังส่งไฟล์',`กำลังส่ง ${P.bytes(file.size)} ไป Private Storage`,'busy',0,'ไฟล์เล็กใช้การส่งตรง จะแสดง 100% เมื่อ Storage ยืนยันสำเร็จ',true);
   const {error}=await sb.storage.from(info.bucket).uploadToSignedUrl(info.path,info.token,file,{contentType:file.type||'application/octet-stream'});
   if(error){await U('failed',{id:info.file.id,error:error.message});throw new Error(error.message)}
-  await finish(info,file);
+  return finish(info,file,partContext);
+}
+async function splitAndUpload(file){
+  setStatus('กำลังแบ่งไฟล์','กำลังอ่านไฟล์และสร้าง Part ที่ไม่เกิน 45 MB','busy',0,'ระหว่างทำงานไม่ต้องอัปโหลดไฟล์ต้นฉบับไปที่อื่น',true);
+  const created=await MA('create-media-set',{original_name:file.name,source_size_bytes:file.size,mime_type:file.type||'video/mp4',source_kind:$('#source').value,project_id:$('#project').value||null,retention_mode:$('#retention').value});
+  if(!created.ok)throw new Error(created.error||'สร้างชุดงานไม่สำเร็จ');
+  const setId=created.set.id;
+  try{
+    const result=await Splitter.splitVideo(file,{targetBytes:PART_TARGET,onProgress:info=>setStatus('กำลังแบ่งไฟล์',info.phase||'กำลังแบ่งไฟล์','busy',Math.round((info.progress||0)*30),'ระบบจะตรวจทุก Part ก่อนส่ง',false)});
+    const manifest={target_bytes:PART_TARGET,duration_ms:result.durationMs,parts:result.parts.map((p,i)=>({index:i+1,name:p.name,size_bytes:p.size}))};
+    const saved=await MA('set-media-set-manifest',{id:setId,manifest});
+    if(!saved.ok)throw new Error(saved.error||'บันทึกข้อมูลชุดงานไม่สำเร็จ');
+    for(let i=0;i<result.parts.length;i++){
+      const part=result.parts[i],progress=Math.round(i/result.parts.length*100);
+      setStatus('กำลังอัปโหลด Part '+(i+1)+' / '+result.parts.length,progress+'% • '+P.bytes(part.size),'busy',progress,'ล้างข้อมูลชั่วคราวของ Part ทันทีเมื่อส่งสำเร็จ');
+      await standardUpload(part,{setId,index:i+1});
+    }
+    setStatus('อัปโหลดครบทุก Part','พร้อมส่งต่อเข้าขั้นตอนวิเคราะห์','good',100,'ชุดงานยังเก็บไว้ตามนโยบายที่เลือก');
+    await loadAll();toast('อัปโหลดชุด Part สำเร็จ');
+  }catch(e){
+    await MA('mark-media-set-ready-to-purge',{id:setId}).catch(()=>{});
+    throw e;
+  }
 }
 function errStatus(err){try{return Number(err?.originalResponse?.getStatus?.()||0)}catch{return 0}}
 async function tusUpload(file){
@@ -217,15 +262,16 @@ async function tusUpload(file){
 }
 async function startUpload(){
   const file=$('#file').files[0];if(!file)return toast('กรุณาเลือกไฟล์ก่อน');
-  if(file.size>STORAGE_MAX){
-    setStatus('เกินขนาดสูงสุด',\`ไฟล์ ${P.bytes(file.size)} เกินข้อจำกัดของแผนปัจจุบัน\`,'bad',0,'อัปเกรด Supabase เป็น Pro ก่อนจึงจะอัปโหลดไฟล์เกิน 50 MB ได้');
-    toast('ไฟล์เกิน 50 MB');
-    return;
-  }
   $('#uploadBtn').disabled=true;
-  try{if(file.size<=SMALL)await standardUpload(file);else await tusUpload(file)}
-  catch(e){setStatus('อัปโหลดไม่สำเร็จ','ระบบหยุดเพื่อป้องกันข้อมูลผิดพลาด','bad',0,String(e?.message||e));toast('อัปโหลดไม่สำเร็จ');await loadAll()}
-  finally{$('#uploadBtn').disabled=false}
+  try{
+    if(file.size<=STORAGE_MAX){
+      setStatus('กำลังส่งไฟล์',P.bytes(file.size)+' • Signed Standard Upload','busy',0,'ไฟล์ไม่เกิน 50 MB ใช้รูปแบบเดิม',true);
+      await standardUpload(file);
+    }else await splitAndUpload(file);
+  }catch(e){
+    setStatus('อัปโหลดไม่สำเร็จ','ระบบหยุดเพื่อป้องกันข้อมูลผิดพลาด','bad',0,String(e?.message||e));
+    toast('อัปโหลดไม่สำเร็จ');await loadAll()
+  }finally{$('#uploadBtn').disabled=false}
 }
 function pauseUpload(){if(!activeTus)return;activeTus.abort(false);paused=true;showControls(true);setStatus('พักการอัปโหลด','กด “ทำต่อ” เมื่อต้องการส่งต่อ','',null,'ไฟล์ยังไม่พร้อมใช้')}
 function resumeUpload(){if(!activeTus)return;paused=false;showControls(true);activeTus.start();setStatus('กำลังทำต่อ','กำลังเชื่อมต่อ Resume session','busy',null,'')}
@@ -251,6 +297,6 @@ $('#resumeBtn').addEventListener('click',resumeUpload);
 $('#cancelBtn').addEventListener('click',cancelUpload);
 $('#filter').addEventListener('change',render);
 $('#clearFailedBtn').addEventListener('click',clearFailed);
-setMode(null);loadAll();
+setMode(null);loadAll();setInterval(()=>refreshWorkspace().catch(()=>{}),60000);
 </script>
 </body></html>
