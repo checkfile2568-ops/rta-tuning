@@ -31,7 +31,7 @@ export function plan(file,targetBytes=TARGET_BYTES){
   }));
   return {targetBytes,count,items};
 }
-export async function splitVideo(file,{targetBytes=TARGET_BYTES,onProgress}={}){
+export async function splitVideo(file,{targetBytes=TARGET_BYTES,maxPartBytes=TARGET_BYTES,onProgress}={}){
   if(!file?.size)throw new Error('ไม่พบไฟล์ต้นฉบับ');
   const p=plan(file,targetBytes);
   const {ffmpeg,fetchFile}=await loadFFmpeg(progress=>onProgress?.({phase:'ตัดไฟล์',progress:progress*.85}));
@@ -55,7 +55,7 @@ export async function splitVideo(file,{targetBytes=TARGET_BYTES,onProgress}={}){
     for(let i=0;i<names.length;i++){
       const data=await ffmpeg.readFile(names[i]);
       const blob=new Blob([data],{type:file.type||'video/mp4'});
-      if(blob.size>targetBytes)throw new Error('Part '+(i+1)+' มีขนาดเกิน 45 MB กรุณาลองใหม่บนคอมพิวเตอร์');
+      if(blob.size>maxPartBytes)throw new Error('Part '+(i+1)+' มีขนาดเกิน 45 MB กรุณาลองใหม่บนคอมพิวเตอร์');
       parts.push(new File([blob], file.name.replace(/(\\.[^.]*)?$/, '-part-'+String(i+1).padStart(3,'0')+'.'+extension), {type:file.type||'video/mp4'}));
       onProgress?.({phase:'ตรวจสอบ Part',progress:.85+((i+1)/names.length)*.15});
       await ffmpeg.deleteFile(names[i]);
