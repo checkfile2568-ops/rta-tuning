@@ -9,7 +9,8 @@ const cors = {
 const URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const BUCKET = 'mms-media';
-const TUS_ENDPOINT = 'https://hwzadnpaxiacucvjxmor.storage.supabase.co/storage/v1/upload/resumable';
+// Signed resumable uploads must use the signed TUS endpoint.
+const TUS_ENDPOINT = 'https://hwzadnpaxiacucvjxmor.storage.supabase.co/storage/v1/upload/resumable/sign';
 const db = createClient(URL, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } });
 const enc = new TextEncoder();
 const out = (d: unknown, s = 200) => new Response(JSON.stringify(d), { status: s, headers: cors });
