@@ -1,4 +1,4 @@
-import os,time,json,hashlib,tempfile,subprocess,uuid,select,math
+import os,time,json,hashlib,tempfile,subprocess,uuid,select
 from pathlib import Path
 from urllib.parse import quote
 import requests
@@ -8,7 +8,7 @@ SERVICE_KEY=os.environ['SUPABASE_SERVICE_ROLE_KEY']
 WORKER_ID=os.getenv('WORKER_ID',f'mms-worker-{uuid.uuid4().hex[:8]}')
 POLL=float(os.getenv('POLL_SECONDS','3'))
 BUCKET=os.getenv('MEDIA_BUCKET','mms-media')
-VERSION='0.3.0'
+VERSION='0.4.0'
 JOB_TYPES=['proxy_generate','checksum_compute','video_export','cctv_analyze']
 HEAD={'apikey':SERVICE_KEY,'Authorization':f'Bearer {SERVICE_KEY}'}
 REST=f'{SUPABASE_URL}/rest/v1'
@@ -28,7 +28,7 @@ def rpc(name,payload):
 
 def now():return time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())
 def heartbeat(status='online',job_id=None,error=None):
-    payload={'worker_id':WORKER_ID,'worker_type':'media','status':status,'current_job_id':job_id,'version':VERSION,'last_seen_at':now(),'capabilities':{'job_types':JOB_TYPES,'ffmpeg':True,'opencv':True,'yolo':True,'cancel':True,'live_progress':True},'metadata':{'error':error} if error else {}}
+    payload={'worker_id':WORKER_ID,'worker_type':'media','status':status,'current_job_id':job_id,'version':VERSION,'last_seen_at':now(),'capabilities':{'job_types':JOB_TYPES,'ffmpeg':True,'opencv':True,'yolo':True,'cancel':True,'live_progress':True,'media_set_export':True,'video_enhance':True},'metadata':{'error':error} if error else {}}
     table_upsert('mms_worker_nodes',payload,'worker_id')
 
 def claim():return rpc('mms_claim_processing_job',{'p_worker_id':WORKER_ID,'p_job_types':JOB_TYPES})
@@ -37,7 +37,15 @@ def job_status(jid):
     rows=table_get('mms_processing_jobs',{'id':f'eq.{jid}','select':'status','limit':'1'});return rows[0]['status'] if rows else None
 
 def media(mid):
+    if not mid:return None
     rows=table_get('media_files',{'id':f'eq.{mid}','select':'*','limit':'1'});return rows[0] if rows else None
+
+def media_set(sid):
+    if not sid:return None
+    rows=table_get('mms_media_sets',{'id':f'eq.{sid}','select':'*','limit':'1'});return rows[0] if rows else None
+
+def media_set_parts(sid):
+    return table_get('media_files',{'media_set_id':f'eq.{sid}','upload_status':'eq.ready','purged_at':'is.null','select':'*','order':'segment_index.asc'})
 
 def download(path,dst,job_id=None):
     url=f"{SUPABASE_URL}/storage/v1/object/authenticated/{BUCKET}/{quote(path,safe='/')}"
@@ -110,27 +118,60 @@ def process_checksum(job,m):
 def process_proxy(job,m):
     with tempfile.TemporaryDirectory() as td:
         src=str(Path(td)/('source'+Path(m['original_name']).suffix));out=str(Path(td)/'proxy-720p.mp4');job_update(job['id'],progress=8);download(m['storage_path'],src,job['id']);meta=ffprobe(src);table_patch('media_files',{'id':m['id']},{**{k:v for k,v in meta.items() if v is not None},'updated_at':now()});job_update(job['id'],progress=25)
-        vf="scale='if(gt(ih,720),-2,iw)':'if(gt(ih,720),720,ih)'"
-        cmd=['ffmpeg','-y','-i',src,'-vf',vf,'-c:v','libx264','-preset','veryfast','-crf','24','-c:a','aac','-b:a','128k','-movflags','+faststart',out];run_ffmpeg(cmd,job,meta.get('duration_ms'),25,78)
+        vf="scale='if(gt(ih,720),-2,iw)':'if(gt(ih,720),720,ih)'";cmd=['ffmpeg','-y','-i',src,'-vf',vf,'-c:v','libx264','-preset','veryfast','-crf','24','-c:a','aac','-b:a','128k','-movflags','+faststart',out];run_ffmpeg(cmd,job,meta.get('duration_ms'),25,78)
         if job_status(job['id'])=='cancelled':raise RuntimeError('JOB_CANCELLED')
         path=f"{m['owner_id']}/proxy/{m['id']}/proxy-720p.mp4";job_update(job['id'],progress=82);upload(path,out,'video/mp4');job_update(job['id'],progress=95)
         table_upsert('mms_media_variants',{'media_file_id':m['id'],'variant_type':'proxy','storage_path':path,'mime_type':'video/mp4','size_bytes':os.path.getsize(out),'height':min(720,int(meta.get('height') or 720)),'duration_ms':meta.get('duration_ms'),'status':'ready','metadata':{'profile':'max-720p-h264-aac','worker':WORKER_ID}},'media_file_id,variant_type')
         job_update(job['id'],progress=100,status='completed',completed_at=now(),output={'storage_path':path,'proxy_path':path,'profile':'max-720p'})
 
+def materialize_export_source(job,m,td):
+    inp=job.get('input') or {};sid=inp.get('media_set_id')
+    if not sid:
+        if not m:raise RuntimeError('MEDIA_FILE_NOT_FOUND')
+        src=str(Path(td)/('source'+(Path(m['original_name']).suffix or '.mp4')));job_update(job['id'],progress=5);download(m['storage_path'],src,job['id']);return src,m.get('owner_id'),m.get('original_name') or 'video.mp4',None
+    s=media_set(sid)
+    if not s:raise RuntimeError('MEDIA_SET_NOT_FOUND')
+    parts=media_set_parts(sid);expected=int(s.get('total_parts') or 0)
+    if not parts or (expected and len(parts)!=expected):raise RuntimeError(f'MEDIA_SET_INCOMPLETE:{len(parts)}/{expected}')
+    files=[];total=len(parts)
+    for i,p in enumerate(parts,1):
+        ext=Path(p.get('original_name') or '').suffix or '.mp4';dst=str(Path(td)/f'part-{i:03d}{ext}');job_update(job['id'],progress=5+round((i-1)/max(1,total)*8));download(p['storage_path'],dst,job['id']);files.append(dst)
+    concat_file=Path(td)/'concat.txt';concat_file.write_text(''.join("file '"+x.replace("'","'\\''")+"'\n" for x in files),encoding='utf-8');merged=str(Path(td)/'source-merged.mp4');job_update(job['id'],progress=14)
+    p=subprocess.run(['ffmpeg','-y','-f','concat','-safe','0','-i',str(concat_file),'-c','copy','-movflags','+faststart',merged],capture_output=True,text=True)
+    if p.returncode!=0:
+        p=subprocess.run(['ffmpeg','-y','-f','concat','-safe','0','-i',str(concat_file),'-c:v','libx264','-preset','veryfast','-crf','18','-c:a','aac','-b:a','192k','-movflags','+faststart',merged],capture_output=True,text=True)
+        if p.returncode!=0:raise RuntimeError('MEDIA_SET_CONCAT_FAILED: '+p.stderr[-4000:])
+    job_update(job['id'],progress=18);return merged,s.get('owner_id'),s.get('original_name') or 'video.mp4',sid
+
+def build_video_filters(inp,zoom,cx,cy,w,h):
+    filters=[];mode=str(inp.get('zoom_mode') or 'original')
+    if mode!='original' and zoom>1.001:
+        filters.append(f"crop=w='trunc(iw/{zoom:.5f}/2)*2':h='trunc(ih/{zoom:.5f}/2)*2':x='(iw-ow)*{cx:.6f}':y='(ih-oh)*{cy:.6f}'");filters.append(f'scale={w}:{h}')
+    enhance=inp.get('enhance') or {};brightness=max(-50.0,min(50.0,float(enhance.get('brightness') or 0)));contrast=max(-50.0,min(50.0,float(enhance.get('contrast') or 0)));saturation=max(-50.0,min(50.0,float(enhance.get('saturation') or 0)));sharpness=max(0.0,min(100.0,float(enhance.get('sharpness') or 0)));preset=str(enhance.get('preset') or 'custom')
+    if preset=='cctv':filters.append('hqdn3d=1.5:1.5:6:6')
+    if brightness or contrast or saturation:filters.append(f'eq=brightness={brightness/200.0:.4f}:contrast={1.0+contrast/100.0:.4f}:saturation={1.0+saturation/100.0:.4f}')
+    if sharpness>0:filters.append(f'unsharp=5:5:{sharpness/100.0*1.5:.4f}:5:5:0')
+    profile=str(inp.get('output_profile') or 'source_quality')
+    if profile=='full_hd':filters.append("scale=1920:1080:force_original_aspect_ratio=decrease,scale='trunc(iw/2)*2':'trunc(ih/2)*2'")
+    elif profile=='hd':filters.append("scale=1280:720:force_original_aspect_ratio=decrease,scale='trunc(iw/2)*2':'trunc(ih/2)*2'")
+    elif profile=='compact':filters.append("scale=854:480:force_original_aspect_ratio=decrease,scale='trunc(iw/2)*2':'trunc(ih/2)*2'")
+    return filters,{'brightness':brightness,'contrast':contrast,'saturation':saturation,'sharpness':sharpness,'preset':preset},profile
+
 def process_video_export(job,m):
-    inp=job.get('input') or {};start=max(0,int(inp.get('trim_start_ms') or 0));end=int(inp.get('trim_end_ms') or (m.get('duration_ms') or 0));clip=max(1,end-start);mode=str(inp.get('zoom_mode') or 'original');zoom=max(1.0,min(4.0,float(inp.get('zoom_level') or 1)));center=inp.get('center') or {};cx=max(0,min(1,float(center.get('x',.5))));cy=max(0,min(1,float(center.get('y',.5))))
+    inp=job.get('input') or {};mode=str(inp.get('zoom_mode') or 'original');zoom=max(1.0,min(4.0,float(inp.get('zoom_level') or 1)));center=inp.get('center') or {};cx=max(0,min(1,float(center.get('x',.5))));cy=max(0,min(1,float(center.get('y',.5))))
     with tempfile.TemporaryDirectory() as td:
-        src=str(Path(td)/('source'+Path(m['original_name']).suffix));out=str(Path(td)/'final.mp4');job_update(job['id'],progress=5);download(m['storage_path'],src,job['id']);meta=ffprobe(src);w=int(meta.get('width') or m.get('width') or 1280);h=int(meta.get('height') or m.get('height') or 720);w-=w%2;h-=h%2;job_update(job['id'],progress=20)
-        cmd=['ffmpeg','-y','-ss',f'{start/1000:.3f}','-i',src,'-t',f'{clip/1000:.3f}']
-        if mode!='original' and zoom>1.001:
-            vf=f"crop=w='trunc(iw/{zoom:.5f}/2)*2':h='trunc(ih/{zoom:.5f}/2)*2':x='(iw-ow)*{cx:.6f}':y='(ih-oh)*{cy:.6f}',scale={w}:{h}"
-            cmd+=['-vf',vf]
-        cmd+=['-c:v','libx264','-preset','veryfast','-crf','20','-c:a','aac','-b:a','192k','-movflags','+faststart',out]
-        run_ffmpeg(cmd,job,clip,20,84)
+        src,owner_id,source_name,set_id=materialize_export_source(job,m,td);meta=ffprobe(src);start=max(0,int(inp.get('trim_start_ms') or 0));source_dur=int(meta.get('duration_ms') or 0);end=int(inp.get('trim_end_ms') or source_dur);end=min(end,source_dur) if source_dur else end
+        if end<=start:raise RuntimeError('INVALID_TRIM_RANGE')
+        clip=max(1,end-start);w=int(meta.get('width') or (m or {}).get('width') or 1280);h=int(meta.get('height') or (m or {}).get('height') or 720);w-=w%2;h-=h%2;filters,enhance,profile=build_video_filters(inp,zoom,cx,cy,w,h);out=str(Path(td)/'final.mp4');job_update(job['id'],progress=20)
+        cmd=['ffmpeg','-y','-ss',f'{start/1000:.3f}','-i',src,'-t',f'{clip/1000:.3f}'];
+        if filters:cmd+=['-vf',','.join(filters)]
+        crf='22' if profile=='compact' else '20';audio_rate='128k' if profile=='compact' else '192k';cmd+=['-c:v','libx264','-preset','veryfast','-crf',crf,'-c:a','aac','-b:a',audio_rate,'-movflags','+faststart',out];run_ffmpeg(cmd,job,clip,20,84)
         if job_status(job['id'])=='cancelled':raise RuntimeError('JOB_CANCELLED')
-        path=f"{m['owner_id']}/output/{m['id']}/{job['id']}/final.mp4";job_update(job['id'],progress=88);upload(path,out,'video/mp4');digest=sha256_file(out,job['id']);job_update(job['id'],progress=96)
-        table_upsert('mms_media_variants',{'media_file_id':m['id'],'variant_type':'output','storage_path':path,'mime_type':'video/mp4','size_bytes':os.path.getsize(out),'width':w,'height':h,'duration_ms':clip,'checksum':digest,'status':'ready','metadata':{'worker':WORKER_ID,'job_id':job['id'],'zoom_mode':mode,'zoom_level':zoom,'center':{'x':cx,'y':cy},'tracking_note':'fixed-center export; AI tracking modes fall back to selected center in v1'}},'media_file_id,variant_type')
-        job_update(job['id'],progress=100,status='completed',completed_at=now(),output={'storage_path':path,'name':f"MMs_{Path(m['original_name']).stem}_final.mp4",'sha256':digest,'duration_ms':clip,'zoom_mode':mode})
+        final_meta=ffprobe(out);source_key=f'set-{set_id}' if set_id else str(m['id']);path=f"{owner_id}/output/{source_key}/{job['id']}/final.mp4";job_update(job['id'],progress=88);upload(path,out,'video/mp4');digest=sha256_file(out,job['id']);job_update(job['id'],progress=96)
+        common_meta={'worker':WORKER_ID,'job_id':job['id'],'zoom_mode':mode,'zoom_level':zoom,'center':{'x':cx,'y':cy},'enhance':enhance,'output_profile':profile,'media_set_id':set_id,'tracking_note':'fixed-center export; AI tracking modes remain disabled in UI'}
+        if m and not set_id:table_upsert('mms_media_variants',{'media_file_id':m['id'],'variant_type':'output','storage_path':path,'mime_type':'video/mp4','size_bytes':os.path.getsize(out),'width':final_meta.get('width'),'height':final_meta.get('height'),'duration_ms':clip,'checksum':digest,'status':'ready','metadata':common_meta},'media_file_id,variant_type')
+        if set_id:table_patch('mms_media_sets',{'id':set_id},{'selected_clip_status':'ready','updated_at':now()})
+        job_update(job['id'],progress=100,status='completed',completed_at=now(),output={'storage_path':path,'name':f"MMs_{Path(source_name).stem}_final.mp4",'sha256':digest,'duration_ms':clip,'zoom_mode':mode,'enhance':enhance,'output_profile':profile,'media_set_id':set_id,'width':final_meta.get('width'),'height':final_meta.get('height')})
 
 def process_cctv(job,m):
     import cv2
@@ -163,13 +204,10 @@ def process_cctv(job,m):
                 elif kind in active and ms-active[kind]['last_ms']>gap:finish(kind)
             if frames and time.time()-last_db>1.3:
                 pct=15+min(72,(idx/max(1,frames))*72);job_update(job['id'],progress=round(pct));heartbeat('busy',job['id']);last_db=time.time()
-        cap.release();finish('person');finish('vehicle');job_update(job['id'],progress=90)
-        inserted=0
+        cap.release();finish('person');finish('vehicle');job_update(job['id'],progress=90);inserted=0
         for e in events:
-            title='พบบุคคล' if e['event_type']=='person' else 'พบยานพาหนะ';detail=(f"พบสูงสุด {e['max_count']} คน" if e['event_type']=='person' else ' • '.join(f"{k} {v}" for k,v in sorted(e['subtypes'].items()) if k!='person'))
-            row={'project_id':job.get('project_id'),'media_file_id':m['id'],'camera_id':camera_id,'event_type':e['event_type'],'title':title,'detail':detail,'start_ms':e['start_ms'],'end_ms':e['end_ms'],'pre_roll_ms':3000,'post_roll_ms':5000,'confidence':round(float(e['confidence']),4),'model_name':'Ultralytics YOLO','model_version':model_name,'review_status':'pending','metadata':{'job_id':job['id'],'max_count':e['max_count'],'subtypes':e['subtypes'],'sample_fps':sample_fps}}
-            er=table_insert('mms_cctv_events',row);event_id=er[0]['id'] if er else None
-            table_insert('mms_ai_findings',{'project_id':job.get('project_id'),'media_file_id':m['id'],'module':'cctv','finding_type':e['event_type'],'title':title,'detail':detail,'position_text':f"{e['start_ms']/1000:.1f}s–{e['end_ms']/1000:.1f}s",'start_ms':e['start_ms'],'end_ms':e['end_ms'],'confidence':round(float(e['confidence']),4),'model_name':'Ultralytics YOLO','model_version':model_name,'review_status':'pending','payload':{'cctv_event_id':event_id,'job_id':job['id'],'subtypes':e['subtypes']}});inserted+=1
+            title='พบบุคคล' if e['event_type']=='person' else 'พบยานพาหนะ';detail=(f"พบสูงสุด {e['max_count']} คน" if e['event_type']=='person' else ' • '.join(f"{k} {v}" for k,v in sorted(e['subtypes'].items()) if k!='person'));row={'project_id':job.get('project_id'),'media_file_id':m['id'],'camera_id':camera_id,'event_type':e['event_type'],'title':title,'detail':detail,'start_ms':e['start_ms'],'end_ms':e['end_ms'],'pre_roll_ms':3000,'post_roll_ms':5000,'confidence':round(float(e['confidence']),4),'model_name':'Ultralytics YOLO','model_version':model_name,'review_status':'pending','metadata':{'job_id':job['id'],'max_count':e['max_count'],'subtypes':e['subtypes'],'sample_fps':sample_fps}}
+            er=table_insert('mms_cctv_events',row);event_id=er[0]['id'] if er else None;table_insert('mms_ai_findings',{'project_id':job.get('project_id'),'media_file_id':m['id'],'module':'cctv','finding_type':e['event_type'],'title':title,'detail':detail,'position_text':f"{e['start_ms']/1000:.1f}s–{e['end_ms']/1000:.1f}s",'start_ms':e['start_ms'],'end_ms':e['end_ms'],'confidence':round(float(e['confidence']),4),'model_name':'Ultralytics YOLO','model_version':model_name,'review_status':'pending','payload':{'cctv_event_id':event_id,'job_id':job['id'],'subtypes':e['subtypes']}});inserted+=1
         job_update(job['id'],progress=100,status='completed',completed_at=now(),output={'event_count':inserted,'model':model_name,'sample_fps':sample_fps,'confidence':conf})
 
 def fail(job,e):
@@ -186,8 +224,9 @@ def main():
             if time.time()-last>30:heartbeat('online');last=time.time()
             job=claim()
             if not job:time.sleep(POLL);continue
-            heartbeat('busy',job['id']);m=media(job.get('media_file_id'))
-            if not m:raise RuntimeError('MEDIA_FILE_NOT_FOUND')
+            heartbeat('busy',job['id']);m=media(job.get('media_file_id'));has_set=bool((job.get('input') or {}).get('media_set_id'))
+            if job['job_type']!='video_export' and not m:raise RuntimeError('MEDIA_FILE_NOT_FOUND')
+            if job['job_type']=='video_export' and not m and not has_set:raise RuntimeError('MEDIA_SOURCE_NOT_FOUND')
             if job['job_type']=='checksum_compute':process_checksum(job,m)
             elif job['job_type']=='proxy_generate':process_proxy(job,m)
             elif job['job_type']=='video_export':process_video_export(job,m)
