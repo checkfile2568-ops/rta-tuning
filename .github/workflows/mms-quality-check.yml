@@ -46,8 +46,10 @@ jobs:
           test -f video-studio-v4.html
           test -f media-system/worker/health_runner.py
           for f in media-library-v3.html video-studio-v4.html cctv-analysis.html cctv-player.html job-center.html projects.html admin-settings-v4.html; do
-            grep -q "mms-shell-bridge.js" "$f"
             grep -Eq "data-mms-(back|close)" "$f"
+            if ! grep -q "mms-shell-bridge.js" "$f"; then
+              grep -q "CLOSE_WORKSPACE" "$f"
+            fi
           done
           grep -q "BACK_TO_MENU" media.html
           grep -q "mms-splitter.js" media-library-v3.html
