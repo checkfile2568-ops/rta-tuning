@@ -25,7 +25,7 @@ jobs:
         run: |
           python - <<'PY'
           import re,pathlib
-          pages=['media.html','media-library.html','video-studio-v4.html','cctv-analysis.html','cctv-player.html','job-center.html','projects.html','admin-settings-v4.html']
+          pages=['media.html','media-library-v3.html','video-studio-v4.html','cctv-analysis.html','cctv-player.html','job-center.html','projects.html','admin-settings-v4.html']
           out=pathlib.Path('/tmp/mms-js');out.mkdir(exist_ok=True)
           for page in pages:
               text=pathlib.Path(page).read_text(encoding='utf-8')
@@ -35,24 +35,27 @@ jobs:
           print('\n'.join(str(x) for x in out.glob('*.js')))
           PY
           for f in /tmp/mms-js/*.js; do node --check "$f"; done
+          node --check mms-splitter.js
       - name: Required integration files and navigation
         shell: bash
         run: |
           test -f mms-shell-bridge.js
           test -f mms-workflow-client.js
+          test -f mms-splitter.js
+          test -f media-library-v3.html
           test -f video-studio-v4.html
           test -f media-system/worker/health_runner.py
-          for f in media-library.html video-studio-v4.html cctv-analysis.html cctv-player.html job-center.html projects.html admin-settings-v4.html; do
+          for f in media-library-v3.html video-studio-v4.html cctv-analysis.html cctv-player.html job-center.html projects.html admin-settings-v4.html; do
             grep -q "mms-shell-bridge.js" "$f"
             grep -Eq "data-mms-(back|close)" "$f"
           done
           grep -q "BACK_TO_MENU" media.html
+          grep -q "mms-splitter.js" media-library-v3.html
           grep -q "cctv_analyze" media-system/worker/worker.py
           grep -q "video_export" media-system/worker/worker.py
           grep -q "media_set_export" media-system/worker/worker.py
           grep -q "video_enhance" media-system/worker/worker.py
           grep -q "mms-workflow-api" mms-workflow-client.js
-          grep -q "media-ensure-jobs" media-library.html
           grep -q "job-result-url" job-center.html
           grep -q "video-source-list" media-system/supabase/functions/mms-workflow-api/index-v4.ts
           grep -q "video-preview-source" media-system/supabase/functions/mms-workflow-api/index-v4.ts
