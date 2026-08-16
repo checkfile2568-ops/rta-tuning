@@ -1,0 +1,79 @@
+name: MMs Source Package
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/mms-source-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build current MMs source package
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="MMs_CURRENT_CODE_BLUEPRINT_20260816"
+          mkdir -p "$ROOT/frontend" "$ROOT/backend" "$ROOT/docs" "$ROOT/workflows"
+
+          # Active/current frontend and current development files
+          for f in \
+            media.html media-library.html media-library-v2.html media-library-v3.html \
+            video-studio-v2.html video-studio-v3.html video-studio-v4.html \
+            cctv-analysis.html cctv-player.html audio-analysis.html document-analysis.html \
+            job-center.html projects.html admin-settings-v4.html linebot.html \
+            mms-pro.css mms-pro-client.js mms-workflow-client.js mms-shell-bridge.js mms-splitter.js; do
+            [ -f "$f" ] && cp "$f" "$ROOT/frontend/"
+          done
+
+          # Backend/API/worker/migrations/specs
+          [ -d media-system ] && cp -R media-system "$ROOT/backend/media-system"
+          [ -d standards ] && cp -R standards "$ROOT/docs/standards"
+
+          # Project-level standards and safe change docs
+          for f in README.md SAFE_CHANGE_PLAN.md SYSTEM_THEME_AND_RECOVERY_STANDARD.md; do
+            [ -f "$f" ] && cp "$f" "$ROOT/docs/"
+          done
+
+          # Relevant CI/worker workflows
+          for f in .github/workflows/mms-quality-check.yml .github/workflows/mms-worker-image.yml; do
+            [ -f "$f" ] && cp "$f" "$ROOT/workflows/"
+          done
+
+          cat > "$ROOT/PACKAGE_INFO.txt" <<EOF
+          MMs Current Code + Blueprint
+          Built from repository: checkfile2568-ops/rta-tuning
+          Branch: ${GITHUB_REF_NAME}
+          Commit: ${GITHUB_SHA}
+          Built UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+          Main reference documents:
+          - backend/media-system/MMs_SYSTEM_BLUEPRINT.md
+          - docs/standards/WORKPLACE_REUSABLE_SYSTEM_STANDARD.md
+          - backend/media-system/MMs_CURRENT_SYSTEM_STATUS_20260816.md
+          - backend/media-system/VIDEO_EDITOR_SPEC.md
+          - backend/media-system/CCTV_ANALYTICS_SPEC.md
+
+          Notes:
+          - Package contains source/configuration only.
+          - No Supabase service-role secret, password, token, or real user data is bundled.
+          - video-studio-v3.html is the currently routed Video Studio at package time; video-studio-v4.html is included when present as current development source.
+          EOF
+
+          zip -qr "${ROOT}.zip" "$ROOT"
+          sha256sum "${ROOT}.zip" > "${ROOT}.zip.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MMs_CURRENT_CODE_BLUEPRINT_20260816
+          path: |
+            MMs_CURRENT_CODE_BLUEPRINT_20260816.zip
+            MMs_CURRENT_CODE_BLUEPRINT_20260816.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
