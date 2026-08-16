@@ -1,26 +1,182 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,x-mms-session,apikey,authorization','Access-Control-Allow-Methods':'POST,OPTIONS','Content-Type':'application/json; charset=utf-8'};
-const URL=Deno.env.get('SUPABASE_URL')!,SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,BUCKET='mms-media';
-const db=createClient(URL,SERVICE,{auth:{persistSession:false,autoRefreshToken:false}}),enc=new TextEncoder();
+
+const cors={
+  'Access-Control-Allow-Origin':'*',
+  'Access-Control-Allow-Headers':'content-type,x-mms-session,apikey,authorization',
+  'Access-Control-Allow-Methods':'POST,OPTIONS',
+  'Content-Type':'application/json; charset=utf-8'
+};
+const URL=Deno.env.get('SUPABASE_URL')!;
+const SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const BUCKET='mms-media';
+const db=createClient(URL,SERVICE,{auth:{persistSession:false,autoRefreshToken:false}});
+const enc=new TextEncoder();
 const out=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:cors});
 const hex=(b:Uint8Array)=>[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
 async function sha256(s:string){return hex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(s))))}
-async function sessionFrom(req:Request,body:any){const raw=req.headers.get('x-mms-session')||body?.session||'';if(!raw)return null;const h=await sha256(raw);const{data:s}=await db.from('mms_sessions').select('id,user_id,expires_at').eq('token_hash',h).gt('expires_at',new Date().toISOString()).maybeSingle();if(!s)return null;const{data:user}=await db.from('mms_users').select('id,display_name,role,active').eq('id',s.user_id).maybeSingle();if(!user?.active)return null;await db.from('mms_sessions').update({last_seen_at:new Date().toISOString()}).eq('id',s.id);return{session:s,user,raw}}
+
+async function sessionFrom(req:Request,body:any){
+  const raw=req.headers.get('x-mms-session')||body?.session||'';
+  if(!raw)return null;
+  const h=await sha256(raw);
+  const{data:s}=await db.from('mms_sessions').select('id,user_id,expires_at').eq('token_hash',h).gt('expires_at',new Date().toISOString()).maybeSingle();
+  if(!s)return null;
+  const{data:user}=await db.from('mms_users').select('id,display_name,role,active').eq('id',s.user_id).maybeSingle();
+  if(!user?.active)return null;
+  await db.from('mms_sessions').update({last_seen_at:new Date().toISOString()}).eq('id',s.id);
+  return{session:s,user,raw};
+}
 async function requireSession(req:Request,body:any){const c=await sessionFrom(req,body);if(!c)throw new Error('UNAUTHORIZED');return c}
 async function mediaOwned(ctx:any,id:string){let q=db.from('media_files').select('*').eq('id',id);if(ctx.user.role!=='admin')q=q.eq('owner_id',ctx.user.id);const{data,error}=await q.maybeSingle();if(error)throw error;return data}
+async function mediaSetOwned(ctx:any,id:string){let q=db.from('mms_media_sets').select('*').eq('id',id);if(ctx.user.role!=='admin')q=q.eq('owner_id',ctx.user.id);const{data,error}=await q.maybeSingle();if(error)throw error;return data}
 async function jobOwned(ctx:any,id:string){let q=db.from('mms_processing_jobs').select('*').eq('id',id);if(ctx.user.role!=='admin')q=q.eq('owner_id',ctx.user.id);const{data,error}=await q.maybeSingle();if(error)throw error;return data}
 async function audit(ctx:any,action:string,entityType:string,entityId:string,detail:any={},projectId:string|null=null,mediaId:string|null=null){await db.from('mms_audit_events').insert({actor_id:ctx.user.id,action,entity_type:entityType,entity_id:entityId,detail,project_id:projectId,media_file_id:mediaId})}
-function clamp(n:number,a:number,b:number){return Math.max(a,Math.min(b,n))}
 async function activeJob(mediaId:string,jobType:string){const{data}=await db.from('mms_processing_jobs').select('*').eq('media_file_id',mediaId).eq('job_type',jobType).in('status',['queued','processing']).order('created_at',{ascending:false}).limit(1).maybeSingle();return data}
-Deno.serve(async(req:Request)=>{if(req.method==='OPTIONS')return new Response('ok',{headers:cors});try{const body=await req.json().catch(()=>({})),action=String(body.action||'status'),ctx=await requireSession(req,body);
-if(action==='status'){const cutoff=new Date(Date.now()-120000).toISOString();const{data:workers}=await db.from('mms_worker_nodes').select('*').gte('last_seen_at',cutoff).order('last_seen_at',{ascending:false});return out({ok:true,workers:workers||[],worker_online:(workers||[]).some((w:any)=>['online','busy'].includes(w.status)),required:['proxy_generate','checksum_compute','video_export','cctv_analyze']})}
-if(action==='video-media-list'){let q=db.from('media_files').select('id,project_id,original_name,size_bytes,duration_ms,width,height,fps,codec,upload_status,source_kind,created_at').eq('media_type','video').eq('upload_status','ready').order('created_at',{ascending:false}).limit(250);if(ctx.user.role!=='admin')q=q.eq('owner_id',ctx.user.id);const{data,error}=await q;if(error)throw error;return out({ok:true,files:data||[]})}
-if(action==='media-preview-url'){const id=String(body.id||''),variant=String(body.variant||'proxy');const f=await mediaOwned(ctx,id);if(!f)return out({ok:false,error:'ไม่พบไฟล์หรือไม่มีสิทธิ์'},404);let path=f.storage_path,mime=f.mime_type;if(variant!=='original'){const{data:v}=await db.from('mms_media_variants').select('*').eq('media_file_id',id).eq('variant_type',variant).eq('status','ready').order('created_at',{ascending:false}).limit(1).maybeSingle();if(v){path=v.storage_path;mime=v.mime_type}}const{data,error}=await db.storage.from(BUCKET).createSignedUrl(path,3600);if(error)throw error;return out({ok:true,url:data.signedUrl,mime,path,variant:path===f.storage_path?'original':variant,file:f})}
-if(action==='media-ensure-jobs'){const id=String(body.media_file_id||''),f=await mediaOwned(ctx,id);if(!f||f.upload_status!=='ready')return out({ok:false,error:'ไฟล์ยังไม่พร้อมใช้งาน'},400);const created:any[]=[];if(!f.checksum_verified&&!await activeJob(id,'checksum_compute')){const{data:j,error}=await db.from('mms_processing_jobs').insert({owner_id:f.owner_id,project_id:f.project_id,media_file_id:id,module:f.source_kind==='cctv'?'cctv':f.media_type,job_type:'checksum_compute',status:'queued',priority:30,input:{source_path:f.storage_path,algorithm:'sha256'},idempotency_key:`checksum:${id}:${Date.now()}`}).select('*').single();if(error)throw error;created.push(j)}if(f.media_type==='video'){const{data:proxy}=await db.from('mms_media_variants').select('id').eq('media_file_id',id).eq('variant_type','proxy').eq('status','ready').limit(1).maybeSingle();if(!proxy&&!await activeJob(id,'proxy_generate')){const{data:j,error}=await db.from('mms_processing_jobs').insert({owner_id:f.owner_id,project_id:f.project_id,media_file_id:id,module:f.source_kind==='cctv'?'cctv':'video',job_type:'proxy_generate',status:'queued',priority:40,input:{source_path:f.storage_path,target_height:720,video_codec:'h264',audio_codec:'aac'},idempotency_key:`proxy:${id}:720p:${Date.now()}`}).select('*').single();if(error)throw error;created.push(j)}}await audit(ctx,'background_jobs_ensured','media_file',id,{created:created.map(x=>x.job_type)},f.project_id,id);return out({ok:true,created})}
-if(action==='video-export-queue'){const id=String(body.media_file_id||''),f=await mediaOwned(ctx,id);if(!f||f.media_type!=='video'||f.upload_status!=='ready')return out({ok:false,error:'ไฟล์วิดีโอยังไม่พร้อมใช้งาน'},400);const start=Math.max(0,Math.round(Number(body.trim_start_ms)||0)),dur=Number(f.duration_ms)||0,end=Math.round(Number(body.trim_end_ms)||(dur||0));if(end<=start)return out({ok:false,error:'จุดเริ่ม/สิ้นสุดไม่ถูกต้อง'},400);if(dur&&end>dur+1000)return out({ok:false,error:'จุดสิ้นสุดเกินความยาววิดีโอ'},400);const modes=['original','fixed','manual_keyframes','follow_ball','follow_subject','auto_action'];const mode=modes.includes(String(body.zoom_mode))?String(body.zoom_mode):'original',zoom=clamp(Number(body.zoom_level)||1,1,4),center={x:clamp(Number(body.center_x)||.5,0,1),y:clamp(Number(body.center_y)||.5,0,1)},frames=Array.isArray(body.keyframes)?body.keyframes.slice(0,500):[];const input={source_path:f.storage_path,source_name:f.original_name,trim_start_ms:start,trim_end_ms:end,event_time_ms:body.event_time_ms==null?null:Math.max(0,Math.round(Number(body.event_time_ms)||0)),zoom_mode:mode,zoom_level:zoom,center,keyframes:frames,tracking_target:String(body.tracking_target||''),output_profile:String(body.output_profile||'source_quality'),output_width:Number(body.output_width)||null,output_height:Number(body.output_height)||null};const key=`video_export:${id}:${crypto.randomUUID()}`;const{data:job,error}=await db.from('mms_processing_jobs').insert({owner_id:ctx.user.id,project_id:f.project_id,media_file_id:id,module:'video',job_type:'video_export',status:'queued',priority:70,input,idempotency_key:key}).select('*').single();if(error)throw error;await audit(ctx,'video_export_queued','processing_job',job.id,{trim_start_ms:start,trim_end_ms:end,zoom_mode:mode},f.project_id,id);return out({ok:true,job})}
-if(action==='cctv-analyze-queue'){const id=String(body.media_file_id||''),f=await mediaOwned(ctx,id);if(!f||f.media_type!=='video'||f.upload_status!=='ready')return out({ok:false,error:'ไฟล์ CCTV ยังไม่พร้อมใช้งาน'},400);const active=await activeJob(id,'cctv_analyze');if(active)return out({ok:true,job:active,existing:true});const input={source_path:f.storage_path,sample_fps:clamp(Number(body.sample_fps)||2,.25,10),confidence:clamp(Number(body.confidence)||.35,.1,.95),classes:Array.isArray(body.classes)&&body.classes.length?body.classes:['person','bicycle','car','motorcycle','bus','truck'],merge_gap_ms:Math.round(clamp(Number(body.merge_gap_ms)||1800,300,10000)),camera_id:body.camera_id?String(body.camera_id):null,model:String(body.model||'yolo11n.pt')};const{data:job,error}=await db.from('mms_processing_jobs').insert({owner_id:ctx.user.id,project_id:f.project_id,media_file_id:id,module:'cctv',job_type:'cctv_analyze',status:'queued',priority:60,input,idempotency_key:`cctv_analyze:${id}:${Date.now()}`}).select('*').single();if(error)throw error;await audit(ctx,'cctv_analysis_queued','processing_job',job.id,{sample_fps:input.sample_fps,confidence:input.confidence,classes:input.classes},f.project_id,id);return out({ok:true,job})}
-if(action==='cctv-source-list'){let q=db.from('mms_cctv_sources').select('*').eq('active',true).order('name');if(ctx.user.role!=='admin')q=q.eq('owner_id',ctx.user.id);const{data,error}=await q;if(error)throw error;return out({ok:true,sources:data||[]})}
-if(action==='cctv-source-create'){const name=String(body.name||'').trim().slice(0,160);if(!name)return out({ok:false,error:'กรุณาระบุชื่อกล้อง'},400);const type=['file','nvr','dvr','onvif','stream'].includes(String(body.source_type))?String(body.source_type):'file';const{data,error}=await db.from('mms_cctv_sources').insert({owner_id:ctx.user.id,name,location:String(body.location||'').slice(0,300),zone:String(body.zone||'').slice(0,120),source_type:type,source_ref:body.source_ref?String(body.source_ref).slice(0,800):null,timezone:String(body.timezone||'Asia/Bangkok')}).select('*').single();if(error)throw error;return out({ok:true,source:data})}
-if(action==='job-status'){const j=await jobOwned(ctx,String(body.id||''));if(!j)return out({ok:false,error:'ไม่พบงาน'},404);return out({ok:true,job:j})}
-if(action==='job-result-url'){const j=await jobOwned(ctx,String(body.id||''));if(!j)return out({ok:false,error:'ไม่พบงาน'},404);if(j.status!=='completed')return out({ok:false,error:'งานยังไม่เสร็จ'},409);const path=j.output?.storage_path||j.output?.output_path||j.output?.proxy_path;if(!path)return out({ok:false,error:'ไม่พบไฟล์ผลลัพธ์'},404);const{data,error}=await db.storage.from(BUCKET).createSignedUrl(path,3600,{download:j.output?.name||undefined});if(error)throw error;return out({ok:true,url:data.signedUrl,output:j.output})}
-return out({ok:false,error:'Unknown action'},400)}catch(e){const msg=e instanceof Error?e.message:String(e);console.error(e);if(msg==='UNAUTHORIZED')return out({ok:false,error:'กรุณาเข้าสู่ระบบใหม่'},401);return out({ok:false,error:'เกิดข้อผิดพลาดของระบบ',detail:msg},500)}});
+async function signed(path:string,download?:string){const{data,error}=await db.storage.from(BUCKET).createSignedUrl(path,3600,download?{download}:undefined);if(error)throw error;return data.signedUrl}
+
+Deno.serve(async(req:Request)=>{
+  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
+  try{
+    const body=await req.json().catch(()=>({}));
+    const action=String(body.action||'status');
+    const ctx=await requireSession(req,body);
+
+    if(action==='status'){
+      const cutoff=new Date(Date.now()-120000).toISOString();
+      const{data:workers}=await db.from('mms_worker_nodes').select('*').gte('last_seen_at',cutoff).order('last_seen_at',{ascending:false});
+      return out({ok:true,workers:workers||[],worker_online:(workers||[]).some((w:any)=>['online','busy'].includes(w.status)),required:['proxy_generate','checksum_compute','video_export','cctv_analyze']});
+    }
+
+    if(action==='video-media-list'){
+      let q=db.from('media_files').select('id,project_id,original_name,size_bytes,duration_ms,width,height,fps,codec,upload_status,source_kind,created_at,media_set_id,segment_index').eq('media_type','video').eq('upload_status','ready').order('created_at',{ascending:false}).limit(250);
+      if(ctx.user.role!=='admin')q=q.eq('owner_id',ctx.user.id);
+      const{data,error}=await q;if(error)throw error;
+      return out({ok:true,files:data||[]});
+    }
+
+    if(action==='video-source-list'){
+      let sq=db.from('mms_media_sets').select('id,project_id,original_name,source_size_bytes,total_parts,uploaded_parts,status,source_kind,created_at').eq('media_type','video').is('purged_at',null).gte('uploaded_parts',1).order('created_at',{ascending:false}).limit(150);
+      if(ctx.user.role!=='admin')sq=sq.eq('owner_id',ctx.user.id);
+      const{data:sets,error:se}=await sq;if(se)throw se;
+      let fq=db.from('media_files').select('id,project_id,original_name,size_bytes,duration_ms,width,height,fps,codec,source_kind,created_at').eq('media_type','video').eq('upload_status','ready').is('media_set_id',null).is('purged_at',null).order('created_at',{ascending:false}).limit(150);
+      if(ctx.user.role!=='admin')fq=fq.eq('owner_id',ctx.user.id);
+      const{data:files,error:fe}=await fq;if(fe)throw fe;
+      const sources:any[]=[];
+      for(const s of sets||[]){if(Number(s.uploaded_parts||0)>=Number(s.total_parts||0)&&Number(s.total_parts||0)>0)sources.push({kind:'set',id:s.id,project_id:s.project_id,name:s.original_name,size_bytes:s.source_size_bytes,total_parts:s.total_parts,source_kind:s.source_kind,created_at:s.created_at})}
+      for(const f of files||[])sources.push({kind:'file',id:f.id,project_id:f.project_id,name:f.original_name,size_bytes:f.size_bytes,duration_ms:f.duration_ms,width:f.width,height:f.height,fps:f.fps,codec:f.codec,source_kind:f.source_kind,created_at:f.created_at});
+      sources.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+      return out({ok:true,sources});
+    }
+
+    if(action==='media-preview-url'){
+      const id=String(body.id||''),variant=String(body.variant||'proxy');
+      const f=await mediaOwned(ctx,id);if(!f)return out({ok:false,error:'ไม่พบไฟล์หรือไม่มีสิทธิ์'},404);
+      let path=f.storage_path,mime=f.mime_type;
+      if(variant!=='original'){
+        const{data:v}=await db.from('mms_media_variants').select('*').eq('media_file_id',id).eq('variant_type',variant).eq('status','ready').order('created_at',{ascending:false}).limit(1).maybeSingle();
+        if(v){path=v.storage_path;mime=v.mime_type}
+      }
+      return out({ok:true,url:await signed(path),mime,path,variant:path===f.storage_path?'original':variant,file:f});
+    }
+
+    if(action==='video-preview-source'){
+      const kind=String(body.source_kind||'file'),id=String(body.id||'');
+      if(kind==='set'){
+        const s=await mediaSetOwned(ctx,id);if(!s||s.purged_at)return out({ok:false,error:'ไม่พบชุดวิดีโอหรือไม่มีสิทธิ์'},404);
+        let q=db.from('media_files').select('id,segment_index,original_name,size_bytes,duration_ms,storage_path,mime_type').eq('media_set_id',id).eq('upload_status','ready').is('purged_at',null).order('segment_index',{ascending:true});
+        if(ctx.user.role!=='admin')q=q.eq('owner_id',ctx.user.id);
+        const{data:parts,error}=await q;if(error)throw error;
+        if(!parts?.length||parts.length<Number(s.total_parts||0))return out({ok:false,error:`ชุดวิดีโอยังไม่ครบ ${parts?.length||0}/${s.total_parts||0} Part`},409);
+        const signedParts=[];
+        for(const p of parts)signedParts.push({...p,url:await signed(p.storage_path)});
+        return out({ok:true,source:{kind:'set',id:s.id,name:s.original_name,project_id:s.project_id,total_parts:s.total_parts,size_bytes:s.source_size_bytes},parts:signedParts});
+      }
+      const f=await mediaOwned(ctx,id);if(!f||f.media_type!=='video'||f.upload_status!=='ready')return out({ok:false,error:'วิดีโอยังไม่พร้อมใช้'},404);
+      let path=f.storage_path,mime=f.mime_type,variant='original';
+      const{data:p}=await db.from('mms_media_variants').select('*').eq('media_file_id',id).eq('variant_type','proxy').eq('status','ready').order('created_at',{ascending:false}).limit(1).maybeSingle();
+      if(p){path=p.storage_path;mime=p.mime_type;variant='proxy'}
+      return out({ok:true,source:{kind:'file',id:f.id,name:f.original_name,project_id:f.project_id,size_bytes:f.size_bytes,duration_ms:f.duration_ms},parts:[{id:f.id,segment_index:1,original_name:f.original_name,size_bytes:f.size_bytes,duration_ms:p?.duration_ms||f.duration_ms,storage_path:path,mime_type:mime,url:await signed(path),variant}]});
+    }
+
+    if(action==='media-ensure-jobs'){
+      const id=String(body.media_file_id||''),f=await mediaOwned(ctx,id);
+      if(!f||f.upload_status!=='ready')return out({ok:false,error:'ไฟล์ยังไม่พร้อมใช้งาน'},400);
+      const created:any[]=[];
+      if(!f.checksum_verified&&!await activeJob(id,'checksum_compute')){
+        const{data:j,error}=await db.from('mms_processing_jobs').insert({owner_id:f.owner_id,project_id:f.project_id,media_file_id:id,module:f.source_kind==='cctv'?'cctv':f.media_type,job_type:'checksum_compute',status:'queued',priority:30,input:{source_path:f.storage_path,algorithm:'sha256'},idempotency_key:`checksum:${id}:${Date.now()}`}).select('*').single();if(error)throw error;created.push(j)
+      }
+      if(f.media_type==='video'){
+        const{data:proxy}=await db.from('mms_media_variants').select('id').eq('media_file_id',id).eq('variant_type','proxy').eq('status','ready').limit(1).maybeSingle();
+        if(!proxy&&!await activeJob(id,'proxy_generate')){
+          const{data:j,error}=await db.from('mms_processing_jobs').insert({owner_id:f.owner_id,project_id:f.project_id,media_file_id:id,module:f.source_kind==='cctv'?'cctv':'video',job_type:'proxy_generate',status:'queued',priority:40,input:{source_path:f.storage_path,target_height:720,video_codec:'h264',audio_codec:'aac'},idempotency_key:`proxy:${id}:720p:${Date.now()}`}).select('*').single();if(error)throw error;created.push(j)
+        }
+      }
+      await audit(ctx,'background_jobs_ensured','media_file',id,{created:created.map(x=>x.job_type)},f.project_id,id);
+      return out({ok:true,created});
+    }
+
+    if(action==='video-export-queue'){
+      const sourceKind=String(body.source_kind||body.media_set_id?'set':'file');
+      let ownerId=ctx.user.id,projectId:null|string=null,mediaId:null|string=null,mediaSetId:null|string=null,sourceName='video.mp4',duration=0;
+      if(sourceKind==='set'||body.media_set_id){
+        mediaSetId=String(body.media_set_id||'');const s=await mediaSetOwned(ctx,mediaSetId);
+        if(!s||s.purged_at)return out({ok:false,error:'ไม่พบชุดวิดีโอหรือไม่มีสิทธิ์'},404);
+        if(Number(s.uploaded_parts||0)<Number(s.total_parts||0))return out({ok:false,error:'ชุดวิดีโอยังอัปโหลดไม่ครบ'},409);
+        ownerId=s.owner_id;projectId=s.project_id;sourceName=s.original_name;
+      }else{
+        mediaId=String(body.media_file_id||'');const f=await mediaOwned(ctx,mediaId);
+        if(!f||f.media_type!=='video'||f.upload_status!=='ready')return out({ok:false,error:'ไฟล์วิดีโอยังไม่พร้อมใช้งาน'},400);
+        ownerId=f.owner_id;projectId=f.project_id;sourceName=f.original_name;duration=Number(f.duration_ms)||0;
+      }
+      const start=Math.max(0,Math.round(Number(body.trim_start_ms)||0));
+      const end=Math.round(Number(body.trim_end_ms)||(duration||0));
+      if(end<=start)return out({ok:false,error:'จุดเริ่ม/สิ้นสุดไม่ถูกต้อง'},400);
+      if(duration&&end>duration+1000)return out({ok:false,error:'จุดสิ้นสุดเกินความยาววิดีโอ'},400);
+      const modes=['original','fixed','manual_keyframes','follow_ball','follow_subject','auto_action'];
+      const mode=modes.includes(String(body.zoom_mode))?String(body.zoom_mode):'original';
+      const zoom=clamp(Number(body.zoom_level)||1,1,4);
+      const center={x:clamp(Number(body.center_x)||.5,0,1),y:clamp(Number(body.center_y)||.5,0,1)};
+      const frames=Array.isArray(body.keyframes)?body.keyframes.slice(0,500):[];
+      const e=body.enhance||{};
+      const enhance={brightness:clamp(Number(e.brightness)||0,-50,50),contrast:clamp(Number(e.contrast)||0,-50,50),saturation:clamp(Number(e.saturation)||0,-50,50),sharpness:clamp(Number(e.sharpness)||0,0,100),preset:['natural','bright','cctv','sport','custom'].includes(String(e.preset))?String(e.preset):'custom'};
+      const profile=['source_quality','full_hd','hd','compact'].includes(String(body.output_profile))?String(body.output_profile):'source_quality';
+      const input={source_kind:mediaSetId?'set':'file',source_path:null,source_name:sourceName,media_set_id:mediaSetId,trim_start_ms:start,trim_end_ms:end,event_time_ms:body.event_time_ms==null?null:Math.max(0,Math.round(Number(body.event_time_ms)||0)),zoom_mode:mode,zoom_level:zoom,center,keyframes:frames,tracking_target:String(body.tracking_target||''),enhance,output_profile:profile};
+      const{data:job,error}=await db.from('mms_processing_jobs').insert({owner_id:ownerId,project_id:projectId,media_file_id:mediaId,module:'video',job_type:'video_export',status:'queued',priority:70,input,idempotency_key:`video_export:${mediaSetId||mediaId}:${crypto.randomUUID()}`}).select('*').single();if(error)throw error;
+      await audit(ctx,'video_export_queued',mediaSetId?'media_set':'processing_job',mediaSetId||job.id,{job_id:job.id,trim_start_ms:start,trim_end_ms:end,zoom_mode:mode,enhance,output_profile:profile},projectId,mediaId);
+      return out({ok:true,job});
+    }
+
+    if(action==='cctv-analyze-queue'){
+      const id=String(body.media_file_id||''),f=await mediaOwned(ctx,id);
+      if(!f||f.media_type!=='video'||f.upload_status!=='ready')return out({ok:false,error:'ไฟล์ CCTV ยังไม่พร้อมใช้งาน'},400);
+      const active=await activeJob(id,'cctv_analyze');if(active)return out({ok:true,job:active,existing:true});
+      const input={source_path:f.storage_path,sample_fps:clamp(Number(body.sample_fps)||2,.25,10),confidence:clamp(Number(body.confidence)||.35,.1,.95),classes:Array.isArray(body.classes)&&body.classes.length?body.classes:['person','bicycle','car','motorcycle','bus','truck'],merge_gap_ms:Math.round(clamp(Number(body.merge_gap_ms)||1800,300,10000)),camera_id:body.camera_id?String(body.camera_id):null,model:String(body.model||'yolo11n.pt')};
+      const{data:job,error}=await db.from('mms_processing_jobs').insert({owner_id:f.owner_id,project_id:f.project_id,media_file_id:id,module:'cctv',job_type:'cctv_analyze',status:'queued',priority:60,input,idempotency_key:`cctv_analyze:${id}:${Date.now()}`}).select('*').single();if(error)throw error;
+      await audit(ctx,'cctv_analysis_queued','processing_job',job.id,{sample_fps:input.sample_fps,confidence:input.confidence,classes:input.classes},f.project_id,id);
+      return out({ok:true,job});
+    }
+
+    if(action==='cctv-source-list'){
+      let q=db.from('mms_cctv_sources').select('*').eq('active',true).order('name');if(ctx.user.role!=='admin')q=q.eq('owner_id',ctx.user.id);
+      const{data,error}=await q;if(error)throw error;return out({ok:true,sources:data||[]});
+    }
+    if(action==='cctv-source-create'){
+      const name=String(body.name||'').trim().slice(0,160);if(!name)return out({ok:false,error:'กรุณาระบุชื่อกล้อง'},400);
+      const type=['file','nvr','dvr','onvif','stream'].includes(String(body.source_type))?String(body.source_type):'file';
+      const{data,error}=await db.from('mms_cctv_sources').insert({owner_id:ctx.user.id,name,location:String(body.location||'').slice(0,300),zone:String(body.zone||'').slice(0,120),source_type:type,source_ref:body.source_ref?String(body.source_ref).slice(0,800):null,timezone:String(body.timezone||'Asia/Bangkok')}).select('*').single();if(error)throw error;return out({ok:true,source:data});
+    }
+    if(action==='job-status'){const j=await jobOwned(ctx,String(body.id||''));if(!j)return out({ok:false,error:'ไม่พบงาน'},404);return out({ok:true,job:j})}
+    if(action==='job-result-url'){
+      const j=await jobOwned(ctx,String(body.id||''));if(!j)return out({ok:false,error:'ไม่พบงาน'},404);
+      if(j.status!=='completed')return out({ok:false,error:j.status==='queued'?'งานยังรอ Worker ประมวลผล':'งานยังไม่เสร็จ'},409);
+      const path=j.output?.storage_path||j.output?.output_path||j.output?.proxy_path;if(!path)return out({ok:false,error:'ไม่พบไฟล์ผลลัพธ์'},404);
+      return out({ok:true,url:await signed(path,j.output?.name||'MMs-final.mp4'),output:j.output});
+    }
+    return out({ok:false,error:'Unknown action'},400);
+  }catch(e){
+    const msg=e instanceof Error?e.message:String(e);console.error(e);
+    if(msg==='UNAUTHORIZED')return out({ok:false,error:'กรุณาเข้าสู่ระบบใหม่'},401);
+    return out({ok:false,error:'เกิดข้อผิดพลาดของระบบ',detail:msg},500);
+  }
+});
