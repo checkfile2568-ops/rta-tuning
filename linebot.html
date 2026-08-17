@@ -6,34 +6,36 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--pink:#ff8fa8;--blue:#65b9f3;--ink:#24364b;--muted:#8090a2;--teal:#0f766e}
-*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Prompt,sans-serif;background:#f8fbff;overflow:hidden}
-#splash, #login-gate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100% );transition:opacity .35s ease,visibility .35s ease}
+:root{--pink:#ff8fa8;--blue:#65b9f3;--ink:#24364b;--muted:#8090a2;--line:#e7eef5}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Prompt,sans-serif;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100% );overflow:hidden}
+#splash, #login-gate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%);transition:opacity .35s ease,visibility .35s ease}
 #login-gate{z-index:25;display:none}
-.card{width:min(92vw,390px);padding:44px 28px;text-align:center;background:#fff;border:1px solid #e7eef5;border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13)}
+.card{width:min(92vw,390px);padding:44px 28px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13)}
 .icon{width:76px;height:76px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#fff0f4,#eef8ff);font-size:34px}
-h1{margin:0;color:var(--ink);font-size:1.45rem}h1 span{color:var(--pink)}
-.sub{margin-top:8px;color:#58aee8;font-size:.86rem}.status{margin:26px 0 12px;color:#607286;font-size:.87rem}
+h1{margin:0;color:var(--ink);font-size:1.45rem;font-weight:600}h1 span{color:var(--pink)}
+.sub{margin-top:8px;color:#58aee8;background:#eef8ff;padding:5px 12px;border-radius:999px;display:inline-block;font-size:.86rem}
+.status{margin:26px 0 12px;color:#607286;font-size:.87rem}
 .bar{height:8px;border-radius:999px;background:#edf2f6;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9db4,#65b9f3);transition:width .25s ease}
 .pct{margin-top:8px;color:#8797a8;font-size:.76rem}
-input[type="password"]{width:100%;padding:14px;margin:20px 0;border:2px solid #edf2f6;border-radius:14px;font-family:inherit;font-size:1rem;text-align:center;outline:none;transition:border-color .2s}
-input[type="password"]:focus{border-color:var(--blue)}
-button{width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(90deg,#ff9db4,#65b9f3);color:#fff;font-family:inherit;font-size:1rem;font-weight:500;cursor:pointer;box-shadow:0 8px 20px rgba(101,185,243,0.3)}
+input[type="password"]{width:100%;padding:14px;margin:20px 0;border:1px solid #efdfe5;border-radius:14px;font-family:inherit;font-size:1rem;text-align:center;outline:none;transition:all .2s;box-shadow:0 8px 22px rgba(74,102,126,.05)}
+input[type="password"]:focus{border-color:#ff9db4;box-shadow:0 0 0 3px rgba(255,143,168,.14)}
+button{width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#ffabc0,#ff7f9d);color:#fff;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 10px 24px rgba(255,127,157,.24);transition:transform .2s}
 button:active{transform:scale(0.98)}
 #app{position:fixed;inset:0;display:none;background:#fff}#app iframe{width:100%;height:100%;border:0;display:block}
 </style>
 </head>
 <body>
 <div id="splash"><div class="card"><div class="icon">💬</div><h1>Chatbot <span>ศูนย์ข้อมูล</span></h1><div class="sub">กำลังเตรียมระบบ</div><div class="status" id="status">กำลังเชื่อมต่อ Dashboard...</div><div class="bar"><i id="fill"></i></div><div class="pct" id="pct">0%</div></div></div>
-<div id="login-gate"><div class="card"><div class="icon">🔒</div><h1>ยืนยัน <span>ตัวตน</span></h1><div class="sub">กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ</div><input type="password" id="passkey" placeholder="รหัสผ่านผู้ดูแลระบบ" autofocus><button onclick="checkLogin()">เข้าสู่หน้าระบบ</button></div></div>
+<div id="login-gate"><div class="card"><div class="icon">🔒</div><h1>ยืนยัน <span>ตัวตน</span></h1><div class="sub">Administrator Only</div><input type="password" id="passkey" placeholder="รหัสผ่านผู้ดูแลระบบ" autofocus><button onclick="checkLogin()">เข้าสู่หน้าระบบ</button></div></div>
 <div id="app"><iframe id="frame" title="Dashboard" referrerpolicy="no-referrer"></iframe></div>
 <script>
 var BASE_URL='https://script.google.com/macros/s/AKfycbwojYt6ZB4aAI8QvKqFdFzr3_72ccwYRnhYENrAF-7PpRyr6AOBkL7NWOg5KELipznp/exec';
 var splash=document.getElementById('splash' ),loginGate=document.getElementById('login-gate'),app=document.getElementById('app'),frame=document.getElementById('frame'),fill=document.getElementById('fill'),pct=document.getElementById('pct'),status=document.getElementById('status'),passInput=document.getElementById('passkey');
 var progress=0,done=false;
-function updateProgress(){if(done)return;progress=Math.min(100,progress+(progress<70?5:2));fill.style.width=progress+'%';pct.textContent=Math.round(progress)+'%';if(progress<100)setTimeout(updateProgress,80);else showLogin()}
+function updateProgress(){if(done)return;progress=Math.min(100,progress+(progress<70?5:2.5));fill.style.width=progress+'%';pct.textContent=Math.round(progress)+'%';if(progress<100)setTimeout(updateProgress,60);else showLogin()}
 function showLogin(){done=true;status.textContent='พร้อมใช้งาน';setTimeout(function(){splash.style.opacity='0';splash.style.visibility='hidden';loginGate.style.display='grid'},300)}
-function checkLogin(){var key=passInput.value.trim();if(!key){alert('กรุณากรอกรหัสผ่าน');return}status.textContent='กำลังตรวจสอบสิทธิ์...';frame.src=BASE_URL+'?adminKey='+encodeURIComponent(key);frame.onload=function(){loginGate.style.opacity='0';loginGate.style.visibility='hidden';app.style.display='block'};}
+function checkLogin(){var key=passInput.value.trim();if(!key){alert('กรุณากรอกรหัสผ่าน');return}status.textContent='กำลังเชื่อมต่อระบบ...';frame.src=BASE_URL+'?adminKey='+encodeURIComponent(key);frame.onload=function(){loginGate.style.opacity='0';loginGate.style.visibility='hidden';app.style.display='block'};}
 passInput.addEventListener('keypress',function(e){if(e.key==='Enter')checkLogin()});
 window.onload=updateProgress;
 </script>
