@@ -1,43 +1,59 @@
+<!doctype html>
 <html lang="th">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Chatbot ศูนย์ข้อมูล - เข้าสู่ระบบ</title>
+<title>Chatbot ศูนย์รวมข้อมูล - V15 Production</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--pink:#ff8fa8;--blue:#65b9f3;--ink:#24364b;--muted:#8090a2;--line:#e7eef5}
+:root{--orange-50:#fff7ed;--orange-100:#ffedd5;--orange-200:#fed7aa;--orange-500:#f97316;--orange-600:#ea580c;--orange-700:#c2410c;--brown:#431407;--muted:#7c2d12;--line:#fed7aa}
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Prompt,sans-serif;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100% );overflow:hidden}
-#splash, #login-gate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#fff0f4 0%,#fbfdff 50%,#edf8ff 100%);transition:opacity .35s ease,visibility .35s ease}
+html,body{height:100%;margin:0;font-family:Prompt,sans-serif;background:linear-gradient(135deg,#fff7ed 0%,#fffbeb 52%,#fffaf5 100%);color:var(--brown);overflow:hidden}
+#splash,#login-gate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,rgba(255,247,237,.98) 0%,rgba(255,251,235,.98) 52%,rgba(255,250,245,.98) 100%);transition:opacity .35s ease,visibility .35s ease}
 #login-gate{z-index:25;display:none}
-.card{width:min(92vw,390px);padding:44px 28px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:0 26px 64px rgba(65,91,116,.13)}
-.icon{width:76px;height:76px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#fff0f4,#eef8ff);font-size:34px}
-h1{margin:0;color:var(--ink);font-size:1.45rem;font-weight:600}h1 span{color:var(--pink)}
-.sub{margin-top:8px;color:#58aee8;background:#eef8ff;padding:5px 12px;border-radius:999px;display:inline-block;font-size:.86rem}
-.status{margin:26px 0 12px;color:#607286;font-size:.87rem}
-.bar{height:8px;border-radius:999px;background:#edf2f6;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9db4,#65b9f3);transition:width .25s ease}
-.pct{margin-top:8px;color:#8797a8;font-size:.76rem}
-input[type="password"]{width:100%;padding:14px;margin:20px 0;border:1px solid #efdfe5;border-radius:14px;font-family:inherit;font-size:1rem;text-align:center;outline:none;transition:all .2s;box-shadow:0 8px 22px rgba(74,102,126,.05)}
-input[type="password"]:focus{border-color:#ff9db4;box-shadow:0 0 0 3px rgba(255,143,168,.14)}
-button{width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#ffabc0,#ff7f9d);color:#fff;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 10px 24px rgba(255,127,157,.24);transition:transform .2s}
-button:active{transform:scale(0.98)}
+.card{width:min(92vw,390px);padding:36px 28px;text-align:center;background:rgba(255,255,255,.96);border:1px solid var(--orange-200);border-radius:28px;box-shadow:0 26px 64px rgba(124,45,18,.16)}
+.robot-mark{position:relative;width:84px;height:84px;margin:0 auto 16px;border-radius:22px;overflow:hidden;background:var(--orange-50);border:1px solid var(--orange-200);box-shadow:0 8px 22px rgba(194,65,12,.18)}
+.robot-mark img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.robot-mark .robot-closed-frame{opacity:0;transition:opacity .12s ease}
+h1{margin:0;color:var(--brown);font-size:1.45rem;font-weight:700;perspective:720px}h1 span{color:var(--orange-600)}
+.title-3d-letter{display:inline-block;min-width:.08em;opacity:0;transform:translateY(7px) rotateY(90deg) rotateX(12deg);transform-origin:50% 70%;transition:opacity .28s ease,transform .42s cubic-bezier(.2,.75,.2,1);text-shadow:1px 1px 0 var(--orange-200),2px 3px 0 rgba(154,52,18,.14),0 8px 16px rgba(154,52,18,.12)}
+.title-3d-letter.is-visible{opacity:1;transform:translateY(0) rotateY(0deg) rotateX(0deg)}
+.sub{margin-top:8px;color:var(--orange-700);background:var(--orange-100);padding:5px 12px;border-radius:999px;display:inline-block;font-size:.86rem;font-weight:500}
+.status{margin:26px 0 12px;color:var(--muted);font-size:.87rem}
+.bar{height:8px;border-radius:999px;background:#ffedd5;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange-500),#fbbf24);transition:width .25s ease}
+.pct{margin-top:8px;color:var(--muted);font-size:.76rem}
+#login-form{display:none;margin-top:18px}
+.login-note{margin:0 0 12px;color:var(--orange-700);background:var(--orange-100);padding:6px 12px;border-radius:999px;display:inline-block;font-size:.86rem;font-weight:500}
+.password-row{display:flex;align-items:stretch;gap:8px;margin:20px 0 12px}
+input[type="password"],input[type="text"]{width:100%;padding:14px;border:1px solid var(--orange-200);border-radius:14px;font-family:inherit;font-size:1rem;text-align:center;outline:none;transition:all .2s;box-shadow:0 8px 22px rgba(124,45,18,.06)}
+input[type="password"]:focus,input[type="text"]:focus{border-color:var(--orange-500);box-shadow:0 0 0 3px rgba(249,115,22,.15)}
+button{width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--orange-500),var(--orange-700));color:#fff;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 10px 24px rgba(194,65,12,.24);transition:transform .2s,box-shadow .2s}
+button:hover{box-shadow:0 12px 28px rgba(194,65,12,.3)}button:active{transform:scale(.98)}
+#open-login-btn{margin-top:22px}
+#toggle-password{width:auto;min-width:94px;padding:10px 12px;font-size:.82rem;white-space:nowrap;background:var(--orange-100);color:var(--orange-700);border:1px solid var(--orange-200);box-shadow:none}
+#submit-login-btn{margin-top:4px}
 #app{position:fixed;inset:0;display:none;background:#fff}#app iframe{width:100%;height:100%;border:0;display:block}
+@media (max-width:420px){.card{padding:30px 20px}.robot-mark{width:76px;height:76px}.password-row{gap:6px}#toggle-password{min-width:84px;padding-left:8px;padding-right:8px}}
 </style>
 </head>
 <body>
-<div id="splash"><div class="card"><div class="icon">💬</div><h1>Chatbot <span>ศูนย์ข้อมูล</span></h1><div class="sub">กำลังเตรียมระบบ</div><div class="status" id="status">กำลังเชื่อมต่อ Dashboard...</div><div class="bar"><i id="fill"></i></div><div class="pct" id="pct">0%</div></div></div>
-<div id="login-gate"><div class="card"><div class="icon">🔒</div><h1>ยืนยัน <span>ตัวตน</span></h1><div class="sub">Administrator Only</div><input type="password" id="passkey" placeholder="รหัสผ่านผู้ดูแลระบบ" autofocus><button onclick="checkLogin()">เข้าสู่หน้าระบบ</button></div></div>
+<div id="splash"><div class="card"><div class="robot-mark" aria-label="หุ่นยนต์ผู้ช่วย"><img class="robot-open-frame" alt="หุ่นยนต์" src="assets/robot-open.jpg"><img class="robot-closed-frame" alt="หุ่นยนต์หลับตา" src="assets/robot-closed.jpg"></div><h1>Chatbot <span id="splash-title"></span></h1><div class="sub">V15 Production</div><div class="status" id="status">กำลังเชื่อมต่อ Dashboard...</div><div class="bar"><i id="fill"></i></div><div class="pct" id="pct">0%</div></div></div>
+<div id="login-gate"><div class="card"><div class="robot-mark" aria-label="หุ่นยนต์ผู้ช่วย"><img class="robot-open-frame" alt="หุ่นยนต์" src="assets/robot-open.jpg"><img class="robot-closed-frame" alt="หุ่นยนต์หลับตา" src="assets/robot-closed.jpg"></div><h1>ยืนยัน <span>ตัวตน</span></h1><button id="open-login-btn" type="button" onclick="showPasswordForm()">เข้าสู่ระบบ</button><div id="login-form"><div class="login-note">Administrator Only</div><div class="password-row"><input type="password" id="passkey" placeholder="รหัสผ่านผู้ดูแลระบบ" autocomplete="current-password"><button id="toggle-password" type="button" onclick="togglePassword()">แสดงรหัส</button></div><button id="submit-login-btn" type="button" onclick="checkLogin()">เข้าสู่ระบบ</button></div></div></div>
 <div id="app"><iframe id="frame" title="Dashboard" referrerpolicy="no-referrer"></iframe></div>
 <script>
 var BASE_URL='https://script.google.com/macros/s/AKfycbwojYt6ZB4aAI8QvKqFdFzr3_72ccwYRnhYENrAF-7PpRyr6AOBkL7NWOg5KELipznp/exec';
-var splash=document.getElementById('splash' ),loginGate=document.getElementById('login-gate'),app=document.getElementById('app'),frame=document.getElementById('frame'),fill=document.getElementById('fill'),pct=document.getElementById('pct'),status=document.getElementById('status'),passInput=document.getElementById('passkey');
-var progress=0,done=false;
+var splash=document.getElementById('splash'),loginGate=document.getElementById('login-gate'),app=document.getElementById('app'),frame=document.getElementById('frame'),fill=document.getElementById('fill'),pct=document.getElementById('pct'),status=document.getElementById('status'),passInput=document.getElementById('passkey'),loginForm=document.getElementById('login-form'),openLoginBtn=document.getElementById('open-login-btn');
+var progress=0,done=false,titleTimer=null,titleLoopTimer=null;
+function animateTitle(){var el=document.getElementById('splash-title');if(!el)return;if(titleTimer)clearInterval(titleTimer);if(titleLoopTimer)clearTimeout(titleLoopTimer);var text='ศูนย์รวมข้อมูล';el.innerHTML=Array.from(text).map(function(ch){return '<span class="title-3d-letter">'+(ch===' '?'&nbsp;':ch)+'</span>';}).join('');var letters=el.querySelectorAll('.title-3d-letter'),i=0;titleTimer=setInterval(function(){if(i<letters.length){letters[i].classList.add('is-visible');i++;return}clearInterval(titleTimer);titleTimer=null;titleLoopTimer=setTimeout(animateTitle,5000)},80)}
+function startBlinkAnimations(){document.querySelectorAll('.robot-mark').forEach(function(mark){var closed=mark.querySelector('.robot-closed-frame');if(!closed)return;function blink(){closed.style.opacity='1';setTimeout(function(){closed.style.opacity='0';setTimeout(blink,3000)},180)}blink()})}
 function updateProgress(){if(done)return;progress=Math.min(100,progress+(progress<70?5:2.5));fill.style.width=progress+'%';pct.textContent=Math.round(progress)+'%';if(progress<100)setTimeout(updateProgress,60);else showLogin()}
-function showLogin(){done=true;status.textContent='พร้อมใช้งาน';setTimeout(function(){splash.style.opacity='0';splash.style.visibility='hidden';loginGate.style.display='grid'},300)}
-function checkLogin(){var key=passInput.value.trim();if(!key){alert('กรุณากรอกรหัสผ่าน');return}status.textContent='กำลังเชื่อมต่อระบบ...';frame.src=BASE_URL+'?adminKey='+encodeURIComponent(key);frame.onload=function(){loginGate.style.opacity='0';loginGate.style.visibility='hidden';app.style.display='block'};}
+function showLogin(){done=true;status.textContent='พร้อมใช้งาน';setTimeout(function(){splash.style.opacity='0';splash.style.visibility='hidden';loginGate.style.display='grid';setTimeout(function(){openLoginBtn.focus()},120)},300)}
+function showPasswordForm(){openLoginBtn.style.display='none';loginForm.style.display='block';passInput.focus()}
+function togglePassword(){var isPassword=passInput.type==='password';passInput.type=isPassword?'text':'password';document.getElementById('toggle-password').textContent=isPassword?'ซ่อนรหัส':'แสดงรหัส'}
+function checkLogin(){if(loginForm.style.display==='none'||!loginForm.style.display)showPasswordForm();var key=passInput.value.trim();if(!key){alert('กรุณากรอกรหัสผ่าน');passInput.focus();return}status.textContent='กำลังเชื่อมต่อระบบ...';frame.src=BASE_URL+'?adminKey='+encodeURIComponent(key);frame.onload=function(){loginGate.style.opacity='0';loginGate.style.visibility='hidden';app.style.display='block'}}
 passInput.addEventListener('keypress',function(e){if(e.key==='Enter')checkLogin()});
-window.onload=updateProgress;
+window.addEventListener('load',function(){animateTitle();startBlinkAnimations();updateProgress()});
 </script>
 </body>
 </html>
