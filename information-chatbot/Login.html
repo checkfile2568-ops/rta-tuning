@@ -247,11 +247,72 @@
         input.type = hidden ? 'text' : 'password';
         toggle.textContent = hidden ? 'ซ่อน' : 'แสดง';
       });
+      var fixedWebAppUrl = 'https://script.google.com/macros/s/AKfycbwI0qyeC8Agz76dXLfkAeabl2eNzOvxBS0eisdtQYhBBJV8hBmxYtFy_Ns-wBVcpYlo/exec';
+      function resolveOuterWebAppUrl_() {
+        var candidates = [];
+        try {
+          if (document.referrer) candidates.push(document.referrer);
+        } catch (ignoreReferrer) {}
+        candidates.push(fixedWebAppUrl);
+        for (var i = 0; i < candidates.length; i++) {
+          var raw = String(candidates[i] || '').split('#')[0];
+          var queryIndex = raw.indexOf('?');
+          if (queryIndex >= 0) raw = raw.slice(0, queryIndex);
+          if (/\/(?:exec|dev)\/?$/.test(raw)) return raw;
+        }
+        return fixedWebAppUrl;
+      }
+
+      function showLoginError_(message) {
+        notice.textContent = message || 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่อีกครั้ง';
+        notice.classList.add('show');
+        card.classList.remove('busy');
+        input.focus();
+      }
+
+      function redirectToDashboard_(key) {
+        var target = resolveOuterWebAppUrl_() + '?adminKey=' + encodeURIComponent(String(key || '').trim());
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = target;
+          } else {
+            window.location.href = target;
+          }
+        } catch (navigationError) {
+          window.location.href = target;
+        }
+      }
+
       form.addEventListener('submit', function (event) {
         event.preventDefault();
         var key = String(input.value || '').trim();
         if (!key) { input.focus(); return; }
-        window.location.assign(window.location.pathname + '?adminKey=' + encodeURIComponent(key));
+        notice.classList.remove('show');
+        card.classList.add('busy');
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(function (result) {
+              if (!result || !result.success) {
+                showLoginError_(result && result.message);
+                return;
+              }
+              redirectToDashboard_(key);
+            })
+            .withFailureHandler(function () {
+              showLoginError_('ระบบตรวจสอบสิทธิ์ขัดข้อง กรุณาลองใหม่อีกครั้ง');
+            })
+            .fixedAdminAuthLoginDashboardHtml_FIXED(key);
+          return;
+        }
+
+        var target = resolveOuterWebAppUrl_() + '?adminKey=' + encodeURIComponent(key);
+        try {
+          if (window.top && window.top !== window) window.top.location.href = target;
+          else window.location.assign(target);
+        } catch (navigationError) {
+          window.location.assign(target);
+        }
       });
     }());
   </script>

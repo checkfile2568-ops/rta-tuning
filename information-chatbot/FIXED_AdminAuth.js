@@ -30,21 +30,34 @@ function fixedAdminAuthConstantTimeEquals_(left, right) {
 }
 
 function fixedAdminAuthConfiguredKey_() {
-  // Information Chatbot ใช้ค่า WEB_ADMIN_KEY ในชีตตั้งค่าของระบบนี้เป็นแหล่งหลัก
-  // เพื่อให้ Admin เปลี่ยนคีย์จากระบบที่สร้างใหม่ได้ โดยไม่ผูกกับ Main Chatbot
+  // อ่าน WEB_ADMIN_KEY จาก Spreadsheet ของ Information Chatbot โดยตรง
+  // ไม่เรียก getConfig() เพราะโปรเจกต์มีโมดูลเดิมที่อาจประกาศชื่อซ้ำและ override กันได้
   try {
-    if (typeof getConfig === "function") {
-      var configKey = fixedAdminAuthTrim_(getConfig("WEB_ADMIN_KEY"));
-      if (configKey) return configKey;
+    var spreadsheetId = "1llnzNFkDirqGAxqIg77azh8FZBbSadFGUvNYfUM4xcc";
+    var configSheetName = "ตั้งค่า";
+    if (typeof SPREADSHEET_ID !== "undefined" && SPREADSHEET_ID) spreadsheetId = String(SPREADSHEET_ID);
+    if (typeof SHEETS !== "undefined" && SHEETS && SHEETS.CONFIG) configSheetName = String(SHEETS.CONFIG);
+
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    var configSheet = spreadsheet.getSheetByName(configSheetName);
+    if (configSheet) {
+      var values = configSheet.getDataRange().getDisplayValues();
+      for (var rowIndex = 0; rowIndex < values.length; rowIndex++) {
+        var keyName = fixedAdminAuthTrim_(values[rowIndex][0]);
+        if (keyName === "WEB_ADMIN_KEY") {
+          var sheetKey = fixedAdminAuthTrim_(values[rowIndex][1]);
+          if (sheetKey) return sheetKey;
+        }
+      }
     }
-  } catch (ignoreConfig) {
+  } catch (ignoreSheetConfig) {
   }
 
-  // ใช้ Script Property เฉพาะกรณีไม่มีค่าในชีต เช่น การกู้คืนหรือการตั้งค่าเริ่มต้น
+  // ใช้ Script Property เฉพาะกรณีอ่านชีตไม่ได้หรือไม่มีค่า เช่น การกู้คืนฉุกเฉิน
   var propertyKey = "";
   try {
     propertyKey = fixedAdminAuthTrim_(PropertiesService.getScriptProperties().getProperty("WEB_ADMIN_KEY"));
-  } catch (ignore) {
+  } catch (ignoreProperty) {
   }
   if (propertyKey) return propertyKey;
 
@@ -249,6 +262,24 @@ function fixedAdminAuthDashboardOutput_(sessionToken) {
     .setHeight(800)
     .addMetaTag("viewport", "width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function fixedAdminAuthLoginDashboardHtml_FIXED(adminKey) {
+  var request = { adminKey: fixedAdminAuthTrim_(adminKey) };
+  var result = fixedAdminAuthCheck_(request, "dashboard login");
+  if (!result.authorized) {
+    return {
+      success: false,
+      message: "รหัสไม่ถูกต้อง หรือยังไม่มีสิทธิ์เข้าใช้งาน"
+    };
+  }
+
+  var sessionToken = fixedAdminAuthIssueSessionToken_(request);
+  var output = fixedAdminAuthDashboardOutput_(sessionToken);
+  return {
+    success: true,
+    html: output.getContent()
+  };
 }
 
 function doGet_FIXED(e) {
