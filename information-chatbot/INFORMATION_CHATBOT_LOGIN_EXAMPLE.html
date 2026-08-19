@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Information Chatbot | เข้าสู่ระบบ</title>
+  <style>
+    :root {
+      --ink: #102a43;
+      --muted: #627d98;
+      --teal-900: #064e5a;
+      --teal-700: #087f8c;
+      --teal-500: #15b8a6;
+      --cyan-100: #e6fffb;
+      --surface: #ffffff;
+      --bg: #eef8fa;
+      --danger: #b42318;
+      --shadow: 0 24px 70px rgba(7, 74, 84, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Sarabun", "Noto Sans Thai", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(21, 184, 166, 0.18), transparent 28%),
+        radial-gradient(circle at 86% 78%, rgba(8, 127, 140, 0.18), transparent 32%),
+        linear-gradient(135deg, #f9ffff 0%, var(--bg) 52%, #e4f3f6 100%);
+      overflow-x: hidden;
+    }
+
+    .app-shell {
+      position: relative;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      isolation: isolate;
+    }
+
+    .orb {
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border: 1px solid rgba(21, 184, 166, 0.25);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: -1;
+      animation: orbit-float 8s ease-in-out infinite;
+    }
+
+    .orb::before,
+    .orb::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--teal-500);
+      box-shadow: 0 0 0 8px rgba(21, 184, 166, 0.12), 0 0 25px rgba(21, 184, 166, 0.65);
+    }
+
+    .orb::before { top: 18px; left: 50%; }
+    .orb::after { right: 22px; bottom: 38px; background: var(--teal-700); }
+
+    .orb-left { left: -110px; top: 10%; }
+    .orb-right { right: -130px; bottom: 3%; width: 360px; height: 360px; animation-delay: -3s; }
+
+    .panel {
+      width: min(100%, 560px);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(8, 127, 140, 0.16);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+    }
+
+    .loading-view,
+    .login-view {
+      padding: 46px 42px;
+    }
+
+    .loading-view {
+      min-height: 390px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: linear-gradient(145deg, rgba(6, 78, 90, 0.98), rgba(8, 127, 140, 0.96));
+      color: #ffffff;
+    }
+
+    .brand-mark {
+      width: 118px;
+      height: 118px;
+      margin: 0 auto 26px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.56);
+      border-radius: 30px;
+      background: linear-gradient(145deg, rgba(255,255,255,.22), rgba(255,255,255,.05));
+      box-shadow: 0 0 0 10px rgba(255,255,255,.06), 0 15px 42px rgba(0,0,0,.18);
+      animation: mark-breathe 2.8s ease-in-out infinite;
+    }
+
+    .bot-svg { width: 100%; height: 100%; overflow: visible; }
+    .bot-wave {
+      transform-box: fill-box;
+      transform-origin: 50% 90%;
+      animation: bot-wave 2.5s ease-in-out infinite;
+    }
+    .bot-screen { fill: #e8fffb; stroke: rgba(255,255,255,.9); stroke-width: 1.5; }
+    .bot-eye {
+      fill: #075e63;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: bot-blink 4.8s ease-in-out infinite;
+    }
+    .bot-mouth { fill: none; stroke: #075e63; stroke-width: 2.4; stroke-linecap: round; }
+    .bot-antenna { stroke: #bffcf2; stroke-width: 3; stroke-linecap: round; }
+    .bot-light {
+      fill: #fff4b8;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: bot-light 1.8s ease-in-out infinite;
+    }
+
+    .brand-title {
+      margin: 0;
+      min-height: 2.2em;
+      font-size: clamp(30px, 6vw, 42px);
+      line-height: 1.25;
+      letter-spacing: 0.02em;
+      font-weight: 800;
+    }
+
+    .char {
+      display: inline-block;
+      transform-origin: 50% 80%;
+      opacity: 0;
+      animation: letter-spin-in 900ms cubic-bezier(.22,.8,.32,1) forwards;
+      animation-delay: var(--delay);
+    }
+
+    .brand-subtitle {
+      margin: 15px 0 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 17px;
+      letter-spacing: 0.04em;
+    }
+
+    .loading-line {
+      width: min(300px, 100%);
+      height: 4px;
+      margin: 28px auto 0;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .loading-line::after {
+      content: "";
+      display: block;
+      width: 42%;
+      height: 100%;
+      border-radius: inherit;
+      background: #8ff7e9;
+      animation: loading-sweep 1.8s ease-in-out infinite;
+    }
+
+    .login-view {
+      display: none;
+      animation: panel-in 650ms cubic-bezier(.22,.8,.32,1) both;
+    }
+
+    .login-view.is-visible { display: block; }
+    .loading-view.is-hidden { display: none; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--teal-700);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h2 { margin: 0; font-size: 30px; line-height: 1.25; }
+    .intro { margin: 12px 0 30px; color: var(--muted); line-height: 1.7; }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .field-wrap { position: relative; }
+
+    input {
+      width: 100%;
+      min-height: 54px;
+      padding: 13px 54px 13px 16px;
+      border: 1px solid #bcccdc;
+      border-radius: 14px;
+      color: var(--ink);
+      background: #fbffff;
+      font: inherit;
+      font-size: 18px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    input:focus {
+      border-color: var(--teal-700);
+      box-shadow: 0 0 0 4px rgba(21, 184, 166, 0.14);
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      min-width: 38px;
+      min-height: 38px;
+      transform: translateY(-50%);
+      border: 0;
+      border-radius: 10px;
+      color: var(--teal-700);
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .login-button {
+      width: 100%;
+      min-height: 56px;
+      margin-top: 22px;
+      border: 0;
+      border-radius: 14px;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--teal-700), var(--teal-500));
+      box-shadow: 0 12px 24px rgba(8, 127, 140, .22);
+      cursor: pointer;
+      font: inherit;
+      font-size: 18px;
+      font-weight: 800;
+      transition: transform .2s, box-shadow .2s, opacity .2s;
+    }
+
+    .login-button:hover { transform: translateY(-2px); box-shadow: 0 16px 28px rgba(8, 127, 140, .3); }
+    .login-button:disabled { cursor: wait; opacity: .7; transform: none; }
+
+    .status {
+      min-height: 25px;
+      margin: 14px 0 0;
+      color: var(--danger);
+      line-height: 1.5;
+    }
+
+    .footnote {
+      margin: 26px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @keyframes letter-spin-in {
+      0% { opacity: 0; transform: translate3d(0, 20px, 0) rotateX(-90deg) rotateZ(-8deg); }
+      68% { opacity: 1; transform: translate3d(0, -4px, 0) rotateX(14deg) rotateZ(2deg); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) rotateX(0deg) rotateZ(0deg); }
+    }
+
+    @keyframes bot-wave {
+      0%, 100% { transform: rotate(0deg); }
+      12% { transform: rotate(16deg); }
+      24% { transform: rotate(-12deg); }
+      36% { transform: rotate(15deg); }
+      48% { transform: rotate(-8deg); }
+      60% { transform: rotate(9deg); }
+      72% { transform: rotate(0deg); }
+    }
+
+    @keyframes bot-blink {
+      0%, 43%, 47%, 100% { transform: scaleY(1); }
+      45% { transform: scaleY(.12); }
+    }
+
+    @keyframes bot-light { 50% { opacity: .55; transform: scale(1.18); } }
+
+    @keyframes mark-breathe {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.05) rotate(4deg); }
+    }
+
+    @keyframes loading-sweep {
+      0% { transform: translateX(-130%); }
+      100% { transform: translateX(340%); }
+    }
+
+    @keyframes orbit-float {
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+      50% { transform: translate3d(0, -14px, 0) rotate(14deg); }
+    }
+
+    @keyframes panel-in {
+      from { opacity: 0; transform: translateY(18px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 560px) {
+      .app-shell { padding: 14px; }
+      .loading-view, .login-view { padding: 34px 24px; }
+      .panel { border-radius: 22px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell" aria-live="polite">
+    <div class="orb orb-left" aria-hidden="true"></div>
+    <div class="orb orb-right" aria-hidden="true"></div>
+
+    <section class="panel" aria-label="Information Chatbot">
+      <div class="loading-view" id="loadingView">
+        <div>
+          <div class="brand-mark" role="img" aria-label="บอตน่ารักกำลังโบกมือ">
+            <svg class="bot-svg" viewBox="0 0 140 120" aria-hidden="true">
+              <defs>
+                <linearGradient id="botBodyGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#ffffff" />
+                  <stop offset="100%" stop-color="#bffcf2" />
+                </linearGradient>
+              </defs>
+              <g class="bot-body">
+                <path class="bot-antenna" d="M58 24V13" />
+                <circle class="bot-light" cx="58" cy="9" r="4" />
+                <rect x="27" y="28" width="69" height="57" rx="19" fill="url(#botBodyGradient)" />
+                <rect class="bot-screen" x="35" y="39" width="53" height="31" rx="12" />
+                <circle class="bot-eye" cx="51" cy="52" r="4" />
+                <circle class="bot-eye" cx="72" cy="52" r="4" />
+                <path class="bot-mouth" d="M53 61 C58 65 65 65 70 61" />
+                <rect x="19" y="48" width="9" height="22" rx="4.5" fill="#bffcf2" />
+                <rect x="96" y="48" width="9" height="22" rx="4.5" fill="#bffcf2" />
+                <path d="M45 85 C44 93 40 98 34 101" fill="none" stroke="#bffcf2" stroke-width="6" stroke-linecap="round" />
+                <path d="M78 85 C79 93 83 98 89 101" fill="none" stroke="#bffcf2" stroke-width="6" stroke-linecap="round" />
+              </g>
+              <g class="bot-wave">
+                <path d="M97 69 C103 72 109 72 114 68 C119 64 122 57 125 51 C126 48 123 46 121 49 L117 55 L120 43 C121 39 117 38 115 42 L112 52 L113 35 C113 31 109 31 108 35 L108 52 L105 43 C104 40 100 41 101 45 L103 59 L98 56 C95 54 92 57 95 61Z" fill="url(#botBodyGradient)" stroke="#bffcf2" stroke-width="2" stroke-linejoin="round" />
+                <path d="M101 62 C105 64 109 64 113 61" fill="none" stroke="#075e63" stroke-width="2" stroke-linecap="round" />
+              </g>
+            </svg>
+          </div>
+          <h1 class="brand-title" id="brandTitle" aria-label="Information Chatbot"></h1>
+          <p class="brand-subtitle">ศูนย์รวมข้อมูลและผู้ช่วยตอบคำถาม</p>
+          <div class="loading-line" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="login-view" id="loginView">
+        <p class="eyebrow">Information Chatbot</p>
+        <h2>เข้าสู่ระบบ Admin</h2>
+        <p class="intro">กรุณาใส่รหัส Admin ของระบบ Information Chatbot เพื่อเข้าสู่หน้าควบคุม</p>
+
+        <form id="loginForm" autocomplete="off">
+          <label for="adminKey">รหัส Admin</label>
+          <div class="field-wrap">
+            <input id="adminKey" name="adminKey" type="password" inputmode="numeric" autocomplete="off" required placeholder="กรอกรหัส Admin" />
+            <button class="toggle-password" id="togglePassword" type="button" aria-label="แสดงรหัส">แสดง</button>
+          </div>
+          <button class="login-button" id="loginButton" type="submit">เข้าสู่ระบบ</button>
+          <p class="status" id="status" role="status"></p>
+        </form>
+
+        <p class="footnote">Information Chatbot · Admin Console</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const brandText = 'Information Chatbot';
+      const brandTitle = document.getElementById('brandTitle');
+      const loadingView = document.getElementById('loadingView');
+      const loginView = document.getElementById('loginView');
+      const form = document.getElementById('loginForm');
+      const adminKey = document.getElementById('adminKey');
+      const togglePassword = document.getElementById('togglePassword');
+      const loginButton = document.getElementById('loginButton');
+      const status = document.getElementById('status');
+
+      [...brandText].forEach((letter, index) => {
+        const span = document.createElement('span');
+        span.className = 'char';
+        span.textContent = letter === ' ' ? '\u00a0' : letter;
+        span.style.setProperty('--delay', `${index * 120}ms`);
+        brandTitle.appendChild(span);
+      });
+
+      // แสดงหน้า Login หลังข้อความหมุนทีละอักษรเสร็จ
+      const introDuration = (brandText.length - 1) * 120 + 900 + 850;
+      window.setTimeout(() => {
+        loadingView.classList.add('is-hidden');
+        loginView.classList.add('is-visible');
+        adminKey.focus();
+      }, introDuration);
+
+      togglePassword.addEventListener('click', () => {
+        const showing = adminKey.type === 'text';
+        adminKey.type = showing ? 'password' : 'text';
+        togglePassword.textContent = showing ? 'แสดง' : 'ซ่อน';
+        togglePassword.setAttribute('aria-label', showing ? 'แสดงรหัส' : 'ซ่อนรหัส');
+      });
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const key = adminKey.value.trim();
+        if (!key) return;
+
+        loginButton.disabled = true;
+        loginButton.textContent = 'กำลังตรวจสอบ...';
+        status.textContent = '';
+
+        // ตัวอย่างสำหรับ Apps Script Web App ที่ตรวจ adminKey ผ่าน query string.
+        // ห้ามใส่รหัสจริงไว้ใน source หรือส่งขึ้น GitHub.
+        const target = new URL(window.location.href);
+        target.search = '';
+        target.searchParams.set('adminKey', key);
+        window.location.assign(target.toString());
+      });
+    })();
+  </script>
+</body>
+</html>
