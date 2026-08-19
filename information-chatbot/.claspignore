@@ -5,9 +5,7 @@ deployment_http_*.html
 verify_*_after_permissions.html
 POST_PERMISSION_VERIFY_*.md
 DEPLOYMENT_HTTP_CHECK_*.md
-ui_auth_backup_*/
-active_deployment_probe/
-backup_*.json
+backup_*
 current_*.json
 deployment_*.json
 safe_*.json
@@ -21,12 +19,19 @@ read_deployment_api.sh
 .gitignore
 .clasp.json
 .claspignore
-
-# Information Chatbot publish safety: never upload local backups or captured responses
-publish_backup_*/
-ui_bot_animation_backup_*/
-ui_rename_backup_*/
+publish_backup_*
+ui_bot_animation_backup_*
+ui_rename_backup_*
+active_deployment_probe
+*_findings.md
+*.html.txt
 deployment_*.html
 deployment_*.txt
-active_deployment_probe/
-*_findings.md
+replace_apps_script_content.py
+INFORMATION_CHATBOT_LOGIN_EXAMPLE.html
+ui_auth_backup_*
+publish_*.zip
+*.zip
+# Local operational notes and generated verification artifacts
+ui_*
+white_screen_*.md

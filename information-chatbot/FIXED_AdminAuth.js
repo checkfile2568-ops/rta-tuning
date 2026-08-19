@@ -219,21 +219,21 @@ function fixedAdminAuthDeniedHtml_() {
 
 function fixedAdminAuthDashboardBootstrap_(sessionToken) {
   var tokenJson = JSON.stringify(fixedAdminAuthText_(sessionToken)).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
-  return "<script>(function(){\\n" +
-    "var token=" + tokenJson + ";\\n" +
-    "var raw=google.script.run;\\n" +
-    "function makeProxy(state){return new Proxy({}, {get:function(target,prop){\\n" +
-      "if(prop==='withSuccessHandler') return function(fn){return makeProxy({success:fn,failure:state.failure,userObject:state.userObject});};\\n" +
-      "if(prop==='withFailureHandler') return function(fn){return makeProxy({success:state.success,failure:fn,userObject:state.userObject});};\\n" +
-      "if(prop==='withUserObject') return function(obj){return makeProxy({success:state.success,failure:state.failure,userObject:obj});};\\n" +
-      "if(prop==='then') return undefined;\\n" +
-      "return function(){var args=Array.prototype.slice.call(arguments);var runner=raw;\\n" +
-        "if(state.success) runner=runner.withSuccessHandler(state.success);\\n" +
-        "if(state.failure) runner=runner.withFailureHandler(state.failure);\\n" +
-        "if(state.userObject) runner=runner.withUserObject(state.userObject);\\n" +
-        "return runner.secureDashboardCall_FIXED(String(prop),args,{sessionToken:token});};\\n" +
-    "}});}\\n" +
-    "google.script.run=makeProxy({success:null,failure:null,userObject:null});\\n" +
+  return "<script>(function(){\n" +
+    "var token=" + tokenJson + ";\n" +
+    "var raw=google.script.run;\n" +
+    "function makeProxy(state){return new Proxy({}, {get:function(target,prop){\n" +
+      "if(prop==='withSuccessHandler') return function(fn){return makeProxy({success:fn,failure:state.failure,userObject:state.userObject});};\n" +
+      "if(prop==='withFailureHandler') return function(fn){return makeProxy({success:state.success,failure:fn,userObject:state.userObject});};\n" +
+      "if(prop==='withUserObject') return function(obj){return makeProxy({success:state.success,failure:state.failure,userObject:obj});};\n" +
+      "if(prop==='then') return undefined;\n" +
+      "return function(){var args=Array.prototype.slice.call(arguments);var runner=raw;\n" +
+        "if(state.success) runner=runner.withSuccessHandler(state.success);\n" +
+        "if(state.failure) runner=runner.withFailureHandler(state.failure);\n" +
+        "if(state.userObject) runner=runner.withUserObject(state.userObject);\n" +
+        "return runner.secureDashboardCall_FIXED(String(prop),args,{sessionToken:token});};\n" +
+    "}});}\n" +
+    "google.script.run=makeProxy({success:null,failure:null,userObject:null});\n" +
   "})();</script>";
 }
 

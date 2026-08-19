@@ -8,7 +8,7 @@
 - **Active deployment ID:** `AKfycbwI0qyeC8Agz76dXLfkAeabl2eNzOvxBS0eisdtQYhBBJV8hBmxYtFy_Ns-wBVcpYlo`
 - **Web App URL:** `https://script.google.com/macros/s/AKfycbwI0qyeC8Agz76dXLfkAeabl2eNzOvxBS0eisdtQYhBBJV8hBmxYtFy_Ns-wBVcpYlo/exec`
 - **Spreadsheet ID:** `1llnzNFkDirqGAxqIg77azh8FZBbSadFGUvNYfUM4xcc`
-- **Deployment version ที่ตรวจสอบล่าสุด:** `11`
+- **Deployment version ที่ตรวจสอบล่าสุด:** `13`
 
 ## ไฟล์สำคัญ
 
@@ -37,6 +37,10 @@ python3 -m json.tool appsscript.json >/dev/null
 ```
 
 สถานะ staging ที่ใช้ล่าสุดยังปิดการทำงานของฟีเจอร์ที่อาจส่งข้อความหรือเรียกบริการภายนอกจริง ได้แก่ `BOT_STATUS`, `NOTIFY_STATUS`, `GEMINI_QA_STATUS`, `TV_NOTIFY_STATUS`, `ONLINE_COURT_STATUS` และ `PERSONAL_ARCHIVE_STATUS` ตามค่าที่ตั้งไว้ใน Spreadsheet
+
+## Patch ล่าสุด
+
+Deployment รุ่น 13 แก้ปัญหาหน้า Admin ไม่แสดงผลหลังตรวจ `WEB_ADMIN_KEY` โดยปรับ newline ใน Dashboard bootstrap ให้เป็น escape ของ JavaScript ที่ถูกต้อง และทำ clean replacement ของ Apps Script content ให้เหลือเฉพาะ source root 23 ไฟล์ ไม่มี backup หรือไฟล์ probe ค้างอยู่
 
 ## ความปลอดภัย
 
