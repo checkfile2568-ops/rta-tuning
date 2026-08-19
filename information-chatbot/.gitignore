@@ -1,0 +1,10 @@
+# Local secrets and environment files — never commit these files
+.newbot_admin_key
+*.newbot_admin_key
+.env
+*.env
+.env.*
+!.env.example
+*.secret
+*.secrets
+*.credentials
