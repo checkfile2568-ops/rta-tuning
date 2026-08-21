@@ -43,6 +43,7 @@ def table_get(table,params):return req('GET',f'{REST}/{table}',params=params).js
 def table_patch(table,filters,payload):
     params={k:f'eq.{v}' for k,v in filters.items()};return req('PATCH',f'{REST}/{table}',params=params,json=payload,headers={'Content-Type':'application/json','Prefer':'return=representation'}).json()
 def table_insert(table,payload):return req('POST',f'{REST}/{table}',json=payload,headers={'Content-Type':'application/json','Prefer':'return=representation'}).json()
+def table_delete(table,params):return req('DELETE',f'{REST}/{table}',params=params,headers={'Prefer':'return=minimal'})
 def table_upsert(table,payload,on_conflict=None):
     params={'on_conflict':on_conflict} if on_conflict else None
     return req('POST',f'{REST}/{table}',params=params,json=payload,headers={'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'}).json()
@@ -109,6 +110,7 @@ def process_audio_transcribe(job,m):
                          'confidence':None,'model_name':'faster-whisper','model_version':model_name,'review_status':'pending',
                          'payload':{'job_id':job['id'],'language':getattr(info,'language',lang),'segment_index':idx}})
         if rows:
+            table_delete('mms_ai_findings',{'media_file_id':f"eq.{m['id']}",'module':'eq.audio','finding_type':'eq.transcript_segment','review_status':'eq.pending','model_name':'eq.faster-whisper'})
             for i in range(0,len(rows),100):table_insert('mms_ai_findings',rows[i:i+100])
         safe_progress(job,95)
         full='\n'.join(texts)
@@ -190,19 +192,21 @@ def process_football_scan(job,m):
         audio=[]
         if p.returncode==0:audio=read_rms_windows(wav,1000)
         safe_progress(job,28);scene=scene_scores(src,sample,job);safe_progress(job,62)
-        candidates=merge_candidates(audio,scene,maxc);rows=[]
+        candidates=merge_candidates(audio,scene,maxc);rows=[];yolo_active=get_yolo() is not None
         for idx,(t,base,av,sv) in enumerate(candidates,1):
             ctx=yolo_context(src,t);bonus=min(.12,ctx['persons']/22*.08)+(.08 if ctx['ball'] else 0);score=min(.99,base+bonus)
-            possible_goal=goal_heuristic and score>=.84 and av>=.72 and (ctx['ball']>0 or not HAVE_YOLO)
+            possible_goal=goal_heuristic and score>=.84 and av>=.72 and (ctx['ball']>0 if yolo_active else score>=.9)
             ftype='goal_candidate' if possible_goal else 'highlight_candidate';title='⚽ Goal candidate — ต้องยืนยัน' if possible_goal else '⭐ AI Highlight candidate'
             rows.append({'project_id':m.get('project_id'),'media_file_id':m['id'],'module':'video','finding_type':ftype,'title':title,
-                         'detail':'AI คัดจังหวะจากความเปลี่ยนแปลงของภาพ + พลังเสียง'+(' + YOLO context' if get_yolo() else ''),
+                         'detail':'AI คัดจังหวะจากความเปลี่ยนแปลงของภาพ + พลังเสียง'+(' + YOLO context' if yolo_active else ''),
                          'position_text':f'{t/1000:.1f}s','start_ms':max(0,t-pre),'end_ms':t+post,'confidence':round(score,4),
                          'model_name':'mms-football-highlight-fusion','model_version':VERSION,'review_status':'pending',
                          'payload':{'job_id':job['id'],'event_ms':t,'audio_score':round(av,4),'scene_score':round(sv,4),'yolo':ctx,'goal_heuristic':goal_heuristic,'human_review_required':True}})
             safe_progress(job,min(92,64+idx*2))
-        if rows:table_insert('mms_ai_findings',rows)
-        job_update(job['id'],progress=100,status='completed',completed_at=now(),output={'candidates':len(rows),'goal_candidates':sum(1 for r in rows if r['finding_type']=='goal_candidate'),'method':'audio+scene'+('+yolo' if get_yolo() else ''),'human_review_required':True})
+        if rows:
+            table_delete('mms_ai_findings',{'media_file_id':f"eq.{m['id']}",'module':'eq.video','finding_type':'in.(highlight_candidate,goal_candidate)','review_status':'eq.pending','model_name':'eq.mms-football-highlight-fusion'})
+            table_insert('mms_ai_findings',rows)
+        job_update(job['id'],progress=100,status='completed',completed_at=now(),output={'candidates':len(rows),'goal_candidates':sum(1 for r in rows if r['finding_type']=='goal_candidate'),'method':'audio+scene'+('+yolo' if yolo_active else ''),'human_review_required':True})
 
 def process(job):
     m=media(job.get('media_file_id'))
