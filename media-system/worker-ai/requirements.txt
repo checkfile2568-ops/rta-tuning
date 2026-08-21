@@ -1,0 +1,6 @@
+requests>=2.32,<3
+faster-whisper>=1.1,<2
+opencv-python-headless>=4.10,<5
+numpy>=1.26,<3
+# Optional: enable FOOTBALL_USE_YOLO=1 only when this package is installed.
+ultralytics>=8.3,<9
