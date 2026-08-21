@@ -1,0 +1,70 @@
+name: MMs vNext Quality Check
+
+on:
+  pull_request:
+    paths:
+      - 'audio-analysis-v2.html'
+      - 'video-football-ai-v1.html'
+      - 'mms-command-center-vnext.html'
+      - 'mms-ai-client.js'
+      - 'media-system/worker-ai/**'
+      - 'media-system/supabase/functions/mms-ai-api/**'
+      - '.github/workflows/mms-vnext-quality-check.yml'
+  workflow_dispatch:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Python worker syntax
+        run: python -m py_compile media-system/worker-ai/worker_ai.py
+
+      - name: Client JS syntax
+        run: node --check mms-ai-client.js
+
+      - name: Inline page JS syntax
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile, sys
+          files=['audio-analysis-v2.html','video-football-ai-v1.html','mms-command-center-vnext.html']
+          failed=False
+          for f in files:
+              text=Path(f).read_text(encoding='utf-8')
+              blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',text,re.I|re.S)
+              for i,code in enumerate(blocks):
+                  p=Path(tempfile.gettempdir())/f'{Path(f).stem}-{i}.js'
+                  p.write_text(code,encoding='utf-8')
+                  r=subprocess.run(['node','--check',str(p)],capture_output=True,text=True)
+                  if r.returncode:
+                      failed=True
+                      print(f'FAIL {f} script {i}:\n{r.stderr}')
+                  else:
+                      print(f'PASS {f} script {i}')
+          sys.exit(1 if failed else 0)
+          PY
+
+      - name: Edge Function type check
+        run: deno check media-system/supabase/functions/mms-ai-api/index.ts
+
+      - name: Guard Production routes untouched by this upgrade
+        run: |
+          git diff --name-only origin/${{ github.base_ref || 'main' }}...HEAD | tee /tmp/changed.txt
+          if grep -Eq '^(media\.html|video-studio-v4\.html|audio-analysis\.html|media-system/worker/worker\.py)$' /tmp/changed.txt; then
+            echo 'Production baseline file changed in vNext PR'; exit 1
+          fi
