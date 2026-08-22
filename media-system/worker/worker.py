@@ -1,14 +1,19 @@
-import os,time,json,hashlib,tempfile,subprocess,uuid,select
+import os,time,json,hashlib,tempfile,subprocess,uuid,select,socket
 from pathlib import Path
 from urllib.parse import quote
 import requests
 
 SUPABASE_URL=os.environ['SUPABASE_URL'].rstrip('/')
 SERVICE_KEY=os.environ['SUPABASE_SERVICE_ROLE_KEY']
-WORKER_ID=os.getenv('WORKER_ID',f'mms-worker-{uuid.uuid4().hex[:8]}')
-POLL=float(os.getenv('POLL_SECONDS','3'))
+WORKER_ID=os.getenv('WORKER_ID','').strip()
+if not WORKER_ID:
+    raise RuntimeError('WORKER_ID is required. Set a different ID on every worker host.')
+WORKER_LABEL=os.getenv('WORKER_LABEL',WORKER_ID).strip() or WORKER_ID
+HOSTNAME=socket.gethostname()
+POLL=max(0.5,float(os.getenv('POLL_SECONDS','3')))
+HEARTBEAT_SECONDS=max(5.0,float(os.getenv('HEARTBEAT_SECONDS','15')))
 BUCKET=os.getenv('MEDIA_BUCKET','mms-media')
-VERSION='0.4.0'
+VERSION='0.4.1'
 JOB_TYPES=['proxy_generate','checksum_compute','video_export','cctv_analyze']
 HEAD={'apikey':SERVICE_KEY,'Authorization':f'Bearer {SERVICE_KEY}'}
 REST=f'{SUPABASE_URL}/rest/v1'
@@ -28,7 +33,9 @@ def rpc(name,payload):
 
 def now():return time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())
 def heartbeat(status='online',job_id=None,error=None):
-    payload={'worker_id':WORKER_ID,'worker_type':'media','status':status,'current_job_id':job_id,'version':VERSION,'last_seen_at':now(),'capabilities':{'job_types':JOB_TYPES,'ffmpeg':True,'opencv':True,'yolo':True,'cancel':True,'live_progress':True,'media_set_export':True,'video_enhance':True},'metadata':{'error':error} if error else {}}
+    metadata={'label':WORKER_LABEL,'hostname':HOSTNAME,'mode':'active-any-node'}
+    if error:metadata['error']=error
+    payload={'worker_id':WORKER_ID,'worker_type':'media','status':status,'current_job_id':job_id,'version':VERSION,'last_seen_at':now(),'capabilities':{'job_types':JOB_TYPES,'ffmpeg':True,'opencv':True,'yolo':True,'cancel':True,'live_progress':True,'media_set_export':True,'video_enhance':True},'metadata':metadata}
     table_upsert('mms_worker_nodes',payload,'worker_id')
 
 def claim():return rpc('mms_claim_processing_job',{'p_worker_id':WORKER_ID,'p_job_types':JOB_TYPES})
@@ -218,10 +225,10 @@ def fail(job,e):
     else:job_update(job['id'],status='failed',error_message=msg,completed_at=now())
 
 def main():
-    print(f'{WORKER_ID} v{VERSION} starting');heartbeat('online');last=time.time();job=None
+    print(f'{WORKER_ID} ({WORKER_LABEL}) v{VERSION} starting on {HOSTNAME}');heartbeat('online');last=time.time();job=None
     while True:
         try:
-            if time.time()-last>30:heartbeat('online');last=time.time()
+            if time.time()-last>HEARTBEAT_SECONDS:heartbeat('online');last=time.time()
             job=claim()
             if not job:time.sleep(POLL);continue
             heartbeat('busy',job['id']);m=media(job.get('media_file_id'));has_set=bool((job.get('input') or {}).get('media_set_id'))

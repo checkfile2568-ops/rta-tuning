@@ -1,0 +1,5 @@
+# Private per-machine Worker configuration. Never commit Supabase server keys.
+.env
+.env.*
+!.env.example
+__pycache__/

@@ -7,8 +7,12 @@ services:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
       MEDIA_BUCKET: mms-media
-      WORKER_ID: ${WORKER_ID:-mms-worker-prod-01}
+      # Every computer must have a different worker ID. Compose stops instead of
+      # accidentally making two computers look like the same worker.
+      WORKER_ID: ${WORKER_ID:?Set a unique WORKER_ID in the private .env file}
+      WORKER_LABEL: ${WORKER_LABEL:?Set a readable WORKER_LABEL in the private .env file}
       POLL_SECONDS: ${POLL_SECONDS:-2}
+      HEARTBEAT_SECONDS: ${HEARTBEAT_SECONDS:-15}
       PORT: 8080
     ports:
       - "127.0.0.1:8080:8080"
