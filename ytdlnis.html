@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f7fbff">
+  <title>MMs — Android Download</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="mms-pro.css">
+  <style>.download-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:12px;margin-top:12px}.hero-icon{font-size:48px;line-height:1}.action-row{display:flex;gap:8px;flex-wrap:wrap}.status{margin-top:12px;min-height:46px}.status b{display:block;margin-bottom:2px}.steps{display:grid;gap:9px;margin:0;padding:0;list-style:none}.steps li{display:flex;gap:9px;align-items:flex-start}.steps i{font-style:normal;display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#edf5ff;color:#3b69a4;font-size:11px;font-weight:800;flex:0 0 auto}.legal{font-size:10px;color:var(--muted);line-height:1.5}@media(max-width:850px){.download-grid{grid-template-columns:1fr}}</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top glass"><div class="brand">MMs</div><div class="title">ANDROID DOWNLOAD<small>ส่งลิงก์ YouTube ไปยัง YTDLnis โดยไม่ประมวลผลบน GitHub Pages</small></div><div class="spacer"></div><button class="btn" onclick="location.href='media.html#menus'">← MMs</button></header>
+    <main class="download-grid">
+      <section class="panel glass">
+        <div class="row"><div class="hero-icon">⇩</div><div><h1 style="margin:0">ดาวน์โหลดด้วย YTDLnis</h1><div class="sub" style="margin:3px 0 0">วางลิงก์ YouTube เลือกรูปแบบ แล้วเปิดแอปบน Android</div></div></div>
+        <div class="field" style="margin-top:14px"><label for="videoUrl">ลิงก์ YouTube</label><input id="videoUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://www.youtube.com/watch?v=…" oninput="clearStatus()"></div>
+        <div class="field" style="margin-top:10px"><label for="mediaType">ต้องการดาวน์โหลด</label><select id="mediaType"><option value="video">วิดีโอ</option><option value="audio">เสียง</option></select></div>
+        <div class="action-row" style="margin-top:14px"><button class="btn primary" onclick="startHandoff()">เปิด YTDLnis</button><button class="btn" onclick="copyUrl()">คัดลอกลิงก์</button><button class="btn" onclick="shareUrl()">แชร์…</button></div>
+        <div id="status" class="help status" role="status"><b>พร้อมใช้งาน</b>กรอกเฉพาะลิงก์ YouTube แล้วกด “เปิด YTDLnis”</div>
+      </section>
+      <aside class="panel glass"><h2>ใช้งานอย่างไร</h2><ol class="steps"><li><i>1</i><span>ติดตั้ง YTDLnis บนโทรศัพท์ Android</span></li><li><i>2</i><span>วางลิงก์ YouTube แล้วเลือกวิดีโอหรือเสียง</span></li><li><i>3</i><span>กดเปิดแอป แล้วเลือกคุณภาพและยืนยันใน YTDLnis</span></li></ol><div class="hint" style="margin-top:14px">หน้านี้ไม่ดาวน์โหลดหรือแปลงวิดีโอบน GitHub Pages จึงไม่ทำให้หน้า MMs ค้าง งานดาวน์โหลดทำบนเครื่อง Android ของผู้ใช้</div><p class="legal" style="margin:12px 0 0">ใช้เฉพาะเนื้อหาที่คุณมีสิทธิ์ดาวน์โหลดและตามเงื่อนไขของแพลตฟอร์มต้นทาง</p></aside>
+    </main>
+  </div>
+  <script>
+  const CONFIG={bridgeUrl:'',returnUrl:'https://checkfile2568-ops.github.io/rta-tuning/media.html#menus'};
+  const $=s=>document.querySelector(s);
+  const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function status(title,detail,kind){const e=$('#status');e.className='help status'+(kind?' '+kind:'');e.innerHTML='<b>'+escapeHtml(title)+'</b>'+escapeHtml(detail)}
+  function clearStatus(){status('พร้อมใช้งาน','กรอกเฉพาะลิงก์ YouTube แล้วกด “เปิด YTDLnis”')}
+  function selected(){const raw=$('#videoUrl').value.trim();let u;try{u=new URL(raw)}catch(error){throw new Error('กรุณาวางลิงก์ YouTube ที่ถูกต้อง')}const host=u.hostname.toLowerCase().replace(/^www\./,'');const accepted=host==='youtube.com'||host.endsWith('.youtube.com')||host==='youtu.be'||host==='youtube-nocookie.com'||host.endsWith('.youtube-nocookie.com');if(!accepted)throw new Error('หน้านี้รับเฉพาะลิงก์ YouTube');if(!['http:','https:'].includes(u.protocol))throw new Error('ลิงก์ต้องขึ้นต้นด้วย https://');return {url:u.href,type:$('#mediaType').value}}
+  function isAndroid(){return /android/i.test(navigator.userAgent)}
+  function intentUrl(url,type){return 'intent:#Intent;action=android.intent.action.SEND;type=text/plain;package=com.deniscerri.ytdl;S.android.intent.extra.TEXT='+encodeURIComponent(url)+';S.TYPE='+encodeURIComponent(type)+';S.BACKGROUND=false;end'}
+  async function copyUrl(){try{const job=selected();await navigator.clipboard.writeText(job.url);status('คัดลอกลิงก์แล้ว','เปิด YTDLnis แล้ววางลิงก์เพื่อเริ่มดาวน์โหลด')}catch(error){status('ยังคัดลอกไม่ได้',error.message,'warn')}}
+  async function shareUrl(){try{const job=selected();if(!navigator.share)throw new Error('เบราว์เซอร์นี้ไม่มีเมนูแชร์');await navigator.share({title:'MMs YouTube',text:job.type==='audio'?'ดาวน์โหลดเสียง':'ดาวน์โหลดวิดีโอ',url:job.url});status('เปิดเมนูแชร์แล้ว','เลือก YTDLnis จากรายการแอป')}catch(error){if(error&&error.name!=='AbortError')status('เปิดเมนูแชร์ไม่ได้',error.message,'warn')}}
+  function openYtdlnis(url,type){if(!isAndroid()){status('ตรวจไม่พบ Android','คัดลอกหรือแชร์ลิงก์ แล้วเปิด YTDLnis บนโทรศัพท์ Android','warn');return}status('กำลังส่งต่อไป YTDLnis','ถ้าแอปไม่เปิด ระบบจะแสดงเมนูแชร์เป็นทางเลือก');location.href=intentUrl(url,type);setTimeout(async function(){if(document.visibilityState!=='visible')return;if(navigator.share){try{await navigator.share({title:'MMs YouTube',text:type==='audio'?'ดาวน์โหลดเสียง':'ดาวน์โหลดวิดีโอ',url:url});status('เลือกแอปจากเมนูแชร์','หาก YTDLnis ไม่เปิดอัตโนมัติ ให้เลือก YTDLnis จากรายการ')}catch(error){if(error&&error.name!=='AbortError')status('เปิด YTDLnis ไม่สำเร็จ','ตรวจว่าติดตั้งแอปแล้ว หรือใช้ปุ่ม “แชร์…”','warn')}}else status('เปิด YTDLnis ไม่สำเร็จ','ตรวจว่าติดตั้งแอปแล้ว หรือคัดลอกลิงก์ไปวางในแอป','warn')},1200)}
+  function startHandoff(){let job;try{job=selected()}catch(error){status('ลิงก์ยังไม่ถูกต้อง',error.message,'bad');return}if(CONFIG.bridgeUrl){const q=new URLSearchParams({action:'ytdlnis',url:job.url,type:job.type,return_url:CONFIG.returnUrl});location.assign(CONFIG.bridgeUrl+(CONFIG.bridgeUrl.includes('?')?'&':'?')+q.toString());return}openYtdlnis(job.url,job.type)}
+  </script>
+</body>
+</html>

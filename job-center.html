@@ -1,1 +1,117 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MMs Job Center</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="mms-pro.css"></head><body><div class="wrap"><header class="top glass"><div class="brand">MMs</div><div class="title">JOB CENTER<small>Queue • Worker • Background Processing</small></div><div class="spacer"></div><button class="btn" onclick="loadAll()">↻</button><button class="btn" data-mms-back>↑ เมนู</button></header><main class="grid"><section class="panel glass col-12"><div class="help">งาน Video / CCTV / Proxy / Checksum จะทำต่อที่ Worker แม้คุณออกจากหน้านี้ • หาก Worker Offline งานจะค้างใน Queue โดยไม่หาย</div><div class="cards" id="metrics" style="margin-top:9px"></div></section><section class="panel glass col-12"><div class="row"><div><h2>งานประมวลผล</h2><div class="sub">ดู Progress ยกเลิก Retry หรือดาวน์โหลด Final ได้จากจุดเดียว</div></div><div class="spacer"></div><select id="status" onchange="loadAll()"><option value="">ทุกสถานะ</option><option>queued</option><option>processing</option><option>completed</option><option>failed</option><option>cancelled</option></select></div><div id="jobs" class="list"><div class="empty">กำลังโหลด...</div></div></section><section class="panel glass col-12"><h2>Media Worker</h2><div class="sub">แสดง Worker ที่ส่ง Heartbeat ภายใน 2 นาทีล่าสุด</div><div id="workers" class="cards"></div></section></main></div><div id="toast" class="toast"></div><script src="mms-pro-client.js"></script><script src="mms-workflow-client.js"></script><script src="mms-shell-bridge.js"></script><script>const P=MmsPro,W=MmsWorkflow,$=s=>document.querySelector(s);let D={jobs:[],workers:[]};function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2200)}function badge(s){return s==='completed'?'good':s==='failed'?'bad':s==='processing'?'good':s==='cancelled'?'warn':'warn'}function hasResult(x){return x.status==='completed'&&x.output&&(x.output.storage_path||x.output.output_path||x.output.proxy_path)}async function loadAll(){try{const d=await P.api('jobs-list',{status:$('#status').value||null});if(!d.ok)throw new Error(d.error);D=d;render()}catch(e){$('#jobs').innerHTML='<div class="empty">โหลด Job Center ไม่สำเร็จ</div>'}}function render(){const j=D.jobs||[],w=D.workers||[];const q=j.filter(x=>x.status==='queued').length,p=j.filter(x=>x.status==='processing').length,f=j.filter(x=>x.status==='failed').length;$('#metrics').innerHTML=`<div class="card"><span class="meta">รอคิว</span><div class="metric">${q}</div></div><div class="card"><span class="meta">กำลังทำ</span><div class="metric">${p}</div></div><div class="card"><span class="meta">ผิดพลาด</span><div class="metric">${f}</div></div><div class="card"><span class="meta">Worker Online</span><div class="metric">${w.length}</div></div>`;$('#jobs').innerHTML=j.length?j.map(x=>`<article class="item"><div class="item-head"><div class="grow"><b>${P.esc(x.job_type)}</b><div class="meta">${P.esc(x.module)} • ${P.dt(x.created_at)} • ครั้งที่ ${x.attempts}/${x.max_attempts}</div></div><span class="badge ${badge(x.status)}">${P.esc(x.status)}</span></div><div style="margin-top:8px" class="progress"><i style="width:${Number(x.progress)||0}%"></i></div><div class="row" style="margin-top:8px"><span class="meta">${Number(x.progress)||0}% ${x.error_message?'• '+P.esc(x.error_message):''}</span><div class="spacer"></div>${hasResult(x)?`<button class="btn good" onclick="downloadJob('${x.id}')">ดาวน์โหลดผล</button>`:''}${['queued','processing'].includes(x.status)?`<button class="btn danger" onclick="cancelJob('${x.id}')">ยกเลิก</button>`:''}${['failed','cancelled'].includes(x.status)?`<button class="btn" onclick="retryJob('${x.id}')">Retry</button>`:''}</div></article>`).join(''):'<div class="empty">ยังไม่มีงานในสถานะนี้</div>';$('#workers').innerHTML=w.length?w.map(x=>`<div class="card"><b>${P.esc(x.worker_id)}</b><div class="meta">${P.esc(x.worker_type)} • ${P.esc(x.status)} • ${P.dt(x.last_seen_at)}</div><div class="row" style="margin-top:7px"><span class="badge good">${P.esc(x.version||'worker')}</span>${Object.keys(x.capabilities||{}).length?'<span class="badge">FFmpeg / AI</span>':''}</div></div>`).join(''):'<div class="empty">ยังไม่มี Media Worker ออนไลน์ — งานใหม่จะรออยู่ใน Queue</div>'}async function cancelJob(id){const d=await P.api('job-cancel',{id});toast(d.ok?'ยกเลิกงานแล้ว':d.error||'ไม่สำเร็จ');loadAll()}async function retryJob(id){const d=await P.api('job-retry',{id});toast(d.ok?'ส่งกลับเข้าคิวแล้ว':d.error||'ไม่สำเร็จ');loadAll()}async function downloadJob(id){const d=await W.api('job-result-url',{id});if(!d.ok)return toast(d.error||'ดาวน์โหลดไม่ได้');window.open(d.url,'_blank','noopener')}loadAll();setInterval(loadAll,9000);</script></body></html>
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>MMs Job Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="mms-pro.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="top glass">
+      <div class="brand">MMs</div>
+      <div class="title">JOB CENTER<small>Queue • Worker • Background Processing</small></div>
+      <div class="spacer"></div>
+      <span id="lastUpdated" class="sync hide-mobile">กำลังเชื่อมต่อ…</span>
+      <button id="refreshBtn" class="btn" onclick="loadAll(true)" aria-label="รีเฟรช Job Center">↻</button>
+      <button class="btn" data-mms-back>↑ เมนู</button>
+    </header>
+    <main class="grid">
+      <section class="panel glass col-12">
+        <div id="connection" class="help">กำลังตรวจสอบ Queue และ Media Worker…</div>
+        <div class="cards" id="metrics" style="margin-top:9px"></div>
+      </section>
+      <section class="panel glass col-12">
+        <div class="row">
+          <div>
+            <h2>งานประมวลผล</h2>
+            <div class="sub">แสดงรายการล่าสุด 60 งาน • กด Retry ได้เฉพาะงานที่หยุดหรือผิดพลาด</div>
+          </div>
+          <div class="spacer"></div>
+          <label class="meta" for="status">สถานะ</label>
+          <select id="status" onchange="loadAll(true)">
+            <option value="">ทุกสถานะ</option>
+            <option value="queued">queued</option>
+            <option value="processing">processing</option>
+            <option value="completed">completed</option>
+            <option value="failed">failed</option>
+            <option value="cancelled">cancelled</option>
+          </select>
+        </div>
+        <div id="jobs" class="list" aria-live="polite"><div class="empty">กำลังโหลด…</div></div>
+        <div id="more" class="meta" style="display:none;margin-top:9px">แสดงเฉพาะ 60 งานล่าสุด กรุณาใช้ตัวกรองสถานะเพื่อดูรายการอื่น</div>
+      </section>
+      <section class="panel glass col-12">
+        <h2>Media Worker</h2>
+        <div class="sub">Worker ที่ส่ง Heartbeat ภายใน 2 นาทีล่าสุด</div>
+        <div id="workers" class="cards"></div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script src="mms-pro-client.js"></script>
+  <script src="mms-workflow-client.js"></script>
+  <script src="mms-shell-bridge.js"></script>
+  <script>
+  const P=MmsPro,W=MmsWorkflow,$=s=>document.querySelector(s);
+  let D={jobs:[],workers:[],summary:{queued:0,processing:0,failed:0},has_more:false,loading:false,lastLoaded:null};
+
+  function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2600)}
+  function badge(s){return s==='completed'?'good':s==='failed'?'bad':s==='processing'?'good':'warn'}
+  function hasResult(x){return x.status==='completed'&&x.output&&(x.output.storage_path||x.output.output_path||x.output.proxy_path)}
+  function busy(on){D.loading=on;$('#refreshBtn').disabled=on;$('#refreshBtn').textContent=on?'…':'↻'}
+  function setConnection(text,kind=''){const e=$('#connection');e.className='help'+(kind?' '+kind:'');e.textContent=text}
+  function retryAt(v){return v?` • ลองอัตโนมัติหลัง ${P.dt(v)}`:''}
+  function updateStamp(){const e=$('#lastUpdated');e.textContent=D.lastLoaded?`อัปเดต ${P.dt(D.lastLoaded)}`:'ยังไม่อัปเดต'}
+
+  async function loadAll(){
+    if(D.loading)return;
+    busy(true);
+    if(!D.jobs.length)$('#jobs').innerHTML='<div class="empty">กำลังโหลด Job Center…</div>';
+    try{
+      const d=await P.api('jobs-list',{status:$('#status').value||null,limit:60});
+      if(!d.ok)throw new Error(d.error||'โหลดข้อมูลไม่สำเร็จ');
+      D={...D,...d,loading:false,lastLoaded:new Date().toISOString()};
+      render();
+    }catch(error){
+      const message=error?.message==='SESSION_EXPIRED'?'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่':(error?.message||'โหลด Job Center ไม่สำเร็จ');
+      $('#jobs').innerHTML=`<div class="empty">${P.esc(message)}<br><button class="btn" style="margin-top:10px" onclick="loadAll(true)">ลองอีกครั้ง</button></div>`;
+      setConnection(message,'bad');
+    }finally{busy(false);updateStamp()}
+  }
+
+  function render(){
+    const j=D.jobs||[],w=D.workers||[],s=D.summary||{};
+    const queued=Number(s.queued)||0,processing=Number(s.processing)||0,failed=Number(s.failed)||0;
+    $('#metrics').innerHTML=`<div class="card"><span class="meta">รอคิว</span><div class="metric">${queued}</div></div><div class="card"><span class="meta">กำลังทำ</span><div class="metric">${processing}</div></div><div class="card"><span class="meta">ผิดพลาด</span><div class="metric">${failed}</div></div><div class="card"><span class="meta">Worker Online</span><div class="metric">${w.length}</div></div>`;
+    if(!w.length&&(queued||processing))setConnection(`Worker Offline — มี ${queued+processing} งานรออยู่ใน Queue ระบบจะเก็บงานไว้ แต่จะยังไม่เริ่มจนกว่า Media Worker จะกลับมาออนไลน์`,'warn');
+    else if(w.length)setConnection(`Media Worker ออนไลน์ ${w.length} เครื่อง • Job Center อัปเดตอัตโนมัติทุก 12 วินาที`);
+    else setConnection('ไม่มีงานที่กำลังรอประมวลผล และยังไม่พบ Media Worker ที่ส่ง Heartbeat ภายใน 2 นาที');
+    $('#jobs').innerHTML=j.length?j.map(x=>`<article class="item"><div class="item-head"><div class="grow"><b>${P.esc(x.job_type)}</b><div class="meta">${P.esc(x.module)} • ${P.dt(x.created_at)} • ครั้งที่ ${Number(x.attempts)||0}/${Number(x.max_attempts)||3}</div></div><span class="badge ${badge(x.status)}">${P.esc(x.status)}</span></div><div style="margin-top:8px" class="progress"><i style="width:${Math.max(0,Math.min(100,Number(x.progress)||0))}%"></i></div><div class="row" style="margin-top:8px"><span class="meta">${Number(x.progress)||0}%${x.error_message?' • '+P.esc(x.error_message):''}${x.status==='queued'?retryAt(x.next_retry_at):''}</span><div class="spacer"></div>${hasResult(x)?`<button class="btn good" onclick="downloadJob('${x.id}')">ดาวน์โหลดผล</button>`:''}${['queued','processing'].includes(x.status)?`<button class="btn danger" onclick="cancelJob('${x.id}')">ยกเลิก</button>`:''}${['failed','cancelled'].includes(x.status)?`<button class="btn" onclick="retryJob('${x.id}')">Retry ใหม่</button>`:''}</div></article>`).join(''):'<div class="empty">ยังไม่มีงานในสถานะนี้</div>';
+    $('#more').style.display=D.has_more?'block':'none';
+    $('#workers').innerHTML=w.length?w.map(x=>`<div class="card"><b>${P.esc(x.worker_id)}</b><div class="meta">${P.esc(x.worker_type)} • ${P.esc(x.status)} • ${P.dt(x.last_seen_at)}</div><div class="row" style="margin-top:7px"><span class="badge good">${P.esc(x.version||'worker')}</span>${Object.keys(x.capabilities||{}).length?'<span class="badge">FFmpeg / AI</span>':''}</div></div>`).join(''):'<div class="empty">ยังไม่มี Media Worker ออนไลน์ — งานใหม่จะคงอยู่ใน Queue</div>';
+  }
+
+  async function cancelJob(id){
+    const d=await P.api('job-cancel',{id});
+    toast(d.ok?'ยกเลิกงานแล้ว':d.error||'ยกเลิกงานไม่สำเร็จ');
+    await loadAll();
+  }
+  async function retryJob(id){
+    const d=await P.api('job-retry',{id});
+    toast(d.ok?'ส่งงานกลับเข้าคิวใหม่แล้ว':d.error||'Retry ไม่สำเร็จ');
+    await loadAll();
+  }
+  async function downloadJob(id){
+    const d=await W.api('job-result-url',{id});
+    if(!d.ok)return toast(d.error||'ดาวน์โหลดไม่ได้');
+    window.open(d.url,'_blank','noopener');
+  }
+
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')loadAll()});
+  loadAll();
+  setInterval(()=>{if(document.visibilityState==='visible')loadAll()},12000);
+  </script>
+</body>
+</html>
