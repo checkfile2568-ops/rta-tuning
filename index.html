@@ -105,6 +105,19 @@
   .pitem .ph span{font-family:var(--mono);font-size:10px;color:var(--muted)}
   .pitem .ph button{flex:0 0 auto;min-height:auto;padding:4px 9px;font-size:11px;border-radius:7px}
   .pitem pre{margin:6px 0 0;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:pre-wrap;line-height:1.5}
+  /* guide / Wi-Fi */
+  .guide{margin:0 12px 4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:none}
+  .guide.show{display:block}
+  .guide h3{margin:0 0 6px;font-size:14px;color:var(--accent2)}
+  .guide h4{margin:12px 0 3px;font-size:13px;color:var(--text)}
+  .guide p{color:var(--muted);font-size:12.5px;line-height:1.7;margin:0 0 4px}
+  .guide ol{margin:2px 0 4px 18px;padding:0}
+  .guide li{color:var(--muted);font-size:12.5px;line-height:1.7;margin:3px 0}
+  .gtabs{display:flex;gap:6px;margin-bottom:10px}
+  .gtabs button{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px;color:var(--muted);cursor:pointer;font-size:12.5px}
+  .gtabs button.sel{color:var(--accent2);border-color:var(--accent2)}
+  .gmode{display:none}.gmode.on{display:block}
+  .gnote{background:var(--panel2);border-radius:8px;padding:8px 10px;margin-top:10px;color:var(--text);font-size:12px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -173,6 +186,7 @@
     <button id="btnMeasure" disabled><span class="icn">📸</span> วัดผล (4 วิ)</button>
     <button id="btnHold" disabled><span class="icn">⤒</span> Peak</button>
     <button id="btnClear" disabled><span class="icn">↺</span> ล้าง</button>
+    <button id="btnMMM" disabled><span class="icn">🚶</span> เดินวัด · MMM</button>
   </div>
   <div class="row">
     <button id="btnSweep" disabled><span class="icn">🌊</span> Sweep เบส · หาจูนตู้ (20–160Hz)</button>
@@ -180,6 +194,7 @@
   <div class="row">
     <button id="btnPhase" disabled><span class="icn">🔄</span> เช็กเฟส/โพลาริตี้</button>
     <button id="btnPreset"><span class="icn">💾</span> พรีเซ็ต</button>
+    <button id="btnGuide"><span class="icn">📖</span> คู่มือ · WiFi</button>
   </div>
 
   <div class="label" style="margin-left:2px">เทียบก่อน–หลัง (A/B)</div>
@@ -215,6 +230,36 @@
   <div class="plist" id="pList"></div>
 </div>
 
+<div class="label" style="margin-left:14px">คู่มือ · ตั้งค่า WiFi วงเดียวกัน</div>
+<div class="guide" id="guidePanel">
+  <div class="gtabs">
+    <button data-m="phone" class="sel">📱 มือถืออย่างเดียว</button>
+    <button data-m="combo">💻 คอม + มือถือ</button>
+  </div>
+  <div class="gmode on" id="gm-phone">
+    <h3>โหมดมือถืออย่างเดียว</h3>
+    <p>ใช้มือถือเครื่องเดียววัดและดูคำแนะนำ แล้วบันทึกค่าเพื่อนำไปกรอก BlueArt — ไม่ต้องตั้ง WiFi</p>
+    <h4>ป้อนเสียงเข้าระบบ</h4>
+    <ol>
+      <li>จับคู่ <b>มือถือ → Bluetooth → BlueArt</b> และปิด EQ/เพิ่มเสียงในมือถือให้เป็น Flat</li>
+      <li>เริ่มวัดด้วยไมค์ แล้วกด <span class="kbd">📻 Pink Noise</span> โดยเริ่มวอลุ่มแอมป์ต่ำสุดก่อน</li>
+      <li>ถือมือถือระดับหู กด <span class="kbd">🚶 เดินวัด · MMM</span> 30 วินาที แล้วนำค่าที่ได้ไปกรอก DSP</li>
+    </ol>
+    <div class="gnote">Pink Noise, Sweep และ Phase จะเริ่มระดับต่ำ และหยุดทันทีเมื่อปิดไมค์หรือออกจากหน้าเว็บ เพื่อป้องกันเสียงทดสอบค้าง</div>
+  </div>
+  <div class="gmode" id="gm-combo">
+    <h3>โหมดคอม + มือถือ</h3>
+    <p><b>คอม</b> = Smaart สำหรับเฟส/ดีเลย์และไมค์คาลิเบรต · <b>มือถือ</b> = หน้านี้สำหรับ MMM หน้างาน</p>
+    <h4>ตั้ง WiFi ให้อยู่วงเดียวกัน</h4>
+    <ol>
+      <li>ให้มือถือและคอมพิวเตอร์เกาะ WiFi/ฮอตสปอตเดียวกัน เช่น <span class="kbd">192.168.1.x</span></li>
+      <li>ใช้ Chrome Remote Desktop หรือ AnyDesk จากมือถือเพื่อปรับ Smaart/DSP ที่จุดฟังได้ทันที</li>
+      <li>หากใช้ DSPico ให้เลือก DHCP เข้ากับเราเตอร์หลัก เพื่อไม่ตัดการเชื่อมต่ออินเทอร์เน็ตของคอม</li>
+    </ol>
+    <div class="gnote">งานเฟสและดีเลย์ที่ต้องอ้างอิงเวลา ใช้ Smaart พร้อม reference channel; หน้านี้เหมาะกับ RTA/MMM และเช็กแนวโน้มอย่างรวดเร็ว</div>
+  </div>
+</div>
+
 <div class="label" style="margin-left:14px">คำแนะนำการจูน (รู้จักระบบ 3 ทาง)</div>
 <div class="card" id="sugBox">
   <div class="empty">ป้อนครอสตามการ์ดด้านบนก่อน แล้วกด <span class="kbd">เริ่มวัดด้วยไมค์</span> → เปิด Pink Noise เข้าระบบ → วางมือถือระดับหูตำแหน่งฟัง → กด <span class="kbd">วัดผล</span> ระบบจะวิเคราะห์เทียบเป้าหมาย “ดีสแต็ก” และบอกจุดที่ควรปรับ</div>
@@ -237,7 +282,7 @@
   <b>จุดอ่อนที่ต้องจับตาในชุดนี้:</b> ไม่มีมิดเบสแยก — 10" ตู้ออเดอร์ 6 เป็นตู้แบนด์แคบ (ขึ้นไม่ค่อยถึง 150–300Hz) ส่วน 4" ก็ยังไม่เต็มที่ในย่านนั้น ทำให้ช่วง <b>150–300 Hz</b> มักตก ฟังแล้วเสียงบาง/ขาดเนื้อ · แก้โดยขยับ LP ซับขึ้นเล็กน้อยหรือ HP กลางลง แล้วหนุน PEQ เบาๆ · และไมค์มือถือไม่ได้คาลิเบรต ค่าที่อ่านเป็นแนวโน้ม ถ้าอยากเป๊ะใช้ UMIK-1 + REW (ฟรี)
 </div>
 
-<div class="foot">RTA 3-WAY TUNING · เปิดผ่าน https เท่านั้นไมค์จึงทำงาน · ห้ามใช้บน GAS</div>
+<div class="foot">RTA 3-WAY TUNING · V2 · เปิดผ่าน https เท่านั้นไมค์จึงทำงาน · ห้ามใช้บน GAS</div>
 
 <script>
 (function(){
@@ -271,7 +316,7 @@
   let audioCtx=null, analyser=null, micStream=null, srcNode=null;
   let noiseNode=null, noiseOn=false, running=false, holdOn=false;
   let perOct=3, bandF=centers(3), bandLabels=bandF.map(niceLabel);
-  let freqData=null, peakHold=[], measured=null, target='dstack', raf=null, measuring=false;
+  let freqData=null, peakHold=[], measured=null, measuredVar=null, target='dstack', raf=null, measuring=false, mmmRunning=false;
   let sweeping=false, sweepData=[], sweepPeak=null, sweepResult=null, sweepOsc=null, sweepMeta=null, sweepFrozen=false;
   let snapA=null, snapB=null, abOn=false;
   let phasing=false, phaseOsc=null, phaseGain=null, phaseMeta=null, phaseLog=[];
@@ -300,17 +345,19 @@
       document.getElementById('stDot').classList.add('live');
       document.getElementById('stFs').textContent=(audioCtx.sampleRate/1000).toFixed(1)+' kHz';
       const b=document.getElementById('btnMic'); b.classList.add('on'); b.innerHTML='<span class="icn">⏹</span> หยุดไมค์';
-      ['btnMeasure','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=false);
+      ['btnMeasure','btnMMM','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=false);
       loop();
     }catch(e){ showMicError(e); }
   }
   function stopMic(){
     running=false; if(raf)cancelAnimationFrame(raf);
+    measuring=false; mmmRunning=false;
+    stopTestSignals();
     if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
     document.getElementById('stMode').textContent='พร้อมใช้งาน';
     document.getElementById('stDot').classList.remove('live');
     const b=document.getElementById('btnMic'); b.classList.remove('on'); b.innerHTML='<span class="icn">🎙️</span> เริ่มวัดด้วยไมค์';
-    ['btnMeasure','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=true);
+    ['btnMeasure','btnMMM','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=true);
     sweepFrozen=false;
     draw();
   }
@@ -332,12 +379,26 @@
       d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;}
     return buf;
   }
+  function setButton(id,on,label){
+    const b=document.getElementById(id); if(!b)return;
+    b.classList.toggle('on',on); b.innerHTML=label;
+  }
+  function stopTestSignals(){
+    if(noiseNode){try{noiseNode.stop();}catch(_){} noiseNode=null;}
+    noiseOn=false; setButton('btnNoise',false,'<span class="icn">📻</span> Pink Noise');
+    if(sweepOsc){try{sweepOsc.stop();}catch(_){} sweepOsc=null;}
+    sweeping=false; setButton('btnSweep',false,'<span class="icn">🌊</span> Sweep เบส · หาจูนตู้ (20–160Hz)');
+    if(analyser)analyser.smoothingTimeConstant=.7;
+    if(phaseOsc){try{phaseOsc.stop();}catch(_){} phaseOsc=null;}
+    phasing=false; setButton('btnPhase',false,'<span class="icn">🔄</span> เช็กเฟส/โพลาริตี้');
+  }
   function toggleNoise(){
     if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); audioCtx.resume();
     const btn=document.getElementById('btnNoise');
     if(noiseOn){ try{noiseNode.stop();}catch(_){}; noiseNode=null;noiseOn=false; btn.classList.remove('on'); btn.innerHTML='<span class="icn">📻</span> Pink Noise'; }
     else{ noiseNode=audioCtx.createBufferSource(); noiseNode.buffer=makePinkNoise(); noiseNode.loop=true;
-      const g=audioCtx.createGain(); g.gain.value=0.5; noiseNode.connect(g).connect(audioCtx.destination); noiseNode.start();
+      const g=audioCtx.createGain(); g.gain.setValueAtTime(.001,audioCtx.currentTime); g.gain.linearRampToValueAtTime(.12,audioCtx.currentTime+.18);
+      noiseNode.connect(g).connect(audioCtx.destination); noiseNode.start();
       noiseOn=true; btn.classList.add('on'); btn.innerHTML='<span class="icn">⏹</span> หยุด Noise'; }
   }
 
@@ -358,10 +419,11 @@
   }
 
   function measure(){
-    if(!running||measuring)return; measuring=true; sweepFrozen=false; sweepResult=null;
+    if(!running||measuring)return; measuring=true; measuredVar=null; sweepFrozen=false; sweepResult=null;
     const btn=document.getElementById('btnMeasure'), accP=new Array(bandF.length).fill(0), acc=new Array(bandF.length).fill(0);
     const t0=performance.now(),DUR=4000;
     (function tick(){
+      if(!running||measuring===false){btn.innerHTML='<span class="icn">📸</span> วัดผล (4 วิ)';return;}
       const raw=computeBands();
       for(let i=0;i<bandF.length;i++){ if(raw[i]>-100){accP[i]+=Math.pow(10,raw[i]/10);acc[i]++;} }
       const el=performance.now()-t0; btn.innerHTML='<span class="icn">⏱</span> วัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
@@ -374,6 +436,32 @@
   function nearestFc(f){ const nice=[31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150,4000,5000,6300,8000,10000,12500];
     let best=nice[0],bd=1e9; for(const x of nice){const d=Math.abs(Math.log2(x/f)); if(d<bd){bd=d;best=x;}} return best; }
   function nearXover(f){ for(const x of XMARK){ if(Math.abs(Math.log2(f/x))<0.2) return x; } return null; }
+
+  function rVar(i0,i1){
+    if(!measuredVar||measuredVar.length!==bandF.length)return 0;
+    let s=0,c=0; for(let i=i0;i<=i1;i++){s+=measuredVar[i];c++;} return c?s/c:0;
+  }
+  function measureMMM(){
+    if(!running||measuring||mmmRunning)return;
+    mmmRunning=true; measuring=true; sweepFrozen=false; sweepResult=null; measured=null; measuredVar=null;
+    const btn=document.getElementById('btnMMM');
+    const accP=new Array(bandF.length).fill(0),sDb=new Array(bandF.length).fill(0),sDb2=new Array(bandF.length).fill(0),cnt=new Array(bandF.length).fill(0);
+    const t0=performance.now(),DUR=30000;
+    document.getElementById('sugBox').innerHTML='<div class="empty">เดินไมค์ช้าๆ ทั่วโซนฟัง (สูงระดับหู · อย่าจ่อลำโพงตัวเดียว) ขณะเปิด Pink Noise — ระบบจะเฉลี่ยหลายจุด ~30 วินาที</div>';
+    (function tick(){
+      if(!running||!mmmRunning){btn.innerHTML='<span class="icn">🚶</span> เดินวัด · MMM';return;}
+      const n=normalize(computeBands());
+      for(let i=0;i<bandF.length;i++){const v=n[i];if(v>-100){accP[i]+=Math.pow(10,v/10);sDb[i]+=v;sDb2[i]+=v*v;cnt[i]++;}}
+      const el=performance.now()-t0;
+      btn.innerHTML='<span class="icn">🚶</span> เดินวัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
+      if(el<DUR)requestAnimationFrame(tick);
+      else{
+        measured=normalize(bandF.map((_,i)=>cnt[i]?10*Math.log10(accP[i]/cnt[i]):-120));
+        measuredVar=bandF.map((_,i)=>{if(cnt[i]<4)return 0;const m=sDb[i]/cnt[i];return Math.sqrt(Math.max(0,sDb2[i]/cnt[i]-m*m));});
+        measuring=false;mmmRunning=false;btn.innerHTML='<span class="icn">🚶</span> เดินวัด · MMM';analyze();
+      }
+    })();
+  }
 
   function analyze(){
     const box=document.getElementById('sugBox'); if(!measured)return;
@@ -388,23 +476,30 @@
     }
     if(cur)regions.push(cur);
     regions.sort((a,b)=>Math.abs(b.peak)-Math.abs(a.peak));
+    const hasMMM=measuredVar&&measuredVar.length===bandF.length;
     let html='';
     if(regions.length===0)
-      html+='<div class="sug note"><h4>เสียงแนบเป้าหมายดีแล้ว ✔</h4><p>ทุกย่านอยู่ในกรอบ ±'+TH+' dB เทียบ “'+targetNames[target]+'” — Save Preset ได้เลย แล้วลองวัดตำแหน่งฟังจุดอื่นยืนยันความสม่ำเสมอ</p></div>';
+      html+='<div class="sug note"><h4>เสียงแนบเป้าหมายดีแล้ว ✔</h4><p>ทุกย่านอยู่ในกรอบ ±'+TH+' dB เทียบ “'+targetNames[target]+'” — Save Preset ได้เลย'+(hasMMM?'':' แล้วลองวัดจุดอื่น หรือใช้ 🚶 MMM ยืนยันความสม่ำเสมอ')+'</p></div>';
     for(const r of regions.slice(0,5)){
       const flo=bandF[r.i0],fhi=bandF[r.i1],amt=Math.abs(r.peak).toFixed(1),fc=nearestFc(r.pf),xo=nearXover(r.pf);
+      const vv=rVar(r.i0,r.i1),shaky=vv>4;
       if(r.sign>0){
         const q=(r.i1-r.i0)<=1?'2.0':'1.2';
+        const caution=shaky?'<p style="color:#c9922f;margin-top:4px">⚠ พีคนี้ขยับ ±'+vv.toFixed(1)+'dB ตามตำแหน่ง — ตัดพองามพอ อย่าตัดลึก</p>':'';
         html+='<div class="sug over"><h4>'+niceLabel(flo)+'–'+niceLabel(fhi)+' Hz <em>ดังเกิน +'+amt+' dB</em></h4>'+
           '<p>ย่านนี้โด่งเกินเป้า มักบวม/แข็ง แนะนำตัดแบบ subtractive</p>'+
-          '<div class="fix">Blue Art → Band ว่าง · Peak(PEQ) · F='+niceLabel(fc)+'Hz · Q='+q+' · G=−'+amt+'dB</div></div>';
+          caution+'<div class="fix">Blue Art → Band ว่าง · Peak(PEQ) · F='+niceLabel(fc)+'Hz · Q='+q+' · G=−'+amt+'dB</div></div>';
       }else{
         const isSub=fhi<80, isMidbass=(flo>=140&&fhi<=340), atX=!!xo;
-        let why= atX? 'อยู่ใกล้จุดตัดครอส '+niceLabel(xo)+'Hz — น่าจะเป็นเฟส/ดีเลย์มากกว่า EQ ลองสลับโพลาริตี้หรือปรับดีเลย์ก่อน'
-              : isMidbass? 'ย่านมิดเบสของชุดนี้ (10"ตู้ออเดอร์6 ขึ้นไม่ถึง + 4"ยังไม่เต็ม) มักตกตรงนี้ ลองขยับ LP ซับขึ้น/HP กลางลงก่อน แล้วค่อยหนุน EQ'
-              : isSub? 'ขาดพลังเบสลึก เพิ่มเกนซับหรือลดจุด LP ซับลงเล็กน้อย' : 'ค่อยเติมทีละน้อย อย่าดันจนคลิป';
-        html+='<div class="sug under"><h4>'+niceLabel(flo)+'–'+niceLabel(fhi)+' Hz <em>เบากว่า −'+amt+' dB</em></h4>'+
-          '<p>'+why+'</p><div class="fix">Blue Art → Band ว่าง · Peak(PEQ) · F='+niceLabel(fc)+'Hz · Q=1.0 · G=+'+Math.min(6,amt)+'dB</div></div>';
+        if(shaky){
+          html+='<div class="sug under"><h4>'+niceLabel(flo)+'–'+niceLabel(fhi)+' Hz <em>เบากว่า −'+amt+' dB</em></h4><p>ดิพนี้แกว่ง ±'+vv.toFixed(1)+'dB ตามตำแหน่งไมค์ = <b>โหมดห้อง</b> ไม่ใช่ปัญหาลำโพงโดยตรง</p><div class="fix">🚫 อย่า EQ ถม — ขยับตำแหน่งซับ/จุดฟัง หรือใช้วัสดุดูดซับแทน</div></div>';
+        }else{
+          let why= atX? 'อยู่ใกล้จุดตัดครอส '+niceLabel(xo)+'Hz — น่าจะเป็นเฟส/ดีเลย์มากกว่า EQ ลองสลับโพลาริตี้หรือปรับดีเลย์ก่อน'
+                : isMidbass? 'ย่านมิดเบสของชุดนี้ (10"ตู้ออเดอร์6 ขึ้นไม่ถึง + 4"ยังไม่เต็ม) มักตกตรงนี้ ลองขยับ LP ซับขึ้น/HP กลางลงก่อน แล้วค่อยหนุน EQ'
+                : isSub? 'ขาดพลังเบสลึก เพิ่มเกนซับหรือลดจุด LP ซับลงเล็กน้อย' : 'ค่อยเติมทีละน้อย อย่าดันจนคลิป';
+          html+='<div class="sug under"><h4>'+niceLabel(flo)+'–'+niceLabel(fhi)+' Hz <em>เบากว่า −'+amt+' dB</em></h4>'+
+            '<p>'+why+'</p><div class="fix">Blue Art → Band ว่าง · Peak(PEQ) · F='+niceLabel(fc)+'Hz · Q=1.0 · G=+'+Math.min(3,amt)+'dB</div></div>';
+        }
       }
     }
     // structural notes for this rig
@@ -412,6 +507,7 @@
     if(sc&&sx/sc>5) html+='<div class="sug note"><h4>พลังงาน &lt;40Hz ล้น</h4><p>ตู้ออเดอร์ 6 อันตรายถ้าปล่อยใต้จูนตู้ — ยืนยัน subsonic HPF ~38Hz เปิดอยู่ กันดอกซับหลุด/พัง</p></div>';
     let hx=0,hc=0; for(let i=0;i<bandF.length;i++){ if(bandF[i]>=5000&&bandF[i]<=8000){hx+=delta[i];hc++;} }
     if(hc&&hx/hc>4) html+='<div class="sug note"><h4>แหลม 2" ช่วง 5–8kHz แข็ง/บาดหู</h4><p>2" ไวย่านนี้มาก ลดเลเวลแหลมหรือตัด PEQ ~6.3kHz ลง 1–2dB ฟังนานจะไม่ล้าหู</p></div>';
+    if(hasMMM)html+='<div class="sug note"><h4>วัดแบบ MMM แล้ว ✔</h4><p>ระบบแยกดิพที่เกิดจากโหมดห้องออกแล้ว — โฟกัสการแก้เฉพาะย่านที่สม่ำเสมอหลายจุด</p></div>';
     box.innerHTML=html;
   }
 
@@ -496,11 +592,12 @@
 
   function startSweep(){
     if(!running||sweeping)return;
+    if(analyser)analyser.smoothingTimeConstant=0;
     if(noiseOn)toggleNoise();            // noise off during sweep
     measured=null; sweepFrozen=false; sweepData=[]; sweepPeak=null; sweepResult=null; sweeping=true;
     const F0=20,F1=160,DUR=18000;
     sweepOsc=audioCtx.createOscillator(); sweepOsc.type='sine';
-    const g=audioCtx.createGain(); g.gain.value=0.35;
+    const g=audioCtx.createGain(); g.gain.setValueAtTime(.001,audioCtx.currentTime); g.gain.linearRampToValueAtTime(.12,audioCtx.currentTime+.18);
     sweepOsc.connect(g).connect(audioCtx.destination);
     const t0=audioCtx.currentTime;
     sweepOsc.frequency.setValueAtTime(F0,t0);
@@ -508,11 +605,13 @@
     sweepOsc.start();
     sweepMeta={F0,F1,DUR,t0:performance.now()};
     const btn=document.getElementById('btnSweep'); btn.classList.add('on'); btn.innerHTML='<span class="icn">🌊</span> กำลังกวาด…';
-    document.getElementById('sugBox').innerHTML='<div class="empty">กำลังกวาดความถี่เบส… เร่งเสียงระบบให้ดังพอ ถือมือถือใกล้ลำโพงซับ รอ ~18 วิ</div>';
+    document.getElementById('sugBox').innerHTML='<div class="empty">กำลังกวาดความถี่เบส… เริ่มวอลุ่มแอมป์ต่ำก่อน แล้วค่อยเพิ่มเท่าที่จำเป็น ถือมือถือใกล้ลำโพงซับ รอ ~18 วิ</div>';
   }
   function finishSweep(){
     try{sweepOsc.stop();}catch(_){}
+    sweepOsc=null;
     sweeping=false;
+    if(analyser)analyser.smoothingTimeConstant=.7;
     let pk=null; for(const p of sweepData){ if(p.f>=25&&p.f<=140){ if(!pk||p.db>pk.db)pk=p; } }
     const box=document.getElementById('sugBox');
     if(pk){
@@ -585,7 +684,7 @@
     measured=null; sweepFrozen=false; abOn=false; phaseLog=[]; phasing=true;
     const XF=XMARK[0]; // crossover freq to test (110Hz sub<->mid)
     phaseOsc=audioCtx.createOscillator(); phaseOsc.type='sine'; phaseOsc.frequency.value=XF;
-    phaseGain=audioCtx.createGain(); phaseGain.gain.value=0.3;
+    phaseGain=audioCtx.createGain(); phaseGain.gain.setValueAtTime(.001,audioCtx.currentTime); phaseGain.gain.linearRampToValueAtTime(.12,audioCtx.currentTime+.12);
     phaseOsc.connect(phaseGain).connect(audioCtx.destination); phaseOsc.start();
     phaseMeta={f:XF,t0:performance.now(),DUR:8000};
     const b=document.getElementById('btnPhase'); b.classList.add('on'); b.innerHTML='<span class="icn">🔄</span> กำลังเช็ก…';
@@ -593,6 +692,7 @@
   }
   function finishPhase(){
     try{phaseOsc.stop();}catch(_){}
+    phaseOsc=null;
     phasing=false;
     const vals=phaseLog.slice(Math.floor(phaseLog.length*0.35));
     const avg=vals.length? vals.reduce((a,b)=>a+b,0)/vals.length : -120;
@@ -678,12 +778,13 @@
   /* FIX: ปุ่มไมค์ไม่เคยถูกผูก event — เป็นสาเหตุที่ทุกอย่างใช้งานไม่ได้ */
   document.getElementById('btnMic').addEventListener('click',()=>{ running ? stopMic() : startMic(); });
   document.getElementById('btnNoise').addEventListener('click',toggleNoise);
+  document.getElementById('btnMMM').addEventListener('click',()=>{if(!running||sweeping||phasing)return;abOn=false;document.getElementById('btnAB').classList.remove('on');measureMMM();});
   document.getElementById('btnMeasure').addEventListener('click',()=>{ if(!sweeping&&!phasing){abOn=false;document.getElementById('btnAB').classList.remove('on');measure();} });
   document.getElementById('btnSweep').addEventListener('click',()=>{ if(!phasing){abOn=false;document.getElementById('btnAB').classList.remove('on');startSweep();} });
   document.getElementById('btnHold').addEventListener('click',function(){holdOn=!holdOn;this.classList.toggle('on',holdOn);peakHold=new Array(bandF.length).fill(-120);});
-  document.getElementById('btnClear').addEventListener('click',function(){measured=null;sweepFrozen=false;sweepResult=null;sweepData=[];abOn=false;document.getElementById('btnAB').classList.remove('on');peakHold=new Array(bandF.length).fill(-120);document.getElementById('sugBox').innerHTML='<div class="empty">ล้างแล้ว — กด <span class="kbd">วัดผล</span> หรือ <span class="kbd">Sweep เบส</span> อีกครั้ง</div>';});
+  document.getElementById('btnClear').addEventListener('click',function(){measured=null;measuredVar=null;sweepFrozen=false;sweepResult=null;sweepData=[];abOn=false;document.getElementById('btnAB').classList.remove('on');peakHold=new Array(bandF.length).fill(-120);document.getElementById('sugBox').innerHTML='<div class="empty">ล้างแล้ว — กด <span class="kbd">วัดผล</span> หรือ <span class="kbd">Sweep เบส</span> อีกครั้ง</div>';});
   document.getElementById('segTarget').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');target=b.dataset.t;if(measured)analyze();if(!running)draw();});
-  document.getElementById('segRes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');perOct=+b.dataset.r;rebuildBands();measured=null;document.getElementById('sugBox').innerHTML='<div class="empty">เปลี่ยนความละเอียดแล้ว — กด <span class="kbd">วัดผล</span> อีกครั้ง</div>';});
+  document.getElementById('segRes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');perOct=+b.dataset.r;rebuildBands();measured=null;measuredVar=null;snapA=null;snapB=null;abOn=false;document.getElementById('btnAB').classList.remove('on');document.getElementById('btnAB').disabled=true;document.getElementById('sugBox').innerHTML='<div class="empty">เปลี่ยนความละเอียดแล้ว — ล้างค่า A/B เพื่อไม่เทียบคนละสเกล และกด <span class="kbd">วัดผล</span> อีกครั้ง</div>';});
 
   document.getElementById('btnPhase').addEventListener('click',startPhase);
   document.getElementById('btnSaveA').addEventListener('click',()=>snap('A'));
@@ -696,6 +797,16 @@
     this.classList.toggle('on',show);
     if(show)p.scrollIntoView({behavior:'smooth',block:'nearest'});
   });
+  document.getElementById('btnGuide').addEventListener('click',function(){
+    const g=document.getElementById('guidePanel'),show=!g.classList.contains('show');
+    g.classList.toggle('show',show);this.classList.toggle('on',show);
+    if(show)g.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
+  document.querySelectorAll('.gtabs button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.gtabs button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+    document.querySelectorAll('.gmode').forEach(m=>m.classList.remove('on'));
+    document.getElementById('gm-'+b.dataset.m).classList.add('on');
+  }));
   document.getElementById('pFill').addEventListener('click',fillFromMeasurement);
   document.getElementById('pSave').addEventListener('click',function(){
     const n=document.getElementById('pName'), t=document.getElementById('pNote');
@@ -706,6 +817,7 @@
 
   loadPresets(); renderPresets();
   resize();draw();
+  window.addEventListener('pagehide',()=>{stopTestSignals();if(micStream)micStream.getTracks().forEach(t=>t.stop());});
 })();
 </script>
 </body>
