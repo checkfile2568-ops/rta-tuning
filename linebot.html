@@ -29,9 +29,9 @@ h1{margin:0;color:var(--wine);font-size:1.45rem;font-weight:700;perspective:720p
 input[type="password"],input[type="text"]{width:100%;min-height:52px;padding:14px 98px 14px 15px;border:1px solid var(--pink-200);border-radius:14px;font-family:inherit;font-size:1rem;text-align:left;outline:none;transition:all .2s;box-shadow:0 8px 22px rgba(157,23,77,.06)}
 input[type="password"]:focus,input[type="text"]:focus{border-color:var(--pink-500);box-shadow:0 0 0 3px rgba(236,72,153,.15)}
 button{position:relative;isolation:isolate;width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--pink-500),var(--pink-700));color:#fff;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 10px 24px rgba(190,24,93,.24);transition:transform .2s,box-shadow .2s}
-button::after{content:"";position:absolute;inset:-2px;padding:1.5px;border-radius:inherit;background:conic-gradient(from 0deg,transparent 0 16%,#fff 24%,#f9a8d4 33%,transparent 46% 66%,#fff 76%,#f9a8d4 84%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;pointer-events:none;animation:buttonLightRing 1.8s linear infinite;transition:opacity .2s}
-button:hover,button:focus-visible{box-shadow:0 12px 28px rgba(190,24,93,.3)}button:hover::after,button:focus-visible::after,button:active::after{opacity:.95}button:active{transform:scale(.98)}
-@keyframes buttonLightRing{to{transform:rotate(1turn)}}
+button::after{content:"";position:absolute;inset:-3px;border:1.5px solid rgba(255,255,255,.92);border-radius:16px;opacity:0;pointer-events:none;box-shadow:0 0 0 0 rgba(236,72,153,0),0 0 0 rgba(255,255,255,0);transition:opacity .2s}
+button:hover,button:focus-visible{box-shadow:0 12px 28px rgba(190,24,93,.3)}button:hover::after,button:focus-visible::after,button:active::after{opacity:.95;animation:buttonLightRing 1.6s ease-in-out infinite}button:active{transform:scale(.98)}
+@keyframes buttonLightRing{0%,100%{box-shadow:0 0 0 0 rgba(236,72,153,.1),0 0 4px rgba(255,255,255,.36)}50%{box-shadow:0 0 0 4px rgba(236,72,153,.22),0 0 16px rgba(255,255,255,.92)}}
 #open-login-btn{margin-top:22px}
 #toggle-password{position:absolute;top:6px;right:6px;width:auto;min-width:86px;min-height:40px;padding:8px 10px;font-size:.78rem;white-space:nowrap;background:var(--pink-100);color:var(--pink-700);border:1px solid var(--pink-200);box-shadow:none}
 #submit-login-btn{margin-top:4px}
