@@ -53,7 +53,7 @@ function updateProgress(){if(done)return;progress=Math.min(100,progress+(progres
 function showLogin(){done=true;status.textContent='พร้อมใช้งาน';setTimeout(function(){splash.style.opacity='0';splash.style.visibility='hidden';loginGate.style.display='grid';setTimeout(function(){openLoginBtn.focus()},120)},300)}
 function showPasswordForm(){openLoginBtn.style.display='none';loginForm.style.display='block';passInput.focus()}
 function togglePassword(){var isPassword=passInput.type==='password';passInput.type=isPassword?'text':'password';document.getElementById('toggle-password').textContent=isPassword?'ซ่อนรหัส':'แสดงรหัส'}
-function checkLogin(){if(loginForm.style.display==='none'||!loginForm.style.display)showPasswordForm();var key=passInput.value.trim();if(!key){alert('กรุณากรอกรหัสผ่าน');passInput.focus();return}status.textContent='กำลังเชื่อมต่อระบบ...';location.href=BASE_URL+'?adminKey='+encodeURIComponent(key)}
+function checkLogin(){if(loginForm.style.display==='none'||!loginForm.style.display)showPasswordForm();var key=passInput.value.trim();if(!key){alert('กรุณากรอกรหัสผ่าน');passInput.focus();return}status.textContent='กำลังเชื่อมต่อระบบ...';frame.src=BASE_URL+'?adminKey='+encodeURIComponent(key);frame.onload=function(){loginGate.style.opacity='0';loginGate.style.visibility='hidden';app.style.display='block'}}
 passInput.addEventListener('keypress',function(e){if(e.key==='Enter')checkLogin()});
 window.addEventListener('load',function(){animateTitle();startBlinkAnimations();updateProgress()});
 </script>
