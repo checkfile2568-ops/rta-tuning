@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f14">
+  <title>ศูนย์ควบคุมคอมพิวเตอร์และมือถือ</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-dot"></span><div><strong>PC Remote</strong><small>Control Center</small></div></div>
+      <nav>
+        <button class="nav-item active">⌂ <span>หน้าหลัก</span></button>
+        <button class="nav-item">◉ <span>สถานะระบบ</span></button>
+        <button class="nav-item">⌁ <span>อุปกรณ์</span></button>
+        <button class="nav-item">⚡ <span>ควบคุมระยะไกล</span></button>
+        <button class="nav-item">◷ <span>ตั้งเวลาปิดเครื่อง</span></button>
+        <button class="nav-item">☷ <span>ประวัติการทำงาน</span></button>
+      </nav>
+      <div class="sidebar-foot"><span id="agentFooterDot" class="dot off"></span><span id="agentFooter">ยังไม่เชื่อมต่อ</span></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><h1>ศูนย์ควบคุมคอมพิวเตอร์และมือถือ</h1><p>ควบคุมเฉพาะคำสั่งที่ได้รับอนุญาตผ่าน Windows Agent</p></div>
+        <div class="top-actions"><span id="lastUpdate">อัปเดตล่าสุด: --:--:--</span><button id="logoutBtn" class="ghost hidden">ออกจากระบบ</button></div>
+      </header>
+
+      <section id="setupBanner" class="banner warning hidden">ยังไม่ได้ตั้งค่า Supabase — แก้ไขไฟล์ <code>frontend/assets/config.js</code> ก่อนใช้งาน</section>
+
+      <section id="loginCard" class="login-card">
+        <h2>เข้าสู่ระบบ</h2>
+        <p>ใช้บัญชี Supabase Auth ที่ได้รับสิทธิ์ควบคุมอุปกรณ์</p>
+        <label>อีเมล<input id="email" type="email" autocomplete="username" placeholder="name@example.com"></label>
+        <label>รหัสผ่าน<input id="password" type="password" autocomplete="current-password" placeholder="••••••••"></label>
+        <button id="loginBtn" class="primary">เข้าสู่ระบบ</button>
+        <p id="loginMessage" class="message"></p>
+      </section>
+
+      <section id="dashboard" class="hidden">
+        <div class="device-row"><div><span class="eyebrow">อุปกรณ์ปัจจุบัน</span><h2 id="deviceName">-</h2></div><select id="deviceSelect" aria-label="เลือกอุปกรณ์"></select></div>
+        <div class="status-grid">
+          <article class="card"><span>สถานะคอมพิวเตอร์</span><strong id="pcStatus">ไม่ทราบ</strong><small id="pcStatusDetail">ยังไม่มีข้อมูล</small></article>
+          <article class="card"><span>Windows Agent</span><strong id="agentStatus">Disconnected</strong><small id="agentVersion">-</small></article>
+          <article class="card"><span>ตั้งเวลาปิดเครื่อง</span><strong id="timerStatus">ปิด</strong><small id="timerCountdown">ไม่ได้ตั้งเวลา</small></article>
+          <article class="card"><span>ระบบเครือข่าย</span><strong id="internetStatus">-</strong><small id="lastSeen">Last seen: -</small></article>
+        </div>
+
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head"><div><span class="eyebrow">SYSTEM MONITOR</span><h3>ประสิทธิภาพเครื่อง</h3></div></div>
+            <div class="metrics">
+              <div class="metric"><span>CPU</span><strong id="cpu">--%</strong><progress id="cpuBar" max="100" value="0"></progress></div>
+              <div class="metric"><span>RAM</span><strong id="ram">--%</strong><progress id="ramBar" max="100" value="0"></progress></div>
+              <div class="metric"><span>Disk</span><strong id="disk">--%</strong><progress id="diskBar" max="100" value="0"></progress></div>
+              <div class="metric"><span>Uptime</span><strong id="uptime">--</strong><small id="windowsVersion">-</small></div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><div><span class="eyebrow">REMOTE CONTROL</span><h3>คำสั่งด่วน</h3></div><span id="controlBadge" class="badge offline">OFFLINE</span></div>
+            <div class="control-grid">
+              <button class="cmd" data-command="LOCK">🔒<span>ล็อกเครื่อง</span></button>
+              <button class="cmd" data-command="SLEEP">🌙<span>Sleep</span></button>
+              <button class="cmd danger" data-command="RESTART">↻<span>Restart</span></button>
+              <button class="cmd danger" data-command="SHUTDOWN">⏻<span>ปิดเครื่อง</span></button>
+              <button class="cmd wide" data-command="CANCEL_SHUTDOWN">✕<span>ยกเลิกตั้งเวลาปิด</span></button>
+            </div>
+          </section>
+        </div>
+
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head"><div><span class="eyebrow">SHUTDOWN TIMER</span><h3>ตั้งเวลาปิด / Restart</h3></div></div>
+            <div class="timer-form">
+              <label>การทำงาน<select id="timerAction"><option value="SHUTDOWN">ปิดเครื่อง</option><option value="RESTART">Restart</option></select></label>
+              <label>ชั่วโมง<input id="timerHours" type="number" min="0" max="168" value="0"></label>
+              <label>นาที<input id="timerMinutes" type="number" min="0" max="59" value="30"></label>
+              <label>วินาที<input id="timerSeconds" type="number" min="0" max="59" value="0"></label>
+              <button id="scheduleBtn" class="primary">ตั้งเวลา</button>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><div><span class="eyebrow">ACTIVITY</span><h3>กิจกรรมล่าสุด</h3></div><button id="refreshBtn" class="ghost">รีเฟรช</button></div>
+            <div id="activityList" class="activity"><div class="empty">ยังไม่มีข้อมูล</div></div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="confirmDialog"><form method="dialog" class="dialog-card"><h3 id="confirmTitle">ยืนยันคำสั่ง</h3><p id="confirmText"></p><div class="dialog-actions"><button value="cancel" class="ghost">ยกเลิก</button><button id="confirmExecute" value="default" class="danger solid">ยืนยัน</button></div></form></dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
