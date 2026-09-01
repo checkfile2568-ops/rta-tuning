@@ -29,7 +29,7 @@ class Agent:
     def call(self,method,action,**kwargs):
         r=self.session.request(method,f"{self.cfg['backend_url']}?action={action}",timeout=12,verify=self.cfg.get('verify_tls',True),**kwargs); r.raise_for_status(); return r.json() if r.content else {}
     def heartbeat(self):
-        metrics=collect_metrics(); body={'device_name':socket.gethostname(),'agent_version':'1.0.0','windows_version':metrics.pop('windows_version',platform.platform()),'metrics':metrics,'shutdown_due_at':self.shutdown_due_at,'shutdown_action':self.shutdown_action}; self.call('POST','heartbeat',json=body); self.last_heartbeat=time.time(); log.info('heartbeat ok')
+        metrics=collect_metrics(); body={'device_name':socket.gethostname(),'agent_version':'1.1.0','windows_version':metrics.pop('windows_version',platform.platform()),'metrics':metrics,'shutdown_due_at':self.shutdown_due_at,'shutdown_action':self.shutdown_action}; self.call('POST','heartbeat',json=body); self.last_heartbeat=time.time(); log.info('heartbeat ok')
     def get_commands(self): return self.call('GET','commands').get('commands',[])
     def send_result(self,cid,status,result=None,error_message=None): self.call('POST','result',json={'command_id':cid,'status':status,'result':result or {},'error_message':error_message})
     def run_command(self,item):
