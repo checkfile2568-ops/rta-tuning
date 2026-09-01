@@ -26,7 +26,7 @@
     <main class="main">
       <header class="topbar">
         <div><h1>ศูนย์ควบคุมคอมพิวเตอร์และมือถือ</h1><p>ควบคุมเฉพาะคำสั่งที่ได้รับอนุญาตผ่าน Windows Agent</p></div>
-        <div class="top-actions"><span id="lastUpdate">อัปเดตล่าสุด: --:--:--</span><button id="logoutBtn" class="ghost hidden">ออกจากระบบ</button></div>
+        <div class="top-actions"><a class="ghost" href="pair-admin.html">เชื่อมต่อมือถือ</a><span id="lastUpdate">อัปเดตล่าสุด: --:--:--</span><button id="logoutBtn" class="ghost hidden">ออกจากระบบ</button></div>
       </header>
 
       <section id="setupBanner" class="banner warning hidden">ยังไม่ได้ตั้งค่า Supabase — แก้ไขไฟล์ <code>frontend/assets/config.js</code> ก่อนใช้งาน</section>
@@ -73,6 +73,16 @@
 
         <div class="content-grid">
           <section class="panel">
+            <div class="panel-head"><div><span class="eyebrow">APPLICATION CONTROL</span><h3>เปิด/ปิดโปรแกรมที่อนุญาต</h3></div></div>
+            <div class="action-stack">
+              <label>โปรแกรม<select id="appSelect"><option value="">ยังไม่มีรายการ</option></select></label>
+              <div class="action-row"><button id="openAppBtn" class="primary">เปิดโปรแกรม</button><button id="closeAppBtn" class="ghost">ปิดโปรแกรม</button></div>
+              <label>เปิด URL ที่อนุญาต<input id="openUrlInput" type="url" placeholder="https://example.com"></label>
+              <button id="openUrlBtn" class="ghost">เปิด URL บนคอม</button>
+              <small class="helper">โดเมนต้องอยู่ใน <code>allowed_url_hosts</code> ของ Windows Agent</small>
+            </div>
+          </section>
+          <section class="panel">
             <div class="panel-head"><div><span class="eyebrow">SHUTDOWN TIMER</span><h3>ตั้งเวลาปิด / Restart</h3></div></div>
             <div class="timer-form">
               <label>การทำงาน<select id="timerAction"><option value="SHUTDOWN">ปิดเครื่อง</option><option value="RESTART">Restart</option></select></label>
@@ -82,11 +92,12 @@
               <button id="scheduleBtn" class="primary">ตั้งเวลา</button>
             </div>
           </section>
-          <section class="panel">
-            <div class="panel-head"><div><span class="eyebrow">ACTIVITY</span><h3>กิจกรรมล่าสุด</h3></div><button id="refreshBtn" class="ghost">รีเฟรช</button></div>
-            <div id="activityList" class="activity"><div class="empty">ยังไม่มีข้อมูล</div></div>
-          </section>
         </div>
+
+        <section class="panel">
+          <div class="panel-head"><div><span class="eyebrow">ACTIVITY</span><h3>กิจกรรมล่าสุด</h3></div><button id="refreshBtn" class="ghost">รีเฟรช</button></div>
+          <div id="activityList" class="activity"><div class="empty">ยังไม่มีข้อมูล</div></div>
+        </section>
       </section>
     </main>
   </div>
