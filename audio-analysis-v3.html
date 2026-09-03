@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>วิเคราะห์เสียง — MMs</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="mms-pro.css">
+<style>
+body{font-family:'Sarabun',sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:10px;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:center;gap:11px;padding:12px 15px;border:1px solid #e0e9f4;border-radius:19px;background:rgba(255,255,255,.82)}
+.mark{font-size:32px;font-weight:800;letter-spacing:-3px;background:linear-gradient(135deg,#3d91ff,#8c68ff,#ef5fc0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.spacer{flex:1}
+.btn{border:1px solid #cfdef0;background:#fff;border-radius:12px;padding:10px 14px;color:#254c7b;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:linear-gradient(135deg,#3d91ff,#6f7dff);border-color:transparent;color:#fff}
+.btn.ghost{background:transparent}
+.panel{padding:15px;border:1px solid #e0e9f4;border-radius:18px;background:#fff;display:flex;flex-direction:column;gap:11px}
+.panel h2{font-size:16px;margin:0;display:flex;align-items:center;gap:8px}
+.panel h2 .step{font-size:11px;font-weight:800;letter-spacing:.08em;background:#eaf3ff;color:#2f76c9;border-radius:999px;padding:3px 9px}
+.muted,.meta{color:#71809a;font-size:12.5px}
+.meta{display:block;margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1.2fr;gap:12px;align-items:start}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.rowline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.srclist{display:grid;gap:8px;max-height:330px;overflow:auto;padding-right:2px}
+.src{display:flex;gap:10px;align-items:center;padding:10px 11px;border:1px solid #e1eaf4;border-radius:13px;background:#fff;cursor:pointer;text-align:left;width:100%}
+.src:hover{border-color:#9fc6f5}
+.src.sel{border-color:#3d91ff;background:#f4f9ff;box-shadow:0 0 0 2px rgba(61,145,255,.15)}
+.src .ico{font-size:22px}
+.src b{display:block;font-size:13.5px;word-break:break-all;line-height:1.35}
+.empty{padding:22px;text-align:center;color:#7a8aa3;font-size:13px}
+.note{font-size:12.5px;padding:10px 12px;border-radius:12px;background:#f6faff;color:#55688a;border-left:3px solid #9fc6f5}
+.note.warn{background:#fff8ec;color:#7d6224;border-left-color:#e6b455}
+.note.bad{background:#fdeeed;color:#8c3b36;border-left-color:#d97a73}
+.chip{border:1px solid #d9e5f2;background:#fff;border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px;color:#4a6e9c;cursor:pointer}
+.chip.on{background:#eaf3ff;border-color:#7fb2f0;color:#22599d}
+#fileInfo{padding:11px 13px;border-radius:13px;background:#f7fbff;border:1px solid #e1ecf8}
+#fileInfo b{word-break:break-all}
+textarea{width:100%;min-height:78px;border:1px solid #d5e1ef;border-radius:12px;padding:10px;font:inherit;resize:vertical}
+.resultbox{padding:13px;border-radius:14px;background:#f4fbf8;border:1px solid #cbe8dc;display:flex;flex-direction:column;gap:10px}
+.resultbox.bad{background:#fdeeed;border-color:#f0cfcc}
+pre.out{white-space:pre-wrap;word-break:break-word;margin:0;max-height:420px;overflow:auto;background:#fff;border:1px solid #e3eef7;border-radius:11px;padding:12px;font:inherit;font-size:13.5px;line-height:1.65}
+.hist{display:flex;gap:8px;align-items:center;padding:9px 11px;border:1px solid #e6eef7;border-radius:12px;background:#fff}
+.hist b{font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="mark">MMs</div>
+    <div><b>วิเคราะห์เสียง</b><small class="muted" style="display:block">AUDIO ANALYSIS v3 · ถอดคำพูดและสรุปด้วย AI</small></div>
+    <div class="spacer"></div>
+    <button class="btn" data-mms-close>ปิด</button>
+  </header>
+
+  <div id="notice" class="note" hidden></div>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2><span class="step">ขั้นที่ 1</span> เลือกไฟล์จากคลังกลาง</h2>
+      <div class="rowline">
+        <input id="q" style="flex:1;min-width:160px;border:1px solid #d5e1ef;border-radius:10px;padding:9px 10px" placeholder="ค้นหาชื่อไฟล์…">
+        <button id="reload" class="btn">โหลดใหม่</button>
+      </div>
+      <div id="listHint" class="muted">กำลังโหลด…</div>
+      <div id="fileList" class="srclist"></div>
+      <p class="muted">ไฟล์ทั้งหมดมาจากคลังกลางเพื่อให้ควบคุมสิทธิ์และที่มาของหลักฐานจากจุดเดียว หากยังไม่มีไฟล์ ให้อัปโหลดผ่านเมนู “คลังมัลติมีเดีย” ก่อน</p>
+    </section>
+
+    <section class="panel">
+      <h2><span class="step">ขั้นที่ 2</span> เลือกงานแล้วสั่งวิเคราะห์</h2>
+      <div id="fileInfo" hidden></div>
+      <div id="taskRow" class="rowline"></div>
+      <div id="askWrap" hidden>
+        <textarea id="question" placeholder="พิมพ์คำถามเกี่ยวกับไฟล์นี้ เช่น มีการกล่าวถึงวันนัดเมื่อใด"></textarea>
+      </div>
+      <button id="runBtn" class="btn primary">เริ่มวิเคราะห์</button>
+      <div id="runStatus" class="note" hidden></div>
+      <div id="resultBox" class="resultbox" hidden></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2><span class="step">ขั้นที่ 3</span> ผลวิเคราะห์ย้อนหลังของไฟล์นี้</h2>
+    <div id="history" style="display:grid;gap:8px"></div>
+  </section>
+
+  <p class="muted" style="text-align:center;padding-bottom:10px">ถอดคำพูด สรุป และถามคำถามกับไฟล์เสียง — ย้ายความสามารถวิเคราะห์สื่อจากระบบเดิมมาไว้ในคลังกลางของ MMs</p>
+</div>
+
+<script src="mms-pro-client.js"></script>
+<script src="mms-gemini-client.js"></script>
+<script src="mms-shell-bridge.js"></script>
+<script type="module">
+import { mountAnalyzer } from './mms-analyze.js';
+mountAnalyzer({"mediaTypes": ["audio"], "icon": "♫", "defaultTask": "transcribe", "tasks": [{"key": "transcribe", "label": "ถอดคำพูดเป็นข้อความ", "media": ["audio"]}, {"key": "summarize", "label": "สรุปสาระสำคัญ", "media": ["audio"]}, {"key": "ask", "label": "ถามคำถามกับไฟล์", "media": ["audio"]}]});
+</script>
+</body>
+</html>
