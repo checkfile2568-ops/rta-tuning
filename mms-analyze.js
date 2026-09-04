@@ -42,7 +42,7 @@ export function mountAnalyzer(cfg) {
     } catch (e) {
       el.notice.hidden = false;
       el.notice.className = 'note bad';
-      el.notice.textContent = 'ยังไม่ได้ติดตั้งบริการวิเคราะห์ (mms-ai-api) หรือเชื่อมต่อไม่ได้ · ' + (e.message || e);
+      el.notice.textContent = 'ยังไม่ได้ติดตั้งบริการวิเคราะห์ (mms-gemini-api) หรือเชื่อมต่อไม่ได้ · ' + (e.message || e);
     }
   }
 
