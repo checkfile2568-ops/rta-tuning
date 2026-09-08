@@ -1,0 +1,11 @@
+{
+  "device_id": "PUT-DEVICE-UUID-HERE",
+  "backend_url": "https://YOUR_PROJECT.supabase.co/functions/v1/agent-api",
+  "heartbeat_seconds": 15,
+  "poll_seconds": 2,
+  "verify_tls": true,
+  "allowed_url_hosts": [
+    "google.com",
+    "github.com"
+  ]
+}

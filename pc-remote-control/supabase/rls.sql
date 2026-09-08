@@ -1,0 +1,13 @@
+alter table public.profiles enable row level security;
+alter table public.devices enable row level security;
+alter table public.device_status enable row level security;
+alter table public.device_commands enable row level security;
+alter table public.device_events enable row level security;
+create or replace function public.can_control_device(target uuid) returns boolean language sql stable security definer set search_path=public as $$ select exists (select 1 from public.devices d left join public.profiles p on p.id=auth.uid() where d.id=target and d.owner_id=auth.uid() and coalesce(p.role,'ADMIN') in ('ADMIN','CONTROL')); $$;
+create policy "profiles read own" on public.profiles for select using (id=auth.uid());
+create policy "devices read own" on public.devices for select using (owner_id=auth.uid());
+create policy "status read own" on public.device_status for select using (exists(select 1 from public.devices d where d.id=device_id and d.owner_id=auth.uid()));
+create policy "commands read own" on public.device_commands for select using (exists(select 1 from public.devices d where d.id=device_id and d.owner_id=auth.uid()));
+create policy "commands insert control" on public.device_commands for insert with check (created_by=auth.uid() and public.can_control_device(device_id) and expires_at<=now()+interval '2 minutes');
+create policy "events read own" on public.device_events for select using (exists(select 1 from public.devices d where d.id=device_id and d.owner_id=auth.uid()));
+create policy "events insert own" on public.device_events for insert with check (user_id=auth.uid() and exists(select 1 from public.devices d where d.id=device_id and d.owner_id=auth.uid()));

@@ -1,0 +1,22 @@
+{
+  "apps": {
+    "chrome": {
+      "label": "Google Chrome",
+      "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "image_name": "chrome.exe",
+      "args": []
+    },
+    "edge": {
+      "label": "Microsoft Edge",
+      "path": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "image_name": "msedge.exe",
+      "args": []
+    },
+    "notepad": {
+      "label": "Notepad",
+      "path": "C:\\Windows\\System32\\notepad.exe",
+      "image_name": "notepad.exe",
+      "args": []
+    }
+  }
+}
