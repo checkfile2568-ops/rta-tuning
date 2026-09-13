@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>ระบบติดตามการรายงานตัวจำเลย — ศาลจังหวัดลพบุรี</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖</text></svg>">
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#EEF1F7}
+  #app{border:0;width:100%;height:100%;display:block}
+  #load{
+    position:fixed;inset:0;display:grid;place-items:center;
+    font-family:'TH Sarabun New','Sarabun',system-ui,sans-serif;
+    color:#16284F;font-size:20px;background:#EEF1F7;z-index:2;
+  }
+</style>
+</head>
+<body>
+<div id="load">กำลังเปิดระบบ…</div>
+
+<!--
+  วิธีใช้
+  1) Deploy เว็บแอปใน Apps Script แบบ "ผู้ใช้ทุกคนที่มีบัญชี Google" หรือตามที่กำหนด
+  2) คัดลอก URL ที่ลงท้ายด้วย /exec มาวางแทนค่า src ด้านล่าง
+  3) อัปโหลดไฟล์นี้ขึ้น GitHub Pages แล้วให้เจ้าหน้าที่เปิดจากลิงก์นี้แทน
+     ผลคือแบนเนอร์ของ Google Apps Script ด้านบนจะไม่ปรากฏ
+-->
+<iframe id="app"
+  src="https://script.google.com/macros/s/AKfycbzKq-cx4fACGLwdHYoAc_ByMFiO67E5ZdMWOVh1q-YOf22rpEsoYswvEUK-NR5YK9TP/exec"
+  allow="clipboard-write; camera"
+  referrerpolicy="no-referrer-when-downgrade"
+  onload="document.getElementById('load').style.display='none'"></iframe>
+
+<script>
+  // กันหน้าจอค้างถ้าโหลดช้าเกิน 12 วินาที
+  setTimeout(function(){
+    var l = document.getElementById('load');
+    if (l && l.style.display !== 'none') {
+      l.textContent = 'เปิดระบบไม่สำเร็จ — ตรวจสอบว่าลงชื่อเข้าใช้บัญชีที่ได้รับสิทธิ์แล้ว';
+    }
+  }, 12000);
+</script>
+</body>
+</html>
