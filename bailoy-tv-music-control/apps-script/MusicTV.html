@@ -1,0 +1,267 @@
+<style>
+  #bm-launcher{position:fixed;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));width:52px;height:52px;z-index:99990}
+  #bm-toggle,#bm-unlock,#bm-panel button{box-sizing:border-box;border:1px solid #cbd8d3;border-radius:8px;background:#fff;color:#203c34;font:600 15px/1.4 Tahoma,sans-serif;letter-spacing:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+  #bm-toggle{width:44px;height:44px;position:absolute;left:0;bottom:0;padding:0;box-shadow:0 3px 12px #0003;opacity:1;transition:opacity .16s ease;touch-action:manipulation}
+  #bm-toggle.bm-fading{opacity:0;transition:opacity 3s linear;pointer-events:none}
+  #bm-toggle.bm-gone{pointer-events:none}
+  #bm-toggle:hover,#bm-panel button:hover{background:#edf5f1;border-color:#a6c3b6}
+  #bm-toggle:focus-visible,#bm-unlock:focus-visible,#bm-panel button:focus-visible,#bm-code:focus-visible{outline:3px solid #43a484;outline-offset:3px}
+  #bm-toggle svg,#bm-unlock svg,#bm-panel svg{width:20px;height:20px;flex-shrink:0;pointer-events:none}
+  #bm-unlock{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom));z-index:99990;padding:12px 18px;max-width:calc(100vw - 24px);background:#fff1bf;border-color:#dbbf62;box-shadow:0 4px 16px #0003}
+  #bm-panel{position:fixed;left:max(12px,env(safe-area-inset-left));bottom:calc(max(12px,env(safe-area-inset-bottom)) + 60px);z-index:99991;width:min(388px,calc(100vw - 24px));max-height:calc(100dvh - 92px);overflow:auto;box-sizing:border-box;padding:0;border:1px solid #d7e2dc;border-radius:8px;background:#fff;color:#233b33;font:15px/1.65 Tahoma,sans-serif;text-align:left;letter-spacing:0;box-shadow:0 12px 40px #0004}
+  #bm-panel *{box-sizing:border-box;letter-spacing:0}
+  #bm-panel .bm-header{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid #e6ece8}
+  #bm-panel .bm-emblem{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;background:#e5f3eb;color:#127152;border-radius:8px}
+  #bm-panel .bm-title{margin:0;font:700 18px/1.4 Tahoma,sans-serif;color:#193b2c}
+  #bm-panel .bm-body{padding:18px 20px 20px}
+  #bm-panel .bm-status{display:flex;align-items:flex-start;gap:9px;margin-bottom:18px;color:#52645c}
+  #bm-panel .bm-status-dot{flex-shrink:0;width:7px;height:7px;margin-top:9px;border-radius:50%;background:#96aa9f}
+  #bm-panel[data-connection="online"] .bm-status-dot{background:#13976b}
+  #bm-panel[data-connection="offline"] .bm-status-dot{background:#c38a18}
+  #bm-panel p{margin:0;overflow-wrap:anywhere;font:14px/1.65 Tahoma,sans-serif}
+  #bm-panel label{display:block;margin-bottom:8px;font-weight:600;font-size:14px;color:#354e41}
+  #bm-code{display:block;width:100%;height:48px;border:1px solid #bccdc3;border-radius:6px;padding:10px 12px;background:#fafcfb;color:#203c34;font:600 18px/1.4 Consolas,monospace}
+  #bm-code:hover{border-color:#83a993}
+  #bm-panel #bm-claim{width:100%;min-height:44px;margin-top:12px;padding:10px 12px;color:#fff;background:#167653;border-color:#167653}
+  #bm-panel #bm-claim:hover{background:#116342}
+  #bm-panel button:disabled{opacity:.55;cursor:wait}
+  #bm-panel .bm-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;border-top:1px solid #e6ece8;background:#f6f9f7}
+  #bm-panel .bm-footer button{min-height:42px;padding:9px 12px;font-size:14px}
+  #bm-panel #bm-close{border-color:transparent;background:transparent;color:#64766a}
+  #bm-panel #bm-close:hover{background:#e8efeb;color:#203c34}
+  #bm-launcher[hidden],#bm-panel[hidden],#bm-pair[hidden],#bm-toggle[hidden],#bm-unlock[hidden]{display:none!important}
+  @media(max-width:360px){#bm-panel .bm-header,#bm-panel .bm-body{padding:16px}#bm-panel .bm-footer{padding:12px 16px;gap:6px}#bm-panel .bm-footer button{padding:8px;font-size:13px;gap:5px}}
+</style>
+<div id="bm-launcher" hidden>
+  <button id="bm-toggle" type="button" aria-label="เพลงของทีวี" title="เพลงของทีวี" aria-controls="bm-panel" aria-expanded="false" hidden><i data-bm-icon="music-2" aria-hidden="true">♫</i></button>
+</div>
+<button id="bm-unlock" type="button" hidden><i data-bm-icon="volume-2" aria-hidden="true"></i>เปิดเสียงเพลง</button>
+<section id="bm-panel" hidden aria-labelledby="bm-title" data-connection="connecting">
+  <header class="bm-header"><span class="bm-emblem"><i data-bm-icon="music-2" aria-hidden="true">♫</i></span><h2 id="bm-title" class="bm-title">เพลงของทีวี</h2></header>
+  <div class="bm-body">
+    <div class="bm-status"><span class="bm-status-dot" aria-hidden="true"></span><p id="bm-info" role="status" aria-live="polite">กำลังเริ่มระบบเพลง</p></div>
+    <div id="bm-pair"><label for="bm-code">รหัสจับคู่จากมือถือ (12 ตัว)</label><input id="bm-code" autocomplete="off" autocapitalize="characters" maxlength="16" spellcheck="false"><button id="bm-claim" type="button"><i data-bm-icon="link" aria-hidden="true"></i>จับคู่ทีวี</button></div>
+  </div>
+  <footer class="bm-footer"><button id="bm-retry" type="button"><i data-bm-icon="refresh-cw" aria-hidden="true"></i>เชื่อมต่อใหม่</button><button id="bm-close" type="button"><i data-bm-icon="chevron-down" aria-hidden="true"></i>ซ่อนตั้งค่า</button></footer>
+</section>
+<script>
+(() => {
+  'use strict';
+  const M=window.BailoyMusic, $=id=>document.getElementById(id);
+  const audio=document.createElement('audio');audio.id='bm-audio';audio.preload='auto';audio.hidden=true;document.body.appendChild(audio);
+  let link=null, secret='', room='', desired=M.initial(), selection=null, activeIndex=0, activeId='', generation=0, heartbeat=null, presence=null;
+  let ready=false, connecting=false, connected=false, loading=false, blocked=false, failure='', ended=false, sourceId='', blobURLs=new Map(), cache=new Map(), pending=new Map(), dbPromise=null;
+  let publishTimer=null, presenceHealthy=false, serverOffset=0, volumeApplied=true;
+  let isPlaying=false;
+  let fadeTimer=null, revealTimer=null, pointerInside=false, keyboardMode=false;
+  const FADE_MS=3000;
+  function revealLauncher(){
+    clearTimeout(fadeTimer);clearTimeout(revealTimer);
+    $('bm-toggle').classList.remove('bm-fading','bm-gone');
+  }
+  function fadeLauncher(){
+    clearTimeout(fadeTimer);clearTimeout(revealTimer);
+    if(!ready||!$('bm-panel').hidden||pointerInside||$('bm-toggle').matches(':focus-visible'))return;
+    $('bm-toggle').classList.add('bm-fading');
+    fadeTimer=setTimeout(()=>{if($('bm-toggle').classList.contains('bm-fading'))$('bm-toggle').classList.add('bm-gone');},FADE_MS);
+  }
+  function musicIcons(){
+    if(window.lucide)window.lucide.createIcons({nameAttr:'data-bm-icon'});
+  }
+  if(window.lucide)musicIcons();
+  else{
+    const icons=document.createElement('script');
+    icons.src='https://cdn.jsdelivr.net/npm/lucide@1.8.0/dist/umd/lucide.min.js';
+    icons.integrity='sha384-+8nbzwDAyu5kAjqtR/XKxIgPHQD2TflvbZgeDZn5t3JP+OOogNH1jXnfel8ZAgzS';
+    icons.crossOrigin='anonymous';icons.onload=musicIcons;document.head.appendChild(icons);
+  }
+  const KEY='bailoy.music.device.v1';
+  function stored(key) { try{return localStorage.getItem(key);}catch(e){return null;} }
+  function save(key,value) {try{localStorage.setItem(key,value);}catch(e){/* playback continues in memory */} }
+  function panel(show){
+    revealLauncher();$('bm-panel').hidden=!show;$('bm-toggle').setAttribute('aria-expanded',String(show));
+    if(show&&keyboardMode)($('bm-pair').hidden?$('bm-retry'):$('bm-code')).focus();
+    if(!show){
+      if(keyboardMode)$('bm-toggle').focus();
+      // Let opacity reach 1 before starting the three-second fade after closing.
+      requestAnimationFrame(()=>requestAnimationFrame(fadeLauncher));
+    }
+  }
+  function info(message){M.text('bm-info',message);}
+  function status() {
+    return {trackId:activeId,index:activeIndex,playing:isPlaying&&!audio.paused&&!audio.ended,position:Math.floor(audio.currentTime||0),volume:audio.volume,muted:audio.muted,volumeApplied,blocked,loading,ended,error:failure.slice(0,200),cached:desired.playlist.filter(t=>cache.has(t.id)).length,total:desired.playlist.length,rev:desired.rev,updatedAt:link?link.stamp():Date.now()};
+  }
+  function publish() {
+    if(!connected || !link || !presenceHealthy) return;
+    if(publishTimer) return;
+    publishTimer=setTimeout(()=>{publishTimer=null;if(connected&&presenceHealthy) link.room.child('status').set(status()).catch(()=>{presenceHealthy=false;});},100);
+  }
+  function refreshUI(){ $('bm-unlock').hidden=!blocked;publish(); }
+  function cacheDB() {
+    if(!dbPromise) dbPromise=new Promise(resolve=>{
+      const timer=setTimeout(()=>resolve(null),3000);
+      try{const req=indexedDB.open('BailoyMusic-v1',1);req.onupgradeneeded=()=>req.result.createObjectStore('audio');req.onsuccess=()=>{clearTimeout(timer);resolve(req.result);};req.onerror=()=>{clearTimeout(timer);resolve(null);};req.onblocked=()=>{clearTimeout(timer);resolve(null);};}catch(e){clearTimeout(timer);resolve(null);}
+    });
+    return dbPromise;
+  }
+  async function diskGet(id) {
+    const db=await cacheDB();if(!db)return null;
+    return new Promise(resolve=>{try{const req=db.transaction('audio').objectStore('audio').get(room+':'+id);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);}catch(e){resolve(null);}});
+  }
+  async function diskPut(id,blob) {
+    const db=await cacheDB();if(!db)return;
+    await new Promise(resolve=>{try{const tx=db.transaction('audio','readwrite');tx.objectStore('audio').put(blob,room+':'+id);tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;}catch(e){resolve();}});
+  }
+  async function fetchBlob(url) {
+    const ctrl=new AbortController(), timer=setTimeout(()=>ctrl.abort(),45000);
+    try {
+      const res=await fetch(url,{signal:ctrl.signal,credentials:'omit',mode:'cors'});
+      if(!res.ok)throw Error('โหลดลิงก์เพลงไม่สำเร็จ');
+      if(Number(res.headers.get('Content-Length'))>M.MAX_BYTES)throw Error('ไฟล์เพลงใหญ่เกิน 8 MB');
+      if(!res.body || !res.body.getReader)throw Error('เบราว์เซอร์นี้โหลดลิงก์แบบจำกัดขนาดไม่ได้ ให้ใช้ไฟล์ MP3');
+      const reader=res.body.getReader(),chunks=[];let size=0;
+      for(;;){const x=await reader.read();if(x.done)break;size+=x.value.byteLength;if(size>M.MAX_BYTES){await reader.cancel();throw Error('ไฟล์เพลงใหญ่เกิน 8 MB');}chunks.push(x.value);}
+      if(!size)throw Error('ไฟล์เสียงว่าง');
+      return new Blob(chunks,{type:res.headers.get('Content-Type')||'audio/mpeg'});
+    }finally{clearTimeout(timer);}
+  }
+  async function getBlob(track) {
+    if(cache.has(track.id))return cache.get(track.id);
+    if(pending.has(track.id))return pending.get(track.id);
+    const task=(async()=>{
+      let blob=await diskGet(track.id);
+      if(!blob){
+        const data=await M.rpc('getMusicAudio',secret,track.id);
+        if(data.base64){const raw=atob(data.base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);blob=new Blob([bytes],{type:data.mime});}
+        else blob=await fetchBlob(data.url);
+        if(!blob.size||blob.size>M.MAX_BYTES)throw Error('ไฟล์เพลงไม่ถูกต้อง');
+        await diskPut(track.id,blob);
+      }
+      cache.set(track.id,blob);publish();return blob;
+    })().finally(()=>pending.delete(track.id));
+    pending.set(track.id,task);return task;
+  }
+  async function prefetch(list,rev) {
+    for(const track of list){if(generation!==rev)return;try{await getBlob(track);}catch(e){if(generation===rev){failure='บางเพลงยังโหลดไม่ครบ: '+e.message;refreshUI();}}}
+  }
+  function applyVolume() {
+    try{audio.volume=desired.volume;audio.muted=!!desired.muted;volumeApplied=Math.abs(audio.volume-desired.volume)<0.02;}catch(e){volumeApplied=false;}
+  }
+  async function play() {
+    if(!desired.playing || !sourceId || loading)return;
+    const ticket=generation, id=sourceId;
+    try{await audio.play();if(ticket===generation&&id===sourceId){blocked=false;failure='';refreshUI();}}
+    catch(e){if(ticket===generation&&id===sourceId){if(e.name==='NotAllowedError'){blocked=true;failure='ต้องกดเปิดเสียงที่ทีวีครั้งแรก';}else{failure='เล่นเสียงไม่ได้: '+e.message;}refreshUI();}}
+  }
+  async function switchTrack(index,ticket) {
+    const track=desired.playlist[index];activeIndex=index;activeId=track?track.id:'';loading=!!track;ended=false;failure='';blocked=false;
+    // Stop old source immediately, including while a new file is loading.
+    isPlaying=false;audio.pause();sourceId='';audio.removeAttribute('src');audio.load();refreshUI();
+    if(!track){loading=false;refreshUI();return;}
+    try{
+      const blob=await getBlob(track);if(ticket!==generation)return;
+      if(!blobURLs.has(track.id))blobURLs.set(track.id,URL.createObjectURL(blob));
+      sourceId=track.id;audio.src=blobURLs.get(track.id);audio.loop=desired.repeat==='one';loading=false;applyVolume();await play();refreshUI();
+    }catch(e){if(ticket===generation){loading=false;failure=e.message;refreshUI();}}
+  }
+  function apply(raw) {
+    const next=M.normalize(raw);if(next.rev<desired.rev)return;
+    const selected=selection!==next.selection;
+    const changed=selected || JSON.stringify(next.playlist.map(t=>t.id))!==JSON.stringify(desired.playlist.map(t=>t.id));
+    desired=next;save('bailoy.music.desired.'+room,JSON.stringify(next));applyVolume();audio.loop=next.repeat==='one';
+    if(changed){
+      selection=next.selection;const ticket=++generation;
+      const retained=next.playlist.findIndex(t=>t.id===activeId);
+      if(!selected&&retained>=0&&sourceId){activeIndex=retained;loading=false;if(!next.playing)audio.pause();else play();refreshUI();}
+      else switchTrack(next.index,ticket);
+      prefetch(next.playlist,ticket);
+    }
+    else {
+      if(!next.playing){audio.pause();blocked=false;}
+      if(next.stop){ended=false;try{audio.currentTime=0;}catch(e){}}
+      if(next.playing&&!ended){if(!sourceId&&!loading){const ticket=++generation;switchTrack(activeIndex,ticket);}else play();}
+      refreshUI();
+    }
+  }
+  audio.addEventListener('ended',()=>{
+    isPlaying=false;
+    if(!desired.playing)return;
+    let next=activeIndex+1;
+    if(next>=desired.playlist.length){if(desired.repeat==='all')next=0;else{ended=true;refreshUI();return;}}
+    const ticket=++generation;switchTrack(next,ticket);prefetch(desired.playlist,ticket);
+  });
+  audio.addEventListener('playing',()=>{if(sourceId){isPlaying=true;blocked=false;failure='';refreshUI();}});
+  for(const event of ['pause','waiting','stalled'])audio.addEventListener(event,()=>{isPlaying=false;refreshUI();});
+  for(const event of ['volumechange','loadedmetadata'])audio.addEventListener(event,refreshUI);
+  audio.addEventListener('error',()=>{if(sourceId){isPlaying=false;failure='รูปแบบไฟล์เสียงไม่รองรับหรือไฟล์เสีย';loading=false;refreshUI();}});
+  $('bm-toggle').addEventListener('click',e=>{e.stopPropagation();panel($('bm-panel').hidden);});
+  $('bm-launcher').addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'){pointerInside=true;revealLauncher();}});
+  $('bm-launcher').addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){pointerInside=false;fadeLauncher();}});
+  $('bm-toggle').addEventListener('focus',revealLauncher);
+  $('bm-toggle').addEventListener('blur',fadeLauncher);
+  document.addEventListener('pointerdown',e=>{
+    keyboardMode=false;
+    if(!ready||!['touch','pen'].includes(e.pointerType))return;
+    const wasFading=$('bm-toggle').classList.contains('bm-fading');
+    // A first tap on the invisible hotspot reveals only; the next tap opens it.
+    if(wasFading&&$('bm-launcher').contains(e.target)){
+      e.preventDefault();e.stopPropagation();
+      const ignoreClick=click=>{click.preventDefault();click.stopPropagation();};
+      $('bm-launcher').addEventListener('click',ignoreClick,{capture:true,once:true});
+      setTimeout(()=>$('bm-launcher').removeEventListener('click',ignoreClick,true),600);
+    }
+    revealLauncher();revealTimer=setTimeout(fadeLauncher,3000);
+  },true);
+  document.addEventListener('keydown',e=>{
+    keyboardMode=true;
+    if(e.key==='Escape'&&!$('bm-panel').hidden&&($('bm-panel').contains(e.target)||e.target===$('bm-toggle'))){e.preventDefault();panel(false);}
+  });
+  $('bm-panel').addEventListener('click',e=>e.stopPropagation());
+  $('bm-close').onclick=()=>panel(false);
+  $('bm-unlock').addEventListener('click',e=>{e.stopPropagation();if(desired.playing)play();});
+  async function connectionChanged(snapshot) {
+    connected=!!snapshot.val();presenceHealthy=false;clearInterval(heartbeat);
+    $('bm-panel').dataset.connection=connected?'online':'offline';
+    if(!connected){info('เพลงเล่นต่อในทีวี • ขณะนี้รีโมตออฟไลน์');return;}
+    const own=link.room.child('presence').push();presence=own;
+    try{
+      // Register server-side removal BEFORE publishing this connection's presence.
+      await own.onDisconnect().remove();
+      if(!connected||presence!==own)return;
+      await own.set({at:link.stamp()});
+      if(!connected||presence!==own){own.remove().catch(()=>{});return;}
+      presenceHealthy=true;info('เชื่อมต่อเพลงแล้ว: '+room.slice(0,8));publish();
+      heartbeat=setInterval(()=>{if(connected&&presence===own){own.set({at:link.stamp()}).then(()=>{presenceHealthy=true;publish();}).catch(()=>{presenceHealthy=false;});}},8000);
+    }catch(e){info('ยืนยันสถานะทีวีไม่ได้: '+e.message);}
+  }
+  async function start() {
+    if(!ready||connecting||link)return;
+    secret=secret||stored(KEY)||'';$('bm-pair').hidden=!!secret;
+    if(!secret){info('เพิ่มทีวีจากหน้าควบคุมเพลงบนมือถือ แล้วกรอกรหัสจับคู่');panel(true);return;}
+    connecting=true;$('bm-panel').dataset.connection='connecting';info('กำลังเชื่อมต่อระบบเพลง');
+    try {
+      const boot=await M.rpc('getMusicTVBoot',secret);room=boot.room;
+      // Cached desired state resumes independently of phone presence.
+      const old=stored('bailoy.music.desired.'+room);if(old)try{apply(JSON.parse(old));}catch(e){}
+      link=await M.connect(boot,'tv');
+      link.room.child('desired').on('value',s=>{if(s.val())apply(s.val());},e=>{info('อ่านคำสั่งเพลงไม่ได้: '+e.message);});
+      link.db.ref('.info/connected').on('value',connectionChanged);
+      link.db.ref('.info/serverTimeOffset').on('value',s=>{serverOffset=Number(s.val())||0;});
+    }catch(e){$('bm-panel').dataset.connection='offline';info('เพลงเชื่อมต่อไม่ได้: '+e.message+' • กดเชื่อมต่อใหม่');panel(true);}
+    finally{connecting=false;}
+  }
+  $('bm-claim').onclick=async()=>{
+    $('bm-claim').disabled=true;
+    try{const d=await M.rpc('claimMusicDevice',$('bm-code').value);secret=d.secret;save(KEY,secret);$('bm-pair').hidden=true;panel(false);await start();}
+    catch(e){info(e.message);}finally{$('bm-claim').disabled=false;}
+  };
+  $('bm-retry').onclick=()=>{if(link){link.db.goOnline();info('กำลังเชื่อมต่อใหม่');}else start();};
+  function finishPresence(){connected=false;clearInterval(heartbeat);if(presence)presence.remove().catch(()=>{});if(link)link.db.goOffline();}
+  window.addEventListener('pagehide',finishPresence);
+  window.addEventListener('pageshow',e=>{if(e.persisted&&link)link.db.goOnline();});
+  // Observe startup rendering without altering any legacy TV function or interval.
+  const observer=new MutationObserver(checkReady);
+  function checkReady(){if(ready)return;if(typeof caseDataLoaded!=='undefined'&&caseDataLoaded&&$('tvContent').style.display!=='none'){ready=true;observer.disconnect();$('bm-launcher').hidden=false;$('bm-toggle').hidden=false;start();if($('bm-panel').hidden)requestAnimationFrame(()=>requestAnimationFrame(fadeLauncher));}}
+  observer.observe($('tvContent'),{attributes:true,childList:true,subtree:true});checkReady();
+})();
+</script>
