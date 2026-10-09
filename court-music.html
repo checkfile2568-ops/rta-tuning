@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#11745b">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Bailoy · ควบคุมเพลงทีวี · ศาลจังหวัดลพบุรี</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#f4f6f5;color:#202724;font:16px/1.5 system-ui,sans-serif;letter-spacing:0}iframe{display:block;border:0;width:100%;height:100%;height:100dvh}.loading{position:fixed;inset:0;background:#f4f6f5;display:flex;align-items:center;justify-content:center;padding:24px;z-index:2}.loading[hidden]{display:none}.content{max-width:360px;width:100%;text-align:center}h1{font-size:23px;line-height:1.5;margin:0 0 6px}p{color:#64706a;margin:0 0 20px;font-size:14px}.spinner{height:28px;width:28px;margin:22px auto;border:3px solid #d8e5dd;border-top-color:#11745b;border-radius:50%;animation:spin .8s linear infinite}.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.actions[hidden]{display:none}button,a{font:inherit;display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;border-radius:6px;border:1px solid #c9d5cd;background:white;text-decoration:none;color:#11745b;cursor:pointer}button{background:#11745b;border-color:#11745b;color:white}:focus-visible{outline:3px solid #e1ac3d;outline-offset:3px}@keyframes spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading" role="status" aria-live="polite"><div class="content"><h1>Bailoy · เพลงทีวี</h1><p id="message">กำลังเปิดหน้าควบคุมเพลง</p><div class="spinner" id="spinner" aria-hidden="true"></div><div class="actions" id="actions" hidden><button id="retry" type="button">ลองใหม่</button><a id="direct" target="_blank" rel="noopener noreferrer">เปิดโดยตรง</a></div></div></div>
+  <iframe id="app" title="ควบคุมเพลงทีวี ศาลจังหวัดลพบุรี" allow="clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <script>
+    (()=>{
+      'use strict';
+      const url='https://script.google.com/macros/s/AKfycbyeAHSW2vjTf1KSV6xy-xBpeW0CGPxVJtuC2F7jQU77G7DkWdUYIDGl9-BJp2gEMUH67Q/exec?page=music';
+      const frame=document.getElementById('app'),loading=document.getElementById('loading'),actions=document.getElementById('actions'),spinner=document.getElementById('spinner');let timer;
+      document.getElementById('direct').href=url;
+      frame.addEventListener('load',()=>{clearTimeout(timer);loading.hidden=true;});
+      function open(){clearTimeout(timer);loading.hidden=false;actions.hidden=true;spinner.hidden=false;document.getElementById('message').textContent='กำลังเปิดหน้าควบคุมเพลง';frame.src=url;timer=setTimeout(()=>{spinner.hidden=true;actions.hidden=false;document.getElementById('message').textContent='การเชื่อมต่อใช้เวลานานกว่าปกติ';},20000);}
+      document.getElementById('retry').addEventListener('click',open);open();
+    })();
+  </script>
+</body>
+</html>
