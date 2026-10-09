@@ -1,0 +1,84 @@
+<script>
+(() => {
+  'use strict';
+  const TV=window.BailoyMusicTV,M=window.BailoyMusic;
+  let pendingFullscreen=null;
+  const hostOrigin='https://checkfile2568-ops.github.io';
+  const hostNonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+  let hostReady=false;
+  window.addEventListener('message',event=>{if(event.origin===hostOrigin&&event.source===top&&event.data&&event.data.type==='bailoy-music-ready-ack'&&event.data.nonce===hostNonce)hostReady=true;});
+  // The greeting contains no credentials. Only our GitHub origin may acknowledge it.
+  top.postMessage({type:'bailoy-music-ready',nonce:hostNonce},'*');
+  const button=document.createElement('button');button.id='bm-fullscreen';button.type='button';button.textContent='กดเข้าเต็มจอ';button.hidden=true;
+  document.querySelector('#bm-panel .bm-body').appendChild(button);
+  const fullscreen=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+  const markKey=()=> 'bailoy.music.remote.'+TV.room;
+  const saved=key=>{try{return sessionStorage.getItem(key);}catch(e){return null;}};
+  const save=(key,value)=>{try{sessionStorage.setItem(key,value);return true;}catch(e){return false;}};
+  const reply=async(own,cmd,result,message)=>{if(TV.link!==own)return;await own.room.child('receipt').set({id:cmd.id,action:cmd.action,result,message:String(message||'').slice(0,200),at:own.stamp()});};
+  async function enterFullscreen(own,cmd){
+    try {
+      if(!fullscreen()){
+        const element=document.documentElement,method=element.requestFullscreen||element.webkitRequestFullscreen;
+        if(!method)throw Error('เบราว์เซอร์นี้ไม่รองรับเต็มจอ');
+        await method.call(element);
+      }
+      if(!fullscreen())throw Error('ยังไม่เข้าเต็มจอ');
+      pendingFullscreen=null;button.hidden=true;await reply(own,cmd,'done','เข้าเต็มจอแล้ว');
+    }catch(e){pendingFullscreen={own,cmd};button.hidden=false;TV.show();TV.message('มือถือขอเต็มจอ • กดปุ่มเข้าเต็มจอบนทีวี');await reply(own,cmd,'blocked','เบราว์เซอร์ต้องให้กดเข้าเต็มจอที่ทีวี');}
+    TV.publish();
+  }
+  button.onclick=event=>{event.stopPropagation();if(pendingFullscreen&&TV.link===pendingFullscreen.own)enterFullscreen(pendingFullscreen.own,pendingFullscreen.cmd);};
+  function displayChanged(){
+    const legacy=document.getElementById('fsBtn');if(legacy)legacy.textContent=fullscreen()?'✕ ออกเต็มจอ':'⛶ เต็มจอ';
+    if(fullscreen()&&pendingFullscreen){const p=pendingFullscreen;pendingFullscreen=null;button.hidden=true;reply(p.own,p.cmd,'done','เข้าเต็มจอแล้ว').catch(()=>{});}
+    TV.publish();
+  }
+  document.addEventListener('fullscreenchange',displayChanged);
+  document.addEventListener('webkitfullscreenchange',displayChanged);
+  document.addEventListener('visibilitychange',()=>TV.publish());
+  async function receive(own,snapshot){
+    const cmd=snapshot.val();if(TV.link!==own||!cmd||!/^[a-f0-9]{32}$/.test(cmd.id||''))return;
+    if(saved(markKey())===cmd.id)return;
+    const now=Date.now()+TV.offset;if(cmd.expiresAt<now||cmd.createdAt>now+1000)return;
+    if(!save(markKey(),cmd.id)){await reply(own,cmd,'error','บันทึกคำสั่งไม่ได้ จึงไม่ทำคำสั่งซ้ำเสี่ยงรีเฟรชวน');return;}
+    try{
+      await reply(own,cmd,'received','ทีวีรับคำสั่งแล้ว');
+      if(cmd.action==='refresh'){
+        if(!hostReady)throw Error('รีเฟรชจากมือถือได้เมื่อทีวีเปิดผ่านลิงก์จอทีวี GitHub • หน้านี้ให้รีเฟรชที่ทีวีเอง');
+        if(!save('bailoy.music.refresh.'+TV.room,JSON.stringify(cmd)))throw Error('เก็บผลการรีเฟรชไม่ได้');
+        await reply(own,cmd,'refreshing','กำลังรีเฟรชตามคำสั่งจากมือถือ');
+        top.postMessage({type:'bailoy-music-refresh',nonce:hostNonce,id:cmd.id},hostOrigin);return;
+      }
+      if(cmd.action==='fullscreen-enter'){await enterFullscreen(own,cmd);return;}
+      if(cmd.action==='fullscreen-exit'){
+        if(fullscreen()){const method=document.exitFullscreen||document.webkitExitFullscreen;if(!method)throw Error('ออกเต็มจอไม่ได้');await method.call(document);}
+      }else if(cmd.action==='hide')TV.hide();
+      else if(cmd.action==='show')TV.show();
+      else if(cmd.action==='retry'){await TV.retryAudio();}
+      else if(cmd.action==='reconnect'){
+        if(!save('bailoy.music.reconnect.'+TV.room,JSON.stringify(cmd)))throw Error('เก็บผลการเชื่อมต่อไม่ได้');
+        await TV.reconnect();return;
+      }else if(cmd.action!=='fullscreen-exit')throw Error('คำสั่งไม่ถูกต้อง');
+      await reply(own,cmd,'done','ทำคำสั่งแล้ว');TV.publish();
+    }catch(e){await reply(own,cmd,'error',e.message).catch(()=>{});}
+  }
+  function attach(own){
+    own.room.child('remote').on('value',s=>receive(own,s).catch(()=>{}));
+    own.db.ref('.info/connected').on('value',async s=>{
+      if(!s.val()||TV.link!==own)return;
+      try{
+        await own.room.child('lifecycle/lastDisconnectedAt').onDisconnect().set(own.stamp());
+        if(TV.link!==own)return;
+        await own.room.child('lifecycle/lastConnectedAt').set(own.stamp());
+        const again=saved('bailoy.music.reconnect.'+TV.room);
+        if(again){const cmd=JSON.parse(again);await reply(own,cmd,'done','เชื่อมต่อเพลงใหม่แล้ว โดยคงการเล่นเดิม');try{sessionStorage.removeItem('bailoy.music.reconnect.'+TV.room);}catch(e){}}
+        const raw=saved('bailoy.music.refresh.'+TV.room);
+        if(raw){const cmd=JSON.parse(raw);await reply(own,cmd,'done','รีเฟรชแล้ว ตารางโหลดใหม่เสร็จ');try{sessionStorage.removeItem('bailoy.music.refresh.'+TV.room);}catch(e){}}
+      }catch(e){TV.message('บันทึกสถานะการเชื่อมต่อไม่ได้');}
+    });
+  }
+  window.addEventListener('bailoy-music-connected',event=>attach(event.detail));
+  if(TV.link)attach(TV.link);
+})();
+</script>

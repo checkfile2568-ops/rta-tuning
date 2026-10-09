@@ -18,6 +18,7 @@
     @media(max-width:760px){.header-inner{padding:14px 18px}.status-inner{padding:9px 18px}main{padding:21px 18px 35px}.columns{grid-template-columns:1fr;gap:28px}.player{position:static;padding:20px}.room-bar{gap:10px;flex-wrap:wrap;margin-bottom:19px}.room-field{flex:1;max-width:none;min-width:150px}.room-state{order:3;flex-basis:100%;padding:0}.room-actions{align-self:flex-end}.room-actions .text-button{width:46px;height:46px;padding:0}.room-actions .text-button span{display:none}.audio-art{height:64px;margin-bottom:14px}.audio-art canvas{height:55px}.track-title{min-height:0;font-size:19px}.track-state{min-height:20px}.player-head{margin-bottom:10px}.transport{padding:17px 0 20px}.login{margin:35px auto 60px}.footer{flex-direction:column;gap:8px}.library-heading{margin-bottom:13px}}
     @media(max-width:380px){main{padding-left:14px;padding-right:14px}.header-inner{padding-left:14px;padding-right:14px}.brand-copy span{font-size:12px}.player{padding:17px}.transport{gap:7px}.transport .icon-button{width:40px;height:40px}.transport .play-button{width:58px;height:58px}.pair-code{font-size:22px}.track-row{gap:9px}.library-heading .text-button{padding:9px 12px}h1{font-size:19px}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+    .device-card{margin:0 0 24px;border:1px solid var(--line);border-radius:8px;background:white;padding:16px 18px}.device-card summary{cursor:pointer;font-weight:600;min-height:28px}.device-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:13px 0;font-size:13px;color:var(--muted)}.device-meta p{overflow-wrap:anywhere}.device-actions{display:flex;gap:8px;flex-wrap:wrap}.device-actions button{font-size:13px;min-height:42px;padding:8px 12px}.device-note{font-size:12px;color:var(--muted);margin-top:12px}.device-result{font-size:13px;margin-top:10px;overflow-wrap:anywhere}.album-filter{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px}.album-filter label{white-space:nowrap}.album-filter select{min-height:40px;padding:6px 9px}.drive-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}.drive-row input{width:18px;min-height:18px;flex:none;margin-top:3px}.drive-row span{overflow-wrap:anywhere;min-width:0}.drive-list{max-height:260px;overflow:auto}.drive-row small{display:block;color:var(--muted)}#cache-detail{font-size:12px;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}@media(max-width:460px){.device-meta{grid-template-columns:1fr}.device-actions button{flex:1 1 calc(50% - 8px)}.library-actions{gap:4px}.library-actions .text-button{padding:9px}.library-actions .text-button span{display:none}}
   </style>
 </head>
 <body>
@@ -46,6 +47,11 @@
         <div class="room-state"><span class="badge" id="presence">ยังไม่ได้เลือกทีวี</span></div>
         <div class="room-actions"><button class="text-button" id="open-pair" type="button" title="เพิ่ม / จับคู่ทีวี" aria-label="เพิ่ม / จับคู่ทีวี"><i data-lucide="scan-line"></i><span>จับคู่ทีวี</span></button></div>
       </section>
+      <details class="device-card"><summary>สถานะเครื่องเล่นและเครื่องมือทีวี</summary><div class="device-meta"><p id="last-seen">ยังไม่มีสถานะล่าสุด</p><p id="display-state">ยังไม่ทราบสถานะหน้าเว็บ</p></div><div class="device-actions">
+        <button class="text-button" data-remote="reconnect" type="button">เชื่อมต่อเพลงใหม่</button><button class="text-button" data-remote="retry" type="button">ลองเล่น / โหลดใหม่</button>
+        <button class="text-button" data-remote="fullscreen-enter" type="button">เข้าเต็มจอ</button><button class="text-button" data-remote="fullscreen-exit" type="button">ออกเต็มจอ</button>
+        <button class="text-button" data-remote="hide" type="button">ซ่อนตั้งค่าทีวี</button><button class="text-button" data-remote="show" type="button">แสดงตั้งค่าทีวี</button><button class="text-button" id="open-refresh" type="button">รีเฟรชหน้าทีวี…</button>
+      </div><p class="device-result" id="remote-result" role="status" aria-live="polite"></p><p class="device-note">เมื่อเน็ตหลุด ตารางและเพลงที่โหลดครบยังทำงานในหน้าเดิม • ไม่รีเฟรชอัตโนมัติ • สถานะนี้ยืนยันการเชื่อมต่อเครื่องเล่น ไม่ใช่ไฟเปิดจอ</p></details>
       <div class="columns">
         <section class="player" aria-labelledby="player-heading">
           <div class="player-head"><h2 class="eyebrow" id="player-heading">เพลงบนทีวี</h2><span class="player-signal" id="player-signal"><i data-lucide="audio-lines"></i><span>หยุดอยู่</span></span></div>
@@ -61,14 +67,15 @@
           </div>
           <div class="sound"><div class="volume-heading"><label for="volume">ระดับเสียงเพลง</label><span id="volume-label">35%</span></div>
             <div class="volume-control"><button class="icon-button" id="mute" data-command="mute" type="button" title="ปิดเสียง" aria-label="ปิดเสียง" aria-pressed="false"><i data-lucide="volume-2"></i></button><input id="volume" type="range" min="0" max="100" step="1" value="35" aria-label="ระดับเสียงเพลง"><button class="icon-button" data-command="higher" type="button" title="เพิ่มเสียง" aria-label="เพิ่มเสียง"><i data-lucide="volume-2"></i></button></div>
-            <div class="repeat-row"><label for="repeat"><i data-lucide="repeat"></i>วนเพลง</label><select id="repeat"><option value="all">ทั้งรายการ</option><option value="one">เพลงเดียว</option><option value="off">ไม่วนเพลง</option></select></div>
+            <div class="repeat-row"><label for="repeat"><i data-lucide="repeat"></i>วนเพลง</label><select id="repeat"><option value="all">ทั้งอัลบั้ม / รายการ</option><option value="one">เพลงเดียว</option><option value="off">ไม่วนเพลง</option></select></div>
           </div>
         </section>
         <section class="library" aria-labelledby="library-heading">
-          <div class="library-heading"><div class="heading-copy"><h2 id="library-heading">คลังเพลง</h2><span class="count" id="library-count">0 เพลง</span></div><div class="library-actions"><button class="icon-button" id="cache-all" type="button" title="โหลดรายการเพลงไว้ในทีวี" aria-label="โหลดรายการเพลงไว้ในทีวี"><i data-lucide="download"></i></button><button class="text-button primary" id="open-upload" type="button"><i data-lucide="plus"></i><span>เพิ่มเพลง</span></button></div></div>
+          <div class="library-heading"><div class="heading-copy"><h2 id="library-heading">คลังเพลง</h2><span class="count" id="library-count">0 เพลง</span></div><div class="library-actions"><button class="text-button" id="open-drive" type="button" title="เลือกเพลงจาก Google Drive"><i data-lucide="folder-open"></i><span>Drive</span></button><button class="icon-button" id="cache-all" type="button" title="โหลดรายการเพลงไว้ในทีวี" aria-label="โหลดรายการเพลงไว้ในทีวี"><i data-lucide="download"></i></button><button class="text-button primary" id="open-upload" type="button"><i data-lucide="plus"></i><span>เพิ่มเพลง</span></button></div></div>
+          <div class="album-filter"><label for="library-album">อัลบั้ม</label><select id="library-album"><option value="*">ทุกเพลง</option></select></div>
           <div class="search"><i data-lucide="search" aria-hidden="true"></i><input id="search" type="search" placeholder="ค้นหาเพลง" aria-label="ค้นหาเพลง"></div>
           <div class="cache-row"><i data-lucide="hard-drive-download"></i><div class="cache-copy"><p id="cache-status">โหลดไว้ในทีวี 0 / 0 เพลง</p><progress id="cache-progress" value="0" max="1" aria-label="เพลงที่ทีวีโหลดครบ"></progress></div></div>
-          <ul class="track-list" id="library"></ul><div class="empty" id="library-empty"><i data-lucide="music-2"></i><h3 id="empty-title">ยังไม่มีเพลงในทีวีนี้</h3><p id="empty-caption"></p></div>
+          <p id="cache-detail"></p><ul class="track-list" id="library"></ul><div class="empty" id="library-empty"><i data-lucide="music-2"></i><h3 id="empty-title">ยังไม่มีเพลงในทีวีนี้</h3><p id="empty-caption"></p></div>
         </section>
       </div>
       <footer class="footer"><span id="signed-in"></span><span><i data-lucide="shield-check"></i>ระบบเพลงทีวี · ศาลจังหวัดลพบุรี</span></footer>
@@ -83,6 +90,8 @@
     <div id="pane-file" role="tabpanel" aria-labelledby="tab-file"><div class="file-field"><label for="file"><i data-lucide="file-audio"></i>ไฟล์เพลง</label><input id="file" type="file" accept="audio/mpeg,.mp3"></div><span class="file-note">MP3 · ไม่เกิน 8 MB ต่อเพลง</span><button class="text-button primary" id="upload" type="button"><i data-lucide="upload"></i>อัปโหลดเพลง</button></div>
     <div id="pane-link" role="tabpanel" aria-labelledby="tab-link" hidden><div class="field"><label for="link-name">ชื่อเพลง</label><input id="link-name" maxlength="120"></div><div class="field"><label for="audio-url">ลิงก์ไฟล์เสียง HTTPS</label><input id="audio-url" type="url" inputmode="url" placeholder="https://…"></div><button class="text-button primary" id="add-link" type="button"><i data-lucide="link"></i>เพิ่มลิงก์เพลง</button></div><p class="dialog-status" id="upload-status" role="status"></p>
   </div></dialog>
+  <dialog id="drive-dialog" aria-labelledby="drive-heading"><div class="dialog-header"><h2 id="drive-heading">เพลงจาก Google Drive</h2><button class="icon-button" data-close="drive-dialog" type="button" aria-label="ปิด">✕</button></div><div class="dialog-body"><div class="field"><label for="drive-album">โฟลเดอร์อัลบั้ม</label><select id="drive-album"><option value="root">เพลงในโฟลเดอร์หลัก</option></select></div><div class="drive-list" id="drive-list"></div><p class="dialog-status" id="drive-status" role="status"></p><p class="file-note">เลือก MP3 ไม่เกิน 8 MB ต่อไฟล์ สูงสุด 30 เพลง • โหลดไว้จะเปลี่ยนรายการที่ทีวีใช้ และรอให้กดเล่นหากเปลี่ยนอัลบั้ม</p><div class="dialog-actions"><button class="text-button" id="import-drive" type="button">เพิ่มและโหลดไว้</button><button class="text-button primary" id="play-drive" type="button">เพิ่มและเล่นอัลบั้ม</button></div></div></dialog>
+  <dialog id="refresh-dialog" aria-labelledby="refresh-heading"><div class="dialog-header"><h2 id="refresh-heading">รีเฟรชหน้าทีวี?</h2></div><div class="dialog-body"><p>ตารางจะโหลดใหม่ เพลงอาจสะดุด และอาจต้องกดเต็มจอหรือเปิดเสียงอีกครั้ง ใช้เฉพาะเมื่อทีวีออนไลน์และต้องการเริ่มหน้าใหม่</p><div class="dialog-actions"><button class="text-button" data-close="refresh-dialog" type="button">ยกเลิก</button><button class="text-button primary" id="confirm-refresh" type="button">ยืนยันรีเฟรช</button></div></div></dialog>
   <?!= musicInclude_('MusicCommon'); ?>
   <script>
   (() => {
@@ -90,13 +99,15 @@
     const M=window.BailoyMusic,$=id=>document.getElementById(id);
     let token='',rooms=[],tracks=[],link=null,desired=M.initial(),actual={},presences={},online=false,gotDesired=false,offset=0,epoch=0,busy=false,volumeTimer=null,watchdog=null,pairTimer=null,pairUntil=0,pairRoom='',enabled=false,userName='',sessionUntil=0,expiryTimer=null;
     const ROOM='bailoy.music.selected-room.v2';
-    const icons=()=>{if(window.lucide)window.lucide.createIcons();};
+    let lifecycle={},receipt={},pendingRemote=null,remoteTimer=null,driveData=null;
+    const fallbackIcons={'play':'▶','pause':'Ⅱ','square':'■','skip-back':'⏮','skip-forward':'⏭','volume-1':'−','volume-2':'+','volume-x':'×','refresh-cw':'↻','log-out':'⇥','log-in':'→','eye':'◉','eye-off':'◉','music-2':'♫','audio-lines':'♫','tv-minimal':'▣','scan-line':'▣','folder-open':'▱','download':'↓','upload':'↑','plus':'+','x':'×','search':'⌕','repeat':'↻','link':'↗','file-audio':'♫','hard-drive-download':'↓','circle-pause':'Ⅱ'};
+    const icons=()=>{if(window.lucide)window.lucide.createIcons();else document.querySelectorAll('i[data-lucide]').forEach(node=>{node.textContent=fallbackIcons[node.dataset.lucide]||'•';node.style.fontStyle='normal';});};
     const icon=(name)=>{const node=document.createElement('i');node.dataset.lucide=name;node.setAttribute('aria-hidden','true');return node;};
     const notice=(message,tone='')=>{M.text('notice',message);$('status-inner').dataset.tone=tone;};
     const fresh=()=>Object.values(presences).some(p=>p&&Number(p.at)>Date.now()+offset-30000);
     const clock=seconds=>{const n=Math.max(0,Math.floor(Number(seconds)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');};
     function buttonIcon(button,name,label){if(button.dataset.icon!==name){button.replaceChildren(icon(name));button.dataset.icon=name;icons();}button.title=label;button.setAttribute('aria-label',label);}
-    function controls(){const can=!!link&&online&&gotDesired&&fresh()&&!busy;document.querySelectorAll('[data-command],#volume,#repeat,#cache-all,#library button').forEach(b=>b.disabled=!can);$('cache-all').disabled=!can||!tracks.length;$('pair-again').disabled=!enabled||!$('room').value||busy;$('new-tv').disabled=!enabled||busy;$('open-upload').disabled=!enabled||!$('room').value||busy;$('upload').disabled=!enabled||!$('room').value||busy;$('add-link').disabled=!enabled||!$('room').value||busy;}
+    function controls(){const can=!!link&&online&&gotDesired&&fresh()&&!busy;document.querySelectorAll('[data-command],[data-remote],#open-refresh,#volume,#repeat,#cache-all,#library button').forEach(b=>b.disabled=!can);$('cache-all').disabled=!can||!libraryTracks().length;$('open-drive').disabled=!enabled||!$('room').value||busy;$('import-drive').disabled=busy||!driveData;$('play-drive').disabled=busy||!driveData;$('pair-again').disabled=!enabled||!$('room').value||busy;$('new-tv').disabled=!enabled||busy;$('open-upload').disabled=!enabled||!$('room').value||busy;$('upload').disabled=!enabled||!$('room').value||busy;$('add-link').disabled=!enabled||!$('room').value||busy;}
     function waveform(){const canvas=$('waveform'),ctx=canvas.getContext('2d');if(!ctx)return;ctx.clearRect(0,0,canvas.width,canvas.height);const playing=actual.playing&&fresh(),position=Number(actual.position)||0;ctx.fillStyle=playing?'#238366':'#bfcec5';for(let i=0;i<54;i++){const strength=playing?.22+.78*Math.abs(Math.sin(i*.73+position*.9)*Math.cos(i*.29-position*.6)):.16+.28*Math.abs(Math.sin(i*.47));const height=14+strength*80;ctx.beginPath();ctx.roundRect(8+i*12,(canvas.height-height)/2,5,height,2);ctx.fill();}}
     function render(){
       const live=fresh(),current=desired.playlist.find(t=>t.id===actual.trackId),room=$('room').value;
@@ -111,12 +122,12 @@
       if(document.activeElement!==$('volume'))$('volume').value=Math.round(desired.volume*100);M.text('volume-label',$('volume').value+'%');$('repeat').value=desired.repeat;
       buttonIcon($('mute'),desired.muted?'volume-x':'volume-2',desired.muted?'เปิดเสียง':'ปิดเสียง');$('mute').setAttribute('aria-pressed',String(desired.muted));
       const cached=Math.max(0,Number(actual.cached)||0),total=Math.max(0,Number(actual.total)||0);M.text('cache-status','โหลดไว้ในทีวี '+cached+' / '+total+' เพลง');$('cache-progress').max=Math.max(1,total);$('cache-progress').value=Math.min(cached,total);
-      document.querySelectorAll('.track-row').forEach(row=>row.classList.toggle('active',row.dataset.trackId===actual.trackId));icons();waveform();controls();
+      document.querySelectorAll('.track-row').forEach(row=>row.classList.toggle('active',row.dataset.trackId===actual.trackId));renderDevice();icons();waveform();controls();
     }
     function library(){
-      const box=$('library');box.replaceChildren();const query=$('search').value.trim().toLocaleLowerCase('th');const filtered=tracks.filter(t=>String(t.name).toLocaleLowerCase('th').includes(query));
+      syncAlbums();const box=$('library');box.replaceChildren();const query=$('search').value.trim().toLocaleLowerCase('th');const filtered=libraryTracks().filter(t=>String(t.name).toLocaleLowerCase('th').includes(query));
       M.text('library-count',tracks.length+' เพลง');$('library-empty').hidden=filtered.length>0;M.text('empty-title',!$('room').value?'ยังไม่ได้เลือกทีวี':query?'ไม่พบเพลงที่ค้นหา':'ยังไม่มีเพลงในทีวีนี้');M.text('empty-caption',query?query:'');
-      for(const track of filtered){const row=document.createElement('li');row.className='track-row';row.dataset.trackId=track.id;const symbol=document.createElement('span');symbol.className='track-symbol';symbol.append(icon('music-2'));const copy=document.createElement('div');copy.className='track-copy';const name=document.createElement('span');name.className='track-name';name.textContent=track.name;const meta=document.createElement('span');meta.className='track-meta';meta.textContent=track.kind==='url'?'ลิงก์เสียง':'MP3'+(track.bytes?' · '+(track.bytes/1048576).toFixed(1)+' MB':'');copy.append(name,meta);const button=document.createElement('button');button.className='icon-button';button.type='button';button.title='เล่น '+track.name;button.setAttribute('aria-label','เล่น '+track.name);button.dataset.libraryPlay='';button.append(icon('play'));button.onclick=()=>command(d=>{d.playlist=tracks.slice();d.index=tracks.findIndex(t=>t.id===track.id);d.selection++;d.playing=true;d.stop=false;});row.append(symbol,copy,button);box.append(row);}icons();render();
+      for(const track of filtered){const row=document.createElement('li');row.className='track-row';row.dataset.trackId=track.id;const symbol=document.createElement('span');symbol.className='track-symbol';symbol.append(icon('music-2'));const copy=document.createElement('div');copy.className='track-copy';const name=document.createElement('span');name.className='track-name';name.textContent=track.name;const meta=document.createElement('span');meta.className='track-meta';meta.textContent=track.kind==='url'?'ลิงก์เสียง':'MP3'+(track.bytes?' · '+(track.bytes/1048576).toFixed(1)+' MB':'');copy.append(name,meta);const button=document.createElement('button');button.className='icon-button';button.type='button';button.title='เล่น '+track.name;button.setAttribute('aria-label','เล่น '+track.name);button.dataset.libraryPlay='';button.append(icon('play'));button.onclick=()=>command(d=>{d.playlist=libraryTracks().slice();d.index=d.playlist.findIndex(t=>t.id===track.id);d.selection++;d.playing=true;d.stop=false;});row.append(symbol,copy,button);box.append(row);}icons();render();
     }
     function errorMessage(error){const message=error&&error.message?error.message:String(error);if(/CONFIGURATION_NOT_FOUND|operation-not-allowed/i.test(message))return 'ยังไม่ได้เปิด Firebase Authentication';if(/PERMISSION_DENIED|permission-denied/i.test(message))return 'สิทธิ์ฐานข้อมูลเพลงไม่ตรงกับบัญชีนี้';if(/custom-token-mismatch|invalid-custom-token/i.test(message))return 'Firebase ไม่ยอมรับคีย์ของระบบเพลง';return message;}
     async function command(change){
@@ -125,12 +136,12 @@
       try{const result=await own.room.child('desired').transaction(current=>{if(tag!==epoch||!online||Date.now()+offset>expires)return;const d=M.normalize(current);change(d);d.rev=(Number(current&&current.rev)||0)+1;d.expiresAt=expires;return d;},undefined,false);if(tag!==epoch)return;notice(result.committed?'ส่งคำสั่งแล้ว':'คำสั่งยกเลิก',result.committed?'success':'error');}catch(error){if(tag===epoch)notice(errorMessage(error),'error');}
     }
     function selectedIndex(d){const i=d.playlist.findIndex(t=>t.id===actual.trackId);return i>=0?i:d.index;}
-    for(const button of document.querySelectorAll('[data-command]'))button.onclick=()=>{const action=button.dataset.command;command(d=>{if(action==='play'){d.playing=true;d.stop=false;if(!d.playlist.length)d.playlist=tracks.slice();if(actual.ended){d.index=selectedIndex(d);d.selection++;}}if(action==='pause'){d.playing=false;d.stop=false;}if(action==='stop'){d.playing=false;d.stop=true;}if(action==='mute')d.muted=!d.muted;if(action==='lower')d.volume=Math.max(0,d.volume-.05);if(action==='higher')d.volume=Math.min(1,d.volume+.05);if((action==='previous'||action==='next')&&d.playlist.length){d.index=(selectedIndex(d)+(action==='next'?1:-1)+d.playlist.length)%d.playlist.length;d.selection++;d.stop=false;}});};
+    for(const button of document.querySelectorAll('[data-command]'))button.onclick=()=>{const action=button.dataset.command;command(d=>{if(action==='play'){d.playing=true;d.stop=false;if(!d.playlist.length)d.playlist=libraryTracks().slice();if(actual.ended){d.index=selectedIndex(d);d.selection++;}}if(action==='pause'){d.playing=false;d.stop=false;}if(action==='stop'){d.playing=false;d.stop=true;}if(action==='mute')d.muted=!d.muted;if(action==='lower')d.volume=Math.max(0,d.volume-.05);if(action==='higher')d.volume=Math.min(1,d.volume+.05);if((action==='previous'||action==='next')&&d.playlist.length){d.index=(selectedIndex(d)+(action==='next'?1:-1)+d.playlist.length)%d.playlist.length;d.selection++;d.stop=false;}});};
     $('volume').oninput=()=>{M.text('volume-label',$('volume').value+'%');clearTimeout(volumeTimer);const value=Number($('volume').value)/100;volumeTimer=setTimeout(()=>command(d=>{d.volume=value;}),250);};
     $('repeat').onchange=()=>{const repeat=$('repeat').value;command(d=>{d.repeat=repeat;});};
-    $('cache-all').onclick=()=>command(d=>{const id=d.playlist[selectedIndex(d)]?.id;d.playlist=tracks.slice();d.index=Math.max(0,tracks.findIndex(t=>t.id===id));});
+    $('cache-all').onclick=()=>command(d=>{const id=d.playlist[selectedIndex(d)]?.id;d.playlist=libraryTracks().slice();d.index=Math.max(0,d.playlist.findIndex(t=>t.id===id));});
     $('search').oninput=library;
-    async function detach(){++epoch;clearTimeout(volumeTimer);clearInterval(watchdog);online=false;gotDesired=false;if(link){const own=link;link=null;own.room.off();own.room.child('desired').off();own.room.child('status').off();own.room.child('presence').off();own.db.ref('.info/connected').off();own.db.ref('.info/serverTimeOffset').off();try{await own.dispose();}catch(error){}}desired=M.initial();actual={};presences={};render();}
+    async function detach(){++epoch;clearTimeout(volumeTimer);clearInterval(watchdog);online=false;gotDesired=false;if(link){const own=link;link=null;own.room.off();own.room.child('desired').off();own.room.child('status').off();own.room.child('presence').off();own.room.child('lifecycle').off();own.room.child('receipt').off();own.db.ref('.info/connected').off();own.db.ref('.info/serverTimeOffset').off();try{await own.dispose();}catch(error){}}desired=M.initial();actual={};presences={};lifecycle={};receipt={};pendingRemote=null;clearTimeout(remoteTimer);render();}
     async function selectRoom(){
       const selected=$('room').value,cleanup=detach(),tag=epoch;await cleanup;if(tag!==epoch)return;tracks=[];library();if(pairRoom!==selected)clearPair();if(!selected)return;notice('กำลังเชื่อมต่อทีวี');
       try{const boot=await M.rpc('getMusicControlBoot',token,selected);if(tag!==epoch)return;tracks=boot.tracks;library();const own=await M.connect(boot,'controller');if(tag!==epoch){await own.dispose();return;}link=own;try{localStorage.setItem(ROOM,selected);}catch(error){}
@@ -140,6 +151,8 @@
         own.room.child('desired').on('value',s=>{if(tag!==epoch)return;desired=M.normalize(s.val());gotDesired=true;render();},denied);
         own.room.child('status').on('value',s=>{if(tag!==epoch)return;actual=s.val()||{};render();},denied);
         own.room.child('presence').on('value',s=>{if(tag!==epoch)return;presences=s.val()||{};render();},denied);
+        own.room.child('lifecycle').on('value',s=>{if(tag!==epoch)return;lifecycle=s.val()||{};render();},denied);
+        own.room.child('receipt').on('value',s=>{if(tag!==epoch)return;receipt=s.val()||{};if(pendingRemote&&receipt.id===pendingRemote.id){notice(receipt.message||'ทีวีรับคำสั่งแล้ว',receipt.result==='error'||receipt.result==='blocked'?'error':'success');if(['done','error','blocked'].includes(receipt.result)){clearTimeout(remoteTimer);pendingRemote=null;}}render();},denied);
         watchdog=setInterval(render,2000);notice('เชื่อมต่อแล้ว','success');
       }catch(error){if(tag===epoch){notice(errorMessage(error),'error');render();}}
     }
@@ -163,6 +176,45 @@
     window.addEventListener('pagehide',()=>{++epoch;clearTimeout(volumeTimer);if(link)link.db.goOffline();});
     window.addEventListener('pageshow',event=>{if(event.persisted&&token)selectRoom();});
     document.addEventListener('visibilitychange',()=>{if(!document.hidden&&token&&sessionUntil&&Date.now()>sessionUntil)logout('การเข้าสู่ระบบหมดอายุ');});
+    function libraryTracks(){const album=$('library-album').value;return album==='*'?tracks:tracks.filter(t=>(t.album||'เพลงทั่วไป')===album);}
+    function syncAlbums(){const select=$('library-album'),old=select.value||'*',names=[...new Set(tracks.map(t=>t.album||'เพลงทั่วไป'))].sort((a,b)=>a.localeCompare(b,'th'));const next=JSON.stringify(names);if(select.dataset.albums!==next){select.replaceChildren(Object.assign(document.createElement('option'),{value:'*',textContent:'ทุกเพลง'}));for(const name of names)select.append(Object.assign(document.createElement('option'),{value:name,textContent:name}));select.dataset.albums=next;select.value=names.includes(old)?old:'*';}}
+    $('library-album').onchange=library;
+    function dateLabel(ms){return ms?new Date(ms).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false}):'ยังไม่มีข้อมูล';}
+    function renderDevice(){
+      const last=Math.max(Number(actual.updatedAt)||0,Number(lifecycle.lastConnectedAt)||0,...Object.values(presences).map(p=>Number(p&&p.at)||0));
+      M.text('last-seen','เครื่องเล่นส่งสถานะล่าสุด: '+dateLabel(last)+(lifecycle.lastDisconnectedAt&&!fresh()?' • ขาดการเชื่อมต่อ: '+dateLabel(lifecycle.lastDisconnectedAt):''));
+      const view=typeof actual.visible==='boolean'?(actual.visible?'หน้าเว็บแสดงอยู่':'หน้าเว็บถูกซ่อน'):'ยังไม่ทราบสถานะหน้าเว็บ';
+      M.text('display-state',view+' • '+(typeof actual.fullscreen==='boolean'?(actual.fullscreen?'เต็มจอ':'ไม่เต็มจอ'):'ยังไม่ทราบเต็มจอ')+(!fresh()?' (ข้อมูลล่าสุดที่บันทึกไว้)':''));
+      M.text('cache-detail',typeof actual.diskCached==='number'?'ตรวจเก็บไฟล์บนทีวีแล้ว '+actual.diskCached+' / '+(actual.total||0)+' เพลง'+(actual.cacheError?' • '+actual.cacheError:''):'ยังไม่มีผลตรวจการเก็บไฟล์ถาวร');
+      M.text('remote-result',receipt.id?'ผลคำสั่งล่าสุด: '+(receipt.message||receipt.result)+' • '+dateLabel(receipt.at):'');
+    }
+    async function remote(action){
+      if(!link||!online||!gotDesired||!fresh()||busy){notice('เครื่องเล่นออฟไลน์หรือยังไม่พร้อมรับคำสั่ง','error');return;}
+      const own=link,tag=epoch,now=Date.now()+offset,id=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+      const cmd={id,action,createdAt:now,expiresAt:now+20000};pendingRemote=cmd;clearTimeout(remoteTimer);notice('กำลังส่งคำสั่งไปทีวี');
+      remoteTimer=setTimeout(()=>{if(tag===epoch&&pendingRemote&&pendingRemote.id===id){pendingRemote=null;notice('ยังไม่ได้รับผลจากทีวี • ตรวจสถานะการเชื่อมต่อ','error');}},25000);
+      try{await own.room.child('remote').set(cmd);if(tag===epoch&&pendingRemote&&pendingRemote.id===id)notice('ส่งแล้ว • รอทีวีรับและทำคำสั่ง');}catch(e){if(tag===epoch){clearTimeout(remoteTimer);pendingRemote=null;notice(errorMessage(e),'error');}}
+    }
+    for(const b of document.querySelectorAll('[data-remote]'))b.onclick=()=>remote(b.dataset.remote);
+    $('open-refresh').onclick=()=>$('refresh-dialog').showModal();$('confirm-refresh').onclick=()=>{$('refresh-dialog').close();remote('refresh');};
+    async function loadDrive(album='root'){
+      const tag=epoch,selected=$('room').value;driveData=null;controls();M.text('drive-status','กำลังอ่านคลังเพลง');$('drive-list').replaceChildren();
+      try{const data=await M.rpc('getMusicDriveLibrary',token,selected,album);if(tag!==epoch)return;driveData=data;const select=$('drive-album');select.replaceChildren();for(const a of data.albums)select.append(Object.assign(document.createElement('option'),{value:a.id,textContent:a.name}));select.value=data.album;
+        for(const t of data.tracks){const label=document.createElement('label');label.className='drive-row';const check=document.createElement('input');check.type='checkbox';check.value=t.fileId;check.checked=true;const text=document.createElement('span');text.textContent=t.name;const small=document.createElement('small');small.textContent=(t.bytes/1048576).toFixed(1)+' MB';text.append(small);label.append(check,text);$('drive-list').append(label);}
+        M.text('drive-status',data.tracks.length+' เพลง'+(data.skipped?' • ข้าม '+data.skipped+' ไฟล์ที่เกินขอบเขต':'')+(data.truncated?' • อ่านเฉพาะชุดแรก':'')+(!data.tracks.length?' • ใส่ MP3 ในโฟลเดอร์เพลงหรือโฟลเดอร์ย่อยอัลบั้มก่อน':''));
+      }catch(e){if(tag===epoch)M.text('drive-status',errorMessage(e));}finally{if(tag===epoch)controls();}
+    }
+    $('open-drive').onclick=()=>{$('drive-dialog').showModal();loadDrive();};$('drive-album').onchange=()=>loadDrive($('drive-album').value);
+    async function importDrive(playNow){
+      if(busy||!driveData)return;const ids=[...document.querySelectorAll('#drive-list input:checked')].map(i=>i.value);if(!ids.length){M.text('drive-status','เลือกอย่างน้อยหนึ่งเพลง');return;}
+      const tag=epoch,selected=$('room').value;busy=true;controls();M.text('drive-status','กำลังเพิ่มเพลงจาก Drive');
+      try{const result=await M.rpc('importMusicDriveTracks',token,selected,$('drive-album').value,ids);if(tag!==epoch)return;const byId=new Map(tracks.map(t=>[t.id,t]));for(const t of result.tracks)byId.set(t.id,t);tracks=[...byId.values()];syncAlbums();$('library-album').value=result.album;library();busy=false;controls();
+        if(online&&gotDesired&&fresh())await command(d=>{const retained=result.tracks.findIndex(t=>t.id===actual.trackId);d.playlist=result.tracks;d.index=retained>=0?retained:0;if(retained<0)d.selection++;d.playing=playNow||(retained>=0&&d.playing);d.stop=false;});
+        else notice('เพิ่มเพลงแล้ว • รอทีวีออนไลน์ก่อนโหลดหรือเล่น','error');
+        $('drive-dialog').close();
+      }catch(e){if(tag===epoch)M.text('drive-status',errorMessage(e));}finally{busy=false;controls();}
+    }
+    $('import-drive').onclick=()=>importDrive(false);$('play-drive').onclick=()=>importDrive(true);
     icons();render();library();
   })();
   </script>

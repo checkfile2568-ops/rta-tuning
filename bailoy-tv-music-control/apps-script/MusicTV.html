@@ -29,7 +29,7 @@
   #bm-panel .bm-footer button{min-height:42px;padding:9px 12px;font-size:14px}
   #bm-panel #bm-close{border-color:transparent;background:transparent;color:#64766a}
   #bm-panel #bm-close:hover{background:#e8efeb;color:#203c34}
-  #bm-launcher[hidden],#bm-panel[hidden],#bm-pair[hidden],#bm-toggle[hidden],#bm-unlock[hidden]{display:none!important}
+  #bm-launcher[hidden],#bm-panel[hidden],#bm-pair[hidden],#bm-toggle[hidden],#bm-unlock[hidden],#bm-fullscreen[hidden]{display:none!important}
   @media(max-width:360px){#bm-panel .bm-header,#bm-panel .bm-body{padding:16px}#bm-panel .bm-footer{padding:12px 16px;gap:6px}#bm-panel .bm-footer button{padding:8px;font-size:13px;gap:5px}}
 </style>
 <div id="bm-launcher" hidden>
@@ -52,7 +52,8 @@
   let link=null, secret='', room='', desired=M.initial(), selection=null, activeIndex=0, activeId='', generation=0, heartbeat=null, presence=null;
   let ready=false, connecting=false, connected=false, loading=false, blocked=false, failure='', ended=false, sourceId='', blobURLs=new Map(), cache=new Map(), pending=new Map(), dbPromise=null;
   let publishTimer=null, presenceHealthy=false, serverOffset=0, volumeApplied=true;
-  let isPlaying=false;
+  let isPlaying=false, diskStored=new Set(), cacheError='', reconnectTimer=null, retryCount=0, suspended=false;
+  const MEMORY_LIMIT=3;
   let fadeTimer=null, revealTimer=null, pointerInside=false, keyboardMode=false;
   const FADE_MS=3000;
   function revealLauncher(){
@@ -89,7 +90,7 @@
   }
   function info(message){M.text('bm-info',message);}
   function status() {
-    return {trackId:activeId,index:activeIndex,playing:isPlaying&&!audio.paused&&!audio.ended,position:Math.floor(audio.currentTime||0),volume:audio.volume,muted:audio.muted,volumeApplied,blocked,loading,ended,error:failure.slice(0,200),cached:desired.playlist.filter(t=>cache.has(t.id)).length,total:desired.playlist.length,rev:desired.rev,updatedAt:link?link.stamp():Date.now()};
+    return {trackId:activeId,index:activeIndex,playing:isPlaying&&!audio.paused&&!audio.ended,position:Math.floor(audio.currentTime||0),volume:audio.volume,muted:audio.muted,volumeApplied,blocked,loading,ended,error:failure.slice(0,200),cached:desired.playlist.filter(t=>cache.has(t.id)||diskStored.has(t.id)).length,total:desired.playlist.length,rev:desired.rev,diskCached:desired.playlist.filter(t=>diskStored.has(t.id)).length,cacheError:cacheError.slice(0,200),fullscreen:!!(document.fullscreenElement||document.webkitFullscreenElement),visible:document.visibilityState!=='hidden',updatedAt:link?link.stamp():Date.now()};
   }
   function publish() {
     if(!connected || !link || !presenceHealthy) return;
@@ -106,11 +107,14 @@
   }
   async function diskGet(id) {
     const db=await cacheDB();if(!db)return null;
-    return new Promise(resolve=>{try{const req=db.transaction('audio').objectStore('audio').get(room+':'+id);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);}catch(e){resolve(null);}});
+    return new Promise(resolve=>{try{const req=db.transaction('audio').objectStore('audio').get(room+':'+id);req.onsuccess=()=>{const blob=req.result;if(blob&&blob.size>0&&blob.size<=M.MAX_BYTES){diskStored.add(id);resolve(blob);}else resolve(null);};req.onerror=()=>resolve(null);}catch(e){resolve(null);}});
   }
   async function diskPut(id,blob) {
-    const db=await cacheDB();if(!db)return;
-    await new Promise(resolve=>{try{const tx=db.transaction('audio','readwrite');tx.objectStore('audio').put(blob,room+':'+id);tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;}catch(e){resolve();}});
+    const db=await cacheDB();if(!db){cacheError='เก็บไฟล์ถาวรไม่ได้ • ใช้เพลงในหน่วยความจำขณะหน้านี้เปิดอยู่';return false;}
+    const written=await new Promise(resolve=>{try{const tx=db.transaction('audio','readwrite');tx.objectStore('audio').put(blob,room+':'+id);tx.oncomplete=()=>resolve(true);tx.onerror=()=>resolve(false);tx.onabort=()=>resolve(false);}catch(e){resolve(false);}});
+    const verified=written&&await diskGet(id);
+    if(!verified||verified.size!==blob.size){diskStored.delete(id);cacheError='พื้นที่เก็บเพลงไม่พร้อม • ยังยืนยันไฟล์เก็บถาวรไม่ได้';return false;}
+    diskStored.add(id);return true;
   }
   async function fetchBlob(url) {
     const ctrl=new AbortController(), timer=setTimeout(()=>ctrl.abort(),45000);
@@ -137,7 +141,9 @@
         if(!blob.size||blob.size>M.MAX_BYTES)throw Error('ไฟล์เพลงไม่ถูกต้อง');
         await diskPut(track.id,blob);
       }
-      cache.set(track.id,blob);publish();return blob;
+      cache.delete(track.id);cache.set(track.id,blob);
+      for(const id of [...cache.keys()]){if(cache.size<=MEMORY_LIMIT)break;if(id===activeId)continue;cache.delete(id);if(blobURLs.has(id)){URL.revokeObjectURL(blobURLs.get(id));blobURLs.delete(id);}}
+      publish();return blob;
     })().finally(()=>pending.delete(track.id));
     pending.set(track.id,task);return task;
   }
@@ -222,7 +228,7 @@
   async function connectionChanged(snapshot) {
     connected=!!snapshot.val();presenceHealthy=false;clearInterval(heartbeat);
     $('bm-panel').dataset.connection=connected?'online':'offline';
-    if(!connected){info('เพลงเล่นต่อในทีวี • ขณะนี้รีโมตออฟไลน์');return;}
+    if(!connected){info('รีโมตออฟไลน์ • เพลงที่โหลดครบยังใช้ได้ • ไม่รีเฟรชหน้า');return;}
     const own=link.room.child('presence').push();presence=own;
     try{
       // Register server-side removal BEFORE publishing this connection's presence.
@@ -243,22 +249,39 @@
       const boot=await M.rpc('getMusicTVBoot',secret);room=boot.room;
       // Cached desired state resumes independently of phone presence.
       const old=stored('bailoy.music.desired.'+room);if(old)try{apply(JSON.parse(old));}catch(e){}
-      link=await M.connect(boot,'tv');
+      link=await M.connect(boot,'tv');retryCount=0;clearTimeout(reconnectTimer);
+      window.dispatchEvent(new CustomEvent('bailoy-music-connected',{detail:link}));
       link.room.child('desired').on('value',s=>{if(s.val())apply(s.val());},e=>{info('อ่านคำสั่งเพลงไม่ได้: '+e.message);});
       link.db.ref('.info/connected').on('value',connectionChanged);
       link.db.ref('.info/serverTimeOffset').on('value',s=>{serverOffset=Number(s.val())||0;});
-    }catch(e){$('bm-panel').dataset.connection='offline';info('เพลงเชื่อมต่อไม่ได้: '+e.message+' • กดเชื่อมต่อใหม่');panel(true);}
-    finally{connecting=false;}
+    }catch(e){$('bm-panel').dataset.connection='offline';info('เพลงเชื่อมต่อไม่ได้: '+e.message+' • กดเชื่อมต่อใหม่');if(retryCount===0)panel(true);}
+    finally{connecting=false;if(!link&&secret&&!suspended)scheduleRetry();}
   }
   $('bm-claim').onclick=async()=>{
     $('bm-claim').disabled=true;
     try{const d=await M.rpc('claimMusicDevice',$('bm-code').value);secret=d.secret;save(KEY,secret);$('bm-pair').hidden=true;panel(false);await start();}
     catch(e){info(e.message);}finally{$('bm-claim').disabled=false;}
   };
-  $('bm-retry').onclick=()=>{if(link){link.db.goOnline();info('กำลังเชื่อมต่อใหม่');}else start();};
-  function finishPresence(){connected=false;clearInterval(heartbeat);if(presence)presence.remove().catch(()=>{});if(link)link.db.goOffline();}
+  function scheduleRetry(){clearTimeout(reconnectTimer);const delay=Math.min(60000,5000*Math.pow(2,retryCount++));reconnectTimer=setTimeout(()=>{if(!suspended&&ready&&!link)start();},delay);}
+  async function reconnectMusic(){
+    clearTimeout(reconnectTimer);const old=link;link=null;connected=false;presenceHealthy=false;clearInterval(heartbeat);
+    if(old){old.room.child('desired').off();old.room.child('remote').off();old.db.ref('.info/connected').off();old.db.ref('.info/serverTimeOffset').off();if(presence)await presence.remove().catch(()=>{});await old.dispose().catch(()=>{});}
+    presence=null;await start();
+  }
+  async function retryAudio(){
+    if(loading)throw Error('กำลังโหลดเพลงอยู่ กรุณารอผลสถานะ');
+    failure='';
+    if(audio.error||!sourceId){const ticket=++generation;await switchTrack(activeIndex,ticket);}else await play();
+    if(cacheError){cacheError='';for(const [id,blob] of cache)await diskPut(id,blob);}
+    prefetch(desired.playlist,generation);refreshUI();
+    if(blocked||failure)throw Error(failure||'ต้องกดเปิดเสียงที่ทีวี');
+  }
+  $('bm-retry').onclick=()=>reconnectMusic();
+  window.BailoyMusicTV={get link(){return link;},get room(){return room;},get offset(){return serverOffset;},show:()=>panel(true),hide:()=>panel(false),message:info,publish,reconnect:reconnectMusic,retryAudio};
+  window.addEventListener('online',()=>{retryCount=0;if(!suspended&&ready){if(link)link.db.goOnline();else start();}});
+  function finishPresence(){suspended=true;clearTimeout(reconnectTimer);connected=false;clearInterval(heartbeat);if(presence)presence.remove().catch(()=>{});if(link)link.db.goOffline();}
   window.addEventListener('pagehide',finishPresence);
-  window.addEventListener('pageshow',e=>{if(e.persisted&&link)link.db.goOnline();});
+  window.addEventListener('pageshow',e=>{suspended=false;if(e.persisted){if(link)link.db.goOnline();else if(ready)start();}});
   // Observe startup rendering without altering any legacy TV function or interval.
   const observer=new MutationObserver(checkReady);
   function checkReady(){if(ready)return;if(typeof caseDataLoaded!=='undefined'&&caseDataLoaded&&$('tvContent').style.display!=='none'){ready=true;observer.disconnect();$('bm-launcher').hidden=false;$('bm-toggle').hidden=false;start();if($('bm-panel').hidden)requestAnimationFrame(()=>requestAnimationFrame(fadeLauncher));}}

@@ -1,0 +1,39 @@
+<script>
+window.BailoyMusic = (() => {
+  'use strict';
+  const SDK = '10.12.2';
+  function rpc(name,...args) {
+    return new Promise((resolve,reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(e=>reject(Error(e.message || String(e))))[name](...args));
+  }
+  function loadScript(src) {
+    return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(Error('เชื่อมต่อระบบเพลงไม่ได้'));document.head.appendChild(s);});
+  }
+  let sdk;
+  function loadSDK() {
+    if(!sdk) sdk = (async()=>{if(!window.firebase){for(const file of ['app','auth','database']) await loadScript('https://www.gstatic.com/firebasejs/'+SDK+'/firebase-'+file+'-compat.js');}return window.firebase;})().catch(e=>{sdk=null;throw e;});
+    return sdk;
+  }
+  async function connect(boot, role) {
+    const f = await loadSDK();
+    const nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+    const app = f.initializeApp(boot.config, 'music-'+role+'-'+nonce);
+    try {
+      await app.auth().setPersistence(f.auth.Auth.Persistence.NONE);
+      await app.auth().signInWithCustomToken(boot.token);
+      const db = app.database(), room = db.ref('bailoyMusic/rooms/'+boot.room);
+      return {app,db,room,stamp:()=>f.database.ServerValue.TIMESTAMP,dispose:async()=>{db.goOffline();await app.delete();}};
+    } catch(e) {await app.delete();throw e;}
+  }
+  function initial() { return {rev:0,selection:0,playlist:[],index:0,playing:false,stop:false,volume:0.35,muted:false,repeat:'all'}; }
+  function normalize(raw) {
+    const d = Object.assign(initial(),raw || {});
+    d.playlist=Array.isArray(d.playlist)?d.playlist.filter(t=>t && /^[a-f0-9]{32}$/.test(t.id)).slice(0,30):[];
+    d.volume=Math.max(0,Math.min(1,Number.isFinite(Number(d.volume))?Number(d.volume):0.35));
+    d.index=Math.max(0,Math.min(Math.floor(Number(d.index)||0),Math.max(0,d.playlist.length-1)));
+    d.repeat=['all','one','off'].includes(d.repeat)?d.repeat:'all';
+    return d;
+  }
+  const text = (id,value)=>{const el=document.getElementById(id);if(el) el.textContent=value;};
+  return {rpc,connect,initial,normalize,text,MAX_BYTES:8*1024*1024};
+})();
+</script>

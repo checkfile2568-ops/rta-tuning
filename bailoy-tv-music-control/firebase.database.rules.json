@@ -1,0 +1,206 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "bailoyMusic": {
+      "rooms": {
+        "$room": {
+          ".read": "auth != null && auth.token.musicRoom === $room && (auth.token.musicRole === 'tv' || (auth.token.musicRole === 'controller' && auth.token.musicUntil > now))",
+          "desired": {
+            ".write": "auth != null && auth.token.musicRole === 'controller' && auth.token.musicRoom === $room && auth.token.musicUntil > now && newData.exists()",
+            ".validate": "newData.hasChildren(['rev','selection','index','playing','stop','volume','muted','repeat','expiresAt']) && newData.child('rev').val() === (data.exists() ? data.child('rev').val() + 1 : 1) && newData.child('expiresAt').val() >= now && newData.child('expiresAt').val() <= now + 30000",
+            "rev": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 2000000000"
+            },
+            "selection": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= (data.exists() ? data.val() : 0) && newData.val() <= (data.exists() ? data.val() + 1 : 1)"
+            },
+            "index": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 29"
+            },
+            "playing": {
+              ".validate": "newData.isBoolean()"
+            },
+            "stop": {
+              ".validate": "newData.isBoolean()"
+            },
+            "volume": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1"
+            },
+            "muted": {
+              ".validate": "newData.isBoolean()"
+            },
+            "repeat": {
+              ".validate": "newData.val() === 'one' || newData.val() === 'all' || newData.val() === 'off'"
+            },
+            "expiresAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "playlist": {
+              ".validate": "newData.hasChildren()",
+              "$index": {
+                ".validate": "$index.matches(/^(0|[1-9]|[12][0-9])$/) && newData.hasChildren(['id','name','kind'])",
+                "id": {
+                  ".validate": "newData.isString() && newData.val().matches(/^[a-f0-9]{32}$/)"
+                },
+                "name": {
+                  ".validate": "newData.isString() && newData.val().length <= 120"
+                },
+                "kind": {
+                  ".validate": "newData.val() === 'drive' || newData.val() === 'url'"
+                },
+                "bytes": {
+                  ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 8388608"
+                },
+                "url": {
+                  ".validate": "newData.isString() && newData.val().length <= 2000 && newData.val().beginsWith('https://')"
+                },
+                "$other": {
+                  ".validate": false
+                },
+                "album": {
+                  ".validate": "newData.isString() && newData.val().length <= 120"
+                }
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "status": {
+            ".write": "auth != null && auth.token.musicRole === 'tv' && auth.token.musicRoom === $room",
+            ".validate": "newData.hasChildren(['trackId','index','playing','position','volume','muted','volumeApplied','blocked','loading','ended','error','cached','total','rev','updatedAt'])",
+            "trackId": {
+              ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^[a-f0-9]{32}$/))"
+            },
+            "index": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 29"
+            },
+            "playing": {
+              ".validate": "newData.isBoolean()"
+            },
+            "position": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "volume": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1"
+            },
+            "muted": {
+              ".validate": "newData.isBoolean()"
+            },
+            "volumeApplied": {
+              ".validate": "newData.isBoolean()"
+            },
+            "blocked": {
+              ".validate": "newData.isBoolean()"
+            },
+            "loading": {
+              ".validate": "newData.isBoolean()"
+            },
+            "ended": {
+              ".validate": "newData.isBoolean()"
+            },
+            "error": {
+              ".validate": "newData.isString() && newData.val().length <= 200"
+            },
+            "cached": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 30"
+            },
+            "total": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 30"
+            },
+            "rev": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "updatedAt": {
+              ".validate": "newData.isNumber() && newData.val() <= now + 1000 && newData.val() >= now - 30000"
+            },
+            "$other": {
+              ".validate": false
+            },
+            "fullscreen": {
+              ".validate": "newData.isBoolean()"
+            },
+            "visible": {
+              ".validate": "newData.isBoolean()"
+            },
+            "diskCached": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 30"
+            },
+            "cacheError": {
+              ".validate": "newData.isString() && newData.val().length <= 200"
+            }
+          },
+          "presence": {
+            "$connection": {
+              ".write": "auth != null && auth.token.musicRole === 'tv' && auth.token.musicRoom === $room",
+              ".validate": "newData.hasChildren(['at'])",
+              "at": {
+                ".validate": "newData.isNumber() && newData.val() <= now + 1000 && newData.val() >= now - 30000"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "$other": {
+            ".validate": false
+          },
+          "lifecycle": {
+            ".write": "auth != null && auth.token.musicRole === 'tv' && auth.token.musicRoom === $room",
+            "lastConnectedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 1000"
+            },
+            "lastDisconnectedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 1000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "remote": {
+            ".write": "auth != null && auth.token.musicRole === 'controller' && auth.token.musicRoom === $room && auth.token.musicUntil > now && newData.exists()",
+            ".validate": "newData.hasChildren(['id','action','createdAt','expiresAt']) && (!data.exists() || newData.child('id').val() !== data.child('id').val())",
+            "id": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-f0-9]{32}$/)"
+            },
+            "action": {
+              ".validate": "newData.val() === 'refresh' || newData.val() === 'reconnect' || newData.val() === 'retry' || newData.val() === 'fullscreen-enter' || newData.val() === 'fullscreen-exit' || newData.val() === 'hide' || newData.val() === 'show'"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() && newData.val() >= now - 5000 && newData.val() <= now + 1000"
+            },
+            "expiresAt": {
+              ".validate": "newData.isNumber() && newData.val() >= now && newData.val() <= now + 30000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "receipt": {
+            ".write": "auth != null && auth.token.musicRole === 'tv' && auth.token.musicRoom === $room",
+            ".validate": "newData.hasChildren(['id','action','result','message','at'])",
+            "id": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-f0-9]{32}$/)"
+            },
+            "action": {
+              ".validate": "newData.val() === 'refresh' || newData.val() === 'reconnect' || newData.val() === 'retry' || newData.val() === 'fullscreen-enter' || newData.val() === 'fullscreen-exit' || newData.val() === 'hide' || newData.val() === 'show'"
+            },
+            "result": {
+              ".validate": "newData.val() === 'received' || newData.val() === 'done' || newData.val() === 'blocked' || newData.val() === 'error' || newData.val() === 'refreshing'"
+            },
+            "message": {
+              ".validate": "newData.isString() && newData.val().length <= 200"
+            },
+            "at": {
+              ".validate": "newData.isNumber() && newData.val() <= now + 1000 && newData.val() >= now - 30000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

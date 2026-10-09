@@ -24,5 +24,25 @@
   onload="var l=document.getElementById('load');if(l)l.style.opacity=0,setTimeout(function(){l.style.display='none'},300)"
   allow="clipboard-write; fullscreen; geolocation; camera" allowfullscreen></iframe>
 <script>setTimeout(function(){var l=document.getElementById('load');if(l)l.style.display='none';},6000);</script>
+<script>
+(() => {
+  'use strict';
+  const frame=document.getElementById('app'),url=frame.src;
+  let source=null,nonce='',last='';
+  function belongsToTV(candidate){
+    try{for(let depth=0;depth<6&&candidate;depth++){if(candidate===frame.contentWindow)return true;const next=candidate.parent;if(next===candidate)return false;candidate=next;}}catch(e){}
+    return false;
+  }
+  window.addEventListener('message',event=>{
+    const data=event.data;
+    if(!data||!/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(event.origin)||!belongsToTV(event.source))return;
+    if(data.type==='bailoy-music-ready'&&/^[a-f0-9]{32}$/.test(data.nonce||'')){
+      source=event.source;nonce=data.nonce;source.postMessage({type:'bailoy-music-ready-ack',nonce},event.origin);return;
+    }
+    if(data.type!=='bailoy-music-refresh'||event.source!==source||data.nonce!==nonce||!/^[a-f0-9]{32}$/.test(data.id||'')||data.id===last)return;
+    last=data.id;source=null;nonce='';frame.src=url;
+  });
+})();
+</script>
 </body>
 </html>
