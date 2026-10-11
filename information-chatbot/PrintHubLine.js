@@ -192,6 +192,7 @@ function _printHubReplyConfig_(key, fallback) {
 function _printHubConfirmFlex_(job) {
   var name = String(job.fileName || job.file || "ไฟล์เอกสาร").substring(0, 120);
   var id = String(job.jobId || job.id || "");
+  var groupPrefix = (job.isGroup || String(job.sourceType || "").toLowerCase() === "group") ? "บอท " : "";
   return {
     type: "flex",
     altText: "Print Hub ออนไลน์แล้ว กรุณายืนยันการพิมพ์",
@@ -214,8 +215,8 @@ function _printHubConfirmFlex_(job) {
       footer: {
         type:"box", layout:"vertical", spacing:"sm", paddingAll:"12px",
         contents:[
-          { type:"button", style:"primary", color:"#16A34A", action:{ type:"message", label:"✅ ยืนยันพิมพ์", text:"ยืนยันพิมพ์ " + id } },
-          { type:"button", style:"secondary", action:{ type:"message", label:"❌ ยกเลิก", text:"ยกเลิกพิมพ์ " + id } }
+          { type:"button", style:"primary", color:"#16A34A", action:{ type:"message", label:"✅ ยืนยันพิมพ์", text:groupPrefix + "ยืนยันพิมพ์ " + id } },
+          { type:"button", style:"secondary", action:{ type:"message", label:"❌ ยกเลิก", text:groupPrefix + "ยกเลิกพิมพ์ " + id } }
         ]
       }
     }
@@ -302,10 +303,15 @@ function _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, repl
 
   if (detected.intent === "PRINT_REPRINT") {
     var rp = _printHubBridge_("line_reprint", { jobId:detected.jobId, lineUserId:userId, sourceId:sourceId });
-    _printHubReply_(replyToken,
-      rp && rp.ok ? "✅ เตรียมไฟล์สำหรับพิมพ์ซ้ำแล้วครับ ระบบจะขอยืนยันก่อนพิมพ์" : "⚠️ " + String(rp && rp.msg || "พิมพ์ซ้ำไม่สำเร็จ"),
-      {ok:!!(rp && rp.ok), jobId:rp && rp.jobId || detected.jobId}, userId);
-    if (rp && rp.ok && rp.agentOnline && rp.job) sendUniversalReply(replyToken, _printHubConfirmFlex_(rp.job));
+    if (rp && rp.ok && rp.agentOnline && rp.job) {
+      rp.job.isGroup = !!isGroup;
+      rp.job.sourceType = isGroup ? "group" : "private";
+      sendUniversalReply(replyToken, _printHubConfirmFlex_(rp.job));
+    } else {
+      _printHubReply_(replyToken,
+        rp && rp.ok ? "✅ เตรียมไฟล์สำหรับพิมพ์ซ้ำแล้วครับ ระบบจะขอยืนยันก่อนพิมพ์เมื่อ Print Hub ออนไลน์" : "⚠️ " + String(rp && rp.msg || "พิมพ์ซ้ำไม่สำเร็จ"),
+        {ok:!!(rp && rp.ok), jobId:rp && rp.jobId || detected.jobId}, userId);
+    }
     return { handled:true, route:"print-reprint" };
   }
 
@@ -377,11 +383,9 @@ function _handlePrintHubMedia_(event, message, user, userId, sourceId, isGroup, 
     _clearPrintHubSession_(sourceId, userId);
     var facts = {jobId:result.jobId,fileName:fileName,agentOnline:!!result.agentOnline,status:result.status || ""};
     if (result.agentOnline) {
-      _printHubReply_(replyToken,
-        _printHubReplyConfig_("PRINT_HUB_RECEIVED_REPLY", "✅ รับไฟล์ไว้แล้วครับ Print Hub ออนไลน์ กรุณายืนยันก่อนพิมพ์"),
-        facts, userId);
       sendUniversalReply(replyToken, _printHubConfirmFlex_({
-        jobId:result.jobId, fileName:fileName, copies:Number(getConfig("PRINT_HUB_DEFAULT_COPIES") || 1)
+        jobId:result.jobId, fileName:fileName, copies:Number(getConfig("PRINT_HUB_DEFAULT_COPIES") || 1),
+        isGroup:!!isGroup, sourceType:isGroup ? "group" : "private"
       }));
     } else {
       _printHubReply_(replyToken,
@@ -412,6 +416,8 @@ function processPrintHubNotifications_() {
     var ok = false;
     try {
       if (ev.type === "CONFIRM" && ev.job) {
+        ev.job.sourceType = ev.sourceType || ev.job.sourceType || "";
+        ev.job.isGroup = String(ev.sourceType || "").toLowerCase() === "group";
         var flex = _printHubConfirmFlex_(ev.job);
         var r = _linePost("https://api.line.me/v2/bot/message/push", {
           to:target, messages:[{type:"flex", altText:flex.altText, contents:flex.contents}]
