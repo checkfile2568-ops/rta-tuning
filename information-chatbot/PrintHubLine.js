@@ -82,6 +82,11 @@ function _printHubDetectIntentDeterministic_(text) {
   var reprint = t.match(/^(?:พิมพ์ซ้ำ|ปริ้นซ้ำ)\s+([a-z0-9_-]+)$/i);
   if (reprint) return { intent: "PRINT_REPRINT", jobId: reprint[1] };
 
+  var received = t.match(/^(?:รับเอกสารครบ|ได้รับเอกสารครบ|เอกสารครบ)\s+([a-z0-9_-]+)$/i);
+  if (received) return { intent: "PRINT_RECEIVED", jobId: received[1], receivedOk:true };
+  var receiveProblem = t.match(/^(?:เอกสารมีปัญหา|เอกสารไม่ครบ|พิมพ์ไม่ครบ)\s+([a-z0-9_-]+)$/i);
+  if (receiveProblem) return { intent: "PRINT_RECEIVED", jobId: receiveProblem[1], receivedOk:false };
+
   if (/^(?:สถานะปริ้นฮับ|สถานะพิมพ์|เครื่องพิมพ์พร้อม|พิมพ์ได้ไหม|ปริ้นได้ไหม|คอมปริ้นฮับ)/i.test(t)) {
     return { intent: "PRINT_HUB_STATUS" };
   }
@@ -240,6 +245,29 @@ function _printHubConfirmFlex_(job) {
   };
 }
 
+function _printHubReceivedFlex_(job) {
+  var name = String(job.fileName || job.file || "ไฟล์เอกสาร").substring(0, 120);
+  var id = String(job.jobId || job.id || "");
+  var groupPrefix = (job.isGroup || String(job.sourceType || "").toLowerCase() === "group") ? "บอท " : "";
+  return {
+    type:"flex",
+    altText:"Print Hub ส่งงานเข้าเครื่องพิมพ์แล้ว กรุณาตรวจรับเอกสาร",
+    contents:{
+      type:"bubble", size:"kilo",
+      header:{type:"box",layout:"vertical",backgroundColor:"#EFF6FF",paddingAll:"14px",
+        contents:[{type:"text",text:"🖨️ ส่งงานเข้าเครื่องพิมพ์แล้ว",weight:"bold",color:"#1E40AF",wrap:true}]},
+      body:{type:"box",layout:"vertical",paddingAll:"16px",contents:[
+        {type:"text",text:"📄 " + name,size:"sm",color:"#374151",wrap:true},
+        {type:"text",text:"กรุณาตรวจเอกสารที่เครื่องพิมพ์ แล้วแจ้งผลครับ",size:"sm",color:"#111827",margin:"lg",wrap:true}
+      ]},
+      footer:{type:"box",layout:"vertical",spacing:"sm",paddingAll:"12px",contents:[
+        {type:"button",style:"primary",color:"#16A34A",action:{type:"message",label:"✅ ได้รับครบแล้ว",text:groupPrefix + "รับเอกสารครบ " + id}},
+        {type:"button",style:"secondary",action:{type:"message",label:"⚠️ ไม่ครบ/มีปัญหา",text:groupPrefix + "เอกสารมีปัญหา " + id}}
+      ]}
+    }
+  };
+}
+
 function _printHubStart_(messageText, user, userId, sourceId, isGroup, replyToken) {
   if (!_printHubAllowed_(user, userId)) {
     _printHubReply_(replyToken,
@@ -300,6 +328,18 @@ function _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, repl
     _printHubReply_(replyToken, result && result.ok ? okText : "⚠️ " + String(result && result.msg || "ดำเนินการไม่สำเร็จ"),
       { ok:!!(result && result.ok), action:action, jobId:detected.jobId, agentOnline:!!(result && result.agentOnline) }, userId);
     return { handled:true, route:detected.intent === "PRINT_CONFIRM" ? "print-confirm" : "print-cancel" };
+  }
+
+  if (detected.intent === "PRINT_RECEIVED") {
+    var rr = _printHubBridge_("line_received", {
+      jobId:detected.jobId, lineUserId:userId, sourceId:sourceId, ok:detected.receivedOk === true
+    });
+    var rrText = rr && rr.ok
+      ? (detected.receivedOk ? _printHubReplyConfig_("PRINT_HUB_COMPLETED_REPLY", "✅ พิมพ์เอกสารเรียบร้อยแล้วครับ") :
+          "⚠️ รับแจ้งแล้วครับ ระบบบันทึกว่างานพิมพ์มีปัญหาและจะไม่สั่งพิมพ์ซ้ำอัตโนมัติ")
+      : "⚠️ " + String(rr && rr.msg || "บันทึกผลรับเอกสารไม่สำเร็จ");
+    _printHubReply_(replyToken, rrText, {ok:!!(rr && rr.ok), status:detected.receivedOk ? "DONE" : "ERROR"}, userId);
+    return { handled:true, route:"print-received" };
   }
 
   if (detected.intent === "PRINT_HISTORY") {
@@ -443,9 +483,18 @@ function processPrintHubNotifications_() {
       } else {
         var msg = "";
         if (ev.type === "PRINTING") msg = "🖨️ กำลังพิมพ์ " + String(ev.fileName || "เอกสาร") + " ครับ";
+        else if (ev.type === "SENT" && ev.job) {
+          ev.job.sourceType = ev.sourceType || ev.job.sourceType || "";
+          ev.job.isGroup = String(ev.sourceType || "").toLowerCase() === "group";
+          var recvFlex = _printHubReceivedFlex_(ev.job);
+          var sentRes = _linePost("https://api.line.me/v2/bot/message/push", {
+            to:target, messages:[{type:"flex", altText:recvFlex.altText, contents:recvFlex.contents}]
+          });
+          ok = sentRes && sentRes.responseCode === 200;
+        }
         else if (ev.type === "DONE") msg = _printHubReplyConfig_("PRINT_HUB_COMPLETED_REPLY", "✅ พิมพ์เอกสารเรียบร้อยแล้วครับ");
         else if (ev.type === "ERROR") msg = _printHubReplyConfig_("PRINT_HUB_FAILED_REPLY", "⚠️ งานพิมพ์ไม่สำเร็จ กรุณาตรวจสอบ Print Hub ครับ");
-        if (msg) {
+        if (!ok && msg) {
           var p = _linePush(target, _printHubFactsReply_(msg, {
             status:ev.type, fileName:ev.fileName || "", jobId:ev.jobId || "", error:ev.error || ""
           }));
