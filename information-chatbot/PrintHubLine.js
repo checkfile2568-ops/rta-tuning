@@ -104,6 +104,12 @@ function _printHubDetectIntentDeterministic_(text) {
 
 function _printHubDetectIntentAI_(text) {
   if (String(getConfig("PRINT_HUB_NL_STATUS") || "ON").toUpperCase() !== "ON") return { intent: "NONE" };
+  var candidate = _printHubNormalize_(text);
+  // Privacy/cost guard: AI classification runs only when the text already looks print-related.
+  // It must never become a second catch-all ahead of the existing GeminiQA router.
+  if (!/(พิมพ์|ปริ้น|ปรินต์|print|เครื่องพิมพ์|งานพิมพ์|คิวพิมพ์|ไฟล์.{0,12}(เครื่อง|ออกกระดาษ))/i.test(candidate)) {
+    return { intent: "NONE" };
+  }
   if (typeof _callGeminiAPI_ !== "function") return { intent: "NONE" };
   var prompt = [
     "จำแนก intent ของข้อความต่อไปนี้สำหรับระบบ PrintHub เท่านั้น",
@@ -160,10 +166,21 @@ function _printHubBridge_(action, payload) {
 
 function _printHubFactsReply_(baseText, facts) {
   baseText = String(baseText || "");
+  // Errors and document-specific details remain deterministic and are not sent to Gemini.
+  if (facts && (facts.error || facts.sensitive)) return baseText;
   if (String(getConfig("PRINT_HUB_AI_REPLY") || "ON").toUpperCase() !== "ON") return baseText;
   if (typeof _callGeminiAPI_ !== "function") return baseText;
   try {
-    var factsText = JSON.stringify(facts || {});
+    var rawFacts = facts || {};
+    var safeFacts = {
+      allowed: rawFacts.allowed,
+      agentOnline: rawFacts.agentOnline,
+      status: rawFacts.status,
+      ok: rawFacts.ok,
+      action: rawFacts.action,
+      found: rawFacts.found
+    };
+    var factsText = JSON.stringify(safeFacts);
     var p = [
       "เรียบเรียงข้อความตอบผู้ใช้ LINE เป็นภาษาไทยสุภาพ เป็นธรรมชาติ กระชับ",
       "ใช้ข้อเท็จจริงที่ให้มาเท่านั้น ห้ามสร้างสถานะ ห้ามบอกว่าพิมพ์เสร็จถ้า status ไม่ใช่ DONE/COMPLETED",
