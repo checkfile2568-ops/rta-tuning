@@ -70,21 +70,22 @@ function _printHubNormalize_(text) {
 }
 
 function _printHubDetectIntentDeterministic_(text) {
-  var t = _printHubNormalize_(text).toLowerCase();
+  var raw = _printHubNormalize_(text);
+  var t = raw.toLowerCase();
   if (!t) return { intent: "NONE" };
 
-  var confirm = t.match(/^(?:ยืนยัน(?:พิมพ์)?|ตกลงพิมพ์|พิมพ์เลย)\s+([a-z0-9_-]+)$/i);
+  var confirm = raw.match(/^(?:ยืนยัน(?:พิมพ์)?|ตกลงพิมพ์|พิมพ์เลย)\s+([a-z0-9_-]+)$/i);
   if (confirm) return { intent: "PRINT_CONFIRM", jobId: confirm[1] };
 
-  var cancel = t.match(/^(?:ยกเลิก(?:พิมพ์)?|ไม่พิมพ์|ลบงานพิมพ์)\s+([a-z0-9_-]+)$/i);
+  var cancel = raw.match(/^(?:ยกเลิก(?:พิมพ์)?|ไม่พิมพ์|ลบงานพิมพ์)\s+([a-z0-9_-]+)$/i);
   if (cancel) return { intent: "PRINT_CANCEL", jobId: cancel[1] };
 
-  var reprint = t.match(/^(?:พิมพ์ซ้ำ|ปริ้นซ้ำ)\s+([a-z0-9_-]+)$/i);
+  var reprint = raw.match(/^(?:พิมพ์ซ้ำ|ปริ้นซ้ำ)\s+([a-z0-9_-]+)$/i);
   if (reprint) return { intent: "PRINT_REPRINT", jobId: reprint[1] };
 
-  var received = t.match(/^(?:รับเอกสารครบ|ได้รับเอกสารครบ|เอกสารครบ)\s+([a-z0-9_-]+)$/i);
+  var received = raw.match(/^(?:รับเอกสารครบ|ได้รับเอกสารครบ|เอกสารครบ)\s+([a-z0-9_-]+)$/i);
   if (received) return { intent: "PRINT_RECEIVED", jobId: received[1], receivedOk:true };
-  var receiveProblem = t.match(/^(?:เอกสารมีปัญหา|เอกสารไม่ครบ|พิมพ์ไม่ครบ)\s+([a-z0-9_-]+)$/i);
+  var receiveProblem = raw.match(/^(?:เอกสารมีปัญหา|เอกสารไม่ครบ|พิมพ์ไม่ครบ)\s+([a-z0-9_-]+)$/i);
   if (receiveProblem) return { intent: "PRINT_RECEIVED", jobId: receiveProblem[1], receivedOk:false };
 
   if (/^(?:สถานะปริ้นฮับ|สถานะพิมพ์|เครื่องพิมพ์พร้อม|พิมพ์ได้ไหม|ปริ้นได้ไหม|คอมปริ้นฮับ)/i.test(t)) {
