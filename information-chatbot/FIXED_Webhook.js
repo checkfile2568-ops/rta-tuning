@@ -249,6 +249,13 @@ function fixedWebhookProcessEvent_(event) {
   }
 
   if (event.type === "message" && message.type === "image") {
+    // PrintHub: รูปจะถูกใช้เป็นงานพิมพ์เฉพาะเมื่อผู้ใช้เปิด Print Session ไว้ก่อนเท่านั้น
+    // ถ้าไม่มี session จะไหลต่อไปยัง Personal Archive / งานหมายเดิมตามปกติ
+    if (typeof handlePrintHubImageMessage_ === "function" &&
+        handlePrintHubImageMessage_(message, user, userId, sourceId, isGroup, replyToken)) {
+      return { handled: true, route: "printhub-image" };
+    }
+
     if (typeof capturePersonalArchiveImage_ === "function") {
       var personalImageResult = capturePersonalArchiveImage_(message.id, {
         sourceId: sourceId,
@@ -306,6 +313,14 @@ function fixedWebhookProcessEvent_(event) {
       }
     }
     return { handled: true, route: "image" };
+  }
+
+  if (event.type === "message" && message.type === "file") {
+    if (typeof handlePrintHubFileMessage_ === "function" &&
+        handlePrintHubFileMessage_(message, user, userId, sourceId, isGroup, replyToken)) {
+      return { handled: true, route: "printhub-file" };
+    }
+    return { handled: false, reason: "file without active printhub session" };
   }
 
   if (event.type !== "message" || message.type !== "text") {
@@ -424,6 +439,13 @@ function fixedWebhookProcessEvent_(event) {
   if (typeof _handleGeneralInfoMessage_ === "function" &&
       _handleGeneralInfoMessage_(messageText, userId, user.name, groupId, replyToken, isGroup)) {
     return { handled: true, route: "general-info" };
+  }
+
+  // PrintHub natural-language router: ตรวจสิทธิ์/สถานะจริงด้วย Code
+  // และใช้ AI ได้เฉพาะช่วยตีความ/เรียบเรียง ไม่ให้ AI สั่งพิมพ์เอง
+  if (typeof handlePrintHubText_ === "function" &&
+      handlePrintHubText_(messageText, user, userId, sourceId, isGroup, replyToken)) {
+    return { handled: true, route: "printhub" };
   }
 
   if (typeof handleGeminiQAMessage_ === "function") {
