@@ -69,8 +69,11 @@ function _printHubClearSession_(userId, sourceId) {
 }
 
 function _printHubBridgeUrl_() {
-  return String(_printHubCfg_("PRINT_HUB_API_URL",
+  var url = String(_printHubCfg_("PRINT_HUB_API_URL",
     "https://script.google.com/macros/s/AKfycbyrbE6zq601rV5UZBPFdXarm2xFLp3_x__LOhSI5ikG1AQ7oUFNdiyEMnS1ElWu7T4Y/exec")).trim();
+  // ห้ามส่ง Bridge Token ไปโดเมนอื่น แม้ URL ใน Dashboard ถูกแก้ผิด
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)) return "";
+  return url;
 }
 
 function _printHubBridgeToken_() {
