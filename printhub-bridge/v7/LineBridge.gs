@@ -49,6 +49,7 @@ function lineBridgeUploadChunk_(b) {
   const index=Math.max(0,parseInt(b.index,10)||0);
   const data=String(b.data||'');
   if (!data) return {ok:false,msg:'EMPTY_CHUNK'};
+  if (data.length > 900000) return {ok:false,msg:'CHUNK_TOO_LARGE'};
   spoolFolder_().createFile(
     Utilities.newBlob(Utilities.base64Decode(data),'application/octet-stream',
       uploadId+'.part'+('000'+index).slice(-3))
