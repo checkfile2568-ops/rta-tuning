@@ -173,10 +173,10 @@ function _printHubDetectIntent_(text) {
   var t = String(text || "").trim().toLowerCase();
   if (!t) return { intent:"" };
   var jobId = _printHubJobIdFromText_(text);
-  if (/^(ยืนยันพิมพ์|พิมพ์เลย|ตกลงพิมพ์)\b/i.test(t)) return { intent:"CONFIRM", jobId:jobId };
-  if (/^(ยกเลิกพิมพ์|ยกเลิกงานพิมพ์|ไม่พิมพ์)\b/i.test(t)) return { intent:"CANCEL", jobId:jobId };
-  if (/^(ได้รับเอกสารแล้ว|รับเอกสารแล้ว|เอกสารออกแล้ว)\b/i.test(t)) return { intent:"RECEIVED", jobId:jobId };
-  if (/^(เอกสารไม่ออก|พิมพ์ไม่ครบ|มีปัญหางานพิมพ์)\b/i.test(t)) return { intent:"PROBLEM", jobId:jobId };
+  if (/^(ยืนยันพิมพ์|พิมพ์เลย|ตกลงพิมพ์)(?:\s|$)/i.test(t)) return { intent:"CONFIRM", jobId:jobId };
+  if (/^(ยกเลิกพิมพ์|ยกเลิกงานพิมพ์|ไม่พิมพ์)(?:\s|$)/i.test(t)) return { intent:"CANCEL", jobId:jobId };
+  if (/^(ได้รับเอกสารแล้ว|รับเอกสารแล้ว|เอกสารออกแล้ว)(?:\s|$)/i.test(t)) return { intent:"RECEIVED", jobId:jobId };
+  if (/^(เอกสารไม่ออก|พิมพ์ไม่ครบ|มีปัญหางานพิมพ์)(?:\s|$)/i.test(t)) return { intent:"PROBLEM", jobId:jobId };
   if (/(เครื่องพิมพ์|print\s*hub|ปริ้นฮับ).*(พร้อม|ออนไลน์|เปิด|ปิด|ใช้ได้ไหม|พร้อมไหม)|ตอนนี้.*(พิมพ์|ปริ้น).*(ได้ไหม|ได้หรือยัง)/i.test(t))
     return { intent:"HUB_STATUS", jobId:"" };
   if (/(งานพิมพ์|พิมพ์).*(ถึงไหน|สถานะ|เรียบร้อย|หรือยัง)|^(สถานะงานพิมพ์|คิวพิมพ์)/i.test(t))
