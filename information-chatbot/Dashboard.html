@@ -758,6 +758,108 @@
           </div>
         </div>
 
+        <div class="card" style="grid-column:1 / -1; border-color:#0ea5e9;">
+          <div class="card-header" style="background:linear-gradient(135deg,#eff6ff,#e0f2fe);color:#075985;">🖨️ ตั้งค่าการพิมพ์ผ่าน LINE / Print Hub</div>
+          <div class="card-body">
+            <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.65;color:#334155;">
+              <b>รูปแบบการทำงาน:</b> เฉพาะ VIP + Admin · PDF/JPG/PNG · A4 · 1 ชุด · ต้องยืนยันก่อนพิมพ์<br>
+              ถ้าคอม Print Hub ปิด ระบบเก็บไฟล์รอไว้ก่อน เมื่อ Agent ออนไลน์จะส่ง LINE ให้ยืนยันอีกครั้ง
+              <br><span style="color:#64748b;">🔒 สิทธิ์ผู้ใช้และสถานะงานพิมพ์ตรวจด้วย Code เท่านั้น AI ใช้ช่วยตีความ/เรียบเรียงข้อความ ไม่สามารถยกระดับสิทธิ์หรือเปลี่ยนสถานะงานได้</span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">สถานะระบบ</label>
+                <select id="cfg-printhub-status" class="form-select">
+                  <option value="OFF">🔴 ปิด</option>
+                  <option value="ON">🟢 เปิดใช้งาน</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">สิทธิ์ใช้งาน</label>
+                <input class="form-input" value="VIP + Admin" disabled>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">ช่องทางที่อนุญาต</label>
+                <input id="cfg-printhub-sources" class="form-input" value="all" placeholder="all / private / groups / Cxxx,Uxxx">
+                <small style="color:var(--text-dim);font-size:12px;">ในกลุ่มยังต้องเรียกบอทตาม Group Gate เดิม เช่น “บอท พิมพ์”</small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Print Hub Web App URL</label>
+                <input id="cfg-printhub-api-url" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">รองรับภาษาธรรมชาติ</label>
+                <select id="cfg-printhub-natural" class="form-select">
+                  <option value="ON">🟢 เปิด</option>
+                  <option value="OFF">🔴 ปิด</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">AI ปรับข้อความตอบให้เป็นธรรมชาติ</label>
+                <select id="cfg-printhub-ai-reply" class="form-select">
+                  <option value="OFF">⚪ ปิด — ใช้ข้อความที่ตั้งไว้ตรง ๆ</option>
+                  <option value="ON">🧠 เปิด — เรียบเรียงจากสถานะจริง</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">รูปแบบภาษา AI</label>
+                <input id="cfg-printhub-reply-style" class="form-input" value="สุภาพ เป็นธรรมชาติ กระชับ">
+              </div>
+              <div class="form-group">
+                <label class="form-label">แจ้งเมื่อเริ่มพิมพ์</label>
+                <select id="cfg-printhub-notify-printing" class="form-select">
+                  <option value="ON">🟢 แจ้ง</option>
+                  <option value="OFF">⚪ ไม่แจ้ง</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">อายุ Print Session</label>
+                <select id="cfg-printhub-session-minutes" class="form-select">
+                  <option value="5">5 นาที</option>
+                  <option value="10">10 นาที</option>
+                  <option value="15">15 นาที</option>
+                  <option value="30">30 นาที</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">ขนาดไฟล์สูงสุดจาก LINE</label>
+                <select id="cfg-printhub-max-mb" class="form-select">
+                  <option value="10">10 MB</option>
+                  <option value="15">15 MB</option>
+                  <option value="20">20 MB</option>
+                  <option value="25">25 MB</option>
+                  <option value="30">30 MB</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin:8px 0 14px;font-weight:700;color:#075985;">💬 ข้อความตอบพื้นฐาน</div>
+            <div class="form-group"><label class="form-label">เมื่อไม่มีสิทธิ์</label><textarea id="cfg-printhub-denied-reply" class="form-textarea" rows="2"></textarea></div>
+            <div class="form-group"><label class="form-label">เมื่อ Print Hub ออนไลน์และพร้อมรับไฟล์</label><textarea id="cfg-printhub-ready-reply" class="form-textarea" rows="4"></textarea></div>
+            <div class="form-group"><label class="form-label">เมื่อคอม Print Hub ออฟไลน์</label><textarea id="cfg-printhub-offline-reply" class="form-textarea" rows="4"></textarea></div>
+            <div class="form-group"><label class="form-label">เมื่อรับไฟล์ไว้ระหว่าง Offline</label><textarea id="cfg-printhub-queued-offline-reply" class="form-textarea" rows="3"></textarea></div>
+            <div class="form-group"><label class="form-label">เมื่อผู้ใช้ยืนยันว่าได้รับเอกสารแล้ว</label><textarea id="cfg-printhub-completed-reply" class="form-textarea" rows="2"></textarea></div>
+            <div class="form-group"><label class="form-label">เมื่อไฟล์ไม่รองรับ</label><textarea id="cfg-printhub-unsupported-reply" class="form-textarea" rows="2"></textarea></div>
+
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.6;color:#854d0e;">
+              🔐 <b>Bridge Token ไม่แสดงและไม่บันทึกใน Dashboard</b> — ต้องตั้ง <code>PRINT_HUB_BRIDGE_TOKEN</code> ใน Script Properties ของ LINE Bot และค่าเดียวกันฝั่ง Print Hub เท่านั้น
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header">⭐ ระบบเจ้าหน้าที่ (VIP) & พิกัด/หมาย</div>
           <div class="card-body">
@@ -3088,6 +3190,21 @@ function getSettingsClientDefaults() {
     PERSONAL_ARCHIVE_COMPRESSOR_URL: '',
     PERSONAL_ARCHIVE_COMPRESSOR_TOKEN: '',
     PERSONAL_ARCHIVE_REPLY_STATUS: 'OFF',
+    PRINT_HUB_LINE_STATUS: 'OFF',
+    PRINT_HUB_API_URL: 'https://script.google.com/macros/s/AKfycbyrbE6zq601rV5UZBPFdXarm2xFLp3_x__LOhSI5ikG1AQ7oUFNdiyEMnS1ElWu7T4Y/exec',
+    PRINT_HUB_ALLOWED_SOURCES: 'all',
+    PRINT_HUB_NATURAL_LANGUAGE: 'ON',
+    PRINT_HUB_AI_REPLY: 'OFF',
+    PRINT_HUB_REPLY_STYLE: 'สุภาพ เป็นธรรมชาติ กระชับ',
+    PRINT_HUB_SESSION_MINUTES: '10',
+    PRINT_HUB_MAX_MB: '20',
+    PRINT_HUB_NOTIFY_PRINTING: 'ON',
+    PRINT_HUB_DENIED_REPLY: '🔒 ระบบสั่งพิมพ์สำหรับ VIP/Admin เท่านั้นครับ',
+    PRINT_HUB_READY_REPLY: '🖨️ ได้ครับ Print Hub ออนไลน์อยู่\nรองรับไฟล์ PDF และรูปภาพ JPG/PNG ขนาด A4\nส่งไฟล์มาได้เลยครับ เมื่อรับไฟล์แล้วระบบจะถามยืนยันอีกครั้งก่อนพิมพ์',
+    PRINT_HUB_OFFLINE_REPLY: '🖨️ ได้ครับ ขณะนี้คอม Print Hub ยังออฟไลน์\nส่งไฟล์ PDF หรือรูปภาพ JPG/PNG มาได้ ระบบจะเก็บงานไว้ และเมื่อ Print Hub ออนไลน์จะแจ้งให้ยืนยันก่อนพิมพ์ครับ',
+    PRINT_HUB_QUEUED_OFFLINE_REPLY: '✅ รับไฟล์ไว้ในคิวแล้วครับ\nขณะนี้คอม Print Hub ยังออฟไลน์ เมื่อออนไลน์ระบบจะแจ้งให้ยืนยันพิมพ์อีกครั้งครับ',
+    PRINT_HUB_COMPLETED_REPLY: '✅ พิมพ์เอกสารเรียบร้อยแล้วครับ',
+    PRINT_HUB_UNSUPPORTED_REPLY: '⚠️ รองรับเฉพาะ PDF และรูปภาพ JPG/PNG ในขณะนี้ครับ',
     COURT_STATUS: 'OFF',
     COURT_ACCESS: 'vip',
     COURT_SHEET_ID: '',
@@ -3289,6 +3406,22 @@ function loadSettingsData() {
       setFieldValue('cfg-personal-archive-compressor-token', config.PERSONAL_ARCHIVE_COMPRESSOR_TOKEN || '');
       setFieldValue('cfg-personal-archive-reply-status', config.PERSONAL_ARCHIVE_REPLY_STATUS || 'OFF');
       if (typeof refreshPersonalArchiveFolder === 'function') refreshPersonalArchiveFolder();
+      // 🖨️ LINE / Print Hub
+      setFieldValue('cfg-printhub-status', config.PRINT_HUB_LINE_STATUS || 'OFF');
+      setFieldValue('cfg-printhub-api-url', config.PRINT_HUB_API_URL || 'https://script.google.com/macros/s/AKfycbyrbE6zq601rV5UZBPFdXarm2xFLp3_x__LOhSI5ikG1AQ7oUFNdiyEMnS1ElWu7T4Y/exec');
+      setFieldValue('cfg-printhub-sources', config.PRINT_HUB_ALLOWED_SOURCES || 'all');
+      setFieldValue('cfg-printhub-natural', config.PRINT_HUB_NATURAL_LANGUAGE || 'ON');
+      setFieldValue('cfg-printhub-ai-reply', config.PRINT_HUB_AI_REPLY || 'OFF');
+      setFieldValue('cfg-printhub-reply-style', config.PRINT_HUB_REPLY_STYLE || 'สุภาพ เป็นธรรมชาติ กระชับ');
+      setFieldValue('cfg-printhub-session-minutes', config.PRINT_HUB_SESSION_MINUTES || '10');
+      setFieldValue('cfg-printhub-max-mb', config.PRINT_HUB_MAX_MB || '20');
+      setFieldValue('cfg-printhub-notify-printing', config.PRINT_HUB_NOTIFY_PRINTING || 'ON');
+      setFieldValue('cfg-printhub-denied-reply', config.PRINT_HUB_DENIED_REPLY || '🔒 ระบบสั่งพิมพ์สำหรับ VIP/Admin เท่านั้นครับ');
+      setFieldValue('cfg-printhub-ready-reply', config.PRINT_HUB_READY_REPLY || '');
+      setFieldValue('cfg-printhub-offline-reply', config.PRINT_HUB_OFFLINE_REPLY || '');
+      setFieldValue('cfg-printhub-queued-offline-reply', config.PRINT_HUB_QUEUED_OFFLINE_REPLY || '');
+      setFieldValue('cfg-printhub-completed-reply', config.PRINT_HUB_COMPLETED_REPLY || '✅ พิมพ์เอกสารเรียบร้อยแล้วครับ');
+      setFieldValue('cfg-printhub-unsupported-reply', config.PRINT_HUB_UNSUPPORTED_REPLY || '');
       // ⚖️ บัญชีนัดความ
       setFieldValue('cfg-court-status', config.COURT_STATUS || 'OFF');
       setFieldValue('cfg-court-access', config.COURT_ACCESS || 'vip');
@@ -3356,6 +3489,21 @@ function saveAllConfigs() {
     PERSONAL_ARCHIVE_COMPRESSOR_URL: getFieldValue('cfg-personal-archive-compressor-url', ''),
     PERSONAL_ARCHIVE_COMPRESSOR_TOKEN: getFieldValue('cfg-personal-archive-compressor-token', ''),
     PERSONAL_ARCHIVE_REPLY_STATUS: getFieldValue('cfg-personal-archive-reply-status', 'OFF'),
+    PRINT_HUB_LINE_STATUS: getFieldValue('cfg-printhub-status', 'OFF'),
+    PRINT_HUB_API_URL: getFieldValue('cfg-printhub-api-url', ''),
+    PRINT_HUB_ALLOWED_SOURCES: getFieldValue('cfg-printhub-sources', 'all'),
+    PRINT_HUB_NATURAL_LANGUAGE: getFieldValue('cfg-printhub-natural', 'ON'),
+    PRINT_HUB_AI_REPLY: getFieldValue('cfg-printhub-ai-reply', 'OFF'),
+    PRINT_HUB_REPLY_STYLE: getFieldValue('cfg-printhub-reply-style', 'สุภาพ เป็นธรรมชาติ กระชับ'),
+    PRINT_HUB_SESSION_MINUTES: getFieldValue('cfg-printhub-session-minutes', '10'),
+    PRINT_HUB_MAX_MB: getFieldValue('cfg-printhub-max-mb', '20'),
+    PRINT_HUB_NOTIFY_PRINTING: getFieldValue('cfg-printhub-notify-printing', 'ON'),
+    PRINT_HUB_DENIED_REPLY: getFieldValue('cfg-printhub-denied-reply', '🔒 ระบบสั่งพิมพ์สำหรับ VIP/Admin เท่านั้นครับ'),
+    PRINT_HUB_READY_REPLY: getFieldValue('cfg-printhub-ready-reply', ''),
+    PRINT_HUB_OFFLINE_REPLY: getFieldValue('cfg-printhub-offline-reply', ''),
+    PRINT_HUB_QUEUED_OFFLINE_REPLY: getFieldValue('cfg-printhub-queued-offline-reply', ''),
+    PRINT_HUB_COMPLETED_REPLY: getFieldValue('cfg-printhub-completed-reply', '✅ พิมพ์เอกสารเรียบร้อยแล้วครับ'),
+    PRINT_HUB_UNSUPPORTED_REPLY: getFieldValue('cfg-printhub-unsupported-reply', ''),
     LOC_ALLOWED_SOURCES: getFieldValue('cfg-loc-sources', 'all'),
     SUMMARY_STATUS: getFieldValue('cfg-summary-status', 'OFF'),
     SUMMARY_INTERVAL: getFieldValue('cfg-summary-interval', 'daily'),
