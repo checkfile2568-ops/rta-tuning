@@ -188,10 +188,27 @@ function lineBridgeSearchTerms_(q) {
     .replace(/\s+/g,' ').trim();
 }
 
+function lineBridgeSearchWindow_(q) {
+  const raw=String(q||'');
+  let d=null;
+  const now=new Date();
+  if (/เมื่อวาน/.test(raw)) d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+  else if (/วันนี้/.test(raw)) d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if (!d) return null;
+  return {from:d.getTime(),to:d.getTime()+86400000};
+}
+
+function lineBridgeDateInWindow_(value,win) {
+  if (!win) return true;
+  const t=value?new Date(value).getTime():NaN;
+  return isFinite(t) && t>=win.from && t<win.to;
+}
+
 function lineBridgeSearch_(b) {
   const owner=lineBridgeOwner_(b.ownerId);
   const limit=Math.max(1,Math.min(20,parseInt(b.limit,10)||8));
   const term=lineBridgeSearchTerms_(b.query);
+  const win=lineBridgeSearchWindow_(b.query);
   const jobs=[];
   const sh=getDb_().getSheetByName('PRINT_QUEUE');
   const n=sh.getLastRow()-1;
@@ -200,6 +217,7 @@ function lineBridgeSearch_(b) {
     for (let i=rows.length-1;i>=0 && jobs.length<limit;i--) {
       const r=rows[i];
       if (String(r[Q.USER])!==owner) continue;
+      if (!lineBridgeDateInWindow_(r[Q.AT],win)) continue;
       if (term && String(r[Q.FILE]||'').toLowerCase().indexOf(term)<0) continue;
       jobs.push(lineBridgeJobObject_(r));
     }
@@ -213,6 +231,7 @@ function lineBridgeSearch_(b) {
       for (let i=rows.length-1;i>=0 && jobs.length<limit;i--) {
         const r=rows[i],id=String(r[0]||'');
         if (String(r[2])!==owner || seen[id]) continue;
+        if (!lineBridgeDateInWindow_(r[1],win)) continue;
         if (term && String(r[5]||'').toLowerCase().indexOf(term)<0) continue;
         jobs.push({id:id,file:String(r[5]||''),pages:Number(r[6]||0),copies:Number(r[7]||1),
           status:String(r[9]||''),at:r[1]?fmtThai_(r[1]):'',available:false});
