@@ -248,6 +248,16 @@ function fixedWebhookProcessEvent_(event) {
     return { handled: true, route: "location" };
   }
 
+  // 🖨️ PrintHub LINE: consume file/image only when this VIP/Admin has an active print session.
+  // If no print session exists, image continues through the original photo/archive flow unchanged.
+  if (event.type === "message" && (message.type === "file" || message.type === "image") &&
+      typeof _handlePrintHubMedia_ === "function") {
+    var printMediaResult = _handlePrintHubMedia_(event, message, user, userId, sourceId, isGroup, replyToken);
+    if (printMediaResult && printMediaResult.handled) {
+      return { handled: true, route: printMediaResult.route || "print-media" };
+    }
+  }
+
   if (event.type === "message" && message.type === "image") {
     if (typeof capturePersonalArchiveImage_ === "function") {
       var personalImageResult = capturePersonalArchiveImage_(message.id, {
@@ -424,6 +434,15 @@ function fixedWebhookProcessEvent_(event) {
   if (typeof _handleGeneralInfoMessage_ === "function" &&
       _handleGeneralInfoMessage_(messageText, userId, user.name, groupId, replyToken, isGroup)) {
     return { handled: true, route: "general-info" };
+  }
+
+  // 🖨️ PrintHub is a deterministic action handler. It may use AI internally only to
+  // classify/rephrase; permission and print state remain code/PrintHub facts.
+  if (typeof _handlePrintHubText_ === "function") {
+    var printTextResult = _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, replyToken);
+    if (printTextResult && printTextResult.handled) {
+      return { handled: true, route: printTextResult.route || "print-hub" };
+    }
   }
 
   if (typeof handleGeminiQAMessage_ === "function") {
