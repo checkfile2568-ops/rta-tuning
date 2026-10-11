@@ -177,6 +177,8 @@ function _printHubDetectIntent_(text) {
   if (/^(ยกเลิกพิมพ์|ยกเลิกงานพิมพ์|ไม่พิมพ์)\b/i.test(t)) return { intent:"CANCEL", jobId:jobId };
   if (/^(ได้รับเอกสารแล้ว|รับเอกสารแล้ว|เอกสารออกแล้ว)\b/i.test(t)) return { intent:"RECEIVED", jobId:jobId };
   if (/^(เอกสารไม่ออก|พิมพ์ไม่ครบ|มีปัญหางานพิมพ์)\b/i.test(t)) return { intent:"PROBLEM", jobId:jobId };
+  if (/(เครื่องพิมพ์|print\s*hub|ปริ้นฮับ).*(พร้อม|ออนไลน์|เปิด|ปิด|ใช้ได้ไหม|พร้อมไหม)|ตอนนี้.*(พิมพ์|ปริ้น).*(ได้ไหม|ได้หรือยัง)/i.test(t))
+    return { intent:"HUB_STATUS", jobId:"" };
   if (/(งานพิมพ์|พิมพ์).*(ถึงไหน|สถานะ|เรียบร้อย|หรือยัง)|^(สถานะงานพิมพ์|คิวพิมพ์)/i.test(t))
     return { intent:"STATUS", jobId:jobId };
   if (/(หา|ค้น|ย้อนหลัง).*(ไฟล์|เอกสาร).*(พิมพ์|ปริ้น)|(ไฟล์|เอกสาร).*(ที่เคย|เมื่อวาน|ย้อนหลัง).*(พิมพ์|ปริ้น)/i.test(t))
@@ -191,11 +193,11 @@ function _printHubAiIntent_(text) {
   if (!_printHubOn_("PRINT_HUB_NATURAL_LANGUAGE", true)) return "";
   if (!/(พิมพ์|ปริ้น|print|เครื่องพิมพ์|ไฟล์|เอกสาร)/i.test(String(text || ""))) return "";
   if (typeof _callGeminiAPI_ !== "function") return "";
-  var sys = "คุณเป็น intent classifier ของระบบ Print Hub เท่านั้น ตอบในช่อง answer เป็นค่าเดียวจาก PRINT_START, PRINT_STATUS, PRINT_SEARCH, PRINT_REPRINT, NONE ห้ามอธิบาย ห้ามสร้างสถานะหรือสิทธิ์";
+  var sys = "คุณเป็น intent classifier ของระบบ Print Hub เท่านั้น ตอบในช่อง answer เป็นค่าเดียวจาก PRINT_START, PRINT_STATUS, PRINT_HUB_STATUS, PRINT_SEARCH, PRINT_REPRINT, NONE ห้ามอธิบาย ห้ามสร้างสถานะหรือสิทธิ์";
   var r = _callGeminiAPI_("จัดประเภทข้อความนี้: "+String(text || "").substring(0,800), null, sys);
   if (!r || !r.ok) return "";
   var a = String(r.answer || "").trim().toUpperCase();
-  var map = { PRINT_START:"START", PRINT_STATUS:"STATUS", PRINT_SEARCH:"SEARCH", PRINT_REPRINT:"REPRINT" };
+  var map = { PRINT_START:"START", PRINT_STATUS:"STATUS", PRINT_HUB_STATUS:"HUB_STATUS", PRINT_SEARCH:"SEARCH", PRINT_REPRINT:"REPRINT" };
   return map[a] || "";
 }
 
@@ -268,10 +270,15 @@ function _printHubReceiveFlex_(jobId, fileName) {
 }
 
 function _printHubEnsurePollTrigger_() {
+  var lock = LockService.getScriptLock();
   try {
+    lock.waitLock(5000);
     var found = ScriptApp.getProjectTriggers().some(function(t){ return t.getHandlerFunction() === "pollPrintHubLineJobs_"; });
     if (!found) ScriptApp.newTrigger("pollPrintHubLineJobs_").timeBased().everyMinutes(1).create();
-  } catch (e) {}
+  } catch (e) {
+  } finally {
+    try { lock.releaseLock(); } catch (ignore) {}
+  }
 }
 
 function _printHubOpenSession_(messageText, user, userId, sourceId, isGroup, replyToken) {
@@ -282,6 +289,10 @@ function _printHubOpenSession_(messageText, user, userId, sourceId, isGroup, rep
   if (!_printHubSourceAllowed_(sourceId, isGroup)) return false;
   _printHubEnsurePollTrigger_();
   var agent = _printHubAgentStatus_();
+  if (agent.error) {
+    _printHubReply_(replyToken, "⚠️ ขณะนี้ยังเชื่อมต่อ Print Hub ไม่ได้ครับ\nกรุณาตรวจสอบการตั้งค่า Bridge แล้วลองใหม่อีกครั้ง");
+    return true;
+  }
   _printHubSaveSession_(userId, sourceId, { step:"WAIT_FILE", at:Date.now() });
   var base = agent.online
     ? _printHubCfg_("PRINT_HUB_READY_REPLY","🖨️ ได้ครับ Print Hub ออนไลน์อยู่\nรองรับไฟล์ PDF และรูปภาพ JPG/PNG ขนาด A4\nส่งไฟล์มาได้เลยครับ เมื่อรับไฟล์แล้วระบบจะถามยืนยันอีกครั้งก่อนพิมพ์")
@@ -392,12 +403,34 @@ function _printHubAction_(intent, user, userId, sourceId, isGroup, replyToken, j
     return true;
   }
   var r;
+  if (intent === "HUB_STATUS") {
+    var agentStatus = _printHubAgentStatus_();
+    if (agentStatus.error) {
+      _printHubReply_(replyToken, "⚠️ ยังเชื่อมต่อ Print Hub ไม่ได้ครับ\n"+agentStatus.error);
+    } else if (agentStatus.online) {
+      _printHubReply_(replyToken, _printHubNaturalReply_(
+        "agentOnline=true; printer="+agentStatus.printer+"; lastSeen="+agentStatus.lastSeen,
+        "🟢 Print Hub ออนไลน์ครับ\nเครื่องพิมพ์: "+(agentStatus.printer || "พร้อมใช้งาน")
+      ));
+    } else {
+      _printHubReply_(replyToken, _printHubNaturalReply_(
+        "agentOnline=false; printer="+agentStatus.printer+"; lastSeen="+agentStatus.lastSeen,
+        "⚪ ขณะนี้คอม Print Hub ยังออฟไลน์ครับ\nสามารถฝากไฟล์ไว้ก่อนได้ เมื่อออนไลน์ระบบจะแจ้งให้ยืนยันก่อนพิมพ์"
+      ));
+    }
+    return true;
+  }
   if (intent === "CONFIRM") {
     r = _printHubBridgeCall_("line_confirm",{jobId:jobId,ownerId:userId});
     if (r && r.ok) {
       _printHubTrackUpdate_(jobId,{status:"QUEUED",agentOnline:true,lastNotice:"QUEUED"});
       _printHubReply_(replyToken,_printHubNaturalReply_("ผู้ใช้ยืนยันแล้ว; งาน="+jobId+"; status=QUEUED","🖨️ ยืนยันแล้วครับ ส่งงานเข้าคิวพิมพ์เรียบร้อย"));
-    } else _printHubReply_(replyToken,"⚠️ ยังยืนยันพิมพ์ไม่ได้ครับ\n"+String(r && r.msg || ""));
+    } else {
+      if (r && r.code === "AGENT_OFFLINE") {
+        _printHubTrackUpdate_(jobId,{status:"WAIT_AGENT",agentOnline:false,notifiedOnline:false,lastNotice:"WAIT_AGENT"});
+      }
+      _printHubReply_(replyToken,"⚠️ ยังยืนยันพิมพ์ไม่ได้ครับ\n"+String(r && r.msg || ""));
+    }
     return true;
   }
   if (intent === "CANCEL") {
@@ -504,6 +537,11 @@ function pollPrintHubLineJobs_() {
     if (j.status === "DONE" && notice !== "DONE") {
       _printHubPush_(to,_printHubCfg_("PRINT_HUB_COMPLETED_REPLY","✅ พิมพ์เอกสารเรียบร้อยแล้วครับ"));
       _printHubTrackUpdate_(jobId,{status:"DONE",agentOnline:!!agent.online,lastNotice:"DONE"});
+      return;
+    }
+    if ((j.status === "CANCELLED" || j.status === "EXPIRED") && notice !== j.status) {
+      if (j.status === "EXPIRED") _printHubPush_(to,"⌛ งานพิมพ์ "+j.file+" หมดอายุแล้วครับ กรุณาส่งไฟล์ใหม่หากยังต้องการพิมพ์");
+      _printHubTrackUpdate_(jobId,{status:j.status,agentOnline:!!agent.online,lastNotice:j.status});
       return;
     }
   });
