@@ -319,8 +319,10 @@ function _printHubDownloadLineContent_(messageId, fileName, mimeHint) {
   var bytes = blob.getBytes();
   var maxMb = Math.max(1, Math.min(30, parseInt(_printHubCfg_("PRINT_HUB_MAX_MB","20"),10)||20));
   if (bytes.length > maxMb*1024*1024) return { ok:false, msg:"ไฟล์ใหญ่เกิน "+maxMb+" MB" };
-  var mime = _printHubMimeFromName_(fileName, mimeHint || blob.getContentType());
-  if (["application/pdf","image/jpeg","image/png"].indexOf(mime) < 0)
+  var actualMime = String(blob.getContentType() || "").toLowerCase();
+  var allowed = ["application/pdf","image/jpeg","image/png"];
+  var mime = allowed.indexOf(actualMime) >= 0 ? actualMime : _printHubMimeFromName_(fileName, mimeHint || actualMime);
+  if (allowed.indexOf(mime) < 0)
     return { ok:false, msg:_printHubCfg_("PRINT_HUB_UNSUPPORTED_REPLY","⚠️ รองรับเฉพาะ PDF และรูปภาพ JPG/PNG ในขณะนี้ครับ") };
   return { ok:true, bytes:bytes, mime:mime };
 }
@@ -355,6 +357,10 @@ function _printHubHandleIncomingContent_(message, user, userId, sourceId, isGrou
                              : String(message.fileName || "document.pdf");
   var got = _printHubDownloadLineContent_(message.id, fileName, forcedImage ? "image/jpeg" : "");
   if (!got.ok) { _printHubReply_(replyToken, got.msg); return true; }
+  if (forcedImage) {
+    fileName = "LINE_" + Utilities.formatDate(new Date(), Session.getScriptTimeZone(),"yyyyMMdd_HHmmss") +
+      (got.mime === "image/png" ? ".png" : ".jpg");
+  }
 
   var up = _printHubUploadBytes_({
     bytes:got.bytes, mime:got.mime, fileName:fileName,
