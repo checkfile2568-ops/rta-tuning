@@ -1,7 +1,7 @@
 /** Isolated music module. No case sheets, legacy TV registry, LINE, or refresh writers. */
 var MUSIC_MAX_BYTES_ = 8 * 1024 * 1024;
 function musicEnabled_() { try { return PropertiesService.getScriptProperties().getProperty('MUSIC_ENABLED') === 'true'; } catch(e) { return false; } }
-function musicInclude_(name) { var html=HtmlService.createHtmlOutputFromFile(name).getContent(); return name==='MusicTV' ? html+HtmlService.createHtmlOutputFromFile('MusicRemote').getContent() : html; }
+function musicInclude_(name) { var html=HtmlService.createHtmlOutputFromFile(name).getContent(); return name==='MusicTV' ? HtmlService.createHtmlOutputFromFile('MusicQR').getContent()+html+HtmlService.createHtmlOutputFromFile('MusicRemote').getContent() : html; }
 function musicProps_() { return PropertiesService.getScriptProperties(); }
 function musicRandom_() { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, ''); }
 function musicConfig_() {

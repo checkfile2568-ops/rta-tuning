@@ -20,14 +20,16 @@
 </head>
 <body>
 <div id="load"><div class="em">⚖</div><div class="nm">บัญชีนัดพิจารณาคดี — จอ TV</div><div class="su">ศาลจังหวัดลพบุรี</div><div class="sp"></div></div>
-<iframe id="app" src="https://script.google.com/macros/s/AKfycbyeAHSW2vjTf1KSV6xy-xBpeW0CGPxVJtuC2F7jQU77G7DkWdUYIDGl9-BJp2gEMUH67Q/exec?page=tv"
+<iframe id="app" data-src="https://script.google.com/macros/s/AKfycbyeAHSW2vjTf1KSV6xy-xBpeW0CGPxVJtuC2F7jQU77G7DkWdUYIDGl9-BJp2gEMUH67Q/exec?page=tv"
   onload="var l=document.getElementById('load');if(l)l.style.opacity=0,setTimeout(function(){l.style.display='none'},300)"
   allow="clipboard-write; fullscreen; geolocation; camera" allowfullscreen></iframe>
 <script>setTimeout(function(){var l=document.getElementById('load');if(l)l.style.display='none';},6000);</script>
 <script>
 (() => {
   'use strict';
-  const frame=document.getElementById('app'),url=frame.src;
+  const frame=document.getElementById('app'),target=new URL(frame.dataset.src),ticket=new URL(location.href).searchParams.get('musicPair');
+  if(ticket&&/^[a-f0-9]{32}$/.test(ticket))target.searchParams.set('musicPair',ticket);
+  const url=target.href;frame.src=url;
   let source=null,nonce='',last='';
   function belongsToTV(candidate){
     try{for(let depth=0;depth<6&&candidate;depth++){if(candidate===frame.contentWindow)return true;const next=candidate.parent;if(next===candidate)return false;candidate=next;}}catch(e){}

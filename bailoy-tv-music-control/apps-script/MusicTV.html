@@ -29,6 +29,7 @@
   #bm-panel .bm-footer button{min-height:42px;padding:9px 12px;font-size:14px}
   #bm-panel #bm-close{border-color:transparent;background:transparent;color:#64766a}
   #bm-panel #bm-close:hover{background:#e8efeb;color:#203c34}
+  #bm-qr-box{margin-top:18px;border-top:1px solid #e6ece8;padding-top:16px;text-align:center}#bm-qr-box canvas{display:block;width:245px;max-width:100%;height:auto;margin:12px auto;background:white;image-rendering:pixelated}#bm-qr-box h3{font:700 16px/1.5 Tahoma,sans-serif;margin:0}#bm-qr-state{font-size:13px!important}#bm-qr-new{min-height:42px;padding:8px 12px;margin-top:12px}#bm-panel .bm-footer{flex-wrap:wrap}#bm-qr-toggle{min-height:42px}#bm-qr-box[hidden],#bm-qr-new[hidden],#bm-qr-canvas[hidden]{display:none!important}
   #bm-launcher[hidden],#bm-panel[hidden],#bm-pair[hidden],#bm-toggle[hidden],#bm-unlock[hidden],#bm-fullscreen[hidden]{display:none!important}
   @media(max-width:360px){#bm-panel .bm-header,#bm-panel .bm-body{padding:16px}#bm-panel .bm-footer{padding:12px 16px;gap:6px}#bm-panel .bm-footer button{padding:8px;font-size:13px;gap:5px}}
 </style>
@@ -41,8 +42,9 @@
   <div class="bm-body">
     <div class="bm-status"><span class="bm-status-dot" aria-hidden="true"></span><p id="bm-info" role="status" aria-live="polite">กำลังเริ่มระบบเพลง</p></div>
     <div id="bm-pair"><label for="bm-code">รหัสจับคู่จากมือถือ (12 ตัว)</label><input id="bm-code" autocomplete="off" autocapitalize="characters" maxlength="16" spellcheck="false"><button id="bm-claim" type="button"><i data-bm-icon="link" aria-hidden="true"></i>จับคู่ทีวี</button></div>
+    <div id="bm-qr-box" hidden><h3 id="bm-qr-title">สแกนเพื่อจับคู่ทีวี</h3><canvas id="bm-qr-canvas" role="img" aria-label="QR สำหรับจับคู่ทีวี"></canvas><p id="bm-qr-state" role="status" aria-live="polite"></p><button id="bm-qr-new" type="button">สร้าง QR ใหม่</button></div>
   </div>
-  <footer class="bm-footer"><button id="bm-retry" type="button"><i data-bm-icon="refresh-cw" aria-hidden="true"></i>เชื่อมต่อใหม่</button><button id="bm-close" type="button"><i data-bm-icon="chevron-down" aria-hidden="true"></i>ซ่อนตั้งค่า</button></footer>
+  <footer class="bm-footer"><button id="bm-qr-toggle" type="button" aria-controls="bm-qr-box" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><path d="M15 15h3v3h3M15 21h3M21 15v-3M12 3v3M3 12h3M12 12h3M12 18v3"/></svg>QR มือถือ</button><button id="bm-retry" type="button"><i data-bm-icon="refresh-cw" aria-hidden="true"></i>เชื่อมต่อใหม่</button><button id="bm-close" type="button"><i data-bm-icon="chevron-down" aria-hidden="true"></i>ซ่อนตั้งค่า</button></footer>
 </section>
 <script>
 (() => {
@@ -78,11 +80,11 @@
   }
   const KEY='bailoy.music.device.v1';
   function stored(key) { try{return localStorage.getItem(key);}catch(e){return null;} }
-  function save(key,value) {try{localStorage.setItem(key,value);}catch(e){/* playback continues in memory */} }
+  function save(key,value) {try{localStorage.setItem(key,value);return true;}catch(e){return false;/* playback continues in memory */} }
   function panel(show){
     revealLauncher();$('bm-panel').hidden=!show;$('bm-toggle').setAttribute('aria-expanded',String(show));
     if(show&&keyboardMode)($('bm-pair').hidden?$('bm-retry'):$('bm-code')).focus();
-    if(!show){
+    if(!show){pauseQR();$('bm-qr-box').hidden=true;$('bm-qr-toggle').setAttribute('aria-expanded','false');
       if(keyboardMode)$('bm-toggle').focus();
       // Let opacity reach 1 before starting the three-second fade after closing.
       requestAnimationFrame(()=>requestAnimationFrame(fadeLauncher));
@@ -243,7 +245,7 @@
   async function start() {
     if(!ready||connecting||link)return;
     secret=secret||stored(KEY)||'';$('bm-pair').hidden=!!secret;
-    if(!secret){info('เพิ่มทีวีจากหน้าควบคุมเพลงบนมือถือ แล้วกรอกรหัสจับคู่');panel(true);return;}
+    if(!secret){info('กด QR มือถือแล้วสแกนเพื่อจับคู่ หรือใช้รหัสจากมือถือ');panel(true);return;}
     connecting=true;$('bm-panel').dataset.connection='connecting';info('กำลังเชื่อมต่อระบบเพลง');
     try {
       const boot=await M.rpc('getMusicTVBoot',secret);room=boot.room;
@@ -257,9 +259,40 @@
     }catch(e){$('bm-panel').dataset.connection='offline';info('เพลงเชื่อมต่อไม่ได้: '+e.message+' • กดเชื่อมต่อใหม่');if(retryCount===0)panel(true);}
     finally{connecting=false;if(!link&&secret&&!suspended)scheduleRetry();}
   }
+  let qrPair=null,qrTimer=null,qrClock=null,qrBusy=false,qrPolling=false;
+  function pauseQR(){clearTimeout(qrTimer);clearInterval(qrClock);qrTimer=null;qrClock=null;}
+  function qrTick(){if(!qrPair)return;const left=Math.max(0,Math.ceil((qrPair.expiresAt-Date.now())/1000));$('bm-qr-state').textContent=left?'ใช้มือถือสแกนและยืนยัน • เหลือ '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0'):'QR หมดอายุแล้ว • กดสร้าง QR ใหม่';if(!left)pauseQR();}
+  function renderQR(url){window.BailoyMusicQR($('bm-qr-canvas'),url);$('bm-qr-canvas').hidden=false;}
+  async function cancelQR(){pauseQR();const old=qrPair;qrPair=null;if(old)await M.rpc('cancelMusicTVPair',old.ticket,old.proof);$('bm-qr-box').hidden=true;$('bm-qr-toggle').setAttribute('aria-expanded','false');}
+  async function pollQR(){
+    const own=qrPair;if(!own||qrPolling||$('bm-qr-box').hidden||suspended||Date.now()>=own.expiresAt)return;
+    qrPolling=true;
+    try {
+      const result=await M.rpc('getMusicTVPairResult',own.ticket,own.proof);
+      if(qrPair!==own)return;
+      if(!result.pending){
+        pauseQR();qrPair=null;secret=result.secret;const persistent=save(KEY,secret);$('bm-pair').hidden=true;$('bm-qr-box').hidden=true;$('bm-qr-toggle').setAttribute('aria-expanded','false');panel(false);await start();if(!persistent)info('จับคู่แล้วในหน้านี้ • เบราว์เซอร์เก็บการจับคู่ไว้ไม่ได้');return;
+      }
+    }catch(e){if(qrPair===own){$('bm-qr-state').textContent=e.message;if(/หมดอายุ/.test(e.message)){pauseQR();own.expiresAt=0;}}}
+    finally{qrPolling=false;if(qrPair===own&&!$('bm-qr-box').hidden&&!suspended&&Date.now()<own.expiresAt)qrTimer=setTimeout(pollQR,3000);}
+  }
+  async function createQR(){
+    if(qrBusy)return;qrBusy=true;$('bm-qr-new').disabled=true;$('bm-qr-toggle').disabled=true;$('bm-qr-canvas').hidden=true;pauseQR();$('bm-qr-state').textContent='กำลังสร้าง QR จับคู่';
+    try{const old=qrPair;qrPair=null;if(old)await M.rpc('cancelMusicTVPair',old.ticket,old.proof);const pair=await M.rpc('beginMusicTVPair');pair.expiresAt=Date.now()+pair.expiresIn*1000;qrPair=pair;renderQR(pair.url);if(!$('bm-qr-box').hidden&&!suspended){qrTick();qrClock=setInterval(qrTick,1000);pollQR();}}
+    catch(e){$('bm-qr-state').textContent=e.message;}
+    finally{qrBusy=false;$('bm-qr-new').disabled=false;$('bm-qr-toggle').disabled=false;}
+  }
+  $('bm-qr-toggle').onclick=async()=>{
+    const show=$('bm-qr-box').hidden;$('bm-qr-box').hidden=!show;$('bm-qr-toggle').setAttribute('aria-expanded',String(show));
+    if(!show){pauseQR();return;}panel(true);
+    if(secret){$('bm-qr-title').textContent='เปิดหน้าควบคุมเพลง';$('bm-qr-new').hidden=true;renderQR('https://checkfile2568-ops.github.io/rta-tuning/court-music.html');$('bm-qr-state').textContent='สแกนแล้วเข้าสู่ระบบและเลือกทีวีนี้ • ไม่ต้องจับคู่ใหม่';}
+    else{$('bm-qr-title').textContent='สแกนเพื่อจับคู่ทีวี';$('bm-qr-new').hidden=false;if(qrPair&&Date.now()<qrPair.expiresAt){renderQR(qrPair.url);qrTick();qrClock=setInterval(qrTick,1000);pollQR();}else await createQR();}
+  };
+  $('bm-qr-new').onclick=createQR;
+
   $('bm-claim').onclick=async()=>{
     $('bm-claim').disabled=true;
-    try{const d=await M.rpc('claimMusicDevice',$('bm-code').value);secret=d.secret;save(KEY,secret);$('bm-pair').hidden=true;panel(false);await start();}
+    try{await cancelQR();const d=await M.rpc('claimMusicDevice',$('bm-code').value);secret=d.secret;save(KEY,secret);$('bm-pair').hidden=true;panel(false);await start();}
     catch(e){info(e.message);}finally{$('bm-claim').disabled=false;}
   };
   function scheduleRetry(){clearTimeout(reconnectTimer);const delay=Math.min(60000,5000*Math.pow(2,retryCount++));reconnectTimer=setTimeout(()=>{if(!suspended&&ready&&!link)start();},delay);}
@@ -279,7 +312,7 @@
   $('bm-retry').onclick=()=>reconnectMusic();
   window.BailoyMusicTV={get link(){return link;},get room(){return room;},get offset(){return serverOffset;},show:()=>panel(true),hide:()=>panel(false),message:info,publish,reconnect:reconnectMusic,retryAudio};
   window.addEventListener('online',()=>{retryCount=0;if(!suspended&&ready){if(link)link.db.goOnline();else start();}});
-  function finishPresence(){suspended=true;clearTimeout(reconnectTimer);connected=false;clearInterval(heartbeat);if(presence)presence.remove().catch(()=>{});if(link)link.db.goOffline();}
+  function finishPresence(){pauseQR();suspended=true;clearTimeout(reconnectTimer);connected=false;clearInterval(heartbeat);if(presence)presence.remove().catch(()=>{});if(link)link.db.goOffline();}
   window.addEventListener('pagehide',finishPresence);
   window.addEventListener('pageshow',e=>{suspended=false;if(e.persisted){if(link)link.db.goOnline();else if(ready)start();}});
   // Observe startup rendering without altering any legacy TV function or interval.
