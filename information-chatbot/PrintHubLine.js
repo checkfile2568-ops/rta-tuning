@@ -13,9 +13,62 @@
 var PRINT_HUB_SESSION_TTL_SEC_ = 10 * 60;
 var PRINT_HUB_UPLOAD_CHUNK_BYTES_ = 1024 * 1024;
 var PRINT_HUB_MAX_AI_TEXT_ = 1200;
+var PRINT_HUB_DEFAULT_MAX_FILE_MB_ = 10;
+var PRINT_HUB_MAX_NOTIFY_ATTEMPTS_ = 5;
+var PRINT_HUB_BRIDGE_ERROR_CODES_ = ["NO_URL", "NO_TOKEN", "FETCH_ERROR", "BAD_RESPONSE"];
 
 function _printHubOn_() {
   return String(getConfig("PRINT_HUB_STATUS") || "OFF").toUpperCase() === "ON";
+}
+
+function _printHubSessionTtlSec_() {
+  var minutes = Number(getConfig("PRINT_HUB_SESSION_MINUTES") || 30);
+  if (!isFinite(minutes) || minutes <= 0) minutes = 30;
+  return Math.min(Math.round(minutes * 60), 6 * 60 * 60);
+}
+
+function _printHubMaxFileBytes_() {
+  var mb = Number(getConfig("PRINT_HUB_MAX_FILE_MB") || PRINT_HUB_DEFAULT_MAX_FILE_MB_);
+  if (!isFinite(mb) || mb <= 0) mb = PRINT_HUB_DEFAULT_MAX_FILE_MB_;
+  return Math.round(mb * 1024 * 1024);
+}
+
+function _printHubOfflineRejects_() {
+  return String(getConfig("PRINT_HUB_OFFLINE_MODE") || "HOLD").toUpperCase() === "REJECT";
+}
+
+function _printHubHistoryOn_() {
+  return String(getConfig("PRINT_HUB_HISTORY_STATUS") || "ON").toUpperCase() === "ON";
+}
+
+function _printHubAllowedExtensions_() {
+  var raw = String(getConfig("PRINT_HUB_FILE_TYPES") || "pdf,jpg,jpeg,png");
+  var list = raw.split(",").map(function(x) {
+    return x.trim().toLowerCase().replace(/^\./, "");
+  }).filter(Boolean);
+  return list.length ? list : ["pdf", "jpg", "jpeg", "png"];
+}
+
+/**
+ * Distinguishes a bridge configuration/transport failure from a genuinely offline agent.
+ * Returning OFFLINE for an unconfigured bridge would tell the user their file is safely
+ * queued when nothing received it, so the two cases must never be collapsed.
+ */
+function _printHubBridgeFailed_(res) {
+  if (!res) return true;
+  if (res.ok === true) return false;
+  var code = String(res.code || "");
+  if (PRINT_HUB_BRIDGE_ERROR_CODES_.indexOf(code) >= 0) return true;
+  return code.indexOf("HTTP_") === 0;
+}
+
+function _printHubConfigErrorText_(res) {
+  var detail = res && res.code === "NO_URL" ? "ยังไม่ได้ตั้งค่า URL ของ Print Hub"
+    : res && res.code === "NO_TOKEN" ? "ยังไม่ได้ตั้งค่า Bridge Token ของ Print Hub"
+    : "ติดต่อ Print Hub ไม่ได้";
+  return _printHubReplyConfig_("PRINT_HUB_CONFIG_ERROR_REPLY",
+    "⚠️ ขออภัยครับ ระบบสั่งพิมพ์ผ่าน LINE ยังเชื่อมต่อ Print Hub ไม่ได้ (" + detail +
+    ") จึงยังรับไฟล์ไว้ไม่ได้ กรุณาแจ้งผู้ดูแลระบบครับ");
 }
 
 function _printHubAllowed_(user, userId) {
@@ -51,7 +104,7 @@ function _savePrintHubSession_(sourceId, userId, data) {
   CacheService.getScriptCache().put(
     _printHubSessionKey_(sourceId, userId),
     JSON.stringify(data),
-    PRINT_HUB_SESSION_TTL_SEC_
+    _printHubSessionTtlSec_()
   );
   return data;
 }
@@ -66,7 +119,23 @@ function _printHubKeywords_() {
 }
 
 function _printHubNormalize_(text) {
-  return String(text || "").trim().replace(/\s+/g, " ");
+  return String(text || "").trim().replace(/\s+/g, " ")
+    // Group messages normally arrive already stripped of the bot prefix, but when another
+    // handler claims the prefix branch first the raw text still carries it. Strip it here so
+    // confirmation buttons keep working whatever GEMINI_QA_GROUP_PREFIX is set to.
+    .replace(/^#?บอท\S*\s+/i, "");
+}
+
+/**
+ * Search/knowledge commands must keep reaching their own handlers. PrintHub runs ahead of
+ * them in the webhook, so anything that looks like a lookup is handed straight back.
+ */
+function _printHubLooksLikeSearch_(text) {
+  var t = String(text || "").trim().toLowerCase();
+  if (!t) return false;
+  var keyword = String((typeof getConfig === "function" && getConfig("SEARCH_KEYWORD")) || "ค้นหา").trim().toLowerCase();
+  if (keyword && t.indexOf(keyword) === 0) return true;
+  return /^(?:\/|ค้นหา|ค้น|ขอข้อมูล|สอบถาม|บัญชีนัดความ|บัญชีนัด|นัดความ|นัด)/.test(t);
 }
 
 function _printHubDetectIntentDeterministic_(text) {
@@ -95,15 +164,18 @@ function _printHubDetectIntentDeterministic_(text) {
     return { intent: "PRINT_HISTORY", query: t.replace(/^(?:งานพิมพ์|คิวพิมพ์|ประวัติพิมพ์|หาไฟล์พิมพ์|ค้นหาไฟล์พิมพ์)\s*/i, "") };
   }
 
+  // Everything below is a loose match, so lookup commands are released back to search/KB first.
+  if (_printHubLooksLikeSearch_(t)) return { intent: "NONE" };
+
+  // Verb-first only: the print word must open the request (optionally after a polite lead-in).
+  // "ขอเอกสารพิมพ์คำพิพากษา" is a records request, not a print request, and must not be taken.
   var keys = _printHubKeywords_();
+  var lead = t.replace(/^(?:ช่วย|ฝาก|ขอ|รบกวน|กรุณา|อยาก|ต้องการ|สั่ง)\s*/, "");
   for (var i = 0; i < keys.length; i++) {
-    if (t === keys[i] || t.indexOf(keys[i]) === 0 || t.indexOf("ช่วย" + keys[i]) >= 0 ||
-        t.indexOf("ฝาก" + keys[i]) >= 0 || t.indexOf("ขอ" + keys[i]) >= 0) {
+    if (!keys[i]) continue;
+    if (t === keys[i] || lead === keys[i] || lead.indexOf(keys[i]) === 0) {
       return { intent: "PRINT_START" };
     }
-  }
-  if (/(พิมพ์|ปริ้น|ปรินต์|print)/i.test(t) && /(ไฟล์|เอกสาร|pdf|รูป|เครื่อง)/i.test(t)) {
-    return { intent: "PRINT_START" };
   }
   return { intent: "NONE" };
 }
@@ -116,6 +188,7 @@ function _printHubDetectIntentAI_(text) {
   if (!/(พิมพ์|ปริ้น|ปรินต์|print|เครื่องพิมพ์|งานพิมพ์|คิวพิมพ์|ไฟล์.{0,12}(เครื่อง|ออกกระดาษ))/i.test(candidate)) {
     return { intent: "NONE" };
   }
+  if (_printHubLooksLikeSearch_(candidate)) return { intent: "NONE" };
   if (typeof _callGeminiAPI_ !== "function") return { intent: "NONE" };
   var prompt = [
     "จำแนก intent ของข้อความต่อไปนี้สำหรับระบบ PrintHub เท่านั้น",
@@ -125,8 +198,13 @@ function _printHubDetectIntentAI_(text) {
   ].join("\n");
   try {
     var r = _callGeminiAPI_(prompt, null, "คุณเป็น intent classifier เท่านั้น ตอบเฉพาะ label ที่กำหนด");
+    // _callGeminiAPI_ forces a JSON response schema, so the label arrives inside `answer` and
+    // may carry extra words. Match the label defensively instead of requiring an exact string.
     var label = r && r.ok ? String(r.text || r.answer || "").trim().toUpperCase() : "";
-    if (["PRINT_START","PRINT_HUB_STATUS","PRINT_HISTORY"].indexOf(label) >= 0) return { intent: label };
+    var known = ["PRINT_HUB_STATUS", "PRINT_HISTORY", "PRINT_START"];
+    for (var k = 0; k < known.length; k++) {
+      if (label.indexOf(known[k]) >= 0) return { intent: known[k] };
+    }
   } catch (e) {}
   return { intent: "NONE" };
 }
@@ -270,23 +348,70 @@ function _printHubReceivedFlex_(job) {
 }
 
 function _printHubStart_(messageText, user, userId, sourceId, isGroup, replyToken) {
-  if (!_printHubAllowed_(user, userId)) {
-    _printHubReply_(replyToken,
-      _printHubReplyConfig_("PRINT_HUB_DENIED_REPLY", "🔒 ระบบสั่งพิมพ์สำหรับเจ้าหน้าที่ VIP/Admin เท่านั้นครับ"),
-      { allowed:false }, userId);
-    return { handled:true, route:"print-denied" };
-  }
+  if (!_printHubAllowed_(user, userId)) return _printHubDeny_(replyToken, userId, isGroup);
   if (!_printHubSourceAllowed_(isGroup)) return { handled:false };
 
   var status = _printHubBridge_("line_status", { lineUserId:userId, sourceId:sourceId });
+  // A bridge that is unreachable or unconfigured is NOT an offline printer. Opening a file
+  // session here would promise the user a queue that does not exist.
+  if (_printHubBridgeFailed_(status)) {
+    _printHubReply_(replyToken, _printHubConfigErrorText_(status), { error:true }, userId);
+    _printHubLog_(userId, user.name, "สั่งพิมพ์ผ่าน LINE (เชื่อมต่อ Print Hub ไม่ได้)", "Error");
+    return { handled:true, route:"print-config-error" };
+  }
+
   var facts = { allowed:true, agentOnline:!!(status && status.agentOnline), printer:status && status.printer || "" };
+
+  // Admin may choose to refuse files while the agent is down rather than hold them.
+  if (!facts.agentOnline && _printHubOfflineRejects_()) {
+    _printHubReply_(replyToken,
+      _printHubReplyConfig_("PRINT_HUB_REJECT_REPLY",
+        "⚪ ขณะนี้คอม Print Hub ออฟไลน์ และระบบตั้งค่าให้ยังไม่รับไฟล์ไว้ครับ กรุณาส่งใหม่อีกครั้งเมื่อเครื่องออนไลน์"),
+      facts, userId);
+    return { handled:true, route:"print-offline-reject" };
+  }
+
   _savePrintHubSession_(sourceId, userId, { state:"WAITING_FILE", isGroup:!!isGroup, userName:user.name });
 
   var base = facts.agentOnline
     ? _printHubReplyConfig_("PRINT_HUB_START_REPLY", "🖨️ ได้ครับ Print Hub พร้อมใช้งาน รองรับ PDF และรูปภาพ JPG/PNG ขนาด A4 ส่งไฟล์มาได้เลยครับ เมื่อรับไฟล์แล้วระบบจะให้ยืนยันก่อนพิมพ์")
     : _printHubReplyConfig_("PRINT_HUB_OFFLINE_REPLY", "🖨️ ได้ครับ ขณะนี้คอม Print Hub ยังออฟไลน์ แต่ส่ง PDF หรือรูปภาพ A4 มาได้เลยครับ ระบบจะเก็บไฟล์ไว้ และเมื่อ Print Hub ออนไลน์จะแจ้งให้ยืนยันก่อนพิมพ์");
   _printHubReply_(replyToken, base, facts, userId);
+  _printHubLog_(userId, user.name, "เริ่มสั่งพิมพ์ผ่าน LINE", "Success");
   return { handled:true, route:"print-start" };
+}
+
+/**
+ * In groups the bot shares the floor with search/KB/GeminiQA, so a refusal here would
+ * replace an answer a non-VIP used to get. Stay silent there and let the original
+ * handlers continue; only private chat gets the explicit refusal.
+ */
+function _printHubDeny_(replyToken, userId, isGroup) {
+  if (isGroup) return { handled:false };
+  _printHubReply_(replyToken,
+    _printHubReplyConfig_("PRINT_HUB_DENIED_REPLY", "🔒 ระบบสั่งพิมพ์สำหรับเจ้าหน้าที่ VIP/Admin เท่านั้นครับ"),
+    { allowed:false }, userId);
+  return { handled:true, route:"print-denied" };
+}
+
+function _printHubLog_(userId, userName, action, result) {
+  try {
+    if (typeof logActivity === "function") {
+      logActivity(userId, userName || "", action, "PrintHub", result || "Success", 0);
+    }
+  } catch (e) {}
+}
+
+function _printHubPushTarget_(sourceId, userId, isGroup) {
+  return String((isGroup ? sourceId : userId) || userId || "");
+}
+
+function _printHubPushFlex_(target, flex) {
+  if (!target || !flex) return null;
+  return _linePost("https://api.line.me/v2/bot/message/push", {
+    to: target,
+    messages: [{ type:"flex", altText:String(flex.altText || "Print Hub"), contents:flex.contents }]
+  });
 }
 
 function _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, replyToken) {
@@ -296,12 +421,7 @@ function _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, repl
   var detected = _printHubDetectIntent_(messageText);
   if (detected.intent === "NONE") return { handled:false };
 
-  if (!_printHubAllowed_(user, userId)) {
-    _printHubReply_(replyToken,
-      _printHubReplyConfig_("PRINT_HUB_DENIED_REPLY", "🔒 ระบบสั่งพิมพ์สำหรับเจ้าหน้าที่ VIP/Admin เท่านั้นครับ"),
-      { allowed:false }, userId);
-    return { handled:true, route:"print-denied" };
-  }
+  if (!_printHubAllowed_(user, userId)) return _printHubDeny_(replyToken, userId, isGroup);
 
   if (detected.intent === "PRINT_START") return _printHubStart_(messageText, user, userId, sourceId, isGroup, replyToken);
 
@@ -326,8 +446,16 @@ function _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, repl
     } else {
       okText = "❌ ยกเลิกงานพิมพ์และลบไฟล์ที่ฝากไว้แล้วครับ";
     }
+    if (_printHubBridgeFailed_(result)) {
+      _printHubReply_(replyToken, _printHubConfigErrorText_(result), { error:true }, userId);
+      _printHubLog_(userId, user.name, action + " " + detected.jobId + " (เชื่อมต่อไม่ได้)", "Error");
+      return { handled:true, route:"print-config-error" };
+    }
     _printHubReply_(replyToken, result && result.ok ? okText : "⚠️ " + String(result && result.msg || "ดำเนินการไม่สำเร็จ"),
       { ok:!!(result && result.ok), action:action, jobId:detected.jobId, agentOnline:!!(result && result.agentOnline) }, userId);
+    _printHubLog_(userId, user.name,
+      (detected.intent === "PRINT_CONFIRM" ? "ยืนยันพิมพ์ " : "ยกเลิกพิมพ์ ") + detected.jobId,
+      result && result.ok ? "Success" : "Error");
     return { handled:true, route:detected.intent === "PRINT_CONFIRM" ? "print-confirm" : "print-cancel" };
   }
 
@@ -340,12 +468,16 @@ function _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, repl
           "⚠️ รับแจ้งแล้วครับ ระบบบันทึกว่างานพิมพ์มีปัญหาและจะไม่สั่งพิมพ์ซ้ำอัตโนมัติ")
       : "⚠️ " + String(rr && rr.msg || "บันทึกผลรับเอกสารไม่สำเร็จ");
     _printHubReply_(replyToken, rrText, {ok:!!(rr && rr.ok), status:detected.receivedOk ? "DONE" : "ERROR"}, userId);
+    _printHubLog_(userId, user.name, "ตรวจรับงานพิมพ์ " + detected.jobId,
+      rr && rr.ok && detected.receivedOk ? "Success" : "Error");
     return { handled:true, route:"print-received" };
   }
 
   if (detected.intent === "PRINT_HISTORY") {
+    if (!_printHubHistoryOn_()) return { handled:false };
     var hist = _printHubBridge_("line_history", {
-      lineUserId:userId, sourceId:sourceId, query:String(detected.query || "").substring(0, 120), limit:8
+      lineUserId:userId, sourceId:sourceId, query:String(detected.query || "").substring(0, 120), limit:8,
+      includeDownloadLink:String(getConfig("PRINT_HUB_DOWNLOAD_STATUS") || "OFF").toUpperCase() === "ON"
     });
     if (!hist || !hist.ok || !hist.jobs || !hist.jobs.length) {
       _printHubReply_(replyToken, "ไม่พบไฟล์พิมพ์ที่ตรงกับคำค้นครับ", {found:0}, userId);
@@ -360,6 +492,7 @@ function _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, repl
   }
 
   if (detected.intent === "PRINT_REPRINT") {
+    if (!_printHubHistoryOn_()) return { handled:false };
     var rp = _printHubBridge_("line_reprint", { jobId:detected.jobId, lineUserId:userId, sourceId:sourceId });
     if (rp && rp.ok && rp.agentOnline && rp.job) {
       rp.job.isGroup = !!isGroup;
@@ -370,6 +503,7 @@ function _handlePrintHubText_(messageText, user, userId, sourceId, isGroup, repl
         rp && rp.ok ? "✅ เตรียมไฟล์สำหรับพิมพ์ซ้ำแล้วครับ ระบบจะขอยืนยันก่อนพิมพ์เมื่อ Print Hub ออนไลน์" : "⚠️ " + String(rp && rp.msg || "พิมพ์ซ้ำไม่สำเร็จ"),
         {ok:!!(rp && rp.ok), jobId:rp && rp.jobId || detected.jobId}, userId);
     }
+    _printHubLog_(userId, user.name, "สั่งพิมพ์ซ้ำ " + detected.jobId, rp && rp.ok ? "Success" : "Error");
     return { handled:true, route:"print-reprint" };
   }
 
@@ -405,7 +539,9 @@ function _printHubUploadBlob_(blob, meta) {
     uploadId:start.uploadId, parts:Math.max(1, Math.ceil(bytes.length / PRINT_HUB_UPLOAD_CHUNK_BYTES_)),
     lineUserId:meta.userId, sourceId:meta.sourceId, sourceType:meta.isGroup ? "group" : "private",
     userName:meta.userName, fileName:meta.fileName, mimeType:meta.mimeType,
-    copies:Number(getConfig("PRINT_HUB_DEFAULT_COPIES") || 1), paperSize:"A4"
+    copies:Number(getConfig("PRINT_HUB_DEFAULT_COPIES") || 1), paperSize:"A4",
+    retentionDays:Number(getConfig("PRINT_HUB_RETENTION_DAYS") || 7),
+    deleteOnCancel:String(getConfig("PRINT_HUB_DELETE_ON_CANCEL") || "ON").toUpperCase() === "ON"
   });
 }
 
@@ -418,44 +554,86 @@ function _handlePrintHubMedia_(event, message, user, userId, sourceId, isGroup, 
   if (type !== "file" && type !== "image") return { handled:false };
 
   var fileName = type === "file" ? String(message.fileName || "document.pdf") : ("LINE_image_" + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyyMMdd_HHmmss") + ".jpg");
-  var mime = type === "file" ? String(message.contentProvider && message.contentProvider.type || "") : "image/jpeg";
-  if (type === "file" && !/\.pdf$/i.test(fileName)) {
+  var ext = String(fileName.split(".").pop() || "").toLowerCase();
+  var mime = type === "file" ? _printHubMimeFromExt_(ext) : "image/jpeg";
+  var target = _printHubPushTarget_(sourceId, userId, isGroup);
+
+  if (type === "file" && _printHubAllowedExtensions_().indexOf(ext) < 0) {
     _printHubReply_(replyToken,
       _printHubReplyConfig_("PRINT_HUB_UNSUPPORTED_REPLY", "⚠️ ระบบพิมพ์ผ่าน LINE รองรับ PDF และรูปภาพ JPG/PNG ในขณะนี้ครับ"),
       {fileName:fileName, supported:false}, userId);
     return { handled:true, route:"print-file-unsupported" };
   }
 
+  // Oversized files cannot be chunked through two Apps Script hops inside one execution,
+  // so they are refused before any download instead of dying mid-upload with no reply.
+  var maxBytes = _printHubMaxFileBytes_();
+  var declaredSize = Number(message.fileSize || 0);
+  if (declaredSize > 0 && declaredSize > maxBytes) {
+    _printHubReply_(replyToken,
+      "⚠️ ไฟล์นี้ใหญ่เกินกว่าที่ระบบพิมพ์ผ่าน LINE รองรับครับ (จำกัด " +
+      Math.round(maxBytes / (1024 * 1024)) + " MB) กรุณาแบ่งไฟล์หรือลดขนาดก่อนส่งใหม่",
+      {ok:false, supported:false}, userId);
+    return { handled:true, route:"print-file-too-large" };
+  }
+
+  // The reply token expires long before a multi-megabyte chunked upload finishes, so the
+  // acknowledgement is sent first and every later result is delivered by push. The ack skips
+  // the AI rephrase on purpose: it must go out before the download starts eating the clock.
+  fixedWebhookSafeReply_(replyToken,
+    _printHubReplyConfig_("PRINT_HUB_RECEIVING_REPLY", "📥 กำลังรับไฟล์เข้าระบบพิมพ์ครับ สักครู่จะแจ้งผลให้ทราบ"),
+    userId);
+
   try {
     var blob = _printHubDownloadLineBlob_(message.id);
-    if (type === "file") mime = blob.getContentType() || "application/pdf";
+    var actualBytes = blob.getBytes().length;
+    if (actualBytes > maxBytes) {
+      _linePush(target, "⚠️ ไฟล์ " + fileName + " ใหญ่เกินกว่าที่ระบบรองรับครับ (จำกัด " +
+        Math.round(maxBytes / (1024 * 1024)) + " MB) ยังไม่ได้ส่งเข้าคิวพิมพ์");
+      _printHubLog_(userId, user.name, "ไฟล์พิมพ์ใหญ่เกินกำหนด: " + fileName, "Error");
+      return { handled:true, route:"print-file-too-large" };
+    }
+    if (type === "file") mime = blob.getContentType() || mime;
+
     var result = _printHubUploadBlob_(blob, {
       userId:userId, sourceId:sourceId, isGroup:isGroup, userName:user.name, fileName:fileName, mimeType:mime
     });
+    if (_printHubBridgeFailed_(result)) {
+      _linePush(target, _printHubConfigErrorText_(result));
+      _printHubLog_(userId, user.name, "ส่งไฟล์พิมพ์ไม่สำเร็จ (เชื่อมต่อ Print Hub ไม่ได้): " + fileName, "Error");
+      return { handled:true, route:"print-config-error" };
+    }
     if (!result || !result.ok) {
-      _printHubReply_(replyToken, "⚠️ รับไฟล์ไม่ได้: " + String(result && result.msg || "Print Hub ไม่ตอบกลับ"),
-        {ok:false,fileName:fileName}, userId);
+      _linePush(target, "⚠️ รับไฟล์ไม่ได้: " + String(result && result.msg || "Print Hub ไม่ตอบกลับ"));
+      _printHubLog_(userId, user.name, "ส่งไฟล์พิมพ์ไม่สำเร็จ: " + fileName, "Error");
       return { handled:true, route:"print-upload-error" };
     }
 
     _clearPrintHubSession_(sourceId, userId);
     var facts = {jobId:result.jobId,fileName:fileName,agentOnline:!!result.agentOnline,status:result.status || ""};
     if (result.agentOnline) {
-      sendUniversalReply(replyToken, _printHubConfirmFlex_({
+      _printHubPushFlex_(target, _printHubConfirmFlex_({
         jobId:result.jobId, fileName:fileName, copies:Number(getConfig("PRINT_HUB_DEFAULT_COPIES") || 1),
         isGroup:!!isGroup, sourceType:isGroup ? "group" : "private"
       }));
     } else {
-      _printHubReply_(replyToken,
+      _linePush(target, _printHubFactsReply_(
         _printHubReplyConfig_("PRINT_HUB_WAIT_REPLY",
           "✅ รับไฟล์ไว้ในคิวแล้วครับ\nขณะนี้คอม Print Hub ยังออฟไลน์อยู่ เมื่อ Print Hub ออนไลน์ ระบบจะแจ้งให้คุณยืนยันอีกครั้งก่อนพิมพ์ครับ"),
-        facts, userId);
+        facts));
     }
+    _printHubLog_(userId, user.name, "ส่งไฟล์เข้าคิวพิมพ์: " + fileName, "Success");
     return { handled:true, route:"print-media" };
   } catch (e) {
-    _printHubReply_(replyToken, "⚠️ เกิดข้อผิดพลาดในการรับไฟล์พิมพ์", {error:true}, userId);
+    _linePush(target, "⚠️ เกิดข้อผิดพลาดในการรับไฟล์พิมพ์ กรุณาลองใหม่อีกครั้งครับ");
+    _printHubLog_(userId, user.name, "รับไฟล์พิมพ์ผิดพลาด: " + String(e && e.message || e), "Error");
     return { handled:true, route:"print-media-error" };
   }
+}
+
+function _printHubMimeFromExt_(ext) {
+  var map = { pdf:"application/pdf", jpg:"image/jpeg", jpeg:"image/jpeg", png:"image/png" };
+  return map[String(ext || "").toLowerCase()] || "application/octet-stream";
 }
 
 /**
@@ -468,9 +646,13 @@ function processPrintHubNotifications_() {
   if (!pending || !pending.ok || !pending.events) return pending || {ok:false};
 
   var sent = 0;
+  var dropped = 0;
   pending.events.forEach(function(ev) {
     var target = String(ev.sourceId || ev.lineUserId || "");
-    if (!target) return;
+    if (!target) {
+      if (_printHubGiveUpOnEvent_(ev)) dropped++;
+      return;
+    }
     var ok = false;
     try {
       if (ev.type === "CONFIRM" && ev.job) {
@@ -505,10 +687,42 @@ function processPrintHubNotifications_() {
     } catch (e) {}
     if (ok) {
       _printHubBridge_("line_mark_notified", { eventId:ev.eventId, jobId:ev.jobId, type:ev.type });
+      _printHubClearAttempts_(ev);
       sent++;
+    } else if (_printHubGiveUpOnEvent_(ev)) {
+      dropped++;
     }
   });
-  return {ok:true, sent:sent};
+  return {ok:true, sent:sent, dropped:dropped};
+}
+
+function _printHubAttemptKey_(ev) {
+  return "printHubNotifyTry:" + String((ev && (ev.eventId || ev.jobId)) || "");
+}
+
+/**
+ * An event that can never be delivered — unknown type, missing payload, no target — used to
+ * stay pending forever and be re-fetched every minute. Count the failures and retire it.
+ */
+function _printHubGiveUpOnEvent_(ev) {
+  if (!ev || !(ev.eventId || ev.jobId)) return false;
+  var key = _printHubAttemptKey_(ev);
+  var cache = CacheService.getScriptCache();
+  var tries = Number(cache.get(key) || 0) + 1;
+  if (tries >= PRINT_HUB_MAX_NOTIFY_ATTEMPTS_) {
+    _printHubBridge_("line_mark_notified", {
+      eventId:ev.eventId, jobId:ev.jobId, type:ev.type, result:"SKIPPED", attempts:tries
+    });
+    cache.remove(key);
+    _printHubLog_("", "system", "ข้ามการแจ้งเตือนงานพิมพ์ที่ส่งไม่สำเร็จ: " + String(ev.eventId || ev.jobId), "Error");
+    return true;
+  }
+  cache.put(key, String(tries), 6 * 60 * 60);
+  return false;
+}
+
+function _printHubClearAttempts_(ev) {
+  try { CacheService.getScriptCache().remove(_printHubAttemptKey_(ev)); } catch (e) {}
 }
 
 function installPrintHubNotificationTrigger() {

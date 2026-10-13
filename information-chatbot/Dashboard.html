@@ -925,8 +925,41 @@
               <div class="form-group"><label class="form-label">จำนวนชุดมาตรฐาน</label>
                 <select id="cfg-print-copies" class="form-select"><option value="1">1 ชุด</option><option value="2">2 ชุด</option><option value="3">3 ชุด</option></select></div>
             </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">ชนิดไฟล์ที่รับ (คั่นด้วย ,)</label>
+                <input id="cfg-print-file-types" class="form-input" value="pdf,jpg,jpeg,png"></div>
+              <div class="form-group"><label class="form-label">ขนาดไฟล์สูงสุด</label>
+                <select id="cfg-print-max-mb" class="form-select"><option value="5">5 MB</option><option value="10">10 MB</option><option value="20">20 MB</option></select>
+                <small style="color:var(--text-dim);font-size:12px;">ไฟล์ใหญ่กว่านี้จะถูกปฏิเสธทันที ไม่ดาวน์โหลด เพื่อกันงานค้างกลางทาง</small></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">อายุคำสั่งรอไฟล์</label>
+                <select id="cfg-print-session-minutes" class="form-select"><option value="10">10 นาที</option><option value="30">30 นาที</option><option value="60">60 นาที</option></select>
+                <small style="color:var(--text-dim);font-size:12px;">หลังพิมพ์ว่า “พิมพ์” แล้วมีเวลาส่งไฟล์เท่านี้</small></div>
+              <div class="form-group"><label class="form-label">เก็บไฟล์ย้อนหลัง (วัน)</label>
+                <select id="cfg-print-retention" class="form-select"><option value="3">3 วัน</option><option value="7">7 วัน</option><option value="30">30 วัน</option><option value="90">90 วัน</option></select>
+                <small style="color:var(--text-dim);font-size:12px;">ใช้กับการค้นไฟล์ย้อนหลังและพิมพ์ซ้ำ · Print Hub เป็นผู้ลบจริง</small></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">ลบไฟล์เมื่อยกเลิก</label>
+                <select id="cfg-print-delete-on-cancel" class="form-select"><option value="ON">ON — ลบทันทีที่ยกเลิก</option><option value="OFF">OFF — เก็บตาม retention</option></select></div>
+              <div class="form-group"><label class="form-label">เมื่อ Print Hub ออฟไลน์</label>
+                <select id="cfg-print-offline-mode" class="form-select"><option value="HOLD">เก็บไฟล์รอ แล้วถามยืนยันเมื่อออนไลน์</option><option value="REJECT">ไม่รับไฟล์ แจ้งให้ส่งใหม่ภายหลัง</option></select>
+                <small style="color:var(--text-dim);font-size:12px;">ไม่ว่ากรณีใด ระบบจะไม่พิมพ์อัตโนมัติเมื่อเครื่องกลับมาออนไลน์</small></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">ค้นไฟล์ย้อนหลัง / พิมพ์ซ้ำ</label>
+                <select id="cfg-print-history-status" class="form-select"><option value="ON">ON</option><option value="OFF">OFF</option></select></div>
+              <div class="form-group"><label class="form-label">ดาวน์โหลดไฟล์จากคลัง</label>
+                <select id="cfg-print-download-status" class="form-select"><option value="OFF">OFF</option><option value="ON">ON — ส่งลิงก์ดาวน์โหลดให้เจ้าของงาน</option></select></div>
+            </div>
             <div style="padding:12px 14px;border:1px solid #bfdbfe;border-radius:8px;background:#f8fbff;margin-bottom:16px;font-size:13px;line-height:1.6;">
-              <b>ค่าคงที่ในรอบนี้:</b> PDF/JPG/PNG · A4 · เมื่อ Agent Offline = เก็บไฟล์รอ · เมื่อ Agent Online = ถามยืนยันก่อนพิมพ์ · ยกเลิก = ลบไฟล์
+              <b>คงที่โดยระบบ:</b> กระดาษ A4 · สิทธิ์ VIP/Admin · ต้องยืนยันก่อนพิมพ์ทุกครั้ง · ห้ามพิมพ์อัตโนมัติเมื่อเครื่องกลับมาออนไลน์<br>
+              <b>แจ้งเตือนสถานะงานพิมพ์</b> ต้องติดตั้งตัวตรวจทุก 1 นาทีก่อน ระบบจึงจะแจ้ง “ยืนยัน/กำลังพิมพ์/เสร็จแล้ว” ได้
+              <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button class="btn" type="button" onclick="installPrintHubTrigger()">⏱️ ติดตั้งตัวแจ้งเตือนงานพิมพ์</button>
+                <span id="print-trigger-status" style="font-size:12px;color:var(--text-dim);"></span>
+              </div>
             </div>
             <div class="form-group"><label class="form-label">ข้อความเริ่มต้นเมื่อ Print Hub พร้อม</label>
               <textarea id="cfg-print-start-reply" class="form-textarea" rows="3">🖨️ ได้ครับ Print Hub พร้อมใช้งาน รองรับ PDF และรูปภาพ JPG/PNG ขนาด A4 ส่งไฟล์มาได้เลยครับ เมื่อรับไฟล์แล้วระบบจะให้ยืนยันก่อนพิมพ์</textarea></div>
@@ -943,6 +976,17 @@
             </div>
             <div class="form-group"><label class="form-label">ข้อความเมื่อไม่มีสิทธิ์</label>
               <textarea id="cfg-print-denied-reply" class="form-textarea" rows="2">🔒 ระบบสั่งพิมพ์สำหรับเจ้าหน้าที่ VIP/Admin เท่านั้นครับ</textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">ข้อความขณะกำลังรับไฟล์</label>
+                <textarea id="cfg-print-receiving-reply" class="form-textarea" rows="2">📥 กำลังรับไฟล์เข้าระบบพิมพ์ครับ สักครู่จะแจ้งผลให้ทราบ</textarea></div>
+              <div class="form-group"><label class="form-label">ข้อความเมื่อเชื่อมต่อ Print Hub ไม่ได้</label>
+                <textarea id="cfg-print-config-error-reply" class="form-textarea" rows="2"></textarea>
+                <small style="color:var(--text-dim);font-size:12px;">เว้นว่างเพื่อใช้ข้อความมาตรฐานที่ระบุสาเหตุให้อัตโนมัติ</small></div>
+            </div>
+            <div class="form-group"><label class="form-label">ข้อความเมื่อออฟไลน์และตั้งค่าเป็น “ไม่รับไฟล์”</label>
+              <textarea id="cfg-print-reject-reply" class="form-textarea" rows="2">⚪ ขณะนี้คอม Print Hub ออฟไลน์ และระบบตั้งค่าให้ยังไม่รับไฟล์ไว้ครับ กรุณาส่งใหม่อีกครั้งเมื่อเครื่องออนไลน์</textarea></div>
+            <div class="form-group"><label class="form-label">ข้อความเมื่อชนิดไฟล์ไม่รองรับ</label>
+              <textarea id="cfg-print-unsupported-reply" class="form-textarea" rows="2">⚠️ ระบบพิมพ์ผ่าน LINE รองรับ PDF และรูปภาพ JPG/PNG ในขณะนี้ครับ</textarea></div>
           </div>
         </div>
 
@@ -3322,12 +3366,24 @@ function loadSettingsData() {
       setFieldValue('cfg-print-nl-status', config.PRINT_HUB_NL_STATUS || 'ON');
       setFieldValue('cfg-print-ai-reply', config.PRINT_HUB_AI_REPLY || 'ON');
       setFieldValue('cfg-print-copies', config.PRINT_HUB_DEFAULT_COPIES || '1');
+      setFieldValue('cfg-print-file-types', config.PRINT_HUB_FILE_TYPES || 'pdf,jpg,jpeg,png');
+      setFieldValue('cfg-print-max-mb', config.PRINT_HUB_MAX_FILE_MB || '10');
+      setFieldValue('cfg-print-session-minutes', config.PRINT_HUB_SESSION_MINUTES || '30');
+      setFieldValue('cfg-print-retention', config.PRINT_HUB_RETENTION_DAYS || '7');
+      setFieldValue('cfg-print-delete-on-cancel', config.PRINT_HUB_DELETE_ON_CANCEL || 'ON');
+      setFieldValue('cfg-print-offline-mode', config.PRINT_HUB_OFFLINE_MODE || 'HOLD');
+      setFieldValue('cfg-print-history-status', config.PRINT_HUB_HISTORY_STATUS || 'ON');
+      setFieldValue('cfg-print-download-status', config.PRINT_HUB_DOWNLOAD_STATUS || 'OFF');
       setFieldValue('cfg-print-start-reply', config.PRINT_HUB_START_REPLY || '🖨️ ได้ครับ Print Hub พร้อมใช้งาน รองรับ PDF และรูปภาพ JPG/PNG ขนาด A4 ส่งไฟล์มาได้เลยครับ เมื่อรับไฟล์แล้วระบบจะให้ยืนยันก่อนพิมพ์');
       setFieldValue('cfg-print-offline-reply', config.PRINT_HUB_OFFLINE_REPLY || '🖨️ ได้ครับ ขณะนี้คอม Print Hub ยังออฟไลน์ แต่ส่ง PDF หรือรูปภาพ A4 มาได้เลยครับ ระบบจะเก็บไฟล์ไว้ และเมื่อ Print Hub ออนไลน์จะแจ้งให้ยืนยันก่อนพิมพ์');
       setFieldValue('cfg-print-wait-reply', config.PRINT_HUB_WAIT_REPLY || '✅ รับไฟล์ไว้ในคิวแล้วครับ\\nขณะนี้คอม Print Hub ยังออฟไลน์อยู่ เมื่อ Print Hub ออนไลน์ ระบบจะแจ้งให้คุณยืนยันอีกครั้งก่อนพิมพ์ครับ');
       setFieldValue('cfg-print-completed-reply', config.PRINT_HUB_COMPLETED_REPLY || '✅ พิมพ์เอกสารเรียบร้อยแล้วครับ');
       setFieldValue('cfg-print-failed-reply', config.PRINT_HUB_FAILED_REPLY || '⚠️ งานพิมพ์ไม่สำเร็จ กรุณาตรวจสอบ Print Hub ครับ');
       setFieldValue('cfg-print-denied-reply', config.PRINT_HUB_DENIED_REPLY || '🔒 ระบบสั่งพิมพ์สำหรับเจ้าหน้าที่ VIP/Admin เท่านั้นครับ');
+      setFieldValue('cfg-print-receiving-reply', config.PRINT_HUB_RECEIVING_REPLY || '📥 กำลังรับไฟล์เข้าระบบพิมพ์ครับ สักครู่จะแจ้งผลให้ทราบ');
+      setFieldValue('cfg-print-config-error-reply', config.PRINT_HUB_CONFIG_ERROR_REPLY || '');
+      setFieldValue('cfg-print-unsupported-reply', config.PRINT_HUB_UNSUPPORTED_REPLY || '⚠️ ระบบพิมพ์ผ่าน LINE รองรับ PDF และรูปภาพ JPG/PNG ในขณะนี้ครับ');
+      setFieldValue('cfg-print-reject-reply', config.PRINT_HUB_REJECT_REPLY || '⚪ ขณะนี้คอม Print Hub ออฟไลน์ และระบบตั้งค่าให้ยังไม่รับไฟล์ไว้ครับ กรุณาส่งใหม่อีกครั้งเมื่อเครื่องออนไลน์');
       setFieldValue('cfg-fallback', searchNoResultMsg);
       setFieldValue('cfg-prefix', config.POLITE_PREFIX || '');
       setFieldValue('cfg-suffix', config.POLITE_SUFFIX || '');
@@ -3407,12 +3463,24 @@ function saveAllConfigs() {
     PRINT_HUB_NL_STATUS: getFieldValue('cfg-print-nl-status', 'ON'),
     PRINT_HUB_AI_REPLY: getFieldValue('cfg-print-ai-reply', 'ON'),
     PRINT_HUB_DEFAULT_COPIES: getFieldValue('cfg-print-copies', '1'),
+    PRINT_HUB_FILE_TYPES: getFieldValue('cfg-print-file-types', 'pdf,jpg,jpeg,png'),
+    PRINT_HUB_MAX_FILE_MB: getFieldValue('cfg-print-max-mb', '10'),
+    PRINT_HUB_SESSION_MINUTES: getFieldValue('cfg-print-session-minutes', '30'),
+    PRINT_HUB_RETENTION_DAYS: getFieldValue('cfg-print-retention', '7'),
+    PRINT_HUB_DELETE_ON_CANCEL: getFieldValue('cfg-print-delete-on-cancel', 'ON'),
+    PRINT_HUB_OFFLINE_MODE: getFieldValue('cfg-print-offline-mode', 'HOLD'),
+    PRINT_HUB_HISTORY_STATUS: getFieldValue('cfg-print-history-status', 'ON'),
+    PRINT_HUB_DOWNLOAD_STATUS: getFieldValue('cfg-print-download-status', 'OFF'),
     PRINT_HUB_START_REPLY: getFieldValue('cfg-print-start-reply', ''),
     PRINT_HUB_OFFLINE_REPLY: getFieldValue('cfg-print-offline-reply', ''),
     PRINT_HUB_WAIT_REPLY: getFieldValue('cfg-print-wait-reply', ''),
     PRINT_HUB_COMPLETED_REPLY: getFieldValue('cfg-print-completed-reply', ''),
     PRINT_HUB_FAILED_REPLY: getFieldValue('cfg-print-failed-reply', ''),
     PRINT_HUB_DENIED_REPLY: getFieldValue('cfg-print-denied-reply', ''),
+    PRINT_HUB_RECEIVING_REPLY: getFieldValue('cfg-print-receiving-reply', ''),
+    PRINT_HUB_CONFIG_ERROR_REPLY: getFieldValue('cfg-print-config-error-reply', ''),
+    PRINT_HUB_REJECT_REPLY: getFieldValue('cfg-print-reject-reply', ''),
+    PRINT_HUB_UNSUPPORTED_REPLY: getFieldValue('cfg-print-unsupported-reply', ''),
     MSG_FALLBACK: getFieldValue('cfg-fallback', ''),
     SEARCH_NO_RESULT_MSG: getFieldValue('cfg-fallback', ''),
     POLITE_PREFIX: getFieldValue('cfg-prefix', ''),
@@ -3461,6 +3529,19 @@ function saveAllConfigs() {
   }).withFailureHandler(function(e) {
     showToast("❌ บันทึกไม่ได้: " + e.message, "error");
   }).saveMultipleConfigs(configs);
+}
+
+function installPrintHubTrigger() {
+  const status = document.getElementById('print-trigger-status');
+  if (status) status.textContent = 'กำลังติดตั้ง…';
+  google.script.run.withSuccessHandler(function(res) {
+    const ok = res && res.ok;
+    if (status) status.textContent = ok ? (res.created ? '✅ ติดตั้งแล้ว ตรวจทุก 1 นาที' : '✅ มีตัวแจ้งเตือนอยู่แล้ว') : '❌ ติดตั้งไม่สำเร็จ';
+    showToast(ok ? 'ตัวแจ้งเตือนงานพิมพ์พร้อมใช้งาน' : 'ติดตั้งไม่สำเร็จ', ok ? 'success' : 'error');
+  }).withFailureHandler(function(e) {
+    if (status) status.textContent = '❌ ' + e.message;
+    showToast('ติดตั้งไม่สำเร็จ: ' + e.message, 'error');
+  }).installPrintHubNotificationTrigger();
 }
 
 // ==========================================
