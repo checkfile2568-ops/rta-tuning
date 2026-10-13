@@ -135,7 +135,8 @@ function _printHubLooksLikeSearch_(text) {
   if (!t) return false;
   var keyword = String((typeof getConfig === "function" && getConfig("SEARCH_KEYWORD")) || "ค้นหา").trim().toLowerCase();
   if (keyword && t.indexOf(keyword) === 0) return true;
-  return /^(?:\/|ค้นหา|ค้น|ขอข้อมูล|สอบถาม|บัญชีนัดความ|บัญชีนัด|นัดความ|นัด)/.test(t);
+  // คำสั่งตามคู่มือ linebot-help-v4: ค้นหา · ช่วยหา · สอบถาม · บัญชีนัด 4 คำนำหน้า · คำสั่ง /
+  return /^(?:\/|ค้นหา|ค้น|ช่วยหา|ช่วยค้น|ขอข้อมูล|สอบถาม|บัญชีนัดความ|บัญชีนัด|นัดความ|นัด)/.test(t);
 }
 
 function _printHubDetectIntentDeterministic_(text) {
