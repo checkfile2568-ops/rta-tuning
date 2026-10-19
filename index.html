@@ -177,11 +177,11 @@
   .pftabs button.sel{background:var(--panel2);color:var(--accent2);border-color:var(--accent2)}
   .pfgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}
   .pfgrid label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted)}
-  .presets .pfgrid input,.presets .pfgrid select,.presets .pfpeq input{width:100%;min-height:36px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:13px;padding:4px 8px;margin:0}
+  .presets .pfgrid input,.presets .pfgrid select,.presets .pfpeq input,.presets .pfpeq select{width:100%;min-height:36px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:13px;padding:4px 8px;margin:0}
   .presets .pfgrid select{appearance:auto}
   .pfpeq{margin-top:10px}
   .pfpeq .ph{font-size:11.5px;color:var(--muted);margin-bottom:4px}
-  .pfprow{display:grid;grid-template-columns:22px 1fr 1fr 1fr 34px;gap:5px;align-items:center;margin-bottom:5px}
+  .pfprow{display:grid;grid-template-columns:20px 1.05fr 1fr .8fr .9fr 30px;gap:5px;align-items:center;margin-bottom:5px}
   .pfprow i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--accent2);text-align:center}
   .pfprow button{min-height:34px;padding:0;font-size:13px}
   .pfprow.hd span{font-size:10.5px;color:var(--muted);text-align:center}
@@ -305,6 +305,8 @@
     <button id="pfFill">✨ ดึงค่าจากการวัด</button>
     <button id="pfCurve">📈 เก็บกราฟปัจจุบัน</button>
   </div>
+  <div class="row" style="margin:6px 0 0"><button id="pfSim">🧪 จำลองผลบนกราฟ</button></div>
+  <div class="pfmsg" id="simInfo" style="color:var(--muted);line-height:1.6"></div>
   <div class="pfmsg" id="pfMsg"></div>
   <div class="label" style="margin:14px 0 6px">ชุดจูนที่บันทึกไว้</div>
   <div class="plist" id="pList"></div>
@@ -632,7 +634,7 @@
       for(let i=0;i<bandF.length;i++){ if(raw[i]>-100){accP[i]+=Math.pow(10,raw[i]/10);acc[i]++;} }
       const el=performance.now()-t0; btn.innerHTML='<span class="icn">⏱</span> วัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
       if(el<DUR)requestAnimationFrame(tick);
-      else{ measured=normalize(bandF.map((_,i)=>acc[i]?10*Math.log10(accP[i]/acc[i]):-120)); measuring=false;
+      else{ measured=normalize(bandF.map((_,i)=>acc[i]?10*Math.log10(accP[i]/acc[i]):-120)); measuring=false; if(cur)measBase=JSON.parse(JSON.stringify(cur.ch)); setTimeout(simReport,0);
         btn.innerHTML='<span class="icn">📸</span> วัดผล (4 วิ)'; analyze(); }
     })();
   }
@@ -658,7 +660,7 @@
       btn.innerHTML='<span class="icn">🚶</span> เดินวัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
       if(el<DUR)requestAnimationFrame(tick);
       else{
-        measured=normalize(bandF.map((_,i)=>cnt[i]?10*Math.log10(accP[i]/cnt[i]):-120));
+        measured=normalize(bandF.map((_,i)=>cnt[i]?10*Math.log10(accP[i]/cnt[i]):-120)); if(cur)measBase=JSON.parse(JSON.stringify(cur.ch)); setTimeout(simReport,0);
         measuredVar=bandF.map((_,i)=>{ if(cnt[i]<4)return 0; const m=sDb[i]/cnt[i]; return Math.sqrt(Math.max(0,sDb2[i]/cnt[i]-m*m)); });
         measuring=false; mmmRunning=false;
         btn.innerHTML='<span class="icn">🚶</span> เดินวัด · MMM';
@@ -764,7 +766,8 @@
       if(holdOn&&!measured){ ctx.fillStyle='rgba(255,176,32,.9)';
         for(let i=0;i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX||peakHold[i]<=-100)continue; ctx.fillRect(xF(bandF[i])-1.5,yDb(peakHold[i])-1.5,3,3);} }
     }else{ ctx.fillStyle='#4a4f5c';ctx.textAlign='center';ctx.font='12px '+getComputedStyle(document.body).getPropertyValue('--sans');ctx.fillText('เริ่มวัดด้วยไมค์เพื่อดูสเปกตรัม',W/2,H/2); }
-    if(measured){ ctx.fillStyle='rgba(255,106,26,.9)';ctx.textAlign='left';ctx.font='bold 11px '+MONO();ctx.fillText('● วัดผลแล้ว',PAD.l+2,PAD.t+8); }
+    if(measured){ ctx.fillStyle='rgba(255,106,26,.9)';ctx.textAlign='left';ctx.font='bold 11px '+MONO();ctx.fillText('● วัดผลแล้ว',PAD.l+2,PAD.t+8); }
+    drawSim();
   }
 
   function levelAt(f){
@@ -985,10 +988,12 @@
   function opt(list,v){ return list.map(x=>'<option'+(String(x)===String(v)?' selected':'')+'>'+x+'</option>').join(''); }
   function chSummary(c){ return 'HPF '+fmtHz(c.hpf)+(c.hpf?' '+c.hpfT:'')+' · LPF '+fmtHz(c.lpf)+(c.lpf?' '+c.lpfT:'')+' · '+(c.gain>0?'+':'')+c.gain+'dB'+(c.phase?' · 180°':'')+(c.delay?' · '+c.delay+'ms':'')+(c.peq.length?' · PEQ '+c.peq.length:''); }
   function renderEditor(){
+    try{ if(simOn)setTimeout(simRefresh,0); }catch(e){}
     const c=cur.ch[curCh];
     const sw=cur.sweep?(' · Sweep: พีค <b>'+Math.round(cur.sweep.peakF)+'Hz</b> → subsonic <b>'+cur.sweep.subsonic+'Hz</b>'):'';
-    let peq='<div class="pfprow hd"><span>#</span><span>F (Hz)</span><span>Q</span><span>G (dB)</span><span></span></div>';
+    let peq='<div class="pfprow hd"><span>#</span><span>ชนิด</span><span>F (Hz)</span><span>Q</span><span>G (dB)</span><span></span></div>';
     c.peq.forEach((b,i)=>{ peq+='<div class="pfprow"><i>'+(i+1)+'</i>'+
+      '<select data-pi="'+i+'" data-pt="1">'+['PK','LS','HS'].map(v=>'<option value="'+v+'"'+((b.t||'PK')===v?' selected':'')+'>'+({PK:'Peak',LS:'L-Shelf',HS:'H-Shelf'})[v]+'</option>').join('')+'</select>'+
       '<input type="number" inputmode="decimal" data-pi="'+i+'" data-pk="f" value="'+esc(b.f)+'">'+
       '<input type="number" inputmode="decimal" step="0.1" data-pi="'+i+'" data-pk="q" value="'+esc(b.q)+'">'+
       '<input type="number" inputmode="decimal" step="0.5" data-pi="'+i+'" data-pk="g" value="'+esc(b.g)+'">'+
@@ -1069,7 +1074,7 @@
   function storeCurve(){
     let d=null; if(measured)d=measured.slice(); else if(running)d=normalize(computeBands());
     if(!d){ pfMsg('ยังไม่มีกราฟ — เริ่มไมค์แล้ววัดก่อน',true); return; }
-    cur.curve={f:bandF.slice(),d:d.map(v=>Math.round(v*10)/10)};
+    cur.curve={f:bandF.slice(),d:d.map(v=>Math.round(v*10)/10)}; cur.curveBase=JSON.parse(JSON.stringify(measured&&measBase?measBase:cur.ch));
     renderEditor(); pfMsg('เก็บกราฟไว้ในชุดนี้แล้ว (กด 💾 บันทึก)');
   }
   function profileText(p){
@@ -1078,17 +1083,78 @@
     for(const k of Object.keys(CHN)){ const c=p.ch[k];
       L.push('['+CHN[k]+'] HPF '+fmtHz(c.hpf)+(c.hpf?' '+c.hpfT:'')+' · LPF '+fmtHz(c.lpf)+(c.lpf?' '+c.lpfT:'')+' · Gain '+c.gain+'dB · Phase '+c.phase+'° · Delay '+c.delay+'ms');
       L.push('   Limiter '+c.lim+'dB · Hold '+c.hold+' · Release '+c.rel);
-      c.peq.forEach((b,i)=>L.push('   PEQ'+(i+1)+': '+fmtHz(b.f)+'Hz Q'+b.q+' '+(b.g>0?'+':'')+b.g+'dB'));
+      c.peq.forEach((b,i)=>L.push('   PEQ'+(i+1)+' '+({PK:'Peak',LS:'L-Shelf',HS:'H-Shelf'})[b.t||'PK']+': '+fmtHz(b.f)+'Hz Q'+b.q+' '+(b.g>0?'+':'')+b.g+'dB'));
     }
     if(p.note)L.push('หมายเหตุ: '+p.note);
     return L.join('\n');
   }
+  // ---------- 🧪 simulation (virtual DSP) ----------
+  let simOn=false, measBase=null, simCache={key:'',f:null,sub:null,mid:null,twe:null,tot:null};
+  const C=(re,im)=>({re,im}), cmul=(a,b)=>C(a.re*b.re-a.im*b.im,a.re*b.im+a.im*b.re),
+        cdiv=(a,b)=>{const d=b.re*b.re+b.im*b.im||1e-30;return C((a.re*b.re+a.im*b.im)/d,(a.im*b.re-a.re*b.im)/d);},
+        cadd=(a,b)=>C(a.re+b.re,a.im+b.im), cabs=a=>Math.hypot(a.re,a.im);
+  function sec2(s,Q,hp){ const den=cadd(cadd(cmul(s,s),C(s.re/Q,s.im/Q)),C(1,0)); return cdiv(hp?cmul(s,s):C(1,0),den); }
+  function sec1(s,hp){ return cdiv(hp?s:C(1,0),cadd(s,C(1,0))); }
+  const FTQ={LR12:[['2',.5]],LR24:[['2',.7071],['2',.7071]],LR48:[['2',.5412],['2',1.3066],['2',.5412],['2',1.3066]],
+    BW12:[['2',.7071]],BW18:[['1'],['2',1]],BW24:[['2',.5412],['2',1.3066]],Bessel12:[['2',.5774]],Bessel24:[['2',.5219],['2',.8055]]};
+  function filt(f,fc,type,hp){ if(!fc||!type||type==='OFF')return C(1,0); const s=C(0,hp?f/fc:f/fc); let h=C(1,0);
+    for(const sec of (FTQ[type]||[])) h=cmul(h, sec[0]==='1'?sec1(s,hp):sec2(s,sec[1],hp)); return h; }
+  function peq(f,b){ if(!b||!b.f||!b.g)return C(1,0); const A=Math.pow(10,b.g/40), Q=b.q||1, s=C(0,f/b.f);
+    const ss=cmul(s,s), rA=Math.sqrt(A), k=rA/Q;
+    if(b.t==='HS') return cmul(C(A,0),cdiv(cadd(cadd(cmul(C(A,0),ss),C(s.re*k,s.im*k)),C(1,0)),cadd(cadd(ss,C(s.re*k,s.im*k)),C(A,0))));
+    if(b.t==='LS') return cmul(C(A,0),cdiv(cadd(cadd(ss,C(s.re*k,s.im*k)),C(A,0)),cadd(cadd(cmul(C(A,0),ss),C(s.re*k,s.im*k)),C(1,0))));
+    return cdiv(cadd(cadd(ss,C(s.re*A/Q,s.im*A/Q)),C(1,0)), cadd(cadd(ss,C(s.re/(A*Q),s.im/(A*Q))),C(1,0))); }
+  function chResp(f,c){ let h=cmul(filt(f,+c.hpf,c.hpfT,true),filt(f,+c.lpf,c.lpfT,false));
+    for(const b of (c.peq||[])) h=cmul(h,peq(f,b));
+    const g=Math.pow(10,(+c.gain||0)/20)*(+c.phase===180?-1:1), ph=-2*Math.PI*f*((+c.delay||0)/1000);
+    return cmul(C(h.re*g,h.im*g),C(Math.cos(ph),Math.sin(ph))); }
+  function sysResp(ch,fs){ const out={sub:[],mid:[],twe:[],tot:[]}, db=x=>20*Math.log10(Math.max(cabs(x),1e-6));
+    for(const f of fs){ const a=chResp(f,ch.sub),b=chResp(f,ch.mid),c=chResp(f,ch.twe);
+      out.sub.push(db(a)); out.mid.push(db(b)); out.twe.push(db(c)); out.tot.push(db(cadd(cadd(a,b),c))); } return out; }
+  function simCurves(){ if(!cur)return null; const key=JSON.stringify(cur.ch)+bandF.length;
+    if(simCache.key!==key){ const fs=[]; for(let f=FMIN;f<=FMAX;f*=1.03)fs.push(f);
+      const r=sysResp(cur.ch,fs); simCache={key,f:fs,sub:r.sub,mid:r.mid,twe:r.twe,tot:r.tot}; } return simCache; }
+  function simSource(){ if(measured&&measBase)return {data:measured,base:measBase,label:'ผลวัดล่าสุด'};
+    if(cur&&cur.curve&&cur.curveBase){ const d=resample(cur.curve); if(d)return {data:d,base:cur.curveBase,label:'กราฟที่เก็บในชุดนี้'}; } return null; }
+  function normRef(arr,fs){ let s=0,c=0; for(let i=0;i<fs.length;i++){ if(fs[i]>=200&&fs[i]<=2000){s+=arr[i];c++;} } return c?s/c:0; }
+  function simPredict(){ const src=simSource(); if(!src)return null;
+    const now=sysResp(cur.ch,bandF).tot, base=sysResp(src.base,bandF).tot;
+    let p=bandF.map((f,i)=>src.data[i]>-100?src.data[i]+now[i]-base[i]:src.data[i]);
+    const r=normRef(p.map((v,i)=>v>-100?v:0),bandF); p=p.map(v=>v>-100?v-r:v); return {pred:p,src}; }
+  function devRMS(arr){ let s=0,c=0; for(let i=0;i<bandF.length;i++){ const f=bandF[i]; if(f<40||f>16000||arr[i]<=-100)continue; const d=arr[i]-TARGETS[target](f); s+=d*d; c++; } return c?Math.sqrt(s/c):null; }
+  function drawSim(){
+    if(!simOn||!cur)return; const sc=simCurves(); if(!sc)return;
+    const off=normRef(sc.tot,sc.f);
+    const line=(arr,col,w,dash)=>{ ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=w; if(dash)ctx.setLineDash(dash); ctx.beginPath(); let st=false;
+      for(let i=0;i<sc.f.length;i++){ const x=xF(sc.f[i]), y=yDb(arr[i]-off); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke(); ctx.restore(); };
+    line(sc.sub,'rgba(255,90,138,.55)',1.2); line(sc.mid,'rgba(53,208,192,.55)',1.2); line(sc.twe,'rgba(110,168,255,.6)',1.2);
+    const pr=simPredict();
+    if(pr){ ctx.save(); ctx.strokeStyle='#ff8a2a'; ctx.lineWidth=2.6; ctx.setLineDash([7,4]); ctx.beginPath(); let st=false;
+      for(let i=0;i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX||pr.pred[i]<=-100)continue; const x=xF(bandF[i]),y=yDb(pr.pred[i]); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke(); ctx.restore(); }
+    else line(sc.tot,'rgba(255,138,42,.9)',2,[3,3]);
+    ctx.save(); ctx.font='bold 10px '+MONO(); ctx.textAlign='right'; ctx.fillStyle='#ff8a2a';
+    ctx.fillText(pr?'🧪 จำลอง: เส้นส้มประ = คาดว่าจะได้':'🧪 จำลอง: ผลรวม DSP (ยังไม่มีผลวัด)',W-PAD.r-4,H-PAD.b-34); ctx.restore();
+  }
+  function simReport(){
+    const box=document.getElementById('simInfo'); if(!box)return;
+    if(!simOn){ box.innerHTML=''; return; }
+    const pr=simPredict();
+    if(!pr){ box.innerHTML='<b>🧪 จำลองอยู่</b> · กราฟแสดงผลของค่า DSP ล้วน (ชมพู=ซับ ฟ้าเขียว=กลาง น้ำเงิน=แหลม ส้ม=รวม)<br>วัด 📸 หรือ 🚶 ก่อน แล้วระบบจะคาดผลจากเสียงจริงให้'; return; }
+    const a=devRMS(pr.src.data), b=devRMS(pr.pred);
+    const better=a!=null&&b!=null&&b<a-0.2, worse=a!=null&&b!=null&&b>a+0.2;
+    box.innerHTML='<b>🧪 ผลจำลอง</b> (อิง'+pr.src.label+')<br>คลาดจากเป้า: วัดจริง <b>±'+(a!=null?a.toFixed(1):'–')+' dB</b> → ถ้าตั้งตามนี้ <b style="color:'+(better?'#5fbf6d':worse?'#e87070':'#ffb020')+'">±'+(b!=null?b.toFixed(1):'–')+' dB</b> '+
+      (better?'✔ ดีขึ้น':worse?'✘ แย่ลง':'≈ ใกล้เดิม')+'<br><span style="opacity:.75">ไม่รวม Limiter (ทำงานตอนเสียงดังเท่านั้น) · ค่าจริงยืนยันด้วยการวัดซ้ำหลังกรอกลงโปรแกรม</span>';
+  }
+  function simRefresh(){ simReport(); if(!running)draw(); }
+  document.getElementById('pfSim').addEventListener('click',function(){ simOn=!simOn; this.classList.toggle('on',simOn); this.innerHTML=simOn?'🧪 ปิดจำลอง':'🧪 จำลองผลบนกราฟ'; simRefresh(); });
   document.getElementById('pfEditor').addEventListener('input',e=>{
     const t=e.target;
     if(t.dataset.k){ const k=t.dataset.k; cur.ch[curCh][k]=(t.tagName==='SELECT'&&isNaN(+t.value))?t.value:(t.value===''?0:+t.value); }
+    else if(t.dataset.pt){ cur.ch[curCh].peq[+t.dataset.pi].t=t.value; }
     else if(t.dataset.pk){ cur.ch[curCh].peq[+t.dataset.pi][t.dataset.pk]=t.value===''?0:+t.value; }
     else if(t.id==='pfName')cur.name=t.value;
     else if(t.id==='pfNote')cur.note=t.value;
+    if(simOn)simRefresh();
   });
   document.getElementById('pfEditor').addEventListener('change',e=>{ if(e.target.tagName==='SELECT')e.target.dispatchEvent(new Event('input',{bubbles:true})); });
   document.getElementById('pfEditor').addEventListener('click',e=>{
