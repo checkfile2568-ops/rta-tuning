@@ -416,15 +416,19 @@
     </div>
     <h4>อุปกรณ์</h4>
     <table>
-      <tr><td>ซับ 10"</td><td>Soundwave SW-10 · 1000W RMS · Fs 38Hz → DM400W (อัปเป็น UCD-1500 ได้)</td></tr>
+      <tr><td>ซับ 10"</td><td>Soundwave SW-10 Edition · DVC 4+4Ω · 1000W RMS · Fs 38Hz</td></tr>
+      <tr><td>แอมป์ซับ</td><td>DIGITCLASS UCD-1500 (Class-D) · ไฟจาก DC1500W BlueArt</td></tr>
       <tr><td>ตู้ซับ</td><td>bandpass ออเดอร์ 4 · ติดดอกกลับด้าน · ลมออกตะแกรงซ้าย · ห้องแอมป์แยก</td></tr>
-      <tr><td>กลาง 4"×2</td><td>Richter 8.9 · 8Ω · 50W → BlueArt 4CH (80W)</td></tr>
-      <tr><td>แหลม 2"×2</td><td>รุ่น? รับ ?W → BlueArt 4CH</td></tr>
+      <tr><td>กลาง 4"×2</td><td>Richter 8.9 · 8Ω · 50W</td></tr>
+      <tr><td>แหลม 2"×2</td><td>รุ่น? รับ ?W</td></tr>
+      <tr><td>แอมป์กลาง/แหลม</td><td>BlueArt 4CH (DMP160W · 80W×4 · DSP ในตัว) + บอร์ดปุ่ม DPL-402</td></tr>
+      <tr><td>ไฟเลี้ยง</td><td>แบต 8S · โมดูล DC-DC มีจอ V/A · พัดลม + ท่อลม</td></tr>
+      <tr><td>ควบคุม</td><td>แอป BlueArt DSP (บลูทูธ) · ไม่มีแลน/WiFi ในตู้</td></tr>
     </table>
     <h4>ลำดับความเปราะ — ตั้งลิมิตเรียงตามนี้</h4>
     <div class="risk r-hi"><span class="rt h">🔴 แหลม 2" — เปราะสุด</span><br>ดอกเล็ก · ต้องมี HPF 3.91k ชันๆ + ลิมิตต่ำ ห้ามหลุดต่ำเด็ดขาด</div>
     <div class="risk r-mid"><span class="rt m">🟠 กลาง 4" (50W)</span><br>แอมป์จ่าย 80W แต่ดอกรับ 50W → คุมเกน/ลิมิตไม่ให้เกิน ~50W</div>
-    <div class="risk r-lo"><span class="rt l">🟢 ซับ 10" (1000W)</span><br>แข็งแรงสุด · แต่ต้องมี subsonic (ค่าจาก Sweep) + ลิมิตกันหลุดใต้ย่านตู้ (ยิ่งใช้ UCD-1500 ยิ่งต้องแน่น)</div>
+    <div class="risk r-lo"><span class="rt l">🟢 ซับ 10" (1000W)</span><br>แข็งแรงสุด · แต่ต้องมี subsonic (ค่าจาก Sweep) + ลิมิตกันหลุดใต้ย่านตู้ (ใช้ UCD-1500 อยู่ ต้องตั้งให้แน่น)</div>
     <h4>ค่าครอสปัจจุบัน</h4>
     <table>
       <tr><td>ซับ</td><td>subsonic ≈0.7×พีค Sweep / LPF 90–100 · LR24</td></tr>
@@ -474,7 +478,7 @@
       </table>
       <div class="gwhere">ค่าเริ่มต้น — ฟังแล้วอัด/ไม่ดังขึ้น ค่อยยก threshold ทีละ 1dB</div>
     </div>
-    <div class="gwarn">🔴 ดูดอกผ่านช่องโครงสีเหลือง: ขยับเยอะผิดปกติหรือมีเสียงกึก = ถึงเพดาน ตั้ง limiter ตรงนั้น · DM400W จ่ายน้อยกว่าที่ดอกรับ เร่งเกิน = แอมป์คลิป (ไม่ใช่ดอกไม่ไหว)</div>
+    <div class="gwarn">🔴 ดูดอกผ่านช่องโครงสีเหลือง: ขยับเยอะผิดปกติหรือมีเสียงกึก = ถึงเพดาน ตั้ง limiter ตรงนั้น · แอมป์ซับ UCD-1500 จ่ายได้มากกว่าที่ดอกรับไหว (ยิ่งต่อ 2Ω ยิ่งแรง) → limiter ช่องซับคือตัวกันดอกพัง</div>
   </div>
 </div>
 
