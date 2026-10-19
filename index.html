@@ -113,8 +113,8 @@
   .guide p{color:var(--muted);font-size:12.5px;line-height:1.7;margin:0 0 4px}
   .guide ol{margin:2px 0 4px 18px;padding:0}
   .guide li{color:var(--muted);font-size:12.5px;line-height:1.7;margin:3px 0}
-  .gtabs{display:flex;gap:6px;margin-bottom:10px}
-  .gtabs button{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px;color:var(--muted);cursor:pointer;font-size:12.5px}
+  .gtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .gtabs button{flex:1 1 46%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px;color:var(--muted);cursor:pointer;font-size:12.5px}
   .gtabs button.sel{color:var(--accent2);border-color:var(--accent2)}
   .gmode{display:none}
   .gmode.on{display:block}
@@ -128,6 +128,71 @@
   .gwhere{color:var(--muted);font-size:11.5px;margin-top:5px}
   .gwhere b{color:var(--accent2)}
   .gwarn{color:#c9922f;font-size:12px;margin-top:5px;line-height:1.55}
+  /* system-summary tab */
+  .flow{margin:6px 0}
+  .flow .fbox{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12.5px;color:var(--text)}
+  .flow .fbox b{color:var(--accent2)}
+  .flow .fbox .sub{color:var(--muted);font-size:11px}
+  .flow .arr{text-align:center;color:var(--muted);font-size:13px;margin:3px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11.5px;color:var(--text)}
+  .risk{border-left:4px solid;border-radius:8px;padding:7px 10px;margin:6px 0;background:var(--panel2);font-size:12px;line-height:1.55;color:var(--muted)}
+  .risk .rt{font-weight:600;font-size:12.5px}
+  .r-hi{border-color:#e05555}
+  .r-mid{border-color:#c9922f}
+  .r-lo{border-color:#3fa64d}
+  .risk .rt.h{color:#e87070}
+  .risk .rt.m{color:#d9a94a}
+  .risk .rt.l{color:#5fbf6d}
+  /* guided stepper */
+  .wiz{margin:0 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px 12px}
+  .wchips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+  .wchips::-webkit-scrollbar{display:none}
+  .wchips button{flex:0 0 auto;min-width:34px;height:34px;padding:0 10px;border-radius:17px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer}
+  .wchips button.done{color:#5fbf6d;border-color:#2f6b3a}
+  .wchips button.cur{background:var(--accent2);border-color:var(--accent2);color:#1a0d02}
+  .wcard h3{margin:2px 0 8px;font-size:15px;color:var(--text)}
+  .wcard h3 em{font-style:normal;color:var(--accent2);font-family:var(--mono);margin-right:6px}
+  .wrow{display:flex;gap:8px;margin:6px 0;font-size:12.5px;line-height:1.6;color:var(--muted)}
+  .wrow b{flex:0 0 62px;color:var(--text);font-weight:600}
+  .wrow.look{background:var(--panel2);border-left:3px solid var(--accent2);border-radius:6px;padding:6px 8px}
+  .wrow.enter span{font-family:var(--mono);font-size:12px;color:var(--accent2)}
+  .wres{margin:6px 0;padding:7px 9px;border-radius:8px;background:rgba(95,191,109,.12);border:1px solid #2f6b3a;color:#9fe0a9;font-size:12.5px}
+  .wacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .wacts button{flex:1 1 45%}
+  .wnav{display:flex;gap:8px;margin-top:10px}
+  .wnav button{flex:1}
+  .whint{font-size:11.5px;color:#ffb98a;margin-top:6px;min-height:0}
+  .gcap{margin:6px 14px 0;font-size:12px;line-height:1.55;color:var(--muted)}
+  .gcap b{color:var(--accent2)}
+  /* tuning profiles */
+  .pfbar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .pfactive{flex:1;font-size:13px;color:var(--muted)}
+  .pfactive b{color:var(--accent2)}
+  .pfbar button{flex:0 0 auto}
+  .pfmeta{font-size:11.5px;color:var(--muted);margin:2px 0 8px;line-height:1.5}
+  .pfmeta b{color:var(--text)}
+  .pftabs{display:flex;gap:6px;margin-bottom:8px}
+  .pftabs button{flex:1;min-height:36px;font-size:13px}
+  .pftabs button.sel{background:var(--panel2);color:var(--accent2);border-color:var(--accent2)}
+  .pfgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}
+  .pfgrid label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted)}
+  .presets .pfgrid input,.presets .pfgrid select,.presets .pfpeq input{width:100%;min-height:36px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:13px;padding:4px 8px;margin:0}
+  .presets .pfgrid select{appearance:auto}
+  .pfpeq{margin-top:10px}
+  .pfpeq .ph{font-size:11.5px;color:var(--muted);margin-bottom:4px}
+  .pfprow{display:grid;grid-template-columns:22px 1fr 1fr 1fr 34px;gap:5px;align-items:center;margin-bottom:5px}
+  .pfprow i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--accent2);text-align:center}
+  .pfprow button{min-height:34px;padding:0;font-size:13px}
+  .pfprow.hd span{font-size:10.5px;color:var(--muted);text-align:center}
+  .pfmsg{font-size:12px;color:#9fe0a9;margin-top:6px;min-height:0}
+  .pfmsg.err{color:#ffb98a}
+  .pfnote{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .pitem .pbtns{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+  .pitem .pbtns button{flex:1 1 auto;min-height:32px;padding:4px 8px;font-size:12px;border-radius:7px}
+  .pitem .sum{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .pitem.act{border-color:var(--accent2)}
+  .pbadge{font-size:10px;font-weight:700;color:#1a0d02;background:var(--accent2);border-radius:5px;padding:1px 6px;margin-left:4px}
 </style>
 </head>
 <body>
@@ -142,39 +207,12 @@
     <span id="stFs" style="font-size:10px">— kHz</span></div>
 </header>
 
-<div class="label">⚡ ต้องหาค่าใดก่อน — ทำตามลำดับนี้เท่านั้น</div>
-<div class="steps">
-  <div class="step"><i>1</i><div><b>เกน + Limiter (ก่อนอื่นใด)</b><small>ตั้งให้แอมป์ไม่คลิป · ยังไม่ต้องวัดอะไร ถ้าแอมป์คลิปอยู่ ค่าที่วัดได้ทั้งหมดจะผิดหมด</small></div></div>
-  <div class="step"><i>2</i><div><b>จูนตู้ (Fb) → ได้ Subsonic</b><small>กด 🌊 Sweep เบส · นี่คือค่าที่ต้องหาเป็นอันดับแรกของการวัด เพราะมันกำหนด Subsonic ที่กันดอกพัง</small></div></div>
-  <div class="step"><i>3</i><div><b>ครอสโอเวอร์ + สโลป</b><small>ใส่ Subsonic จากข้อ 2 + ครอสตามการ์ดด้านล่าง ลงช่องซับ/กลาง/แหลม</small></div></div>
-  <div class="step"><i>4</i><div><b>เฟส/โพลาริตี้ + ดีเลย์</b><small>กด 🔄 เช็กเฟส · ต้องแก้ก่อน EQ เสมอ ดิพจากเฟสแก้ด้วย EQ ไม่หาย</small></div></div>
-  <div class="step"><i>5</i><div><b>เลเวลสมดุล 3 ทาง</b><small>ปรับเกนซับ/กลาง/แหลม ให้เส้นใกล้เป้าหมายก่อน แล้วค่อยละเอียด</small></div></div>
-  <div class="step"><i>6</i><div><b>PEQ ละเอียด (ท้ายสุด)</b><small>กด 📸 วัดผล แล้วทำตามคำแนะนำ · เน้นตัดมากกว่าบูสต์ · เก็บ A/B ดูว่าดีขึ้นจริง</small></div></div>
-</div>
-
-<div class="label">ตั้งครอสโอเวอร์แนะนำ (ป้อนลง Blue Art · 4CH)</div>
-<div class="xcards">
-  <div class="xcard sub">
-    <h3>ซับ 10"</h3><div class="qty">ตู้ออเดอร์ 6 · กระแทกข้าง</div>
-    <div class="kv"><span>HPF (subsonic)</span><b>38Hz · BW24</b></div>
-    <div class="kv"><span>LPF</span><b>110Hz · LR24</b></div>
-    <div class="kv"><span>Limiter / Phase</span><b>ON · 0/180°*</b></div>
-  </div>
-  <div class="xcard mid">
-    <h3>กลาง 4"</h3><div class="qty">×2 ตัว</div>
-    <div class="kv"><span>HPF</span><b>120Hz · LR24</b></div>
-    <div class="kv"><span>LPF</span><b>3.91k · LR12</b></div>
-    <div class="kv"><span>Limiter</span><b>ON · กันคลิป</b></div>
-  </div>
-  <div class="xcard twe">
-    <h3>แหลม 2"</h3><div class="qty">×2 ตัว</div>
-    <div class="kv"><span>HPF</span><b>3.91k · LR12</b></div>
-    <div class="kv"><span>Level</span><b>ค่อยเปิด</b></div>
-    <div class="kv"><span>Limiter</span><b>ON · 5–8k บาดหู</b></div>
-  </div>
-</div>
-<div style="font-size:11px;color:var(--muted);margin:6px 16px 0;line-height:1.5">
-  * ใน Blue Art เลือกชนิดฟิลเตอร์ได้ (LinkwitzRiley / Butterworth / Bessel) — ใช้ LR24 ตรงจุดตัดหลักเพื่อรวมเฟสสวย, HPF ซับใช้ Butterworth ชันๆ กันดอกหลุด · ถ้ามีดิพตรงจุดตัดให้สลับ Phase ซับ 180° ก่อนแก้ EQ · ค่าเหล่านี้เป็นจุดตั้งต้น (คลิปในวิดีโออ้างอิงตัด mid→แหลม ~5–6k) ปรับตามผลวัดจริงได้
+<div class="label">🧭 จูนทีละขั้น — ทำตามลำดับ · กราฟจะไฮไลต์ย่านที่ต้องดูให้</div>
+<div class="wiz" id="wiz">
+  <div class="wchips" id="wChips"></div>
+  <div class="wcard" id="wCard"></div>
+  <div class="whint" id="wHint"></div>
+  <div class="wnav"><button id="wPrev">◀ ขั้นก่อนหน้า</button><button id="wNext" class="primary">ขั้นถัดไป ▶</button></div>
 </div>
 
 <div class="graphwrap">
@@ -186,6 +224,7 @@
   </div>
   <div class="readout"><b id="rLevel">–</b> dB<br><span id="rBand">—</span></div>
 </div>
+<div class="gcap" id="gCap"></div>
 
 <div class="controls">
   <div class="row">
@@ -203,7 +242,7 @@
   </div>
   <div class="row">
     <button id="btnPhase" disabled><span class="icn">🔄</span> เช็กเฟส/โพลาริตี้</button>
-    <button id="btnPreset"><span class="icn">💾</span> พรีเซ็ต</button>
+    <button id="btnPreset"><span class="icn">🎛️</span> ชุดจูน</button>
     <button id="btnGuide"><span class="icn">📖</span> คู่มือ · WiFi</button>
   </div>
 
@@ -229,15 +268,53 @@
   </div>
 </div>
 
-<div class="label" id="presetLabel" style="margin-left:14px;display:none">จดค่าพรีเซ็ต</div>
-<div class="presets" id="presetPanel">
-  <input id="pName" placeholder="ชื่อพรีเซ็ต (เช่น ฟังเพลิน / ประกวด / ประกาศ)" maxlength="40">
-  <textarea id="pNote" placeholder="ค่าที่ตั้งไว้ — เช่น&#10;Sub: HPF 38 BW24 · LPF 110 LR24 · Gain -2&#10;Mid: HPF 120 · LPF 3.91k · PEQ 250Hz Q1.2 -4dB&#10;Twe: HPF 3.91k · PEQ 6.3k Q2 -2dB"></textarea>
-  <div class="row" style="margin:0">
-    <button id="pSave" class="primary"><span class="icn">💾</span> บันทึกพรีเซ็ต</button>
-    <button id="pFill"><span class="icn">✨</span> ดึงค่าที่วัดได้</button>
+<div class="label">ตั้งครอสโอเวอร์แนะนำ (ป้อนลง Blue Art · 4CH)</div>
+<div class="xcards">
+  <div class="xcard sub">
+    <h3>ซับ 10"</h3><div class="qty">bandpass ออเดอร์ 4 · ติดดอกกลับด้าน</div>
+    <div class="kv"><span>HPF (subsonic)</span><b>≈0.7×พีค Sweep · BW24</b></div>
+    <div class="kv"><span>LPF</span><b>90–100Hz · LR24</b></div>
+    <div class="kv"><span>Limiter / Phase</span><b>ON · 0/180°*</b></div>
   </div>
+  <div class="xcard mid">
+    <h3>กลาง 4"</h3><div class="qty">×2 ตัว</div>
+    <div class="kv"><span>HPF</span><b>120Hz · LR24</b></div>
+    <div class="kv"><span>LPF</span><b>3.91k · LR12</b></div>
+    <div class="kv"><span>Limiter</span><b>ON · กันคลิป</b></div>
+  </div>
+  <div class="xcard twe">
+    <h3>แหลม 2"</h3><div class="qty">×2 ตัว</div>
+    <div class="kv"><span>HPF</span><b>3.91k · LR12</b></div>
+    <div class="kv"><span>Level</span><b>ค่อยเปิด</b></div>
+    <div class="kv"><span>Limiter</span><b>ON · 5–8k บาดหู</b></div>
+  </div>
+</div>
+<div style="font-size:11px;color:var(--muted);margin:6px 16px 0;line-height:1.5">
+  * ใน Blue Art เลือกชนิดฟิลเตอร์ได้ (LinkwitzRiley / Butterworth / Bessel) — ใช้ LR24 ตรงจุดตัดหลักเพื่อรวมเฟสสวย, HPF ซับใช้ Butterworth ชันๆ กันดอกหลุด · ถ้ามีดิพตรงจุดตัดให้สลับ Phase ซับ 180° ก่อนแก้ EQ · ค่าเหล่านี้เป็นจุดตั้งต้น (คลิปในวิดีโออ้างอิงตัด mid→แหลม ~5–6k) ปรับตามผลวัดจริงได้
+</div>
+
+<div class="label" id="presetLabel" style="margin-left:14px;display:none">🎛️ ชุดจูน — สร้าง · เก็บค่า · โหลดค่า</div>
+<div class="presets" id="presetPanel">
+  <div class="pfbar"><span class="pfactive" id="pfActive">—</span><button id="pfNew">＋ ชุดใหม่จาก Base</button></div>
+  <div id="pfEditor"></div>
+  <div class="row" style="margin:10px 0 0">
+    <button id="pfSave" class="primary">💾 บันทึก</button>
+    <button id="pfSaveAs">📄 บันทึกเป็นชุดใหม่</button>
+  </div>
+  <div class="row" style="margin:6px 0 0">
+    <button id="pfFill">✨ ดึงค่าจากการวัด</button>
+    <button id="pfCurve">📈 เก็บกราฟปัจจุบัน</button>
+  </div>
+  <div class="pfmsg" id="pfMsg"></div>
+  <div class="label" style="margin:14px 0 6px">ชุดจูนที่บันทึกไว้</div>
   <div class="plist" id="pList"></div>
+  <div class="row" style="margin:8px 0 0">
+    <button id="pfExport">⬇️ ส่งออกไฟล์</button>
+    <button id="pfImport">⬆️ นำเข้าไฟล์</button>
+    <button id="pfCopy">📋 คัดลอกข้อความ</button>
+  </div>
+  <input type="file" id="pfFile" accept=".json,application/json" style="display:none">
+  <div class="pfnote">ชุดจูนเก็บในเบราว์เซอร์ของเครื่องนี้ · กด ⬇️ ส่งออกไฟล์ ไว้สำรอง หรือย้ายไปเปิดในเครื่องอื่นด้วย ⬆️ นำเข้าไฟล์</div>
 </div>
 
 <div class="label" style="margin-left:14px">คู่มือ · ตั้งค่า WiFi วงเดียวกัน</div>
@@ -246,6 +323,8 @@
     <button data-m="phone" class="sel">📱 มือถืออย่างเดียว</button>
     <button data-m="combo">💻 คอม + มือถือ</button>
     <button data-m="steps">🎚️ ขั้นตอนจูน</button>
+    <button data-m="system">🔧 ระบบของฉัน</button>
+    <button data-m="subplan">📦 ตู้ปัจจุบัน</button>
   </div>
 
   <div class="gmode on" id="gm-phone">
@@ -291,12 +370,12 @@
     <div class="gcard">
       <div class="gh"><span class="gn">3</span> ครอสโอเวอร์ + สโลป</div>
       <table>
-        <tr><td>ซับ 10"</td><td>HPF 38Hz (subsonic) · LPF 110Hz · LR24</td></tr>
+        <tr><td>ซับ 10"</td><td>subsonic ≈0.7×พีค Sweep (≥30Hz) · LPF 90–100Hz · LR24</td></tr>
         <tr><td>กลาง 4"×2</td><td>HPF 120Hz · LPF 3.91k · LR24/LR12</td></tr>
         <tr><td>แหลม 2"×2</td><td>HPF 3.91k · LR12</td></tr>
       </table>
       <div class="gwhere">ใส่ที่ช่อง <b>HPF</b> และ <b>LPF</b> ของแต่ละแชนแนล (เลือกความถี่ + ชนิด/สโลป)</div>
-      <div class="gwarn">⚠ อย่าลืม subsonic HPF ที่ซับ — ตู้ออเดอร์ 6 ขาดตัวนี้ดอกพังได้</div>
+      <div class="gwarn">⚠ อย่าลืม subsonic HPF ที่ซับ — ตู้ bandpass ขาดตัวนี้ดอกพังได้</div>
     </div>
     <div class="gcard">
       <div class="gh"><span class="gn">4</span> เฟส / ดีเลย์</div>
@@ -316,6 +395,87 @@
       <div class="gwarn">⚠ อย่าดันเกนจนคลิป · ตัดพีคก่อน แล้วค่อยเร่งรวม</div>
     </div>
   </div>
+  <div class="gmode" id="gm-system">
+    <h3>ระบบ D-STACK ของฉัน</h3>
+    <p>3 ทางแอ็กทีฟจริง · 5 ช่องแยกกัน · คุมได้ทั้งคอมและมือถือ</p>
+    <h4>สายสัญญาณ</h4>
+    <div class="flow">
+      <div class="fbox"><b>ต้นทาง</b> <span class="sub">บลูทูธ LDAC / AUX</span></div>
+      <div class="arr">↓</div>
+      <div class="fbox"><b>BlueArt DSP</b> <span class="sub">ครอส · EQ · Limiter · Delay/Phase · Gain</span></div>
+      <div class="arr">↓ แยก 5 ทาง</div>
+      <div class="fbox">แอมป์ + ดอก
+        <div class="chips">
+          <span class="chip">กลาง 4" L</span>
+          <span class="chip">กลาง 4" R</span>
+          <span class="chip">แหลม 2" L</span>
+          <span class="chip">แหลม 2" R</span>
+          <span class="chip">ซับ 10" (โมโน)</span>
+        </div>
+      </div>
+    </div>
+    <h4>อุปกรณ์</h4>
+    <table>
+      <tr><td>ซับ 10"</td><td>Soundwave SW-10 · 1000W RMS · Fs 38Hz → DM400W (อัปเป็น UCD-1500 ได้)</td></tr>
+      <tr><td>ตู้ซับ</td><td>bandpass ออเดอร์ 4 · ติดดอกกลับด้าน · ลมออกตะแกรงซ้าย · ห้องแอมป์แยก</td></tr>
+      <tr><td>กลาง 4"×2</td><td>Richter 8.9 · 8Ω · 50W → BlueArt 4CH (80W)</td></tr>
+      <tr><td>แหลม 2"×2</td><td>รุ่น? รับ ?W → BlueArt 4CH</td></tr>
+    </table>
+    <h4>ลำดับความเปราะ — ตั้งลิมิตเรียงตามนี้</h4>
+    <div class="risk r-hi"><span class="rt h">🔴 แหลม 2" — เปราะสุด</span><br>ดอกเล็ก · ต้องมี HPF 3.91k ชันๆ + ลิมิตต่ำ ห้ามหลุดต่ำเด็ดขาด</div>
+    <div class="risk r-mid"><span class="rt m">🟠 กลาง 4" (50W)</span><br>แอมป์จ่าย 80W แต่ดอกรับ 50W → คุมเกน/ลิมิตไม่ให้เกิน ~50W</div>
+    <div class="risk r-lo"><span class="rt l">🟢 ซับ 10" (1000W)</span><br>แข็งแรงสุด · แต่ต้องมี subsonic (ค่าจาก Sweep) + ลิมิตกันหลุดใต้ย่านตู้ (ยิ่งใช้ UCD-1500 ยิ่งต้องแน่น)</div>
+    <h4>ค่าครอสปัจจุบัน</h4>
+    <table>
+      <tr><td>ซับ</td><td>subsonic ≈0.7×พีค Sweep / LPF 90–100 · LR24</td></tr>
+      <tr><td>กลาง</td><td>HPF 120 / LPF 3.91k</td></tr>
+      <tr><td>แหลม</td><td>HPF 3.91k · LR12</td></tr>
+    </table>
+    <div class="gwarn">⚠ ยังขาด 2 ค่าเพื่อคำนวณ threshold ลิมิต: รุ่น/วัตต์แหลม 2" · โอห์มซับที่จะต่อ UCD (8 หรือ 2)</div>
+  </div>
+  <div class="gmode" id="gm-subplan">
+    <h3>ตู้ปัจจุบัน — bandpass ออเดอร์ 4</h3>
+    <p>ดอกติดกลับด้านบนแผ่นกั้น · <b>ฝั่งกรวย = ห้องปิด</b> · <b>ฝั่งแม่เหล็ก (เห็นผ่านอะคริลิก) = ห้องมีช่องลม</b> → เบสออกทางตะแกรงซ้าย · ห้องแอมป์แยก</p>
+    <div class="gcard">
+      <div class="gh"><span class="gn">1</span> เช็กตัวตู้ก่อนจูน</div>
+      <table>
+        <tr><td>หารอยรั่ว</td><td>เปิดโทน 40–50Hz ระดับกลาง เอาทิชชูไล่รอบขอบอะคริลิก หัวสกรู รูสาย · ลมพ่น/เสียงซี่ = รั่ว → อัดยาง/ซิลิโคน</td></tr>
+        <tr><td>ห้องปิดฝั่งกรวย</td><td>ต้องสนิท 100% — รั่วนิดเดียวเบสหลวมทันที</td></tr>
+        <tr><td>ห้องแอมป์/กลาง/แหลม</td><td>แยกลมจากห้องซับ · รูลอดสายอุดซิลิโคน</td></tr>
+        <tr><td>อะคริลิก</td><td>เร่งแล้วต้องไม่สั่น/ตบ · ถ้าย้วยเพิ่มสกรูหรือคานค้ำ</td></tr>
+      </table>
+    </div>
+    <div class="gcard">
+      <div class="gh"><span class="gn">2</span> Gain staging (กันเร่งแล้วแตก)</div>
+      <table>
+        <tr><td>มือถือ</td><td>85–90% · ปิด EQ ในมือถือ</td></tr>
+        <tr><td>ปุ่มหลังตู้</td><td>BASS / MID / TREBLE ไว้ตรงกลาง (flat) · ใช้ VOL คุมหลัก</td></tr>
+      </table>
+      <div class="gwarn">⚠ BASS หมุนขึ้นค้าง = บูสต์ซ้อนกับ DSP แอมป์คลิปเร็ว</div>
+    </div>
+    <div class="gcard">
+      <div class="gh"><span class="gn">3</span> ตั้ง DSP ตามลำดับ</div>
+      <table>
+        <tr><td>①</td><td>Reset EQ ทุกช่อง</td></tr>
+        <tr><td>②</td><td>ครอส: ซับ LPF 90–100 LR24 · กลาง 120 / 3.9k · แหลม 3.9k LR12</td></tr>
+        <tr><td>③</td><td>🌊 Sweep จ่อตะแกรงซ้าย → subsonic ≈ 0.7 × พีค (≥30Hz) · BW24</td></tr>
+        <tr><td>④</td><td>🔄 เช็กเฟสซับ 0/180 ที่จุดตัด · ยังดิพ → ดีเลย์ทีละ 0.5ms</td></tr>
+        <tr><td>⑤</td><td>เลเวล: ซับสูงกว่ากลาง ~+6dB (เป้า ดีสแต็ก)</td></tr>
+        <tr><td>⑥</td><td>🚶 MMM → ตัดโหนกเบส · ≤5 แบนด์ · บูสต์ ≤ +3dB</td></tr>
+        <tr><td>⑦</td><td>Limiter (ตารางล่าง) → เร่งดูดอกผ่านช่องโครง → A/B → เซฟ 2 พรีเซ็ต (ในบ้าน/กลางแจ้ง)</td></tr>
+      </table>
+    </div>
+    <div class="gcard">
+      <div class="gh"><span class="gn">4</span> Limiter เริ่มต้น</div>
+      <table>
+        <tr><td>แหลม 2"</td><td>Thresh −6 dB · Hold FAST · Release NORMAL</td></tr>
+        <tr><td>กลาง 4" (50W/แอมป์80W)</td><td>Thresh −4 dB · Hold NORMAL · Release NORMAL</td></tr>
+        <tr><td>ซับ</td><td>Thresh −2 ถึง −3 dB · Hold FAST · Release NORMAL</td></tr>
+      </table>
+      <div class="gwhere">ค่าเริ่มต้น — ฟังแล้วอัด/ไม่ดังขึ้น ค่อยยก threshold ทีละ 1dB</div>
+    </div>
+    <div class="gwarn">🔴 ดูดอกผ่านช่องโครงสีเหลือง: ขยับเยอะผิดปกติหรือมีเสียงกึก = ถึงเพดาน ตั้ง limiter ตรงนั้น · DM400W จ่ายน้อยกว่าที่ดอกรับ เร่งเกิน = แอมป์คลิป (ไม่ใช่ดอกไม่ไหว)</div>
+  </div>
 </div>
 
 <div class="label" style="margin-left:14px">คำแนะนำการจูน (รู้จักระบบ 3 ทาง)</div>
@@ -327,7 +487,7 @@
   <b>ลำดับการจูนชุด 3 ทางนี้</b>
   <ol>
     <li><b>หาจูนตู้ก่อน:</b> กด <span class="kbd">Sweep เบส</span> กวาด 20–160Hz — ระบบจะบอกความถี่ที่ตู้ดังสุด (จูนตู้) และแนะนำจุดตั้ง Subsonic ให้อัตโนมัติ เอาไปตั้งช่องซับ</li>
-    <li><b>ครอส:</b> ตั้งครอส/subsonic ตามการ์ด+ผล Sweep บน Blue Art — subsonic สำคัญมากกับตู้ออเดอร์ 6 กันดอกซับหลุดใต้จูนตู้จนพัง</li>
+    <li><b>ครอส:</b> ตั้งครอส/subsonic ตามการ์ด+ผล Sweep บน Blue Art — subsonic สำคัญมากกับตู้ bandpass กันดอกซับหลุดใต้ย่านที่ตู้เล่นได้จนพัง · Sweep ให้จ่อไมค์ที่ช่องลมตะแกรงซ้าย</li>
     <li><b>เฟส/ดีเลย์:</b> เล่น Pink Noise วัดรอบจุดตัด 100Hz กับ 4kHz — ถ้าเป็นดิพลึก ลองสลับโพลาริตี้/ปรับดีเลย์ ให้ไดรเวอร์มาถึงหูพร้อมกันก่อน อย่าเพิ่งดันด้วย EQ</li>
     <li><b>เลเวลสมดุล:</b> ปรับเกนซับ/กลาง/แหลม ให้เส้นเสียงจริงราบใกล้เป้าหมาย</li>
     <li><b>EQ ละเอียด:</b> ค่อยจูน PEQ ตามที่ระบบแนะนำ เน้นตัด (subtractive) มากกว่าบูสต์</li>
@@ -335,9 +495,9 @@
   </ol>
 </div>
 <div class="help warn">
-  <b>อาการเบสแตกตอนเร่ง (แก้ตามลำดับ):</b> ① ตั้ง <b>Subsonic HPF ~38Hz Butterworth ชันๆ</b> — กันดอกซับหลุดใต้จูนตู้ (สาเหตุอันดับ 1 ของเสียงแตก) ② เช็ก <b>amp คลิปไหม</b> ตั้งเกน+Limiter สับให้เอาต์พุตไม่ดันแอมป์คลิป ③ <b>อย่าบูสต์ต่ำกว่าที่ตู้เล่นได้</b> — ตู้ออเดอร์ 6 เป็นตู้แบนด์แคบ บูสต์ 30–45Hz มีแต่ทำดอกสะบัด/แตก ให้ตัดพีคของตู้แล้วเร่งเกนรวมแทน จะดังสะอาดกว่า<br><br>
+  <b>อาการเบสแตกตอนเร่ง (แก้ตามลำดับ):</b> ① ตั้ง <b>Subsonic HPF ตามค่า 🌊 Sweep (~0.7×พีค) Butterworth ชันๆ</b> — กันดอกซับหลุดใต้จูนตู้ (สาเหตุอันดับ 1 ของเสียงแตก) ② เช็ก <b>amp คลิปไหม</b> ตั้งเกน+Limiter สับให้เอาต์พุตไม่ดันแอมป์คลิป ③ <b>อย่าบูสต์ต่ำกว่าที่ตู้เล่นได้</b> — ตู้ bandpass ออเดอร์ 4 เป็นตู้แบนด์แคบ บูสต์ 30–45Hz มีแต่ทำดอกสะบัด/แตก ให้ตัดพีคของตู้แล้วเร่งเกนรวมแทน จะดังสะอาดกว่า<br><br>
   <b>หมายเหตุ:</b> Blue Art มี RTA/Spectrum ในตัว และเครื่องพี่มี Smaart Suite ด้วย — ถ้ามีไมค์วัดคาลิเบรต ใช้ Smaart จะเที่ยงสุด · ตัวนี้ไว้เช็กเร็ว/พกพา + ได้เส้นเป้าหมายและคำแนะนำอัตโนมัติที่ RTA ในตัวไม่มี แล้วเอาค่าไปใส่ Blue Art ตามฟอร์แมต Band/F/Q/G ได้เลย<br><br>
-  <b>จุดอ่อนที่ต้องจับตาในชุดนี้:</b> ไม่มีมิดเบสแยก — 10" ตู้ออเดอร์ 6 เป็นตู้แบนด์แคบ (ขึ้นไม่ค่อยถึง 150–300Hz) ส่วน 4" ก็ยังไม่เต็มที่ในย่านนั้น ทำให้ช่วง <b>150–300 Hz</b> มักตก ฟังแล้วเสียงบาง/ขาดเนื้อ · แก้โดยขยับ LP ซับขึ้นเล็กน้อยหรือ HP กลางลง แล้วหนุน PEQ เบาๆ · และไมค์มือถือไม่ได้คาลิเบรต ค่าที่อ่านเป็นแนวโน้ม ถ้าอยากเป๊ะใช้ UMIK-1 + REW (ฟรี)
+  <b>จุดอ่อนที่ต้องจับตาในชุดนี้:</b> ไม่มีมิดเบสแยก — 10" ตู้ bandpass ออเดอร์ 4 เป็นตู้แบนด์แคบ (ขึ้นไม่ค่อยถึง 150–300Hz) ส่วน 4" ก็ยังไม่เต็มที่ในย่านนั้น ทำให้ช่วง <b>150–300 Hz</b> มักตก ฟังแล้วเสียงบาง/ขาดเนื้อ · แก้โดยขยับ LP ซับขึ้นเล็กน้อยหรือ HP กลางลง แล้วหนุน PEQ เบาๆ · และไมค์มือถือไม่ได้คาลิเบรต ค่าที่อ่านเป็นแนวโน้ม ถ้าอยากเป๊ะใช้ UMIK-1 + REW (ฟรี)
 </div>
 
 <div class="foot">RTA 3-WAY TUNING · เปิดผ่าน https เท่านั้นไมค์จึงทำงาน · ห้ามใช้บน GAS</div>
@@ -346,8 +506,8 @@
 (function(){
   "use strict";
   // crossover config (Hz)
-  const X={ subsonic:38, subLP:110, midHP:120, midLP:3910, tweHP:3910 };
-  const XMARK=[110,3910], SUBMARK=38;
+  const X={ subsonic:38, subLP:100, midHP:120, midLP:3910, tweHP:3910 };
+  const XMARK=[100,3910], SUBMARK=38;
 
   function centers(perOct){
     const ratio=Math.pow(2,1/perOct); let f=1000; const low=[];
@@ -378,7 +538,6 @@
   let sweeping=false, sweepData=[], sweepPeak=null, sweepResult=null, sweepOsc=null, sweepMeta=null, sweepFrozen=false;
   let snapA=null, snapB=null, abOn=false;
   let phasing=false, phaseOsc=null, phaseGain=null, phaseMeta=null, phaseLog=[];
-  let presets=[];
 
   const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
   let W=0,H=0; const DPR=Math.min(window.devicePixelRatio||1,2.5);
@@ -533,14 +692,14 @@
           html+='<div class="sug under"><h4>'+niceLabel(flo)+'–'+niceLabel(fhi)+' Hz <em>เบากว่า −'+amt+' dB</em></h4><p>ดิพนี้แกว่ง ±'+vv.toFixed(1)+'dB ตามตำแหน่งไมค์ = <b>โหมดห้อง (room null)</b> ไม่ใช่ลำโพง</p><div class="fix" style="border-color:#c9922f">🚫 อย่า EQ ถม — เปลืองเฮดรูม/ยิ่งพัง · แก้ด้วยขยับตำแหน่งซับ/จุดฟัง หรือวัสดุดูดซับแทน</div></div>';
         }else{
           let why= atX? 'อยู่ใกล้จุดตัดครอส '+niceLabel(xo)+'Hz — น่าจะเป็นเฟส/ดีเลย์มากกว่า EQ ลองสลับโพลาริตี้หรือปรับดีเลย์ก่อน'
-                : isMidbass? 'ย่านมิดเบสของชุดนี้ (10"ตู้ออเดอร์6 ขึ้นไม่ถึง + 4"ยังไม่เต็ม) มักตกตรงนี้ ลองขยับ LP ซับขึ้น/HP กลางลงก่อน แล้วค่อยหนุน EQ'
+                : isMidbass? 'ย่านมิดเบสของชุดนี้ (10" ตู้ bandpass ขึ้นไม่ถึง + 4"ยังไม่เต็ม) มักตกตรงนี้ ลองขยับ LP ซับขึ้น/HP กลางลงก่อน แล้วค่อยหนุน EQ'
                 : isSub? 'ขาดพลังเบสลึก เพิ่มเกนซับหรือลดจุด LP ซับลงเล็กน้อย' : 'ค่อยเติมทีละน้อย อย่าดันจนคลิป';
           html+='<div class="sug under"><h4>'+niceLabel(flo)+'–'+niceLabel(fhi)+' Hz <em>เบากว่า −'+amt+' dB</em></h4><p>'+why+'</p><div class="fix">Blue Art → Band ว่าง · Peak(PEQ) · F='+niceLabel(fc)+'Hz · Q=1.0 · G=+'+Math.min(6,amt)+'dB</div></div>';
         }
       }
     }
     let sx=0,sc=0; for(let i=0;i<bandF.length;i++){ if(bandF[i]<40){sx+=delta[i];sc++;} }
-    if(sc&&sx/sc>5) html+='<div class="sug note"><h4>พลังงาน &lt;40Hz ล้น</h4><p>ตู้ออเดอร์ 6 อันตรายถ้าปล่อยใต้จูนตู้ — ยืนยัน subsonic HPF ~38Hz เปิดอยู่ กันดอกซับหลุด/พัง</p></div>';
+    if(sc&&sx/sc>5) html+='<div class="sug note"><h4>พลังงาน &lt;40Hz ล้น</h4><p>ตู้ bandpass อันตรายถ้าปล่อยใต้ย่านที่ตู้เล่นได้ — ยืนยัน subsonic HPF (ค่าจาก 🌊 Sweep) เปิดอยู่ กันดอกซับหลุด/พัง</p></div>';
     let hx=0,hc=0; for(let i=0;i<bandF.length;i++){ if(bandF[i]>=5000&&bandF[i]<=8000){hx+=delta[i];hc++;} }
     if(hc&&hx/hc>4) html+='<div class="sug note"><h4>แหลม 2" ช่วง 5–8kHz แข็ง/บาดหู</h4><p>2" ไวย่านนี้มาก ลดเลเวลแหลมหรือตัด PEQ ~6.3kHz ลง 1–2dB ฟังนานจะไม่ล้าหู</p></div>';
     if(hasMMM) html+='<div class="sug note"><h4>วัดแบบ MMM แล้ว ✔</h4><p>กรองดิพจากโหมดห้องออกให้แล้ว — ที่เหลือคือปัญหาลำโพงจริงที่ EQ แก้ได้</p></div>';
@@ -567,7 +726,8 @@
       ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]); }
     ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--target');
     ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
-    let st=false; for(let f=FMIN;f<=FMAX;f*=1.05){ const x=xF(f),y=yDb(TARGETS[target](f)); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke();ctx.setLineDash([]);
+    let st=false; for(let f=FMIN;f<=FMAX;f*=1.05){ const x=xF(f),y=yDb(TARGETS[target](f)); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke();ctx.setLineDash([]);
+    drawStepOverlay();
   }
   function drawCurve(arr,color,width,dash){
     ctx.strokeStyle=color;ctx.lineWidth=width;if(dash)ctx.setLineDash(dash);
@@ -641,7 +801,7 @@
     sweepOsc.start();
     sweepMeta={F0,F1,DUR,t0:performance.now()};
     const btn=document.getElementById('btnSweep'); btn.classList.add('on'); btn.innerHTML='<span class="icn">🌊</span> กำลังกวาด…';
-    document.getElementById('sugBox').innerHTML='<div class="empty">กำลังกวาดความถี่เบส… เร่งเสียงระบบให้ดังพอ ถือมือถือใกล้ลำโพงซับ รอ ~18 วิ</div>';
+    document.getElementById('sugBox').innerHTML='<div class="empty">กำลังกวาดความถี่เบส… เร่งเสียงระบบให้ดังพอ <b>จ่อมือถือที่ช่องลมตะแกรงซ้าย</b> (ทางออกเบสของตู้ bandpass) รอ ~18 วิ</div>';
   }
   function finishSweep(){
     try{sweepOsc.stop();}catch(_){}
@@ -652,13 +812,14 @@
     if(pk){
       const thr=pk.db-10, below=sweepData.filter(p=>p.f<pk.f).sort((a,b)=>a.f-b.f);
       let edge=pk.f; for(let i=below.length-1;i>=0;i--){ if(below[i].db>=thr)edge=below[i].f; else break; }
-      const subsonic=Math.max(25,Math.round(edge));
+      const subsonic=Math.max(30,Math.round(0.7*pk.f),Math.round(edge)); // bandpass: ~0.7x peak, never below the -10dB edge
       sweepResult={peakF:pk.f,subsonic,edge:Math.round(edge)};
+      setTimeout(renderWiz,0);
       box.innerHTML=
         '<div class="sug note"><h4>จูนตู้ (จุดดังสุด) ≈ '+Math.round(pk.f)+' Hz</h4>'+
-        '<p>ตู้ออเดอร์ 6 ให้เอาต์พุตสูงสุดแถวนี้ = ย่านที่ตู้ทำงานจริง นอกช่วงนี้จะร่วงเร็ว เน้นเบสให้เล่นในกรอบนี้</p></div>'+
+        '<p>ตู้ bandpass ออเดอร์ 4 ให้เอาต์พุตสูงสุดแถวนี้ = ย่านที่ตู้ทำงานจริง นอกช่วงนี้จะร่วง เน้นเบสให้เล่นในกรอบนี้</p></div>'+
         '<div class="sug under"><h4>ตั้ง Subsonic HPF ≈ '+subsonic+' Hz</h4>'+
-        '<p>ต่ำกว่าขอบล่าง (~'+sweepResult.edge+'Hz) ที่ตู้เริ่มหมดแรง ดอกจะไร้โหลด/สะบัดจนแตก ตั้ง HPF ชันๆ ตรงนี้กันแตก แล้วเร่งดังได้ขึ้น</p>'+
+        '<p>คิดจาก ~0.7 เท่าของพีค (ไม่ต่ำกว่า 30Hz และไม่ต่ำกว่าขอบ −10dB ~'+sweepResult.edge+'Hz) · ต่ำกว่านี้ตู้หมดแรง ดอกสะบัดจนแตก ตั้ง HPF ชันๆ กันแตก แล้วเร่งดังได้ขึ้น</p>'+
         '<div class="fix">Blue Art (ช่องซับ) → HPF · Butterworth 18–24 · F≈'+subsonic+'Hz</div></div>'+
         '<div class="sug over"><h4>พีคตู้ '+Math.round(pk.f)+'Hz อาจโด่ง/โหน่ง</h4>'+
         '<p>ถ้าฟังแล้วบวมโหน่งจุดเดียว ให้ตัดพีคลงแล้วเร่งเกนซับรวม จะได้เบสอิ่มและดังสะอาดกว่าบูสต์จุดเดียว</p>'+
@@ -717,7 +878,7 @@
     if(!running||phasing||sweeping)return;
     if(noiseOn)toggleNoise();
     measured=null; sweepFrozen=false; abOn=false; phaseLog=[]; phasing=true;
-    const XF=XMARK[0]; // crossover freq to test (110Hz sub<->mid)
+    const XF=XMARK[0]; // crossover freq to test (100Hz sub<->mid)
     phaseOsc=audioCtx.createOscillator(); phaseOsc.type='sine'; phaseOsc.frequency.value=XF;
     phaseGain=audioCtx.createGain(); phaseGain.gain.value=0.3;
     phaseOsc.connect(phaseGain).connect(audioCtx.destination); phaseOsc.start();
@@ -779,34 +940,218 @@
     if(!running)draw();
   }
 
-  // ---------- presets ----------
-  function loadPresets(){ try{ presets=JSON.parse(localStorage.getItem('rta_presets')||'[]'); }catch(_){ presets=[]; } }
-  function savePresets(){ try{ localStorage.setItem('rta_presets',JSON.stringify(presets)); }catch(_){} }
-  function renderPresets(){
-    const list=document.getElementById('pList');
-    if(!presets.length){ list.innerHTML='<div class="empty" style="padding:4px 0 0">ยังไม่มีพรีเซ็ต — ตั้งชื่อและจดค่าที่ตั้งบน Blue Art ไว้ด้านบน แล้วกดบันทึก</div>'; return; }
-    list.innerHTML=presets.map((p,i)=>
-      '<div class="pitem"><div class="ph"><b>'+esc(p.name)+'</b><span>'+esc(p.date)+'</span>'+
-      '<button data-del="'+i+'">ลบ</button></div><pre>'+esc(p.note)+'</pre></div>').join('');
-    list.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
-      presets.splice(+b.dataset.del,1); savePresets(); renderPresets();
-    }));
-  }
-  function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-  function fillFromMeasurement(){
-    const ta=document.getElementById('pNote'); const lines=[];
-    lines.push('ครอส: Sub HPF '+(sweepResult?sweepResult.subsonic:X.subsonic)+' BW24 · LPF '+X.subLP+' LR24');
-    lines.push('      Mid HPF '+X.midHP+' · LPF '+(X.midLP/1000).toFixed(2)+'k');
-    lines.push('      Twe HPF '+(X.tweHP/1000).toFixed(2)+'k');
-    if(sweepResult) lines.push('จูนตู้ที่วัดได้: '+Math.round(sweepResult.peakF)+' Hz');
-    lines.push('เป้าหมาย: '+targetNames[target]);
-    if(measured){
-      const d=bandF.map((f,i)=>({f,d:measured[i]-TARGETS[target](f)})).filter(o=>Math.abs(o.d)>3.5)
-        .sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,3);
-      d.forEach(o=>lines.push('PEQ: F='+niceLabel(nearestFc(o.f))+'Hz Q=1.2 G='+(o.d>0?'-':'+')+Math.abs(o.d).toFixed(1)+'dB'));
+  // ---------- tuning profiles (ชุดจูน) ----------
+  const PF_KEY='rta_profiles', PF_ACT='rta_prof_active';
+  const FT=['OFF','LR12','LR24','LR48','BW12','BW18','BW24','Bessel12','Bessel24'];
+  const HOLDS=['SLOW','NORMAL','FAST'];
+  const CHN={sub:'ซับ 10″',mid:'กลาง 4″',twe:'แหลม 2″'};
+  let profiles=[], cur=null, curCh='sub';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function uid(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function fmtHz(f){ f=+f; if(!f)return 'OFF'; return f>=1000?(f/1000).toFixed(2).replace(/\.?0+$/,'')+'k':String(Math.round(f)); }
+  function thDate(iso){ try{ return new Date(iso).toLocaleDateString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }catch(_){ return ''; } }
+  function defCh(){ return {
+    sub:{hpf:(sweepResult?sweepResult.subsonic:X.subsonic),hpfT:'BW24',lpf:X.subLP,lpfT:'LR24',gain:0,phase:0,delay:0,lim:-3,hold:'FAST',rel:'NORMAL',peq:[]},
+    mid:{hpf:X.midHP,hpfT:'LR24',lpf:X.midLP,lpfT:'LR12',gain:0,phase:0,delay:0,lim:-4,hold:'NORMAL',rel:'NORMAL',peq:[]},
+    twe:{hpf:X.tweHP,hpfT:'LR12',lpf:0,lpfT:'OFF',gain:0,phase:0,delay:0,lim:-6,hold:'FAST',rel:'NORMAL',peq:[]} }; }
+  function newProfile(name,isBase){ return {id:uid(),name,isBase:!!isBase,updated:new Date().toISOString(),target,note:'',sweep:null,curve:null,ch:defCh()}; }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function persist(){ try{ localStorage.setItem(PF_KEY,JSON.stringify(profiles)); if(cur)localStorage.setItem(PF_ACT,cur.id); }catch(_){ pfMsg('บันทึกลงเครื่องไม่ได้ (เบราว์เซอร์ปิดที่เก็บข้อมูล) — กด ⬇️ ส่งออกไฟล์ไว้แทน',true); } }
+  function loadProfiles(){
+    try{ profiles=JSON.parse(localStorage.getItem(PF_KEY)||'null'); }catch(_){ profiles=null; }
+    if(!Array.isArray(profiles)){
+      profiles=[];
+      try{ // migrate old free-text presets (old key kept as-is)
+        const old=JSON.parse(localStorage.getItem('rta_presets')||'[]');
+        if(Array.isArray(old)) old.forEach(o=>{ const p=newProfile(o.name||'พรีเซ็ตเดิม',false); p.note=o.note||''; profiles.push(p); });
+      }catch(_){}
     }
-    ta.value=lines.join('\n');
+    if(!profiles.some(p=>p.isBase)){ const bp=newProfile('Base',true); bp.auto=true; profiles.unshift(bp); }
+    let act=null; try{ act=localStorage.getItem(PF_ACT); }catch(_){}
+    const p=profiles.find(x=>x.id===act)||profiles.find(x=>x.isBase)||profiles[0];
+    cur=clone(p); persist();
   }
+  function pfMsg(t,err){ const m=document.getElementById('pfMsg'); m.textContent=t||''; m.classList.toggle('err',!!err); }
+  function resample(curve){ // curve {f:[],d:[]} -> current bandF (log-interp)
+    if(!curve||!curve.f||curve.f.length<2)return null;
+    const lf=curve.f.map(Math.log10);
+    return bandF.map(f=>{ const l=Math.log10(f); if(l<=lf[0])return curve.d[0]; if(l>=lf[lf.length-1])return curve.d[curve.d.length-1];
+      let i=1; while(lf[i]<l)i++; const t=(l-lf[i-1])/(lf[i]-lf[i-1]); return curve.d[i-1]+(curve.d[i]-curve.d[i-1])*t; });
+  }
+  function opt(list,v){ return list.map(x=>'<option'+(String(x)===String(v)?' selected':'')+'>'+x+'</option>').join(''); }
+  function chSummary(c){ return 'HPF '+fmtHz(c.hpf)+(c.hpf?' '+c.hpfT:'')+' · LPF '+fmtHz(c.lpf)+(c.lpf?' '+c.lpfT:'')+' · '+(c.gain>0?'+':'')+c.gain+'dB'+(c.phase?' · 180°':'')+(c.delay?' · '+c.delay+'ms':'')+(c.peq.length?' · PEQ '+c.peq.length:''); }
+  function renderEditor(){
+    const c=cur.ch[curCh];
+    const sw=cur.sweep?(' · Sweep: พีค <b>'+Math.round(cur.sweep.peakF)+'Hz</b> → subsonic <b>'+cur.sweep.subsonic+'Hz</b>'):'';
+    let peq='<div class="pfprow hd"><span>#</span><span>F (Hz)</span><span>Q</span><span>G (dB)</span><span></span></div>';
+    c.peq.forEach((b,i)=>{ peq+='<div class="pfprow"><i>'+(i+1)+'</i>'+
+      '<input type="number" inputmode="decimal" data-pi="'+i+'" data-pk="f" value="'+esc(b.f)+'">'+
+      '<input type="number" inputmode="decimal" step="0.1" data-pi="'+i+'" data-pk="q" value="'+esc(b.q)+'">'+
+      '<input type="number" inputmode="decimal" step="0.5" data-pi="'+i+'" data-pk="g" value="'+esc(b.g)+'">'+
+      '<button data-pdel="'+i+'" title="ลบแบนด์">✕</button></div>'; });
+    document.getElementById('pfEditor').innerHTML=
+      '<input id="pfName" maxlength="40" placeholder="ชื่อชุดจูน (เช่น Base / กลางแจ้ง / ในบ้าน)" value="'+esc(cur.name)+'">'+
+      '<div class="pfmeta">เป้าหมาย: <b>'+(targetNames[cur.target]||cur.target)+'</b>'+sw+(cur.curve?' · มีกราฟที่วัดเก็บไว้ ✔':'')+'</div>'+
+      '<div class="pftabs">'+Object.keys(CHN).map(k=>'<button data-ch="'+k+'" class="'+(k===curCh?'sel':'')+'">'+CHN[k]+'</button>').join('')+'</div>'+
+      '<div class="pfgrid">'+
+        '<label>HPF (Hz)<input type="number" inputmode="decimal" data-k="hpf" value="'+c.hpf+'"></label>'+
+        '<label>ชนิด HPF<select data-k="hpfT">'+opt(FT,c.hpfT)+'</select></label>'+
+        '<label>LPF (Hz · 0 = ปิด)<input type="number" inputmode="decimal" data-k="lpf" value="'+c.lpf+'"></label>'+
+        '<label>ชนิด LPF<select data-k="lpfT">'+opt(FT,c.lpfT)+'</select></label>'+
+        '<label>Gain (dB)<input type="number" inputmode="decimal" step="0.5" data-k="gain" value="'+c.gain+'"></label>'+
+        '<label>Phase<select data-k="phase">'+opt([0,180],c.phase)+'</select></label>'+
+        '<label>Delay (ms)<input type="number" inputmode="decimal" step="0.1" data-k="delay" value="'+c.delay+'"></label>'+
+        '<label>Limiter Thresh (dB)<input type="number" inputmode="decimal" step="0.5" data-k="lim" value="'+c.lim+'"></label>'+
+        '<label>Hold<select data-k="hold">'+opt(HOLDS,c.hold)+'</select></label>'+
+        '<label>Release<select data-k="rel">'+opt(HOLDS,c.rel)+'</select></label>'+
+      '</div>'+
+      '<div class="pfpeq"><div class="ph">PEQ '+CHN[curCh]+' ('+c.peq.length+'/8 แบนด์)</div>'+peq+
+      (c.peq.length<8?'<button data-padd="1" style="width:100%;min-height:34px">＋ เพิ่มแบนด์ PEQ</button>':'')+'</div>'+
+      '<textarea id="pfNote" placeholder="หมายเหตุ (เช่น วางพื้นกลางแจ้ง ห่างผนัง 1 ม.)" style="margin-top:8px">'+esc(cur.note)+'</textarea>';
+    const saved=profiles.find(p=>p.id===cur.id);
+    document.getElementById('pfActive').innerHTML='กำลังแก้: <b>'+esc(cur.name)+'</b>'+(saved&&saved.isBase?'<span class="pbadge">BASE</span>':'')+(saved?'':' (ยังไม่บันทึก)');
+  }
+  function renderProfiles(){
+    const list=document.getElementById('pList');
+    list.innerHTML=profiles.map(p=>
+      '<div class="pitem'+(cur&&p.id===cur.id?' act':'')+'"><div class="ph"><b>'+esc(p.name)+(p.isBase?'<span class="pbadge">BASE</span>':'')+'</b><span>'+thDate(p.updated)+'</span></div>'+
+      '<div class="sum">ซับ '+chSummary(p.ch.sub)+'<br>กลาง '+chSummary(p.ch.mid)+'<br>แหลม '+chSummary(p.ch.twe)+'</div>'+
+      '<div class="pbtns"><button data-load="'+p.id+'">📂 โหลด</button><button data-dup="'+p.id+'">⧉ คัดลอก</button>'+
+      (p.isBase?'':'<button data-base="'+p.id+'">⭐ ตั้งเป็น Base</button><button data-del="'+p.id+'">ลบ</button>')+'</div></div>').join('');
+  }
+  function loadProfile(id){
+    const p=profiles.find(x=>x.id===id); if(!p)return;
+    cur=clone(p); curCh='sub'; persist();
+    if(cur.target&&cur.target!==target){ const b=document.querySelector('#segTarget button[data-t="'+cur.target+'"]'); if(b)b.click(); }
+    let msg='โหลด "'+cur.name+'" แล้ว — กรอกค่าตามนี้ใน BlueArt';
+    const d=resample(cur.curve);
+    if(d){ snapA={data:d,perOct,t:'ชุด '+cur.name}; document.getElementById('btnAB').disabled=false; msg+=' · กราฟของชุดนี้ตั้งเป็น Ⓐ แล้ว วัดใหม่แล้วกด Ⓑ เพื่อเทียบ'; }
+    renderEditor(); renderProfiles(); pfMsg(msg);
+  }
+  function saveCur(asNew){
+    const n=document.getElementById('pfName'); cur.name=(n.value||'').trim()||'ไม่มีชื่อ';
+    cur.note=document.getElementById('pfNote').value; cur.target=target; cur.updated=new Date().toISOString();
+    if(asNew){
+      const src=profiles.find(p=>p.id===cur.id);
+      if(src&&src.name===cur.name)cur.name=cur.name+' (ใหม่)';
+      cur.id=uid(); cur.isBase=false; profiles.push(clone(cur));
+    }else{
+      const i=profiles.findIndex(p=>p.id===cur.id);
+      if(i>=0){ cur.isBase=profiles[i].isBase; profiles[i]=clone(cur); } else profiles.push(clone(cur));
+    }
+    profiles.forEach(p=>{ if(p.id===cur.id)delete p.auto; }); delete cur.auto;
+    persist(); renderEditor(); renderProfiles(); pfMsg('บันทึก "'+cur.name+'" แล้ว ✔');
+  }
+  function fillFromMeasurement(){
+    let added=0;
+    if(sweepResult){ cur.sweep={peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}; cur.ch.sub.hpf=sweepResult.subsonic; }
+    if(measured){
+      const hasVar=measuredVar&&measuredVar.length===bandF.length;
+      const cand=bandF.map((f,i)=>({f,i,d:measured[i]-TARGETS[target](f)}))
+        .filter(o=>o.f>=Math.max(25,+cur.ch.sub.hpf||0)&&o.f<=16000&&Math.abs(o.d)>3.5)   // nothing below subsonic
+        .filter(o=>o.d>0||(!hasVar||measuredVar[o.i]<=4))   // skip room-mode nulls
+        .sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+      for(const o of cand){
+        if(added>=5)break;
+        const ch=o.f<X.subLP?'sub':(o.f<X.tweHP?'mid':'twe'), fc=nearestFc(o.f), arr=cur.ch[ch].peq;
+        if(arr.length>=8||arr.some(b=>Math.abs(Math.log2(b.f/fc))<0.34))continue;
+        arr.push({f:fc,q:1.2,g:o.d>0?-Math.min(10,Math.round(o.d*2)/2):Math.min(3,Math.round(-o.d*2)/2)}); added++;   // cut ≤ −10dB, boost ≤ +3dB
+      }
+    }
+    cur.target=target;
+    if(!sweepResult&&!measured){ pfMsg('ยังไม่มีผลวัด — กด 🌊 Sweep หรือ 📸 วัดผล / 🚶 MMM ก่อน',true); return; }
+    renderEditor(); pfMsg((sweepResult?'ใส่ subsonic '+sweepResult.subsonic+'Hz แล้ว · ':'')+'เพิ่ม PEQ '+added+' แบนด์ (ยังไม่บันทึก กด 💾)');
+  }
+  function storeCurve(){
+    let d=null; if(measured)d=measured.slice(); else if(running)d=normalize(computeBands());
+    if(!d){ pfMsg('ยังไม่มีกราฟ — เริ่มไมค์แล้ววัดก่อน',true); return; }
+    cur.curve={f:bandF.slice(),d:d.map(v=>Math.round(v*10)/10)};
+    renderEditor(); pfMsg('เก็บกราฟไว้ในชุดนี้แล้ว (กด 💾 บันทึก)');
+  }
+  function profileText(p){
+    const L=['ชุดจูน: '+p.name+'  ('+thDate(p.updated)+')','เป้าหมาย: '+(targetNames[p.target]||p.target)];
+    if(p.sweep)L.push('Sweep: พีค '+Math.round(p.sweep.peakF)+'Hz → subsonic '+p.sweep.subsonic+'Hz');
+    for(const k of Object.keys(CHN)){ const c=p.ch[k];
+      L.push('['+CHN[k]+'] HPF '+fmtHz(c.hpf)+(c.hpf?' '+c.hpfT:'')+' · LPF '+fmtHz(c.lpf)+(c.lpf?' '+c.lpfT:'')+' · Gain '+c.gain+'dB · Phase '+c.phase+'° · Delay '+c.delay+'ms');
+      L.push('   Limiter '+c.lim+'dB · Hold '+c.hold+' · Release '+c.rel);
+      c.peq.forEach((b,i)=>L.push('   PEQ'+(i+1)+': '+fmtHz(b.f)+'Hz Q'+b.q+' '+(b.g>0?'+':'')+b.g+'dB'));
+    }
+    if(p.note)L.push('หมายเหตุ: '+p.note);
+    return L.join('\n');
+  }
+  document.getElementById('pfEditor').addEventListener('input',e=>{
+    const t=e.target;
+    if(t.dataset.k){ const k=t.dataset.k; cur.ch[curCh][k]=(t.tagName==='SELECT'&&isNaN(+t.value))?t.value:(t.value===''?0:+t.value); }
+    else if(t.dataset.pk){ cur.ch[curCh].peq[+t.dataset.pi][t.dataset.pk]=t.value===''?0:+t.value; }
+    else if(t.id==='pfName')cur.name=t.value;
+    else if(t.id==='pfNote')cur.note=t.value;
+  });
+  document.getElementById('pfEditor').addEventListener('change',e=>{ if(e.target.tagName==='SELECT')e.target.dispatchEvent(new Event('input',{bubbles:true})); });
+  document.getElementById('pfEditor').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    if(b.dataset.ch){ curCh=b.dataset.ch; renderEditor(); }
+    else if(b.dataset.padd){ const ref=curCh==='sub'?60:(curCh==='mid'?500:6300); cur.ch[curCh].peq.push({f:ref,q:1.2,g:0}); renderEditor(); }
+    else if(b.dataset.pdel!=null){ cur.ch[curCh].peq.splice(+b.dataset.pdel,1); renderEditor(); }
+  });
+  document.getElementById('pList').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    if(b.dataset.load)loadProfile(b.dataset.load);
+    else if(b.dataset.dup){ const s=profiles.find(p=>p.id===b.dataset.dup); if(!s)return;
+      const p=clone(s); p.id=uid(); p.isBase=false; p.name=s.name+' (สำเนา)'; p.updated=new Date().toISOString();
+      profiles.push(p); persist(); loadProfile(p.id); pfMsg('คัดลอกเป็น "'+p.name+'" แล้ว — เปลี่ยนชื่อ แก้ค่า แล้วกด 💾'); }
+    else if(b.dataset.base){ profiles.forEach(p=>p.isBase=(p.id===b.dataset.base)); if(cur)cur.isBase=(cur.id===b.dataset.base); persist(); renderEditor(); renderProfiles(); pfMsg('ตั้งเป็น Base แล้ว'); }
+    else if(b.dataset.del){ const p=profiles.find(x=>x.id===b.dataset.del); if(!p)return;
+      if(!confirm('ลบชุดจูน "'+p.name+'" ?'))return;
+      profiles=profiles.filter(x=>x.id!==p.id);
+      if(cur&&cur.id===p.id){ const bse=profiles.find(x=>x.isBase)||profiles[0]; cur=clone(bse); }
+      persist(); renderEditor(); renderProfiles(); pfMsg('ลบแล้ว'); }
+  });
+  document.getElementById('pfNew').addEventListener('click',()=>{
+    const base=profiles.find(p=>p.isBase);
+    const p=base?clone(base):newProfile('ชุดใหม่',false);
+    p.id=uid(); p.isBase=false; p.name='ชุดใหม่ (จาก '+(base?base.name:'Base')+')'; p.updated=new Date().toISOString();
+    cur=p; curCh='sub'; renderEditor(); renderProfiles();
+    pfMsg('สร้างจาก Base แล้ว — ตั้งชื่อ แก้ค่า แล้วกด 💾 บันทึก'); document.getElementById('pfName').focus();
+  });
+  document.getElementById('pfSave').addEventListener('click',()=>saveCur(false));
+  document.getElementById('pfSaveAs').addEventListener('click',()=>saveCur(true));
+  document.getElementById('pfFill').addEventListener('click',fillFromMeasurement);
+  document.getElementById('pfCurve').addEventListener('click',storeCurve);
+  document.getElementById('pfExport').addEventListener('click',()=>{
+    const data={app:'rta-tuning',v:1,exported:new Date().toISOString(),profiles};
+    const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+    const a=document.createElement('a'); const d=new Date();
+    a.href=URL.createObjectURL(blob); a.download='rta-tuning-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.json';
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+    pfMsg('ส่งออก '+profiles.length+' ชุดแล้ว');
+  });
+  document.getElementById('pfImport').addEventListener('click',()=>document.getElementById('pfFile').click());
+  document.getElementById('pfFile').addEventListener('change',e=>{
+    const f=e.target.files&&e.target.files[0]; if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{ try{
+        const j=JSON.parse(r.result), arr=Array.isArray(j)?j:j.profiles;
+        if(!Array.isArray(arr))throw 0;
+        const autoBase=profiles.find(x=>x.isBase&&x.auto);
+        const impHasBase=arr.some(p=>p&&p.isBase);
+        if(autoBase&&impHasBase) profiles=profiles.filter(x=>x!==autoBase);
+        const keepBase=profiles.some(x=>x.isBase);
+        let n=0; arr.forEach(p=>{ if(!p||!p.ch||!p.ch.sub||!p.ch.mid||!p.ch.twe)return;
+          delete p.auto; if(keepBase)p.isBase=false;
+          const i=profiles.findIndex(x=>x.id===p.id); if(i>=0)profiles[i]=Object.assign(p,{isBase:profiles[i].isBase}); else profiles.push(p); n++; });
+        if(!profiles.some(x=>x.isBase)&&profiles.length)profiles[0].isBase=true;
+        if(!profiles.some(x=>cur&&x.id===cur.id)){ const bse=profiles.find(x=>x.isBase)||profiles[0]; cur=clone(bse); renderEditor(); }
+        persist(); renderProfiles(); pfMsg('นำเข้า '+n+' ชุดแล้ว ✔');
+      }catch(_){ pfMsg('ไฟล์ไม่ถูกต้อง — ใช้ไฟล์ .json ที่ส่งออกจากหน้านี้',true); }
+      e.target.value=''; };
+    r.readAsText(f);
+  });
+  document.getElementById('pfCopy').addEventListener('click',()=>{
+    const txt=profileText(Object.assign({},cur,{name:(document.getElementById('pfName').value||cur.name)}));
+    const done=()=>pfMsg('คัดลอกค่าชุด "'+cur.name+'" แล้ว — วางในโน้ต/LINE ไว้ดูตอนกรอก BlueArt');
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,()=>fallbackCopy(txt,done)); else fallbackCopy(txt,done);
+  });
+  function fallbackCopy(txt,done){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');done();}catch(_){pfMsg('คัดลอกไม่ได้ในเบราว์เซอร์นี้',true);} ta.remove(); }
 
 
   /* FIX: ปุ่มไมค์ไม่เคยถูกผูก event — เป็นสาเหตุที่ทุกอย่างใช้งานไม่ได้ */
@@ -831,16 +1176,92 @@
     this.classList.toggle('on',show);
     if(show)p.scrollIntoView({behavior:'smooth',block:'nearest'});
   });
-  document.getElementById('pFill').addEventListener('click',fillFromMeasurement);
-  document.getElementById('pSave').addEventListener('click',function(){
-    const n=document.getElementById('pName'), t=document.getElementById('pNote');
-    if(!n.value.trim()){ n.focus(); return; }
-    presets.unshift({name:n.value.trim(),note:t.value.trim(),date:new Date().toLocaleDateString('th-TH',{day:'2-digit',month:'short'})});
-    savePresets(); renderPresets(); n.value=''; t.value='';
+  /* ===== guided stepper + graph annotations ===== */
+  const ZC={sub:'255,90,138',mid:'53,208,192',twe:'110,168,255',look:'255,176,32',ph:'255,210,74'};
+  const STEPS=[
+    {t:'เช็กตู้ + ตั้งเกน', do:'หารอยรั่วรอบอะคริลิกและห้องปิดฝั่งกรวย · มือถือ 85–90% · ปุ่ม BASS/MID/TREBLE หลังตู้ไว้ตรงกลาง',
+     look:'ขั้นนี้ยังไม่ต้องดูกราฟ — ถ้าตู้รั่วหรือแอมป์คลิป ค่าที่วัดต่อจากนี้จะผิดหมด',
+     enter:'Reset EQ ทุกช่อง · เปิด Limiter ทุกช่อง', acts:[{act:'guide',label:'📦 เปิดเช็กลิสต์ตู้'}], zones:[], lines:[]},
+    {t:'Sweep หาจูนตู้ → Subsonic', do:'กดเริ่มไมค์ แล้วกด Sweep · จ่อมือถือที่ช่องลมตะแกรงซ้าย รอ 18 วิ',
+     look:'ดูพีคเบสใน<b>แถบส้ม</b> = ย่านที่ตู้ทำงาน · ระบบคำนวณ subsonic ≈ 0.7 × พีค ให้อัตโนมัติ',
+     enter:'ช่องซับ → HPF · Butterworth 24 · F = ค่าที่ได้', acts:[{id:'btnMic'},{id:'btnSweep'}],
+     zones:[{f0:20,f1:160,c:'look',l:'ย่าน Sweep 20–160Hz'}], lines:[]},
+    {t:'ตั้งครอส 3 ทาง', do:'กรอกค่าครอสลง BlueArt ตามการ์ดด้านล่าง (ยังไม่แตะ EQ)',
+     look:'<b>แถบสี</b> = ย่านของแต่ละดอก · <b>เส้นประ</b> = จุดตัด 100Hz และ 3.9kHz',
+     enter:'ซับ LPF 100 LR24 · กลาง HPF 120 LR24 / LPF 3.9k LR12 · แหลม HPF 3.9k LR12', acts:[],
+     zones:[{f0:20,f1:100,c:'sub',l:'ซับ'},{f0:120,f1:3910,c:'mid',l:'กลาง 4″'},{f0:3910,f1:20000,c:'twe',l:'แหลม 2″'}], lines:[100,3910]},
+    {t:'เฟส / ดีเลย์ ที่จุดตัด', do:'กดเช็กเฟส ถือนิ่งที่จุดฟัง 8 วิ → สลับ Phase ซับ 0/180 ใน BlueArt → กดเช็กซ้ำ',
+     look:'ดู<b>แถบเหลือง</b>รอบ 100Hz · ค่าไหนดังกว่า = เฟสนั้นถูก · ยังเป็นดิพอยู่ค่อยปรับดีเลย์ทีละ 0.5ms',
+     enter:'ช่องซับ → Phase 0/180 · Delay', acts:[{id:'btnPhase'}],
+     zones:[{f0:70,f1:140,c:'ph',l:'จุดตัด ซับ↔กลาง'}], lines:[100]},
+    {t:'เลเวลสมดุล 3 ทาง', do:'เปิด Pink Noise → วัดผล 4 วิ → ปรับ Gain ซับ/กลาง/แหลม ทีละ 1–2dB แล้ววัดซ้ำ',
+     look:'ให้แต่ละแถบเกาะ<b>เส้นเป้าหมาย</b> (เหลืองประ) · ซับควรสูงกว่ากลางราว +6dB',
+     enter:'Gain แต่ละช่อง', acts:[{id:'btnNoise'},{id:'btnMeasure'}],
+     zones:[{f0:20,f1:100,c:'sub',l:'ซับ ≈ +6dB'},{f0:120,f1:3910,c:'mid',l:'กลาง ≈ 0dB'},{f0:3910,f1:20000,c:'twe',l:'แหลม ≈ 0dB'}], lines:[100,3910]},
+    {t:'PEQ ละเอียด', do:'กดเดินวัด MMM เดินไมค์ช้าๆ ทั่วโซนฟัง 30 วิ → ทำตามคำแนะนำด้านล่างกราฟ',
+     look:'<b>แดง</b> = เกินเป้า → ตัด · <b>ฟ้า</b> = ขาด → ถมได้เฉพาะที่ไม่ขึ้น 🚫 · จับตา<b>แถบส้ม</b> 50–150Hz (โหนกตู้ bandpass)',
+     enter:'Band ว่าง · Peak(PEQ) · ไม่เกิน 5 แบนด์ · บูสต์ ≤ +3dB', acts:[{id:'btnMMM'}],
+     zones:[{f0:50,f1:150,c:'look',l:'โหนกเบส bandpass'}], lines:[]},
+    {t:'Limiter + เทียบ A/B + เซฟ', do:'ตั้ง Limiter → เร่งพร้อมดูดอกผ่านช่องโครง → เก็บ Ⓐ ก่อนแก้ / Ⓑ หลังแก้ → เซฟพรีเซ็ต',
+     look:'กด ⇄ ซ้อน A/B · เส้น Ⓑ ต้องเกาะเป้าดีกว่า Ⓐ ถึงจะเซฟ · ในชุดจูนกด 📈 เก็บกราฟ ไว้เทียบครั้งหน้า',
+     enter:'แหลม −6dB · กลาง −4dB · ซับ −2~−3dB · บันทึกเป็นชุดจูน 🎛️ (Base → กลางแจ้ง / ในบ้าน)', acts:[{id:'btnSaveA'},{id:'btnSaveB'},{id:'btnAB'},{id:'btnPreset'}],
+     zones:[], lines:[]}
+  ];
+  let wStep=0; try{ const v=parseInt(localStorage.getItem('rtaWizStep'),10); if(v>=0&&v<STEPS.length)wStep=v; }catch(_){}
+  function drawStepOverlay(){
+    const st=STEPS[wStep]; if(!st)return;
+    ctx.save(); ctx.font='bold 10px '+MONO(); ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(const z of st.zones){
+      const x0=xF(Math.max(FMIN,z.f0)), x1=xF(Math.min(FMAX,z.f1)), rgb=ZC[z.c]||ZC.look;
+      ctx.fillStyle='rgba('+rgb+',.10)'; ctx.fillRect(x0,PAD.t,x1-x0,H-PAD.t-PAD.b);
+      ctx.fillStyle='rgba('+rgb+',.55)'; ctx.fillRect(x0,H-PAD.b-3,x1-x0,3);
+      const tw=ctx.measureText(z.l).width+10, cx=Math.min(Math.max((x0+x1)/2,PAD.l+tw/2),W-PAD.r-tw/2), cy=H-PAD.b-16;
+      ctx.fillStyle='rgba(10,11,14,.82)'; ctx.fillRect(cx-tw/2,cy-8,tw,16);
+      ctx.fillStyle='rgba('+rgb+',1)'; ctx.fillText(z.l,cx,cy);
+    }
+    for(const f of st.lines){ const x=xF(f);
+      ctx.strokeStyle='rgba(255,176,32,.9)'; ctx.lineWidth=1.6; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.moveTo(x,PAD.t+22); ctx.lineTo(x,H-PAD.b-26); ctx.stroke(); ctx.setLineDash([]);
+      const lab=f>=1000?(f/1000).toFixed(1)+'k':f+'Hz', tw=ctx.measureText(lab).width+8, ly=PAD.t+30;
+      ctx.fillStyle='rgba(10,11,14,.85)'; ctx.fillRect(x-tw/2,ly-8,tw,16);
+      ctx.fillStyle='#ffb020'; ctx.fillText(lab,x,ly);
+    }
+    ctx.restore();
+  }
+  function btnLabel(id){ const b=document.getElementById(id); return b?b.innerHTML:id; }
+  function renderWiz(){
+    const st=STEPS[wStep];
+    document.getElementById('wChips').innerHTML=STEPS.map((s,i)=>'<button data-i="'+i+'" class="'+(i===wStep?'cur':(i<wStep?'done':''))+'" title="'+s.t+'">'+(i<wStep?'✓':(i+1))+'</button>').join('');
+    let res='';
+    if(wStep===1&&sweepResult) res='<div class="wres">ผลล่าสุด: พีค '+Math.round(sweepResult.peakF)+' Hz → ตั้ง subsonic <b>'+sweepResult.subsonic+' Hz</b></div>';
+    const acts=st.acts.map(a=>a.act?'<button data-act="'+a.act+'">'+a.label+'</button>':'<button data-btn="'+a.id+'">'+btnLabel(a.id)+'</button>').join('');
+    document.getElementById('wCard').innerHTML=
+      '<h3><em>'+(wStep+1)+'/'+STEPS.length+'</em>'+st.t+'</h3>'+
+      '<div class="wrow"><b>ทำอะไร</b><div>'+st.do+'</div></div>'+
+      '<div class="wrow look"><b>ดูกราฟ</b><div>'+st.look+'</div></div>'+
+      '<div class="wrow enter"><b>BlueArt</b><span>'+st.enter+'</span></div>'+res+
+      (acts?'<div class="wacts">'+acts+'</div>':'');
+    document.getElementById('wHint').textContent='';
+    document.getElementById('wPrev').disabled=wStep===0;
+    document.getElementById('wNext').innerHTML=wStep===STEPS.length-1?'✓ ครบทุกขั้น':'ขั้นถัดไป ▶';
+    document.getElementById('gCap').innerHTML='<b>ขั้น '+(wStep+1)+' · '+st.t+'</b> — '+st.look;
+    try{ localStorage.setItem('rtaWizStep',String(wStep)); }catch(_){}
+    if(!running) draw();
+  }
+  document.getElementById('wChips').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return; wStep=+b.dataset.i; renderWiz(); });
+  document.getElementById('wPrev').addEventListener('click',()=>{ if(wStep>0){wStep--;renderWiz();} });
+  document.getElementById('wNext').addEventListener('click',()=>{ if(wStep<STEPS.length-1){wStep++;renderWiz();} });
+  document.getElementById('wCard').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    if(b.dataset.act==='guide'){ const gp=document.getElementById('guidePanel'); gp.classList.add('show');
+      const tb=document.querySelector('.gtabs button[data-m="subplan"]'); if(tb)tb.click(); gp.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+    const t=document.getElementById(b.dataset.btn); if(!t)return;
+    if(t.disabled){ document.getElementById('wHint').textContent='กด 🎙️ เริ่มวัดด้วยไมค์ก่อน ปุ่มนี้ถึงจะใช้ได้'; return; }
+    t.click(); setTimeout(renderWiz,60);
   });
 
-  loadPresets(); renderPresets();
-  resize();draw();
+  loadProfiles(); renderEditor(); renderProfiles();
+  resize();renderWiz();
 })();
   document.getElementById('btnGuide').addEventListener('click',function(){ document.getElementById('guidePanel').classList.toggle('show'); });
   document.querySelectorAll('.gtabs button').forEach(function(b){ b.addEventListener('click',function(){ document.querySelectorAll('.gtabs button').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel'); document.querySelectorAll('.gmode').forEach(function(m){m.classList.remove('on');}); document.getElementById('gm-'+b.dataset.m).classList.add('on'); }); });
