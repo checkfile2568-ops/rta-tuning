@@ -394,6 +394,15 @@
   .apptoast.show{display:block} .apptoast.err{border-color:rgba(255,77,77,.7)}
   body.outdoor .apptoast{background:#fff;color:#14161b}
   .syncform label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+  .syncform textarea{width:100%;background:#0c0e12;border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:12px;padding:8px 10px;font-family:var(--mono);resize:vertical}
+  body.outdoor .syncform textarea{background:#fff;color:#111}
+  .syncsteps code{font-size:11px;background:var(--panel2);padding:1px 5px;border-radius:5px;color:var(--accent2)}
+  .rmbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px;padding:8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;font-size:12px;line-height:1.5}
+  .rmbar.on{border-color:rgba(90,209,255,.55);background:rgba(90,209,255,.06)}
+  .rmbar>b{font-size:13px} .rmbar>span{flex:1 1 100%;color:var(--muted)} .rmbar>span b{color:var(--text)}
+  .rmbar>button{margin-left:auto;flex:0 0 auto;min-height:32px;font-size:12px;padding:4px 10px}
+  .rmseg{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap} .rmseg button{flex:0 0 auto;min-height:32px;font-size:12px;padding:4px 10px;border-radius:9px}
+  .rmseg button.sel{background:rgba(90,209,255,.18);border-color:#5ad1ff;color:var(--text)}
   .syncform input{width:100%;min-height:40px;background:#0c0e12;border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13.5px;padding:6px 10px;font-family:var(--mono)}
   body.outdoor .syncform input{background:#fff;color:#111}
   .syncsteps{font-size:12px;color:var(--muted);line-height:1.7;margin:10px 0 0;padding-left:18px}
@@ -437,6 +446,7 @@
 <div class="gcap" id="gCap"></div>
 
 <div class="controls">
+  <div class="rmbar" id="rmBar"></div>
   <div class="stylechip" id="styleChip"></div>
   <div class="row">
     <button id="btnMic" class="primary"><span class="icn">🎙️</span> เริ่มวัดด้วยไมค์</button>
@@ -565,6 +575,13 @@
       <li>โน้ตบุ๊ก: กรอกค่าเดียวกันใน DSPico (ครอส · PEQ ชนิด/F/Q/G · เกน · เฟส · ดีเลย์ · Limiter)</li>
       <li>มือถือ: วัดซ้ำ → เส้นจริงควรทับเส้นส้ม → <b>📈 เก็บกราฟ</b> + <b>💾 บันทึก</b></li>
       <li>อยากยืนจุดฟังแล้วกดคอมได้: ลง <b>Chrome Remote Desktop</b>/AnyDesk คุมโน้ตบุ๊กจากมือถือ</li>
+    </ol>
+    <h4>③ 📡 โหมดรีโมต: คอมรับเสียง · มือถือควบคุม</h4>
+    <ol>
+      <li>ตั้งค่า <b>🔄 ซิงก์</b> (Firebase) ทั้งสองเครื่อง ใช้ config + ชื่อห้องเดียวกัน</li>
+      <li>คอม: หน้า 📊 วัด → แถบ “โหมดรีโมต” เลือก <b>💻 เครื่องนี้รับเสียง</b> · วางคอม/ไมค์ไว้ที่จุดฟัง</li>
+      <li>มือถือ: เลือก <b>🎮 เครื่องนี้เป็นรีโมต</b> → กด 📻 Pink (เล่นจากมือถือผ่านบลูทูธ) → กด 🎙️ / 📸 / 🚶 / 🌊 สั่งคอมได้เลย กราฟสดขึ้นบนมือถือทันที</li>
+      <li><b>ไมค์คอมต้องปิดตัวปรับเสียง:</b> Windows → ตั้งค่า → ระบบ → เสียง → ไมโครโฟน → ปิด <b>Audio enhancements</b> / ลดเสียงรบกวน · ถ้ามีไมค์วัด USB (เช่น UMIK-1) ใช้ตัวนั้นจะแม่นที่สุด</li>
     </ol>
     <div class="gnote">มี Smaart Suite: ใช้ตอนต้องการเฟส/ดีเลย์แม่นระดับ ms ร่วมกับไมค์วัดคาลิเบรต · งานประจำ (MMM/EQ/เกน) ใช้เว็บนี้พอ</div>
   </div>
@@ -1634,7 +1651,7 @@
     if((sweeping||sweepFrozen)&&sweepData.length>1){ let mx=-999; for(const p of sweepData) if(p.db>mx)mx=p.db;
       dvLine(sweepData.map(p=>p.f),sweepData.map(p=>Math.max(DBOT,(p.db-mx)+9)),'#ff7a3a',2.2);
       if(sweepResult&&sweepResult.peakF){ const x=dX(sweepResult.peakF); c.fillStyle='#ff9b9b'; c.font='bold 10px '+MONO(); c.fillText('พีคตู้ '+Math.round(sweepResult.peakF)+'Hz',x,DP.t+6); } }
-    const data=measured||(running?lastLive:null);
+    const data=measured||((running||rmLive())?lastLive:null);
     if(DV.show.meas&&data&&data.length===bandF.length){
       c.beginPath(); let st=false,x0=0,x1=0;
       for(let i=0;i<bandF.length;i++){ const f=bandF[i]; if(f<FMIN||f>FMAX)continue; const x=dX(f),y=dY(data[i]); if(!st){c.moveTo(x,y);st=true;x0=x;}else c.lineTo(x,y); x1=x; }
@@ -2014,7 +2031,7 @@
   function afterMeasure(){
     SM.lastT=Date.now(); SM.lastFrom=SY.name; syMetaSave(); syncSoon(); pushMeasHist(); if(measured)analyze(); if(DV.open){ DV.dirty=true; dvRenderResult(); }
     let ask=true; try{ ask=localStorage.getItem(ASK_KEY)!=='0'; }catch(_){}
-    if(ask) askStyle(true);
+    if(ask&&SY.role!=='station') askStyle(true);
     else if(DV.open){ setTargetUI(REC.style); runRecs(); dvRenderAll(); }
   }
   dq('dvResult').addEventListener('click',e=>{ const b=e.target.closest('[data-r="ask"]'); if(b)askStyle(); });
@@ -2056,6 +2073,7 @@
   // 🎚 mic level meter
   let tdBuf=null; const LV={rms:-120,peak:-120,state:'off'};
   function readLevel(){
+    if(SY.role==='remote'&&FB.st&&FB.st.lv){ LV.state=rmLive()&&FB.st.running?FB.st.lv.s:'off'; LV.rms=FB.st.lv.r; return; }
     if(!running||!analyser){ LV.state='off'; return; }
     if(!tdBuf||tdBuf.length!==analyser.fftSize)tdBuf=new Float32Array(analyser.fftSize);
     analyser.getFloatTimeDomainData(tdBuf); let s=0,pk=0,n=0;
@@ -2119,7 +2137,7 @@
   setInterval(()=>{ if(running)wakeOn(); else if(wakeLock)wakeOff(); },1500);
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='hidden'&&measuring) appToast._lost=true;
-    if(document.visibilityState==='visible'){ if(running)wakeOn(); if(appToast._lost){ appToast._lost=false; appToast('⚠ จอถูกปิด/สลับแอประหว่างวัด ผลอาจไม่ครบ — วัดใหม่อีกครั้ง',true); } syncNow(false); } });
+    if(document.visibilityState==='visible'){ if(running)wakeOn(); if(appToast._lost){ appToast._lost=false; appToast('⚠ จอถูกปิด/สลับแอประหว่างวัด ผลอาจไม่ครบ — วัดใหม่อีกครั้ง',true); } } });
   // --- Android back button → previous tab / close dialogs
   let curView='meas';
   window.addEventListener('popstate',e=>{
@@ -2129,23 +2147,65 @@
   dq('segRes').parentElement.addEventListener('click',e=>{ const b=e.target.closest('#segRes button'); if(!b||b.classList.contains('sel')||!measured)return;
     if(!confirm('เปลี่ยนความละเอียดจะล้างผลวัดปัจจุบัน (ต้องวัดใหม่) — ทำต่อไหม?')){ e.stopPropagation(); e.preventDefault(); } },true);
 
-  // --- sync
-  const SY_CFG='rta_sync_cfg', SY_META='rta_sync_meta';
-  let SY={url:'',key:'',name:'',on:false}, SM={lastT:0,lastFrom:'',styleT:0,tomb:{}}, syState='off', syBusy=false, syDirty=false, syTimer=0, syLastOk=0, syRev=0;
+  // --- 🔄 sync + 📡 remote via Firebase Realtime Database (path rta/<room>/…)
+  const SY_CFG='rta_fb_cfg', SY_META='rta_sync_meta', FB_VER='10.12.2';
+  let SY={config:null,room:'',name:'',on:false,role:'off'}, SM={lastT:0,lastFrom:'',styleT:0,tomb:{}};
   try{ Object.assign(SY,JSON.parse(localStorage.getItem(SY_CFG)||'{}')); }catch(_){}
   try{ Object.assign(SM,JSON.parse(localStorage.getItem(SY_META)||'{}')); }catch(_){}
   if(!SY.name) SY.name=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)?'มือถือ':'คอม';
+  if(!SM.tomb)SM.tomb={};
+  const FB={db:null,root:null,conn:false,state:'off',msg:'',pushed:{},pushedTomb:{},pushedDev:'',pushedLast:0,pushedStyle:0,timer:0,st:null,stAt:0,cmdSeen:0,pub:0,remoteCmd:false};
   function syMetaSave(){ try{ localStorage.setItem(SY_META,JSON.stringify(SM)); }catch(_){} }
   function syCfgSave(){ try{ localStorage.setItem(SY_CFG,JSON.stringify(SY)); }catch(_){} }
-  function syOn(){ return SY.on&&/^https:\/\/script\.google(usercontent)?\.com\//.test(SY.url)&&SY.key.length>=6; }
-  function syncSoon(){ if(!syOn())return; syDirty=true; clearTimeout(syTimer); syTimer=setTimeout(()=>syncNow(true),1200); }
-  function syStatus(st,msg){ syState=st; const b=dq('btnSync'); if(b){ b.className='hsync'+(st==='ok'?' ok':st==='err'?' err':st==='busy'?' busy':''); b.textContent=st==='off'?'🔄 ซิงก์':st==='busy'?'🔄 …':st==='err'?'⚠ ซิงก์':'🔄 '+SY.name; b.title=msg||''; }
-    const c=dq('syncCard'); if(c) c.innerHTML='<div class="t"><b>🔄 ซิงก์มือถือ ↔ คอม</b><small>'+(st==='off'?'ยังไม่ได้ตั้งค่า — ข้อมูลอยู่ในเครื่องนี้อย่างเดียว':st==='err'?'เชื่อมต่อไม่ได้: '+esc(msg||''):'เครื่องนี้: <b>'+esc(SY.name)+'</b> · '+(syLastOk?'ซิงก์ล่าสุด '+new Date(syLastOk).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'กำลังเชื่อมต่อ…'))+'</small></div><button data-sy="open">'+(st==='off'?'ตั้งค่าซิงก์':'⚙️ ตั้งค่า')+'</button>'+(st!=='off'?'<button data-sy="now">ซิงก์เดี๋ยวนี้</button>':''); }
+  function syOn(){ return !!(SY.on&&SY.config&&SY.config.databaseURL&&SY.config.apiKey&&/^[A-Za-z0-9_-]{6,40}$/.test(SY.room||'')); }
+  function syncSoon(){ if(!FB.root)return; clearTimeout(FB.timer); FB.timer=setTimeout(fbPush,700); }
   function sortById(a){ return a.slice().sort((x,y)=>String(x.id)<String(y.id)?-1:1); }
-  function buildDoc(){ return { v:1, profiles:sortById(profiles), tomb:SM.tomb||{}, device:DEVICE||null,
-      last: measured?{t:SM.lastT||0, from:SM.lastFrom||SY.name, perOct, f:bandF.map(f=>Math.round(f*100)/100), d:measured.map(v=>Math.round(v*10)/10), base:measBase||null, sweep:sweepResult?{peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}:null}:null,
-      style:{k:REC.style,s:REC.strength,t:SM.styleT||0} }; }
   function tsOf(p){ const t=Date.parse(p&&p.updated); return isNaN(t)?0:t; }
+  function loadScript(src){ return new Promise((ok,no)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=()=>no(new Error('โหลด Firebase SDK ไม่ได้ (เช็กเน็ต)')); document.head.appendChild(s); }); }
+  function syStatus(st,msg){ FB.state=st; FB.msg=msg||'';
+    const b=dq('btnSync'); if(b){ b.className='hsync'+(st==='ok'?' ok':st==='err'?' err':st==='busy'?' busy':''); b.textContent=st==='off'?'🔄 ซิงก์':st==='busy'?'🔄 …':st==='err'?'⚠ ซิงก์':(SY.role==='station'?'📡 ':SY.role==='remote'?'🎮 ':'🔄 ')+SY.name; b.title=msg||''; }
+    const c=dq('syncCard'); if(c) c.innerHTML='<div class="t"><b>🔄 ซิงก์มือถือ ↔ คอม (Firebase)</b><small>'+(st==='off'?'ยังไม่ได้ตั้งค่า — ข้อมูลอยู่ในเครื่องนี้อย่างเดียว':st==='err'?'เชื่อมต่อไม่ได้: '+esc(msg||''):'เครื่องนี้: <b>'+esc(SY.name)+'</b> · ห้อง <b>'+esc(SY.room)+'</b> · '+(FB.conn?'🟢 ออนไลน์ อัปเดตทันที':'🟠 ออฟไลน์ — จะซิงก์เมื่อกลับมาออนไลน์'))+'</small></div><button data-sy="open">'+(st==='off'?'ตั้งค่าซิงก์':'⚙️ ตั้งค่า')+'</button>';
+    rmRender(); }
+  async function fbInit(){
+    rmRender(); if(!syOn()){ syStatus('off'); return; }
+    syStatus('busy');
+    try{
+      if(!window.firebase||!firebase.database){ await loadScript('https://www.gstatic.com/firebasejs/'+FB_VER+'/firebase-app-compat.js'); await loadScript('https://www.gstatic.com/firebasejs/'+FB_VER+'/firebase-database-compat.js'); }
+      let app=(firebase.apps||[]).find(a=>a.name==='rta'); if(app){ try{ await app.delete(); }catch(_){} }
+      app=firebase.initializeApp(SY.config,'rta'); FB.db=app.database(); FB.root=FB.db.ref('rta/'+SY.room);
+      FB.db.ref('.info/connected').on('value',s=>{ FB.conn=!!s.val(); syStatus('ok'); });
+      FB.root.child('sync').on('value',snap=>{ try{ fbMerge(snap.val()||{}); syStatus('ok'); }catch(e){ console.error(e); } },err=>syStatus('err',fbErr(err)));
+      FB.root.child('live/station').on('value',s=>{ FB.st=s.val(); FB.stAt=Date.now(); if(SY.role==='remote')rmApplyStation(); rmRender(); });
+      FB.root.child('live/cmd').on('value',s=>{ const c=s.val(); if(SY.role==='station'&&c&&c.id&&c.id!==FB.cmdSeen){ const fresh=!FB.cmdSeen; FB.cmdSeen=c.id; if(!fresh||Date.now()-(c.at||0)<5000)stExec(c); } else if(c&&c.id&&!FB.cmdSeen)FB.cmdSeen=c.id; });
+      syStatus('ok');
+    }catch(e){ syStatus('err',fbErr(e)); }
+  }
+  function fbErr(e){ const m=String(e&&e.message||e); return /permission|PERMISSION/i.test(m)?'ไม่มีสิทธิ์อ่าน/เขียน — เพิ่มกฎ "rta" ใน Realtime Database Rules':m; }
+  function fbMerge(S){
+    const R={profiles:[],tomb:S.tomb||{},device:null,last:null,style:null};
+    const remJ={};
+    for(const [id,v] of Object.entries(S.profiles||{})){ try{ const p=JSON.parse(v.j); if(p&&p.id){ R.profiles.push(p); remJ[id]=v.j; } }catch(_){} }
+    try{ if(S.device&&S.device.j)R.device=JSON.parse(S.device.j); }catch(_){}
+    try{ if(S.last&&S.last.j)R.last=JSON.parse(S.last.j); }catch(_){}
+    if(S.style)R.style=S.style;
+    mergeDoc(R);
+    profiles.forEach(p=>{ if(remJ[p.id]===JSON.stringify(p))FB.pushed[p.id]=remJ[p.id]; });
+    Object.keys(R.tomb).forEach(id=>FB.pushedTomb[id]=1);
+    if(R.device&&DEVICE&&R.device.at===DEVICE.at)FB.pushedDev=JSON.stringify(DEVICE);
+    if(R.last&&R.last.t>=FB.pushedLast)FB.pushedLast=R.last.t;
+    if(R.style&&R.style.t>=FB.pushedStyle)FB.pushedStyle=R.style.t;
+    syncSoon();
+  }
+  function fbPush(){
+    if(!FB.root)return; const u={};
+    profiles.forEach(p=>{ const j=JSON.stringify(p); if(FB.pushed[p.id]!==j){ u['sync/profiles/'+p.id]={j,t:tsOf(p)}; FB.pushed[p.id]=j; } });
+    Object.entries(SM.tomb||{}).forEach(([id,t])=>{ if(!FB.pushedTomb[id]){ u['sync/tomb/'+id]=t; u['sync/profiles/'+id]=null; FB.pushedTomb[id]=1; } });
+    if(DEVICE){ const j=JSON.stringify(DEVICE); if(j!==FB.pushedDev){ u['sync/device']={j,t:Date.parse(DEVICE.at)||Date.now()}; FB.pushedDev=j; } }
+    if(measured&&SM.lastT>FB.pushedLast){ const L={t:SM.lastT,from:SM.lastFrom||SY.name,perOct,d:measured.map(v=>Math.round(v*10)/10),base:measBase||null,sweep:sweepResult?{peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}:null};
+      u['sync/last']={j:JSON.stringify(L),t:L.t}; FB.pushedLast=SM.lastT; }
+    if((SM.styleT||0)>FB.pushedStyle){ u['sync/style']={k:REC.style,s:REC.strength,t:SM.styleT}; FB.pushedStyle=SM.styleT; }
+    if(Object.keys(u).length) FB.root.update(u).catch(e=>syStatus('err',fbErr(e)));
+  }
   function mergeDoc(R){
     let changed=false, msgs=[];
     // tombstones
@@ -2179,50 +2239,86 @@
     syMetaSave();
     if(changed){ try{ localStorage.setItem(PF_KEY,JSON.stringify(profiles)); }catch(_){} renderEditor(); renderProfiles(); }
     if(changed||gotMeas){ if(DV.open){ if(gotMeas&&REC.seq>=0)runRecs(); dvRenderAll(); } }
-    if(gotMeas) appToast('📥 ได้ผลวัดใหม่จาก'+(L.from||'อีกเครื่อง')+' แล้ว');
+    if(gotMeas){ appToast('📥 ได้ผลวัดใหม่จาก'+(L.from||'อีกเครื่อง')+' แล้ว'); if(SY.role==='remote'){ let ask=true; try{ ask=localStorage.getItem(ASK_KEY)!=='0'; }catch(_){} if(ask)askStyle(true); } }
     else if(msgs.length) appToast('📥 อัปเดตจากอีกเครื่อง: '+msgs.slice(0,3).join(', ')+(msgs.length>3?' …':''));
   }
-  const canon=d=>JSON.stringify({p:sortById(d.profiles||[]),t:d.tomb||{},v:d.device||null,l:d.last?{t:d.last.t,d:d.last.d}:null,s:d.style||null});
-  async function syCall(body){ const r=await fetch(SY.url,{method:'POST',body:JSON.stringify(Object.assign({key:SY.key},body)),redirect:'follow'}); const j=await r.json(); if(!j.ok)throw new Error(j.err||'ผิดพลาด'); return j; }
-  async function syncNow(push){
-    if(!syOn()||syBusy)return; if(document.visibilityState==='hidden'&&!push)return;
-    syBusy=true; if(syState!=='ok')syStatus('busy');
-    try{
-      const g=await syCall({op:'get'}); let R={}; try{ R=g.doc?JSON.parse(g.doc):{}; }catch(_){ R={}; }
-      mergeDoc(R); syRev=g.rev;
-      const local=buildDoc();
-      if(syDirty||canon(local)!==canon(R)){ await syCall({op:'put',doc:JSON.stringify(local),from:SY.name}); syDirty=false; }
-      syLastOk=Date.now(); syStatus('ok');
-    }catch(err){ syStatus('err',String(err&&err.message||err)); }
-    syBusy=false;
+  // --- 📡 remote: station (computer mic) ↔ remote (phone)
+  const RM_OPS={mic:'btnMic',measure:'btnMeasure',mmm:'btnMMM',sweep:'btnSweep',phase:'btnPhase',clear:'btnClear'};
+  function stExec(c){
+    const id=RM_OPS[c.op]; if(!id)return; FB.remoteCmd=true;
+    const go=()=>{ const b=dq(id); if(b&&!b.disabled)b.click(); };
+    if(c.op!=='mic'&&!running){ dq('btnMic').click(); setTimeout(go,1600); } else go();
+    appToast('🎮 คำสั่งจาก'+(c.from||'รีโมต')+': '+({mic:'ไมค์',measure:'วัด 4 วิ',mmm:'MMM',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง'})[c.op]);
   }
-  setInterval(()=>syncNow(false),8000);
+  function stPublish(){
+    if(SY.role!=='station'||!FB.root)return; const now=Date.now();
+    if(!running&&now-FB.pub<3000)return; if(running&&now-FB.pub<120)return; FB.pub=now;
+    const data=measured||lastLive, pick=id=>{ const b=dq(id); return b?{t:b.textContent.replace(/\s+/g,' ').trim(),d:b.disabled,on:b.classList.contains('on')}:null; };
+    FB.root.child('live/station').set({name:SY.name,at:now,running,measuring:!!measuring,sweeping:!!sweeping,perOct,lv:{s:LV.state,r:Math.round(LV.rms)},
+      s:data&&data.length===bandF.length?data.map(v=>Math.round(v*2)/2).join(','):'',m:!!measured,
+      b:{mic:pick('btnMic'),measure:pick('btnMeasure'),mmm:pick('btnMMM'),sweep:pick('btnSweep'),phase:pick('btnPhase')}}).catch(()=>{});
+  }
+  setInterval(stPublish,60);
+  function rmLive(){ return SY.role==='remote'&&FB.st&&Date.now()-FB.stAt<6000&&Date.now()-(FB.st.at||0)<15000; }
+  function rmApplyStation(){
+    const st=FB.st; if(!st)return;
+    if(st.perOct&&st.perOct!==perOct){ perOct=st.perOct; rebuildBands(); measured=null; document.querySelectorAll('#segRes button').forEach(b=>b.classList.toggle('sel',+b.dataset.r===perOct)); }
+    Object.entries(RM_OPS).forEach(([op,id])=>{ const b=dq(id), s=st.b&&st.b[op]; if(!b||!s||op==='clear')return; b.disabled=false; b.classList.toggle('on',s.on); const ic=b.querySelector('.icn'); const lab=s.t; if(b.textContent.replace(/\s+/g,' ').trim()!==lab){ b.innerHTML=lab; } });
+    dq('btnClear').disabled=false;
+    if(!measured&&st.s){ const arr=st.s.split(',').map(Number); if(arr.length===bandF.length){ lastLive=arr; if(curView==='meas')draw(arr);
+        let mx=-999,mi=0; arr.forEach((v,i)=>{ if(v>mx){mx=v;mi=i;} }); dq('rLevel').textContent=(mx>0?'+':'')+mx.toFixed(0); dq('rBand').textContent='พีค '+bandLabels[mi]+'Hz · จาก'+st.name; if(DV.open)DV.dirty=true; } }
+  }
+  // intercept local measure buttons when this device is the remote
+  document.addEventListener('click',e=>{
+    if(SY.role!=='remote'||!FB.root)return; const b=e.target.closest('button'); if(!b)return;
+    const op=Object.keys(RM_OPS).find(k=>RM_OPS[k]===b.id); if(!op)return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if(op==='clear'){ measured=null; measuredVar=null; draw(); }
+    FB.root.child('live/cmd').set({op,id:Date.now()+'-'+Math.random().toString(36).slice(2,6),at:Date.now(),from:SY.name});
+    appToast('🎮 ส่งคำสั่ง '+({mic:'ไมค์',measure:'วัด 4 วิ',mmm:'MMM 30 วิ',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง'})[op]+' ไปที่'+(FB.st&&FB.st.name||'เครื่องวัด'));
+  },true);
+  function rmRender(){
+    const el=dq('rmBar'); if(!el)return;
+    if(!syOn()){ el.innerHTML='<b>📡 โหมดรีโมต</b><span>ใช้คอมรับเสียง + มือถือควบคุม (ต้องตั้งค่าซิงก์ Firebase ก่อน)</span><button data-sy="open">ตั้งค่า</button>'; el.className='rmbar'; return; }
+    const R=SY.role, st=FB.st, live=st&&Date.now()-(st.at||0)<15000;
+    el.className='rmbar'+(R!=='off'?' on':'');
+    el.innerHTML='<b>📡 โหมดรีโมต</b><div class="rmseg"><button data-rm="off" class="'+(R==='off'?'sel':'')+'">ปิด</button><button data-rm="station" class="'+(R==='station'?'sel':'')+'">💻 เครื่องนี้รับเสียง</button><button data-rm="remote" class="'+(R==='remote'?'sel':'')+'">🎮 เครื่องนี้เป็นรีโมต</button></div>'+
+      '<span>'+(R==='station'?'รอคำสั่งจากมือถือ · กราฟส่งสดไปที่รีโมต · '+(running?'🟢 ไมค์ทำงาน':'⚪ ไมค์ปิด (รีโมตสั่งเปิดได้)'):
+        R==='remote'?(live?'🟢 เชื่อมกับ <b>'+esc(st.name)+'</b> · '+(st.running?'ไมค์ทำงาน':'ไมค์ปิด')+' · ปุ่มวัดจะสั่งเครื่องนั้น · Pink Noise เล่นจากเครื่องนี้':'🟠 ยังไม่เจอเครื่องรับเสียง — เปิดเว็บบนคอม เลือก “เครื่องนี้รับเสียง”'):
+        'เลือกบทบาทของเครื่องนี้')+'</span>';
+  }
+  dq('rmBar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
+    if(b.dataset.sy==='open'){ openSync(); return; }
+    const r=b.dataset.rm; if(!r)return; if(SY.role==='remote'&&r!=='remote'){ ['btnMeasure','btnMMM','btnSweep','btnPhase','btnClear'].forEach(id=>dq(id).disabled=!running); lastLive=null; draw(); }
+    SY.role=r; syCfgSave(); if(r==='remote'&&running)dq('btnMic').click(); rmApplyStation(); rmRender(); syStatus(FB.state,FB.msg);
+    appToast(r==='station'?'💻 เครื่องนี้เป็นเครื่องรับเสียง — เปิดไมค์ค้างไว้ วางที่จุดฟัง':r==='remote'?'🎮 เครื่องนี้เป็นรีโมต — ปุ่มวัดจะสั่งเครื่องรับเสียง':'ปิดโหมดรีโมต'); });
+  // --- settings
+  function parseCfg(t){ t=String(t||''); try{ const j=JSON.parse(t); if(j&&j.apiKey)return j; }catch(_){}
+    const o={}; ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'].forEach(k=>{ const m=t.match(new RegExp(k+'\\s*:\\s*["\']([^"\']+)["\']')); if(m)o[k]=m[1]; }); return o; }
   function openSync(){
-    openModal('<h3>🔄 ซิงก์มือถือ ↔ คอม</h3><p>ให้ทุกเครื่องเห็นชุดจูน · ค่าในเครื่อง · ผลวัดล่าสุด · แนวเสียง ตรงกัน (อัปเดตทุก ~8 วินาที) ข้อมูลเก็บใน Google Sheet ของพี่เอง</p>'+
-      '<div class="syncform"><label>URL ของ Apps Script (ลงท้าย /exec)</label><input id="syUrl" placeholder="https://script.google.com/macros/s/…/exec" value="'+esc(SY.url)+'">'+
-      '<label>รหัสซิงก์ (ตั้งเอง อย่างน้อย 6 ตัว · ใส่เหมือนกันทุกเครื่อง)</label><input id="syKey" placeholder="เช่น dstack-2569" value="'+esc(SY.key)+'">'+
+    const c=SY.config||{};
+    openModal('<h3>🔄 ซิงก์ + 📡 รีโมต (Firebase)</h3><p>ใช้โปรเจกต์ Firebase เดิม · ข้อมูลอยู่ใต้ <code>rta/&lt;ห้อง&gt;</code> ไม่ปนกับระบบอื่น · ทุกเครื่องใส่ค่าเหมือนกัน</p>'+
+      '<div class="syncform"><label>Firebase config (วางทั้งก้อนจาก Project settings → Web app ได้เลย)</label><textarea id="syCfg" rows="5" placeholder="const firebaseConfig = { apiKey: &quot;…&quot;, databaseURL: &quot;https://….firebasedatabase.app&quot;, … };">'+(c.apiKey?esc(JSON.stringify(c,null,1)):'')+'</textarea>'+
+      '<label>ชื่อห้อง (ตั้งเอง 6–40 ตัว a-z 0-9 - _ · ใส่เหมือนกันทุกเครื่อง)</label><input id="syRoom" placeholder="เช่น dstack-2569" value="'+esc(SY.room)+'">'+
       '<label>ชื่อเครื่องนี้</label><input id="syName" maxlength="20" value="'+esc(SY.name)+'"></div>'+
       '<div class="syncstat" id="syStat"></div>'+
-      '<div class="dvmfoot">'+(SY.on?'<button data-sy="off">ปิดซิงก์</button>':'')+'<button data-sy="test">ทดสอบ</button><button class="primary" data-sy="save">บันทึก + ซิงก์เลย</button></div>'+
-      '<ol class="syncsteps"><li>สร้าง <b>Google Sheet</b> ใหม่ → เมนู <b>ส่วนขยาย → Apps Script</b></li><li>ลบโค้ดเดิม วางโค้ดจาก <a href="https://github.com/checkfile2568-ops/rta-tuning/blob/main/sync/Code.gs" target="_blank" rel="noopener">sync/Code.gs</a> แล้วกดบันทึก</li>'+
-      '<li><b>ทำให้ใช้งานได้ → การทำให้ใช้งานได้รายการใหม่ → เว็บแอป</b> · ดำเนินการในฐานะ: <b>ฉัน</b> · ผู้มีสิทธิ์: <b>ทุกคน</b> → อนุญาตสิทธิ์</li><li>คัดลอก URL (/exec) มาวางด้านบน ทั้งในมือถือและคอม ใช้รหัสซิงก์เดียวกัน</li></ol>'+
-      '<p style="margin-top:6px">ใครมี URL + รหัสซิงก์จะอ่านข้อมูลชุดจูนได้ — อย่าแชร์รหัสนี้</p>');
+      '<div class="dvmfoot">'+(SY.on?'<button data-sy="off">ปิดซิงก์</button>':'')+'<button class="primary" data-sy="save">บันทึก + เชื่อมต่อ</button></div>'+
+      '<ol class="syncsteps"><li>Firebase console → โปรเจกต์เดิม → ⚙️ Project settings → Your apps (Web) → คัดลอก <b>firebaseConfig</b> มาวาง</li>'+
+      '<li>Realtime Database → <b>Rules</b> → เพิ่มบรรทัดนี้ในกฎเดิม (ไม่ต้องลบของเดิม):<br><code>"rta": { ".read": true, ".write": true }</code></li>'+
+      '<li>ทำซ้ำในอีกเครื่อง ใช้ <b>config + ชื่อห้องเดียวกัน</b></li></ol>'+
+      '<p style="margin-top:6px">ใครรู้ config + ชื่อห้องจะอ่าน/แก้ชุดจูนได้ — ตั้งชื่อห้องให้เดายาก</p>');
   }
-  function syForm(){ return {url:(dq('syUrl').value||'').trim(),key:(dq('syKey').value||'').trim(),name:(dq('syName').value||'').trim()||SY.name}; }
-  dq('dvModal').addEventListener('click',async e=>{ const b=e.target.closest('[data-sy]'); if(!b)return; const a=b.dataset.sy, st=dq('syStat');
-    if(a==='test'||a==='save'){ const f=syForm();
-      if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(f.url)){ st.textContent='⚠ URL ต้องขึ้นต้นด้วย https://script.google.com/'; return; }
-      if(f.key.length<6){ st.textContent='⚠ รหัสซิงก์ต้องยาวอย่างน้อย 6 ตัว'; return; }
-      st.textContent='กำลังเชื่อมต่อ…'; const old=Object.assign({},SY); Object.assign(SY,f,{on:true});
-      try{ await syCall({op:'ping'}); st.textContent='✔ เชื่อมต่อได้';
-        if(a==='save'){ syCfgSave(); syDirty=true; closeModal(); await syncNow(true); appToast(syState==='ok'?'🔄 เปิดซิงก์แล้ว — ใส่ URL + รหัสเดียวกันในอีกเครื่อง':'⚠ ซิงก์ไม่สำเร็จ',syState!=='ok'); }
-        else Object.assign(SY,old); }
-      catch(err){ Object.assign(SY,old); st.textContent='✘ เชื่อมต่อไม่ได้: '+(err&&err.message||err)+' — เช็ก URL / การ Deploy (ผู้มีสิทธิ์: ทุกคน)'; } }
-    else if(a==='off'){ SY.on=false; syCfgSave(); closeModal(); syStatus('off'); appToast('ปิดซิงก์แล้ว — ข้อมูลยังอยู่ในเครื่องนี้'); } });
-  function onSyncUi(e){ const b=e.target.closest('[data-sy]'); if(!b)return; if(b.dataset.sy==='open')openSync(); else if(b.dataset.sy==='now'){ syDirty=true; syncNow(true).then(()=>appToast(syState==='ok'?'🔄 ซิงก์แล้ว':'⚠ ซิงก์ไม่สำเร็จ',syState!=='ok')); } }
+  dq('dvModal').addEventListener('click',e=>{ const b=e.target.closest('[data-sy]'); if(!b)return; const a=b.dataset.sy, st=dq('syStat');
+    if(a==='save'){ const cfg=parseCfg(dq('syCfg').value), room=(dq('syRoom').value||'').trim(), name=(dq('syName').value||'').trim()||SY.name;
+      if(!cfg.apiKey||!cfg.databaseURL){ st.textContent='⚠ config ต้องมี apiKey และ databaseURL (ถ้าไม่มี databaseURL ให้สร้าง Realtime Database ก่อน)'; return; }
+      if(!/^[A-Za-z0-9_-]{6,40}$/.test(room)){ st.textContent='⚠ ชื่อห้องใช้ a-z 0-9 - _ ยาว 6–40 ตัว'; return; }
+      Object.assign(SY,{config:cfg,room,name,on:true}); syCfgSave(); FB.pushed={}; FB.pushedTomb={}; FB.pushedDev=''; FB.pushedLast=0; FB.pushedStyle=0;
+      closeModal(); fbInit().then(()=>{ syncSoon(); appToast(FB.state==='ok'?'🔄 เชื่อมต่อแล้ว — ตั้งค่าเดียวกันในอีกเครื่อง':'⚠ '+FB.msg,FB.state!=='ok'); }); }
+    else if(a==='off'){ SY.on=false; SY.role='off'; syCfgSave(); closeModal(); try{ firebase.apps.forEach(x=>{ if(x.name==='rta')x.delete(); }); }catch(_){} FB.root=null; FB.db=null; syStatus('off'); appToast('ปิดซิงก์แล้ว — ข้อมูลยังอยู่ในเครื่องนี้'); } });
+  function onSyncUi(e){ const b=e.target.closest('[data-sy]'); if(b&&b.dataset.sy==='open')openSync(); }
   dq('syncCard').addEventListener('click',onSyncUi);
   dq('btnSync').addEventListener('click',()=>openSync());
-  function syInit(){ syStatus(syOn()?'busy':'off'); if(syOn())syncNow(false); }
+  function syInit(){ fbInit(); }
   function cmpLine(){ const pv=prevMeas(); if(!pv||!measured)return ''; const a=devRMS(pv.d), b=devRMS(measured); if(a==null||b==null)return '';
     return '<p style="color:var(--text)">📈 เสียงจริงเทียบครั้งก่อน: ±'+a.toFixed(1)+' → ±'+b.toFixed(1)+' dB '+(b<a-0.2?'✔ ดีขึ้น':b>a+0.2?'✘ แย่ลง':'≈ ใกล้เดิม')+' (เส้นเทาประบนกราฟ)</p>'; }
 
