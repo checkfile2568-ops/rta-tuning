@@ -2187,7 +2187,7 @@
   const FB={peers:{},rtt:0,pres:null,db:null,root:null,conn:false,state:'off',msg:'',pushed:{},pushedTomb:{},pushedDev:'',pushedLast:0,pushedStyle:0,pushedM:{},pushedMT:{},timer:0,st:null,stAt:0,cmdSeen:0,pub:0,remoteCmd:false};
   function syMetaSave(){ try{ localStorage.setItem(SY_META,JSON.stringify(SM)); }catch(_){} }
   function syCfgSave(){ try{ localStorage.setItem(SY_CFG,JSON.stringify(SY)); }catch(_){} }
-  function syOn(){ return !!(SY.on&&SY.config&&SY.config.databaseURL&&SY.config.apiKey&&/^[A-Za-z0-9_-]{6,40}$/.test(SY.room||'')); }
+  function syOn(){ return !!(SY.on&&SY.config&&SY.config.databaseURL&&/^[A-Za-z0-9_-]{6,40}$/.test(SY.room||'')); }
   function syncSoon(){ if(!FB.root)return; clearTimeout(FB.timer); FB.timer=setTimeout(fbPush,700); }
   function sortById(a){ return a.slice().sort((x,y)=>String(x.id)<String(y.id)?-1:1); }
   function tsOf(p){ const t=Date.parse(p&&p.updated); return isNaN(t)?0:t; }
@@ -2258,7 +2258,7 @@
   function shareLink(){ const data=btoa(unescape(encodeURIComponent(JSON.stringify({c:SY.config,r:SY.room})))); return location.origin+location.pathname+'#sync='+data; }
   function bootShare(){
     if(!BOOT_HASH.startsWith('#sync='))return false;
-    try{ const o=JSON.parse(decodeURIComponent(escape(atob(BOOT_HASH.slice(6))))); if(o&&o.c&&o.c.apiKey&&o.r){ SY.config=o.c; SY.room=o.r; openSync(true); return true; } }catch(_){}
+    try{ const o=JSON.parse(decodeURIComponent(escape(atob(BOOT_HASH.slice(6))))); if(o&&o.c&&o.c.databaseURL&&o.r){ SY.config=o.c; SY.room=o.r; openSync(true); return true; } }catch(_){}
     appToast('ลิงก์ตั้งค่าไม่ถูกต้อง',true); return false; }
   function mergeDoc(R){
     let changed=false, msgs=[];
@@ -2347,12 +2347,13 @@
     SY.role=r; syCfgSave(); presBeat(); if(r==='remote'&&running)dq('btnMic').click(); rmApplyStation(); rmRender(); syStatus(FB.state,FB.msg);
     appToast(r==='station'?'💻 เครื่องนี้เป็นเครื่องรับเสียง — เปิดไมค์ค้างไว้ วางที่จุดฟัง':r==='remote'?'🎮 เครื่องนี้เป็นรีโมต — ปุ่มวัดจะสั่งเครื่องรับเสียง':'ปิดโหมดรีโมต'); });
   // --- settings
-  function parseCfg(t){ t=String(t||''); try{ const j=JSON.parse(t); if(j&&j.apiKey)return j; }catch(_){}
-    const o={}; ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'].forEach(k=>{ const m=t.match(new RegExp(k+'\\s*:\\s*["\']([^"\']+)["\']')); if(m)o[k]=m[1]; }); return o; }
+  function parseCfg(t){ t=String(t||''); try{ const j=JSON.parse(t); if(j&&(j.apiKey||j.databaseURL))return j; }catch(_){}
+    const um=t.match(/https:\/\/[a-z0-9.-]+\.(firebaseio\.com|firebasedatabase\.app)\/?/i);
+    const o={}; ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'].forEach(k=>{ const m=t.match(new RegExp(k+'\\s*:\\s*["\']([^"\']+)["\']')); if(m)o[k]=m[1]; }); if(!o.databaseURL&&um)o.databaseURL=um[0]; if(o.databaseURL)o.databaseURL=o.databaseURL.replace(/\/$/,''); return o; }
   function openSync(fromLink){
     const c=SY.config||{};
     openModal('<h3>🔄 ซิงก์ + 📡 รีโมต (Firebase)</h3><p>ใช้โปรเจกต์ Firebase เดิม · ข้อมูลอยู่ใต้ <code>rta/&lt;ห้อง&gt;</code> ไม่ปนกับระบบอื่น · ทุกเครื่องใส่ค่าเหมือนกัน</p>'+
-      '<div class="syncform"><label>Firebase config (วางทั้งก้อนจาก Project settings → Web app ได้เลย)</label><textarea id="syCfg" rows="5" placeholder="const firebaseConfig = { apiKey: &quot;…&quot;, databaseURL: &quot;https://….firebasedatabase.app&quot;, … };">'+(c.apiKey?esc(JSON.stringify(c,null,1)):'')+'</textarea>'+
+      '<div class="syncform"><label>Firebase config (วางทั้งก้อนจาก Project settings → Web app หรือวางแค่ Database URL ก็ได้)</label><textarea id="syCfg" rows="5" placeholder="const firebaseConfig = { apiKey: &quot;…&quot;, databaseURL: &quot;https://….firebasedatabase.app&quot;, … };">'+(c.apiKey?esc(JSON.stringify(c,null,1)):'')+'</textarea>'+
       '<label>ชื่อห้อง (ตั้งเอง 6–40 ตัว a-z 0-9 - _ · ใส่เหมือนกันทุกเครื่อง)</label><input id="syRoom" placeholder="เช่น dstack-2569" value="'+esc(SY.room)+'">'+
       '<label>ชื่อเครื่องนี้</label><input id="syName" maxlength="20" value="'+esc(SY.name)+'"></div>'+
       '<div class="syncstat" id="syStat"></div>'+
@@ -2364,7 +2365,7 @@
   }
   dq('dvModal').addEventListener('click',e=>{ const b=e.target.closest('[data-sy]'); if(!b)return; const a=b.dataset.sy, st=dq('syStat');
     if(a==='save'){ const cfg=parseCfg(dq('syCfg').value), room=(dq('syRoom').value||'').trim(), name=(dq('syName').value||'').trim()||SY.name;
-      if(!cfg.apiKey||!cfg.databaseURL){ st.textContent='⚠ config ต้องมี apiKey และ databaseURL (ถ้าไม่มี databaseURL ให้สร้าง Realtime Database ก่อน)'; return; }
+      if(!cfg.databaseURL){ st.textContent='⚠ ต้องมี databaseURL (ลงท้าย .firebasedatabase.app หรือ .firebaseio.com) — ถ้ายังไม่มี ให้สร้าง Realtime Database ก่อน'; return; }
       if(!/^[A-Za-z0-9_-]{6,40}$/.test(room)){ st.textContent='⚠ ชื่อห้องใช้ a-z 0-9 - _ ยาว 6–40 ตัว'; return; }
       Object.assign(SY,{config:cfg,room,name,on:true}); syCfgSave(); FB.pushedM={}; FB.pushedMT={}; FB.pushed={}; FB.pushedTomb={}; FB.pushedDev=''; FB.pushedLast=0; FB.pushedStyle=0;
       closeModal(); fbInit().then(()=>{ syncSoon(); appToast(FB.state==='ok'?'🔄 เชื่อมต่อแล้ว — ตั้งค่าเดียวกันในอีกเครื่อง':'⚠ '+FB.msg,FB.state!=='ok'); }); }
