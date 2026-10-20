@@ -44,7 +44,7 @@
 
   .graphwrap{position:relative;margin:12px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
   canvas{display:block;width:100%;height:300px;touch-action:none}
-  .overlay-legend{position:absolute;top:8px;left:10px;display:flex;gap:10px;font-family:var(--mono);font-size:10px;pointer-events:none;flex-wrap:wrap;max-width:60%}
+  .overlay-legend{position:absolute;top:6px;left:40px;display:flex;gap:10px;font-family:var(--mono);font-size:10px;pointer-events:none;flex-wrap:wrap;max-width:60%}
   .overlay-legend span{display:flex;align-items:center;gap:4px;color:var(--muted)}
   .swatch{width:12px;height:3px;border-radius:2px;display:inline-block}
   .readout{position:absolute;top:8px;right:10px;text-align:right;font-family:var(--mono);font-size:10px;color:var(--muted);pointer-events:none}
@@ -386,6 +386,19 @@
   body.outdoor .dvchips button.on{background:#f1ede4;border-color:#cdc6b9;color:#14161b}
   body.outdoor .dvchips button{color:#545966}
   body.outdoor .lvl .bar{background:linear-gradient(90deg,#d9dfe9 0 21%,#d7efdf 21% 86%,#f6e1c8 86%)}
+  .hsync{flex:0 0 auto;min-height:36px;padding:0 10px;font-size:12px;margin-left:6px;border-radius:10px;gap:4px;white-space:nowrap}
+  .hsync.ok{border-color:rgba(55,200,113,.55);color:#5fe08a} .hsync.err{border-color:rgba(255,77,77,.6);color:#ff8a8a} .hsync.busy{color:var(--accent2)}
+  .synccard{margin:0 12px 10px;padding:11px 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;line-height:1.5}
+  .synccard .t{flex:1;min-width:180px} .synccard .t small{display:block;color:var(--muted)} .synccard button{flex:0 0 auto;min-height:38px;font-size:12.5px}
+  .apptoast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:95;max-width:min(92vw,520px);background:#1d2029;color:var(--text);border:1px solid #3a4050;border-radius:12px;padding:9px 14px;font-size:13px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.5);display:none}
+  .apptoast.show{display:block} .apptoast.err{border-color:rgba(255,77,77,.7)}
+  body.outdoor .apptoast{background:#fff;color:#14161b}
+  .syncform label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+  .syncform input{width:100%;min-height:40px;background:#0c0e12;border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13.5px;padding:6px 10px;font-family:var(--mono)}
+  body.outdoor .syncform input{background:#fff;color:#111}
+  .syncsteps{font-size:12px;color:var(--muted);line-height:1.7;margin:10px 0 0;padding-left:18px}
+  .syncsteps b{color:var(--text)} .syncsteps a{color:var(--accent2)}
+  .syncstat{font-size:12.5px;margin-top:8px;min-height:18px}
 </style>
 </head>
 <body>
@@ -398,6 +411,7 @@
   <div class="brand"><b>RTA จูน <span>3 ทาง</span></b><small>DSTACK · 10" + 4"×2 + 2"×2</small></div>
   <div class="status"><span id="stMode">พร้อมใช้งาน</span><span class="dot" id="stDot"></span><br>
     <span id="stFs" style="font-size:10px">— kHz</span></div>
+  <button class="hsync" id="btnSync" title="ซิงก์มือถือ ↔ คอม">🔄 ซิงก์</button>
   <button class="hsun" id="btnSun" title="โหมดกลางแจ้ง (จอสว่าง)">☀️</button>
 </header>
 
@@ -475,6 +489,7 @@
 
 <div class="view" id="vProf">
 <div class="vhead"><h2>💾 ชุดจูน</h2><p>ชุดค่าที่บันทึกไว้ · กด 📂 โหลด แล้วไปลอง/แก้ในหน้า 🎛️ จูน · ⭐ Base = ชุดตั้งต้น</p></div>
+<div class="synccard" id="syncCard"></div>
 <div class="row" style="margin:0 12px 10px"><button class="primary" id="pfOpenTune">🎛️ แก้ชุดที่เปิดอยู่ในหน้าจูน</button></div>
 <div class="label legacy" id="presetLabel">ชุดจูน</div>
 <div class="presets" id="presetPanel">
@@ -560,8 +575,8 @@
       <div class="gh"><span class="gn">3</span> ครอสโอเวอร์ + สโลป</div>
       <table>
         <tr><td>ซับ 10"</td><td>subsonic ≈0.7×พีค Sweep (≥30Hz) · LPF 90–100Hz · LR24</td></tr>
-        <tr><td>กลาง 4"×2</td><td>HPF 120Hz · LPF 3.91k · LR24/LR12</td></tr>
-        <tr><td>แหลม 2"×2</td><td>HPF 3.91k · LR12</td></tr>
+        <tr><td>กลาง 4"×2</td><td>HPF 120Hz · LPF 3.91k · LR24</td></tr>
+        <tr><td>แหลม 2"×2</td><td>HPF 3.91k · LR24 (เฟสปกติ)</td></tr>
       </table>
       <div class="gwhere">ใส่ที่ช่อง <b>HPF</b> และ <b>LPF</b> ของแต่ละแชนแนล (เลือกความถี่ + ชนิด/สโลป)</div>
       <div class="gwarn">⚠ อย่าลืม subsonic HPF ที่ซับ — ตู้ bandpass ขาดตัวนี้ดอกพังได้</div>
@@ -622,7 +637,7 @@
     <table>
       <tr><td>ซับ</td><td>subsonic ≈0.7×พีค Sweep / LPF 90–100 · LR24</td></tr>
       <tr><td>กลาง</td><td>HPF 120 / LPF 3.91k</td></tr>
-      <tr><td>แหลม</td><td>HPF 3.91k · LR12</td></tr>
+      <tr><td>แหลม</td><td>HPF 3.91k · LR24</td></tr>
     </table>
     <div class="gwarn">⚠ ยังขาด 2 ค่าเพื่อคำนวณ threshold ลิมิต: รุ่น/วัตต์แหลม 2" · โอห์มซับที่จะต่อ UCD (8 หรือ 2)</div>
   </div>
@@ -650,7 +665,7 @@
       <div class="gh"><span class="gn">3</span> ตั้ง DSP ตามลำดับ</div>
       <table>
         <tr><td>①</td><td>Reset EQ ทุกช่อง</td></tr>
-        <tr><td>②</td><td>ครอส: ซับ LPF 90–100 LR24 · กลาง 120 / 3.9k · แหลม 3.9k LR12</td></tr>
+        <tr><td>②</td><td>ครอส: ซับ LPF 90–100 LR24 · กลาง 120 / 3.9k LR24 · แหลม 3.9k LR24</td></tr>
         <tr><td>③</td><td>🌊 Sweep จ่อตะแกรงซ้าย → subsonic ≈ 0.7 × พีค (≥30Hz) · BW24</td></tr>
         <tr><td>④</td><td>🔄 เช็กเฟสซับ 0/180 ที่จุดตัด · ยังดิพ → ดีเลย์ทีละ 0.5ms</td></tr>
         <tr><td>⑤</td><td>เลเวล: ซับสูงกว่ากลาง ~+6dB (เป้า ดีสแต็ก)</td></tr>
@@ -752,6 +767,7 @@
 
 <div class="dvmodal" id="dvModal"><div class="dvmbox" id="dvMbox"></div></div>
 
+<div class="apptoast" id="appToast"></div>
 <nav class="tabbar" id="tabbar">
   <button data-view="meas"><i>📊</i>วัด</button>
   <button data-view="tune"><i>🎛️</i>จูน</button>
@@ -1213,11 +1229,11 @@
   function thDate(iso){ try{ return new Date(iso).toLocaleDateString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }catch(_){ return ''; } }
   function defCh(){ return {
     sub:{hpf:(sweepResult?sweepResult.subsonic:X.subsonic),hpfT:'BW24',lpf:X.subLP,lpfT:'LR24',gain:0,phase:0,delay:0,lim:-3,hold:'FAST',rel:'NORMAL',peq:[]},
-    mid:{hpf:X.midHP,hpfT:'LR24',lpf:X.midLP,lpfT:'LR12',gain:0,phase:0,delay:0,lim:-4,hold:'NORMAL',rel:'NORMAL',peq:[]},
-    twe:{hpf:X.tweHP,hpfT:'LR12',lpf:0,lpfT:'OFF',gain:0,phase:0,delay:0,lim:-6,hold:'FAST',rel:'NORMAL',peq:[]} }; }
+    mid:{hpf:X.midHP,hpfT:'LR24',lpf:X.midLP,lpfT:'LR24',gain:0,phase:0,delay:0,lim:-4,hold:'NORMAL',rel:'NORMAL',peq:[]},
+    twe:{hpf:X.tweHP,hpfT:'LR24',lpf:0,lpfT:'OFF',gain:0,phase:0,delay:0,lim:-6,hold:'FAST',rel:'NORMAL',peq:[]} }; }
   function newProfile(name,isBase){ return {id:uid(),name,isBase:!!isBase,updated:new Date().toISOString(),target,note:'',sweep:null,curve:null,ch:defCh()}; }
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
-  function persist(){ try{ localStorage.setItem(PF_KEY,JSON.stringify(profiles)); if(cur)localStorage.setItem(PF_ACT,cur.id); }catch(_){ pfMsg('บันทึกลงเครื่องไม่ได้ (เบราว์เซอร์ปิดที่เก็บข้อมูล) — กด ⬇️ ส่งออกไฟล์ไว้แทน',true); } }
+  function persist(){ syncSoon(); try{ localStorage.setItem(PF_KEY,JSON.stringify(profiles)); if(cur)localStorage.setItem(PF_ACT,cur.id); }catch(_){ pfMsg('บันทึกลงเครื่องไม่ได้ (เบราว์เซอร์ปิดที่เก็บข้อมูล) — กด ⬇️ ส่งออกไฟล์ไว้แทน',true); } }
   function loadProfiles(){
     try{ profiles=JSON.parse(localStorage.getItem(PF_KEY)||'null'); }catch(_){ profiles=null; }
     if(!Array.isArray(profiles)){
@@ -1427,7 +1443,7 @@
     else if(b.dataset.base){ profiles.forEach(p=>p.isBase=(p.id===b.dataset.base)); if(cur)cur.isBase=(cur.id===b.dataset.base); persist(); renderEditor(); renderProfiles(); pfMsg('ตั้งเป็น Base แล้ว'); }
     else if(b.dataset.del){ const p=profiles.find(x=>x.id===b.dataset.del); if(!p)return;
       if(!confirm('ลบชุดจูน "'+p.name+'" ?'))return;
-      profiles=profiles.filter(x=>x.id!==p.id);
+      profiles=profiles.filter(x=>x.id!==p.id); SM.tomb[p.id]=Date.now(); syMetaSave();
       if(cur&&cur.id===p.id){ const bse=profiles.find(x=>x.isBase)||profiles[0]; cur=clone(bse); }
       persist(); renderEditor(); renderProfiles(); pfMsg('ลบแล้ว'); }
   });
@@ -1513,7 +1529,7 @@
      zones:[{f0:20,f1:160,c:'look',l:'ย่าน Sweep 20–160Hz'}], lines:[]},
     {t:'ตั้งครอส 3 ทาง', do:'ไปหน้า 🎛️ จูน → แท็บ ✂️ ครอส กด “ใช้ค่าแนะนำ” ทั้ง 3 ช่อง (หรือลากจุด ◆ บนกราฟ) แล้วกรอกลง DSPico · ยังไม่แตะ EQ',
      look:'<b>แถบสี</b> = ย่านของแต่ละดอก · <b>เส้นประ</b> = จุดตัด 100Hz และ 3.9kHz',
-     enter:'ซับ LPF 100 LR24 · กลาง HPF 120 LR24 / LPF 3.9k LR12 · แหลม HPF 3.9k LR12', acts:[{act:'tune',label:'🎛️ ไปตั้งครอส'}],
+     enter:'ซับ LPF 100 LR24 · กลาง HPF 120 LR24 / LPF 3.9k LR24 · แหลม HPF 3.9k LR24 (เฟสปกติทุกช่อง)', acts:[{act:'tune',label:'🎛️ ไปตั้งครอส'}],
      zones:[{f0:20,f1:100,c:'sub',l:'ซับ'},{f0:120,f1:3910,c:'mid',l:'กลาง 4″'},{f0:3910,f1:20000,c:'twe',l:'แหลม 2″'}], lines:[100,3910]},
     {t:'เฟส / ดีเลย์ ที่จุดตัด', do:'กดเช็กเฟส ถือนิ่งที่จุดฟัง 8 วิ → สลับ Phase ซับ 0/180 ใน DSPico → กดเช็กซ้ำ',
      look:'ดู<b>แถบเหลือง</b>รอบ 100Hz · ค่าไหนดังกว่า = เฟสนั้นถูก · ยังเป็นดิพอยู่ค่อยปรับดีเลย์ทีละ 0.5ms',
@@ -1711,7 +1727,7 @@
   }
   function numBox(attrs,val,step,unit){ return '<div class="dvnum"><button data-st="-" '+attrs+'>−</button><input type="number" inputmode="decimal" step="'+step+'" '+attrs+' value="'+esc(val)+'"><button data-st="+" '+attrs+'>+</button>'+(unit?'<em>'+unit+'</em>':'')+'</div>'; }
   function recFor(k){ const sw=sweepResult||cur.sweep;
-    return {sub:{hpf:sw?sw.subsonic:X.subsonic,hpfT:'BW24',lpf:X.subLP,lpfT:'LR24'},mid:{hpf:X.midHP,hpfT:'LR24',lpf:X.midLP,lpfT:'LR12'},twe:{hpf:X.tweHP,hpfT:'LR12',lpf:0,lpfT:'OFF'}}[k]; }
+    return {sub:{hpf:sw?sw.subsonic:X.subsonic,hpfT:'BW24',lpf:X.subLP,lpfT:'LR24'},mid:{hpf:X.midHP,hpfT:'LR24',lpf:X.midLP,lpfT:'LR24'},twe:{hpf:X.tweHP,hpfT:'LR24',lpf:0,lpfT:'OFF',phase:0}}[k]; }
   function dvRenderBody(){
     const k=DV.ch, c=cur.ch[k], col=CHC[k];
     dq('dvEdit').style.setProperty('--dvc',col);
@@ -1726,7 +1742,7 @@
         h+='<div class="dvsec"><h5>'+lab+'<small>'+(+c[kk]?fmtHz(c[kk])+'Hz':'ปิด')+'</small></h5><div class="dvg2"><label>ความถี่ (0 = ปิด)'+numBox('data-k="'+kk+'"',c[kk],1,'Hz')+'</label>'+
           '<label>ชนิด / สโลป<select data-k="'+kk+'T">'+opt(FT,c[kk+'T'])+'</select></label></div><input type="range" min="0" max="1000" data-k="'+kk+'" data-log="1" value="'+logPos(c[kk])+'"></div>';
       h+='<div class="dvbtns"><button data-act="rec">↺ ใช้ค่าแนะนำ ('+fmtHz(r.hpf)+(r.lpf?' – '+fmtHz(r.lpf):'')+')</button></div>'+
-        '<div class="dvnote">'+({sub:'<b>ซับ:</b> Subsonic BW24 ≈0.7×พีคตู้ กันดอกหลุด · LP ราว 90–110Hz LR24',mid:'<b>กลาง 4″×2:</b> HP 100–150Hz กันดอกรับเบส · LP 3.9k ต่อแหลม',twe:'<b>แหลม 2″×2:</b> HP ≥3kHz เสมอ (ต่ำกว่านี้ดอกขาดง่าย) · ไม่ต้องตั้ง LP'})[k]+'</div>';
+        '<div class="dvnote">'+({sub:'<b>ซับ:</b> Subsonic BW24 ≈0.7×พีคตู้ กันดอกหลุด · LP ราว 90–110Hz LR24',mid:'<b>กลาง 4″×2:</b> HP 100–150Hz กันดอกรับเบส · LP 3.9k LR24 ต่อแหลม (ถ้าใช้ LR12 ต้องกลับเฟสแหลม 180° ไม่งั้นเสียงหายที่จุดตัด)',twe:'<b>แหลม 2″×2:</b> HP ≥3kHz LR24 เสมอ (ต่ำกว่านี้ดอกขาดง่าย) · ไม่ต้องตั้ง LP · LR24 ใช้เฟสปกติ'})[k]+'</div>';
     }else if(DV.tab==='eq'){
       h+='<div class="dvbhd"><span>#</span><span>ชนิด</span><span>F (Hz)</span><span>Q</span><span>G (dB)</span><span></span></div><div class="dvpeq">'+
         (c.peq.length?c.peq.map((b,i)=>'<div class="dvband'+(i===DV.sel?' sel':'')+'"><div class="n" data-bsel="'+i+'">'+(i+1)+'</div>'+
@@ -1858,7 +1874,7 @@
   function devBaseCh(){ return clone(DEVICE&&DEVICE.ch?DEVICE.ch:(cur?cur.ch:defCh())); }
   function setDevice(ch,name,measuredUnderIt){ DEVICE={ch:clone(ch),name:name||'ค่าในเครื่อง',at:new Date().toISOString()};
     try{ localStorage.setItem(DEV_KEY,JSON.stringify(DEVICE)); }catch(_){}
-    if(measuredUnderIt&&measured)measBase=clone(DEVICE.ch); DV.dirty=true; }
+    if(measuredUnderIt&&measured)measBase=clone(DEVICE.ch); DV.dirty=true; syncSoon(); }
   const STYLES=[
     {k:'bass',e:'🔊',t:'เน้นเบส',d:'เบสแน่น ลึก หนัก สำหรับเพลงแดนซ์/ตื๊ด กลางแจ้ง',n:'<b>เน้นเบส:</b> เบสแน่นมาจาก “เกนซับรวม” + ตัดพีคตู้ ไม่ใช่บูสต์ใต้ 45Hz (ตู้ bandpass เล่นไม่ถึง มีแต่แตก) · ตั้ง Limiter ซับ ≈ −3 dB · เปิดดังแล้วดูโวลต์แบตที่จอ DC-DC'},
     {k:'dstack',e:'⚖️',t:'สมดุลดีสแต็ก',d:'เบสนำนิดๆ เสียงร้องลอยชัด แหลมใส — ใช้ทั่วไป',n:'<b>สมดุลดีสแต็ก:</b> ให้ 60–90Hz นำราว +5 dB · 2–4.5kHz ยกเล็กน้อยให้เสียงร้องลอยออกมา · ปลายแหลมเกิน 12k ลดลงนิด ฟังกลางแจ้งไม่บาด'},
@@ -1884,6 +1900,13 @@
     if(sw&&(!+chX.sub.hpf||Math.abs(chX.sub.hpf-sw.subsonic)>3||/12|Bessel|OFF/.test(chX.sub.hpfT))){
       const v=sw.subsonic; items.push({ch:'sub',t:'ตั้ง Subsonic '+v+' Hz · BW24',d:'จากผล Sweep พีคตู้ '+Math.round(sw.peakF)+'Hz — กันดอกซับหลุดใต้จูนตู้ (สาเหตุอันดับ 1 ของเบสแตก)',ap:c=>{c.sub.hpf=v;c.sub.hpfT='BW24';}});
       chX.sub.hpf=v; chX.sub.hpfT='BW24'; }
+    // ①b crossover summation (e.g. LR12 same polarity → null)
+    const xoD=(c,a,b,f)=>{ const ha=chResp(f,c[a]), hb=chResp(f,c[b]), ma=cabs(ha), mb=cabs(hb), pw=Math.sqrt(ma*ma+mb*mb); return pw<1e-4?0:20*Math.log10(Math.max(cabs(cadd(ha,hb)),1e-6)/pw); };
+    [['sub','mid',Math.sqrt((+chX.sub.lpf||100)*(+chX.mid.hpf||120))],['mid','twe',Math.sqrt((+chX.mid.lpf||3910)*(+chX.twe.hpf||3910))]].forEach(([a,b,f])=>{
+      if(chX[a].mute||chX[b].mute)return; const d0=xoD(chX,a,b,f); if(d0>=-3)return;
+      const t1=clone(chX); t1[b].phase=+t1[b].phase?0:180; const d1=xoD(t1,a,b,f);
+      if(b==='twe'&&(chX.mid.lpfT==='LR12'||chX.twe.hpfT==='LR12')){ items.push({ch:'twe',t:'ครอสกลาง/แหลม → LR24 ทั้งคู่ · เฟสปกติ',d:'ตอนนี้ผลรวมที่ '+fmtHz(Math.round(f))+'Hz ยุบ '+d0.toFixed(0)+' dB (LR12 เฟสเดียวกันหักล้างกัน) · LR24 ต่อกันเรียบและกันดอก 2″ ได้ดีกว่า',ap:c=>{c.mid.lpfT='LR24';c.twe.hpfT='LR24';c.twe.phase=0;}}); chX.mid.lpfT='LR24'; chX.twe.hpfT='LR24'; chX.twe.phase=0; }
+      else if(d1>d0+3){ const ph=t1[b].phase; items.push({ch:b,t:'เฟส '+CHN[b]+' → '+ph+'°',d:'ผลรวมที่จุดตัด '+fmtHz(Math.round(f))+'Hz ยุบ '+d0.toFixed(0)+' dB → ถ้าสลับเฟสจะเป็น '+sgn(d1.toFixed(1))+' dB · ยืนยันด้วย 🔄 เช็กเฟสของจริง',ap:c=>{c[b].phase=ph;}}); chX[b].phase=ph; } });
     // ② level balance
     const S=chX.sub, M=chX.mid, W=chX.twe;
     const reg={sub:[Math.max(40,(+S.hpf||30)*1.25),Math.min((+S.lpf||100)*0.8,95)],mid:[200,2000],twe:[Math.max((+W.hpf||3910)*1.3,4500),12000]};
@@ -1961,6 +1984,7 @@
     else if(b.dataset.str){ REC.strength=b.dataset.str; dq('dvMbox').querySelectorAll('[data-str]').forEach(x=>x.classList.toggle('sel',x===b)); }
     else if(b.dataset.m==='go'||b.dataset.m==='skip'){
       const ck=dq('askEach'); try{ localStorage.setItem(ASK_KEY,ck&&ck.checked?'1':'0'); localStorage.setItem(STY_KEY,JSON.stringify({style:REC.style,strength:REC.strength})); }catch(_){}
+      SM.styleT=Date.now(); syMetaSave(); syncSoon();
       closeModal(); if(b.dataset.m==='skip')return;
       setTargetUI(REC.style); if(!measured){ if(DV.open)dvToast('ตั้งแนวเสียงแล้ว — วัดเสียงเพื่อรับคำแนะนำ'); return; } if(!DV.open)setView('tune'); runRecs(); dvRenderAll();
       setTimeout(()=>{ const r=dq('dvRec'); if(r)r.scrollIntoView({behavior:'smooth',block:'start'}); },80); }
@@ -1988,7 +2012,7 @@
     else if(b.dataset.r==='style') askStyle(); });
   dq('dvApplied').addEventListener('click',()=>{ setDevice(cur.ch,cur.name,false); dvRenderDev(); dvToast('ตั้ง “'+cur.name+'” เป็นค่าในเครื่องแล้ว — วัดใหม่ 📸/🚶 เพื่อดูผลจริง'); });
   function afterMeasure(){
-    pushMeasHist(); if(measured)analyze(); if(DV.open){ DV.dirty=true; dvRenderResult(); }
+    SM.lastT=Date.now(); SM.lastFrom=SY.name; syMetaSave(); syncSoon(); pushMeasHist(); if(measured)analyze(); if(DV.open){ DV.dirty=true; dvRenderResult(); }
     let ask=true; try{ ask=localStorage.getItem(ASK_KEY)!=='0'; }catch(_){}
     if(ask) askStyle(true);
     else if(DV.open){ setTargetUI(REC.style); runRecs(); dvRenderAll(); }
@@ -1997,7 +2021,7 @@
 
   /* ===== app shell: tabs · style · level · outdoor · undo · history ===== */
   function pal(){ return document.body.classList.contains('outdoor')?{grid:'#ddd8ce',zero:'#8f897d',lab:'#4f4c46',bg:'#ffffff',tgt:'#a87200'}:{grid:'#1d212a',zero:'#3a4150',lab:'#5a6172',bg:null,tgt:'rgba(255,210,74,.8)'}; }
-  function setView(v){
+  function setView(v,fromPop){
     if(v==='tune'){ if(!DV.open)dvOpen(); }
     else if(DV.open) dvClose(true);
     document.body.dataset.view=v;
@@ -2006,6 +2030,7 @@
     if(v==='meas'){ resize(); if(!running)draw(); }
     if(v==='prof'){ renderProfiles(); }
     if(v!=='tune') window.scrollTo(0,0);
+    if(!fromPop&&v!==curView) history.pushState({v},'','#'+v); curView=v;
   }
   dq('tabbar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b)setView(b.dataset.view); });
   // style chip
@@ -2081,9 +2106,123 @@
     let sun=false; try{ sun=localStorage.getItem('rta_sun')==='1'; }catch(_){} setSun(sun);
     if(REC.style&&REC.style!==target) setTargetUI(REC.style);
     renderStyleChips(); histReset();
-    let v='meas'; try{ v=localStorage.getItem('rta_view')||'meas'; }catch(_){} if(!['meas','tune','prof','guide'].includes(v))v='meas';
-    setView(v);
+    let v=(location.hash||'').slice(1); if(!['meas','tune','prof','guide'].includes(v)){ try{ v=localStorage.getItem('rta_view')||'meas'; }catch(_){ v='meas'; } } if(!['meas','tune','prof','guide'].includes(v))v='meas';
+    setView(v,true); history.replaceState({v},'','#'+v); curView=v; syInit();
   }
+  /* ===== 🔄 sync phone ↔ computer (Google Apps Script) · wake lock · back button · misc fixes ===== */
+  function appToast(t,err){ const m=dq('appToast'); m.textContent=t; m.className='apptoast show'+(err?' err':''); clearTimeout(appToast.t); appToast.t=setTimeout(()=>m.className='apptoast',4200); }
+  // --- wake lock: keep screen on while mic runs
+  let wakeLock=null, wakePending=false;
+  async function wakeOn(){ if(wakeLock||wakePending||!('wakeLock' in navigator)||document.visibilityState!=='visible')return; wakePending=true;
+    try{ wakeLock=await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release',()=>{ wakeLock=null; }); }catch(_){} wakePending=false; }
+  function wakeOff(){ try{ if(wakeLock)wakeLock.release(); }catch(_){} wakeLock=null; }
+  setInterval(()=>{ if(running)wakeOn(); else if(wakeLock)wakeOff(); },1500);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden'&&measuring) appToast._lost=true;
+    if(document.visibilityState==='visible'){ if(running)wakeOn(); if(appToast._lost){ appToast._lost=false; appToast('⚠ จอถูกปิด/สลับแอประหว่างวัด ผลอาจไม่ครบ — วัดใหม่อีกครั้ง',true); } syncNow(false); } });
+  // --- Android back button → previous tab / close dialogs
+  let curView='meas';
+  window.addEventListener('popstate',e=>{
+    if(dq('dvModal').classList.contains('show')){ closeModal(); history.pushState({v:curView},'','#'+curView); return; }
+    const v=(e.state&&e.state.v)||'meas'; setView(v,true); });
+  // --- resolution change guard
+  dq('segRes').parentElement.addEventListener('click',e=>{ const b=e.target.closest('#segRes button'); if(!b||b.classList.contains('sel')||!measured)return;
+    if(!confirm('เปลี่ยนความละเอียดจะล้างผลวัดปัจจุบัน (ต้องวัดใหม่) — ทำต่อไหม?')){ e.stopPropagation(); e.preventDefault(); } },true);
+
+  // --- sync
+  const SY_CFG='rta_sync_cfg', SY_META='rta_sync_meta';
+  let SY={url:'',key:'',name:'',on:false}, SM={lastT:0,lastFrom:'',styleT:0,tomb:{}}, syState='off', syBusy=false, syDirty=false, syTimer=0, syLastOk=0, syRev=0;
+  try{ Object.assign(SY,JSON.parse(localStorage.getItem(SY_CFG)||'{}')); }catch(_){}
+  try{ Object.assign(SM,JSON.parse(localStorage.getItem(SY_META)||'{}')); }catch(_){}
+  if(!SY.name) SY.name=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)?'มือถือ':'คอม';
+  function syMetaSave(){ try{ localStorage.setItem(SY_META,JSON.stringify(SM)); }catch(_){} }
+  function syCfgSave(){ try{ localStorage.setItem(SY_CFG,JSON.stringify(SY)); }catch(_){} }
+  function syOn(){ return SY.on&&/^https:\/\/script\.google(usercontent)?\.com\//.test(SY.url)&&SY.key.length>=6; }
+  function syncSoon(){ if(!syOn())return; syDirty=true; clearTimeout(syTimer); syTimer=setTimeout(()=>syncNow(true),1200); }
+  function syStatus(st,msg){ syState=st; const b=dq('btnSync'); if(b){ b.className='hsync'+(st==='ok'?' ok':st==='err'?' err':st==='busy'?' busy':''); b.textContent=st==='off'?'🔄 ซิงก์':st==='busy'?'🔄 …':st==='err'?'⚠ ซิงก์':'🔄 '+SY.name; b.title=msg||''; }
+    const c=dq('syncCard'); if(c) c.innerHTML='<div class="t"><b>🔄 ซิงก์มือถือ ↔ คอม</b><small>'+(st==='off'?'ยังไม่ได้ตั้งค่า — ข้อมูลอยู่ในเครื่องนี้อย่างเดียว':st==='err'?'เชื่อมต่อไม่ได้: '+esc(msg||''):'เครื่องนี้: <b>'+esc(SY.name)+'</b> · '+(syLastOk?'ซิงก์ล่าสุด '+new Date(syLastOk).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'กำลังเชื่อมต่อ…'))+'</small></div><button data-sy="open">'+(st==='off'?'ตั้งค่าซิงก์':'⚙️ ตั้งค่า')+'</button>'+(st!=='off'?'<button data-sy="now">ซิงก์เดี๋ยวนี้</button>':''); }
+  function sortById(a){ return a.slice().sort((x,y)=>String(x.id)<String(y.id)?-1:1); }
+  function buildDoc(){ return { v:1, profiles:sortById(profiles), tomb:SM.tomb||{}, device:DEVICE||null,
+      last: measured?{t:SM.lastT||0, from:SM.lastFrom||SY.name, perOct, f:bandF.map(f=>Math.round(f*100)/100), d:measured.map(v=>Math.round(v*10)/10), base:measBase||null, sweep:sweepResult?{peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}:null}:null,
+      style:{k:REC.style,s:REC.strength,t:SM.styleT||0} }; }
+  function tsOf(p){ const t=Date.parse(p&&p.updated); return isNaN(t)?0:t; }
+  function mergeDoc(R){
+    let changed=false, msgs=[];
+    // tombstones
+    const tomb=Object.assign({},SM.tomb||{}); for(const [id,t] of Object.entries(R.tomb||{})) if(!tomb[id]||tomb[id]<t)tomb[id]=t; SM.tomb=tomb;
+    // profiles (newest per id wins)
+    const byId={}; profiles.forEach(p=>byId[p.id]=p);
+    (R.profiles||[]).forEach(rp=>{ if(!rp||!rp.id||!rp.ch)return; const lp=byId[rp.id];
+      if(!lp){ byId[rp.id]=rp; changed=true; msgs.push('ชุด “'+rp.name+'”'); }
+      else if(tsOf(rp)>tsOf(lp)){ const wasCur=cur&&cur.id===lp.id&&JSON.stringify(cur.ch)===JSON.stringify(lp.ch)&&cur.name===lp.name; byId[rp.id]=rp; changed=true; msgs.push('ชุด “'+rp.name+'”'); if(wasCur){ cur=clone(rp); } } });
+    let list=Object.values(byId).filter(p=>!(tomb[p.id]&&tomb[p.id]>=tsOf(p)));
+    const order=profiles.map(p=>p.id); list.sort((a,b)=>{ const ia=order.indexOf(a.id), ib=order.indexOf(b.id); return (ia<0?1e9:ia)-(ib<0?1e9:ib)||(String(a.id)<String(b.id)?-1:1); });
+    { const autos=list.filter(p=>p.isBase&&p.auto), real=list.some(p=>p.isBase&&!p.auto);
+      if(autos.length&&(real||autos.length>1)){ const keep=real?null:autos.slice().sort((a,b)=>String(a.id)<String(b.id)?-1:1)[0];
+        const drop=autos.filter(p=>p!==keep); drop.forEach(p=>{ tomb[p.id]=Date.now(); });
+        list=list.filter(p=>!drop.includes(p)); if(cur&&drop.some(p=>p.id===cur.id)){ const b=list.find(p=>p.isBase)||list[0]; if(b)cur=clone(b); } changed=true; } }
+    if(list.length!==profiles.length)changed=true;
+    const bases=list.filter(p=>p.isBase); if(bases.length>1){ bases.sort((a,b)=>tsOf(b)-tsOf(a)); bases.slice(1).forEach(p=>p.isBase=false); } if(!list.some(p=>p.isBase)&&list.length)list[0].isBase=true;
+    profiles=list;
+    if(cur&&!profiles.some(p=>p.id===cur.id)&&tomb[cur.id]){ const b=profiles.find(p=>p.isBase)||profiles[0]; if(b)cur=clone(b); }
+    // device settings
+    if(R.device&&(!DEVICE||Date.parse(R.device.at)>Date.parse(DEVICE.at))){ DEVICE=R.device; try{localStorage.setItem(DEV_KEY,JSON.stringify(DEVICE));}catch(_){} changed=true; msgs.push('ค่าในเครื่อง'); }
+    // style
+    if(R.style&&R.style.t>(SM.styleT||0)){ REC.style=R.style.k; REC.strength=R.style.s||REC.strength; SM.styleT=R.style.t; try{localStorage.setItem(STY_KEY,JSON.stringify({style:REC.style,strength:REC.strength}));}catch(_){} if(target!==REC.style)setTargetUI(REC.style); }
+    // latest measurement
+    const L=R.last; let gotMeas=false;
+    if(L&&L.t>(SM.lastT||0)&&Array.isArray(L.d)){
+      if(L.perOct&&L.perOct!==perOct){ perOct=L.perOct; rebuildBands(); measured=null; document.querySelectorAll('#segRes button').forEach(b=>b.classList.toggle('sel',+b.dataset.r===perOct)); }
+      if(L.d.length===bandF.length){ measured=L.d.slice(); measuredVar=null; measBase=L.base||devBaseCh(); if(L.sweep&&!sweepResult)sweepResult=Object.assign({},L.sweep);
+        SM.lastT=L.t; SM.lastFrom=L.from||''; gotMeas=true; pushMeasHist(); analyze(); if(!running)draw(); }
+    }
+    syMetaSave();
+    if(changed){ try{ localStorage.setItem(PF_KEY,JSON.stringify(profiles)); }catch(_){} renderEditor(); renderProfiles(); }
+    if(changed||gotMeas){ if(DV.open){ if(gotMeas&&REC.seq>=0)runRecs(); dvRenderAll(); } }
+    if(gotMeas) appToast('📥 ได้ผลวัดใหม่จาก'+(L.from||'อีกเครื่อง')+' แล้ว');
+    else if(msgs.length) appToast('📥 อัปเดตจากอีกเครื่อง: '+msgs.slice(0,3).join(', ')+(msgs.length>3?' …':''));
+  }
+  const canon=d=>JSON.stringify({p:sortById(d.profiles||[]),t:d.tomb||{},v:d.device||null,l:d.last?{t:d.last.t,d:d.last.d}:null,s:d.style||null});
+  async function syCall(body){ const r=await fetch(SY.url,{method:'POST',body:JSON.stringify(Object.assign({key:SY.key},body)),redirect:'follow'}); const j=await r.json(); if(!j.ok)throw new Error(j.err||'ผิดพลาด'); return j; }
+  async function syncNow(push){
+    if(!syOn()||syBusy)return; if(document.visibilityState==='hidden'&&!push)return;
+    syBusy=true; if(syState!=='ok')syStatus('busy');
+    try{
+      const g=await syCall({op:'get'}); let R={}; try{ R=g.doc?JSON.parse(g.doc):{}; }catch(_){ R={}; }
+      mergeDoc(R); syRev=g.rev;
+      const local=buildDoc();
+      if(syDirty||canon(local)!==canon(R)){ await syCall({op:'put',doc:JSON.stringify(local),from:SY.name}); syDirty=false; }
+      syLastOk=Date.now(); syStatus('ok');
+    }catch(err){ syStatus('err',String(err&&err.message||err)); }
+    syBusy=false;
+  }
+  setInterval(()=>syncNow(false),8000);
+  function openSync(){
+    openModal('<h3>🔄 ซิงก์มือถือ ↔ คอม</h3><p>ให้ทุกเครื่องเห็นชุดจูน · ค่าในเครื่อง · ผลวัดล่าสุด · แนวเสียง ตรงกัน (อัปเดตทุก ~8 วินาที) ข้อมูลเก็บใน Google Sheet ของพี่เอง</p>'+
+      '<div class="syncform"><label>URL ของ Apps Script (ลงท้าย /exec)</label><input id="syUrl" placeholder="https://script.google.com/macros/s/…/exec" value="'+esc(SY.url)+'">'+
+      '<label>รหัสซิงก์ (ตั้งเอง อย่างน้อย 6 ตัว · ใส่เหมือนกันทุกเครื่อง)</label><input id="syKey" placeholder="เช่น dstack-2569" value="'+esc(SY.key)+'">'+
+      '<label>ชื่อเครื่องนี้</label><input id="syName" maxlength="20" value="'+esc(SY.name)+'"></div>'+
+      '<div class="syncstat" id="syStat"></div>'+
+      '<div class="dvmfoot">'+(SY.on?'<button data-sy="off">ปิดซิงก์</button>':'')+'<button data-sy="test">ทดสอบ</button><button class="primary" data-sy="save">บันทึก + ซิงก์เลย</button></div>'+
+      '<ol class="syncsteps"><li>สร้าง <b>Google Sheet</b> ใหม่ → เมนู <b>ส่วนขยาย → Apps Script</b></li><li>ลบโค้ดเดิม วางโค้ดจาก <a href="https://github.com/checkfile2568-ops/rta-tuning/blob/main/sync/Code.gs" target="_blank" rel="noopener">sync/Code.gs</a> แล้วกดบันทึก</li>'+
+      '<li><b>ทำให้ใช้งานได้ → การทำให้ใช้งานได้รายการใหม่ → เว็บแอป</b> · ดำเนินการในฐานะ: <b>ฉัน</b> · ผู้มีสิทธิ์: <b>ทุกคน</b> → อนุญาตสิทธิ์</li><li>คัดลอก URL (/exec) มาวางด้านบน ทั้งในมือถือและคอม ใช้รหัสซิงก์เดียวกัน</li></ol>'+
+      '<p style="margin-top:6px">ใครมี URL + รหัสซิงก์จะอ่านข้อมูลชุดจูนได้ — อย่าแชร์รหัสนี้</p>');
+  }
+  function syForm(){ return {url:(dq('syUrl').value||'').trim(),key:(dq('syKey').value||'').trim(),name:(dq('syName').value||'').trim()||SY.name}; }
+  dq('dvModal').addEventListener('click',async e=>{ const b=e.target.closest('[data-sy]'); if(!b)return; const a=b.dataset.sy, st=dq('syStat');
+    if(a==='test'||a==='save'){ const f=syForm();
+      if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(f.url)){ st.textContent='⚠ URL ต้องขึ้นต้นด้วย https://script.google.com/'; return; }
+      if(f.key.length<6){ st.textContent='⚠ รหัสซิงก์ต้องยาวอย่างน้อย 6 ตัว'; return; }
+      st.textContent='กำลังเชื่อมต่อ…'; const old=Object.assign({},SY); Object.assign(SY,f,{on:true});
+      try{ await syCall({op:'ping'}); st.textContent='✔ เชื่อมต่อได้';
+        if(a==='save'){ syCfgSave(); syDirty=true; closeModal(); await syncNow(true); appToast(syState==='ok'?'🔄 เปิดซิงก์แล้ว — ใส่ URL + รหัสเดียวกันในอีกเครื่อง':'⚠ ซิงก์ไม่สำเร็จ',syState!=='ok'); }
+        else Object.assign(SY,old); }
+      catch(err){ Object.assign(SY,old); st.textContent='✘ เชื่อมต่อไม่ได้: '+(err&&err.message||err)+' — เช็ก URL / การ Deploy (ผู้มีสิทธิ์: ทุกคน)'; } }
+    else if(a==='off'){ SY.on=false; syCfgSave(); closeModal(); syStatus('off'); appToast('ปิดซิงก์แล้ว — ข้อมูลยังอยู่ในเครื่องนี้'); } });
+  function onSyncUi(e){ const b=e.target.closest('[data-sy]'); if(!b)return; if(b.dataset.sy==='open')openSync(); else if(b.dataset.sy==='now'){ syDirty=true; syncNow(true).then(()=>appToast(syState==='ok'?'🔄 ซิงก์แล้ว':'⚠ ซิงก์ไม่สำเร็จ',syState!=='ok')); } }
+  dq('syncCard').addEventListener('click',onSyncUi);
+  dq('btnSync').addEventListener('click',()=>openSync());
+  function syInit(){ syStatus(syOn()?'busy':'off'); if(syOn())syncNow(false); }
   function cmpLine(){ const pv=prevMeas(); if(!pv||!measured)return ''; const a=devRMS(pv.d), b=devRMS(measured); if(a==null||b==null)return '';
     return '<p style="color:var(--text)">📈 เสียงจริงเทียบครั้งก่อน: ±'+a.toFixed(1)+' → ±'+b.toFixed(1)+' dB '+(b<a-0.2?'✔ ดีขึ้น':b>a+0.2?'✘ แย่ลง':'≈ ใกล้เดิม')+' (เส้นเทาประบนกราฟ)</p>'; }
 
