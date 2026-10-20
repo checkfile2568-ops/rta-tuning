@@ -45,7 +45,9 @@ function handle_(p) {
       const width = Math.max(sh.getLastColumn(), 4 + parts.length);
       const vals = [key, rev, ts, String(p.from || '')].concat(parts);
       while (vals.length < width) vals.push('');
-      sh.getRange(row, 1, 1, width).setValues([vals]);
+      const rg = sh.getRange(row, 1, 1, width);
+      rg.setNumberFormat('@');            // เก็บเป็นข้อความล้วน กัน Sheets แปลง JSON เป็นตัวเลข/สูตร
+      rg.setValues([vals.map(String)]);
       return out_({ ok: true, rev: rev, ts: ts });
     }
     // get
