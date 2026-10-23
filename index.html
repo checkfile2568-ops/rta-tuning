@@ -455,8 +455,10 @@
   .microw button{flex:0 0 auto;min-height:40px;font-size:12.5px;padding:6px 10px}
   .micinfo{font-size:11.5px;color:var(--muted);line-height:1.6;margin:0 2px 8px} .micinfo b{color:var(--text)} .micinfo a{color:var(--accent2)}
 </style>
+<meta name="theme-color" content="#fbfaf6">
 </head>
 <body>
+<script>try{ if(localStorage.getItem('rta_sun2')!=='0')document.body.classList.add('outdoor'); }catch(_){ document.body.classList.add('outdoor'); }</script>
 
 <header>
   <svg class="logo" viewBox="0 0 100 100" fill="none">
@@ -973,9 +975,9 @@
   function measure(){
     if(!running||measuring)return; measuring=true; RAW={p:new Array(bandF.length).fill(0),n:0}; sweepFrozen=false; sweepResult=null;
     const btn=document.getElementById('btnMeasure'), accP=new Array(bandF.length).fill(0), acc=new Array(bandF.length).fill(0);
-    const t0=performance.now(),DUR=4000;
+    const t0=performance.now(),DUR=4000; measQ=qNew();
     (function tick(){
-      const raw=computeBands();
+      const raw=computeBands(); qTick(measQ);
       for(let i=0;i<bandF.length;i++){ if(raw[i]>-100){accP[i]+=Math.pow(10,raw[i]/10);acc[i]++;} }
       const el=performance.now()-t0; btn.innerHTML='<span class="icn">⏱</span> วัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
       if(el<DUR)requestAnimationFrame(tick);
@@ -984,6 +986,19 @@
     })();
   }
 
+  /* measurement quality: clipping / level / mic processing — tracked during every measurement */
+  let measQ=null, measQW=null;
+  function qNew(){ return {f:0,clip:0,low:0,pk:-120,rs:0}; }
+  function qTick(Q){ if(!Q||!analyser)return; if(!qTick.b||qTick.b.length!==analyser.fftSize)qTick.b=new Float32Array(analyser.fftSize);
+    const b=qTick.b; analyser.getFloatTimeDomainData(b); let s=0,pk=0; const n0=b.length-2048;
+    for(let i=n0;i<b.length;i++){ const v=b[i]; s+=v*v; const a=v<0?-v:v; if(a>pk)pk=a; }
+    const p=20*Math.log10(pk+1e-9), r=20*Math.log10(Math.sqrt(s/2048)+1e-9); Q.f++; if(p>-0.3)Q.clip++; if(r<-55)Q.low++; if(p>Q.pk)Q.pk=p; Q.rs+=r; }
+  function qVerdict(){ const Q=measQ, w=[]; if(!Q||!Q.f)return null; const cr=Q.clip/Q.f, lr=Q.low/Q.f;
+    if(cr>0.01) w.push({s:'ไมค์คลิป '+Math.round(cr*100)+'%',l:'ไมค์คลิป '+Math.round(cr*100)+'% ของเวลาวัด — เสียงดังเกินไมค์ ค่าแหลม/ทั้งกราฟจะสูงเกินจริง ลดวอลุ่มหรือถอยห่างลำโพง แล้ววัดใหม่'});
+    if(lr>0.3) w.push({s:'เสียงเบาไป',l:'เสียงเข้าไมค์เบาไป — เปิด Pink Noise และเร่งเสียงระบบ แล้ววัดใหม่'});
+    if(MICINFO.flags&&MICINFO.flags.length) w.push({s:'ตัวปรับเสียงไมค์เปิด',l:'ไมค์ยังเปิดตัวปรับเสียง ('+MICINFO.flags.join(', ')+') — ค่าเพี้ยน ใช้ Chrome และปิด Audio enhancements'});
+    const lowN=measSNR?measSNR.filter(x=>x<10).length:0; if(lowN>3) w.push({s:lowN+' ย่านใกล้เสียงพื้นหลัง',l:lowN+' ย่านสัญญาณใกล้เสียงพื้นหลัง (จุดเทาใต้กราฟ) — ค่าย่านนั้นเชื่อถือไม่ได้'});
+    return w; }
   function nearestFc(f){ const nice=[31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150,4000,5000,6300,8000,10000,12500];
     let best=nice[0],bd=1e9; for(const x of nice){const d=Math.abs(Math.log2(x/f)); if(d<bd){bd=d;best=x;}} return best; }
   function nearXover(f){ for(const x of XMARK){ if(Math.abs(Math.log2(f/x))<0.2) return x; } return null; }
@@ -996,10 +1011,10 @@
     mmmRunning=true; measuring=true; RAW={p:new Array(bandF.length).fill(0),n:0}; sweepFrozen=false; sweepResult=null; measured=null; measuredVar=null;
     const btn=document.getElementById('btnMMM');
     const accP=new Array(bandF.length).fill(0),sDb=new Array(bandF.length).fill(0),sDb2=new Array(bandF.length).fill(0),cnt=new Array(bandF.length).fill(0);
-    const t0=performance.now(),DUR=30000;
+    const t0=performance.now(),DUR=30000; measQ=qNew();
     document.getElementById('sugBox').innerHTML='<div class="empty">เดินไมค์ช้าๆ ทั่วโซนฟัง (สูงระดับหู · อย่าจ่อลำโพงตัวเดียว) ขณะเปิด Pink Noise — ระบบเฉลี่ยหลายจุดให้ ~30 วิ</div>';
     (function tick(){
-      const n=normalize(computeBands());
+      const n=normalize(computeBands()); qTick(measQ);
       for(let i=0;i<bandF.length;i++){const v=n[i]; if(v>-100){accP[i]+=Math.pow(10,v/10);sDb[i]+=v;sDb2[i]+=v*v;cnt[i]++;}}
       const el=performance.now()-t0;
       btn.innerHTML='<span class="icn">🚶</span> เดินวัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
@@ -1114,6 +1129,7 @@
       if(holdOn&&!measured){ ctx.fillStyle='rgba(255,176,32,.9)';
         for(let i=0;i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX||peakHold[i]<=-100)continue; ctx.fillRect(xF(bandF[i])-1.5,yDb(peakHold[i])-1.5,3,3);} }
     }else{ ctx.fillStyle='#4a4f5c';ctx.textAlign='center';ctx.font='12px '+getComputedStyle(document.body).getPropertyValue('--sans');ctx.fillText('เริ่มวัดด้วยไมค์เพื่อดูสเปกตรัม',W/2,H/2); }
+    if(measured&&measQW&&measQW.for===measured&&measQW.w.length){ ctx.fillStyle=pal().bg?'#b3261e':'#ff7b7b'; ctx.textAlign='left'; ctx.font='bold 11px '+MONO(); ctx.fillText('⚠ '+measQW.w.map(x=>x.s).join(' · '),PAD.l+2,PAD.t+22); }
     if(measured){ ctx.fillStyle='rgba(255,106,26,.9)';ctx.textAlign='left';ctx.font='bold 11px '+MONO();ctx.fillText('● วัดผลแล้ว',PAD.l+2,PAD.t+8);
       if(measSNR&&measSNR.length===bandF.length){ ctx.fillStyle='rgba(150,156,170,.9)'; for(let i=0;i<bandF.length;i++){ if(measSNR[i]<10&&bandF[i]>=FMIN&&bandF[i]<=FMAX){ ctx.fillRect(xF(bandF[i])-3,H-PAD.b-6,6,6); } } } }
     drawSim();
@@ -2098,7 +2114,9 @@
     else if(b.dataset.r==='style') askStyle(); });
   dq('dvApplied').addEventListener('click',()=>{ setDevice(cur.ch,cur.name,false); dvRenderDev(); dvToast('ตั้ง “'+cur.name+'” เป็นค่าในเครื่องแล้ว — วัดใหม่ 📸/🚶 เพื่อดูผลจริง'); });
   function afterMeasure(){
-    snrCompute(); SM.lastT=Date.now(); SM.lastFrom=SY.name; syMetaSave(); pushMeasHist(); mlAdd(); syncSoon(); if(measured)analyze(); if(DV.open){ DV.dirty=true; dvRenderResult(); }
+    snrCompute(); { const w=qVerdict(); measQW=w?{for:measured,w}:null; measQ=null;
+      if(w){ const bad=w; if(bad.length) appToast('⚠ คุณภาพการวัด: '+bad[0].l,true); else if(!w.length) appToast('✓ คุณภาพการวัดดี — ไม่คลิป ระดับพอดี'); } }
+    SM.lastT=Date.now(); SM.lastFrom=SY.name; syMetaSave(); pushMeasHist(); mlAdd(); syncSoon(); if(measured)analyze(); if(DV.open){ DV.dirty=true; dvRenderResult(); }
     let ask=true; try{ ask=localStorage.getItem(ASK_KEY)!=='0'; }catch(_){}
     if(ask&&SY.role!=='station') askStyle(true);
     else if(DV.open){ setTargetUI(REC.style); runRecs(); dvRenderAll(); }
@@ -2159,7 +2177,7 @@
   setInterval(renderLevel,120);
   ['btnMeasure','btnMMM'].forEach(id=>dq(id).addEventListener('click',()=>{ if(running&&LV.state==='low'){ const m='⚠ เสียงเข้าไมค์เบาไป ค่าที่วัดอาจเพี้ยน — เปิด Pink Noise และเร่งเสียงระบบ'; if(DV.open)dvToast(m,true); } },true));
   // ☀️ outdoor mode
-  function setSun(on){ document.body.classList.toggle('outdoor',on); try{localStorage.setItem('rta_sun',on?'1':'0');}catch(_){}
+  function setSun(on){ document.body.classList.toggle('outdoor',on); try{localStorage.setItem('rta_sun2',on?'1':'0');}catch(_){} const tc=document.querySelector('meta[name=theme-color]'); if(tc)tc.content=on?'#fbfaf6':'#0a0b0e';
     dq('btnSun').textContent=on?'🌙':'☀️'; dq('dvSun').textContent=on?'🌙':'☀️'; DV.dirty=true; if(!running)draw(); }
   dq('btnSun').addEventListener('click',()=>setSun(!document.body.classList.contains('outdoor')));
   dq('dvSun').addEventListener('click',()=>setSun(!document.body.classList.contains('outdoor')));
@@ -2191,7 +2209,7 @@
   dq('pList').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&(b.dataset.load||b.dataset.dup))setTimeout(()=>setView('tune'),0); });
   dq('pfNew').addEventListener('click',()=>setTimeout(()=>setView('tune'),0));
   function uiInit(){
-    let sun=false; try{ sun=localStorage.getItem('rta_sun')==='1'; }catch(_){} setSun(sun);
+    let sun=true; try{ sun=localStorage.getItem('rta_sun2')!=='0'; }catch(_){} setSun(sun);
     if(REC.style&&REC.style!==target) setTargetUI(REC.style);
     renderStyleChips(); histReset();
     let v=(location.hash||'').slice(1); if(!['meas','tune','prof','guide'].includes(v)){ try{ v=localStorage.getItem('rta_view')||'meas'; }catch(_){ v='meas'; } } if(!['meas','tune','prof','guide'].includes(v))v='meas';
@@ -2437,7 +2455,7 @@
     if(!measured)return null;
     const sig=noiseOn?{type:'pink',name:''}:{type:mlLastSig.type,name:mlLastSig.type==='pink'?'':mlLastSig.name};
     const lowN=measSNR?measSNR.filter(x=>x<10).length:null;
-    const e={v:2,snrLow:lowN,id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:Date.now(),up:Date.now(),from:SY.name,method:(measuredVar&&measuredVar.length===bandF.length)?'MMM 30 วิ':'วัด 4 วิ',
+    const e={v:2,q:(measQW&&measQW.for===measured)?measQW.w.map(x=>x.s):[],snrLow:lowN,id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:Date.now(),up:Date.now(),from:SY.name,method:(measuredVar&&measuredVar.length===bandF.length)?'MMM 30 วิ':'วัด 4 วิ',
       sig,pos:mlLastSig.pos||'',note:'',style:target,perOct,f:bandF.map(f=>Math.round(f*100)/100),d:measured.map(v=>Math.round(v*10)/10),
       dev:(()=>{ const r=devRMS(measured); return r==null?null:Math.round(r*10)/10; })(),prof:cur?cur.name:'',devName:DEVICE?DEVICE.name:'',base:measBase?clone(measBase):null};
     MLOG.unshift(e); if(MLOG.length>300)MLOG.length=300; mlSave(); mlLastId=e.id; mlRender(); syncSoon(); return e;
@@ -2472,7 +2490,7 @@
     el.innerHTML=list.slice(0,lim).map(e=>{ const st=STYLES.find(s=>s.k===e.style)||{t:e.style}, d=new Date(e.t);
       return '<div class="mli'+(e.id===mlLastId?' sel':'')+'"><div class="h"><b>'+d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+'</b> · '+e.method+'<br>'+
         '<span class="sig '+e.sig.type+'">'+SIGT[e.sig.type]+'</span>'+(e.sig.name?esc(e.sig.name):'')+
-        '<small>'+(e.conv?'<span style="color:#ffc34a">⚙ แปลงจากผลวัดเวอร์ชันเก่า · </span>':'')+(e.snrLow?'<span style="color:#ff9b9b">⚠ เสียงไม่พอ '+e.snrLow+' ย่าน · </span>':'')+'คลาดจากเป้า “'+esc(st.t)+'” <span class="mdv">±'+(e.dev??'–')+' dB</span>'+(e.pos?' · 📍'+esc(e.pos):'')+(e.prof?' · ชุด '+esc(e.prof):'')+(e.from?' · '+esc(e.from):'')+(e.note?'<br>📝 '+esc(e.note):'')+'</small></div>'+spark(e)+
+        '<small>'+(e.q&&e.q.length?'<span style="color:#ff9b9b">⚠ '+esc(e.q.join(' · '))+' · </span>':'')+(e.conv?'<span style="color:#ffc34a">⚙ แปลงจากผลวัดเวอร์ชันเก่า · </span>':'')+(e.snrLow?'<span style="color:#ff9b9b">⚠ เสียงไม่พอ '+e.snrLow+' ย่าน · </span>':'')+'คลาดจากเป้า “'+esc(st.t)+'” <span class="mdv">±'+(e.dev??'–')+' dB</span>'+(e.pos?' · 📍'+esc(e.pos):'')+(e.prof?' · ชุด '+esc(e.prof):'')+(e.from?' · '+esc(e.from):'')+(e.note?'<br>📝 '+esc(e.note):'')+'</small></div>'+spark(e)+
         '<div class="bt"><button data-ml="view" data-id="'+e.id+'">📊 ดู</button><button data-ml="A" data-id="'+e.id+'">Ⓐ</button><button data-ml="B" data-id="'+e.id+'">Ⓑ</button><button data-ml="edit" data-id="'+e.id+'">✏️ แก้ป้าย</button><button data-ml="del" data-id="'+e.id+'">🗑</button></div></div>'; }).join('')+
       (list.length>lim?'<button data-ml="more" style="width:100%;min-height:38px">ดูเพิ่ม ('+(list.length-lim)+')</button>':'');
   }
@@ -2480,7 +2498,7 @@
     if(e.perOct!==perOct){ perOct=e.perOct; rebuildBands(); document.querySelectorAll('#segRes button').forEach(b=>b.classList.toggle('sel',+b.dataset.r===perOct)); }
     if(e.d.length!==bandF.length){ appToast('⚠ ข้อมูลรายการนี้ไม่ตรงความละเอียด',true); return false; }
     if(asSnap){ const s={data:e.d.slice(),perOct,t:(e.sig.name||SIGT[e.sig.type])+' '+new Date(e.t).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}; if(asSnap==='A')snapA=s; else snapB=s; dq('btnAB').disabled=false; return true; }
-    measured=e.d.slice(); measuredVar=null; measBase=e.base||devBaseCh(); if(e.style&&e.style!==target)setTargetUI(e.style); analyze(); return true; }
+    measured=e.d.slice(); measQW=e.q&&e.q.length?{for:measured,w:e.q.map(x=>({s:x,l:x}))}:null; measuredVar=null; measBase=e.base||devBaseCh(); if(e.style&&e.style!==target)setTargetUI(e.style); analyze(); return true; }
   dq('mlogList').addEventListener('click',e=>{ const b=e.target.closest('[data-ml]'); if(!b)return; const a=b.dataset.ml, m=mlFind(b.dataset.id);
     if(a==='more'){ dq('mlogList').dataset.lim=(+(dq('mlogList').dataset.lim||20))+20; mlRender(); return; }
     if(!m)return;
