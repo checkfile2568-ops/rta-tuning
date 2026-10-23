@@ -1048,7 +1048,7 @@
     for(const f of GRID_F){ const x=xF(f);
       ctx.strokeStyle=PLm.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();
       ctx.fillStyle=PLm.lab;ctx.fillText(niceLabel(f),x,H-PAD.b+11); }
-    for(const xo of XMARK){ const x=xF(xo);
+    for(const xo of xoMarks()){ const x=xF(xo);
       ctx.strokeStyle='rgba(120,130,150,.45)';ctx.lineWidth=1.2;ctx.setLineDash([2,3]);
       ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]); }
     { const x=xF(SUBMARK); ctx.strokeStyle='rgba(255,90,138,.4)';ctx.setLineDash([1,4]);
@@ -1095,6 +1095,17 @@
     drawSim();
   }
 
+  function detectTone(fNow){
+    analyser.getFloatFrequencyData(freqData);
+    const df=audioCtx.sampleRate/analyser.fftSize, k0=Math.max(2,Math.floor(fNow/1.6/df)), k1=Math.min(freqData.length-2,Math.ceil(fNow*1.4/df));
+    let mk=k0,mx=-200; for(let k=k0;k<=k1;k++){ if(freqData[k]>mx){ mx=freqData[k]; mk=k; } }
+    const a=freqData[mk-1],b=freqData[mk],c=freqData[mk+1], den=a-2*b+c, off=(isFinite(den)&&den<0)?Math.max(-0.5,Math.min(0.5,0.5*(a-c)/den)):0;
+    return {f:(mk+off)*df,db:mx};
+  }
+  function playSweepTone(ac,F0,F1,DUR){ const o=ac.createOscillator(); o.type='sine'; const g=ac.createGain(); g.gain.value=0.35; o.connect(g).connect(ac.destination);
+    const t0=ac.currentTime; o.frequency.setValueAtTime(F0,t0); o.frequency.exponentialRampToValueAtTime(F1,t0+DUR/1000); o.start(); o.stop(t0+DUR/1000+0.3); return o; }
+  function playToneFor(ac,f,ms){ const o=ac.createOscillator(); o.type='sine'; o.frequency.value=f; const g=ac.createGain(); g.gain.value=0.3; o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+ms/1000); return o; }
+  function xoMarks(){ try{ const c=cur&&cur.ch; if(c) return [Math.round(Math.sqrt((+c.sub.lpf||100)*(+c.mid.hpf||120))),Math.round(Math.sqrt((+c.mid.lpf||3910)*(+c.twe.hpf||3910)))]; }catch(_){} return XMARK; }
   function levelAt(f){
     analyser.getFloatFrequencyData(freqData);
     const hzPerBin=audioCtx.sampleRate/analyser.fftSize, bin=Math.round(f/hzPerBin);
@@ -1118,19 +1129,15 @@
     ctx.fillText(sweeping?'● กำลังกวาดเบส':'● ผลกวาดเบส',PAD.l+2,PAD.t+8);
   }
 
-  function startSweep(){
+  function startSweep(opt){
+    opt=opt||{};
     if(!running||sweeping)return;
     if(analyser)analyser.smoothingTimeConstant=0;
     if(noiseOn)toggleNoise();            // noise off during sweep
     measured=null; sweepFrozen=false; sweepData=[]; sweepPeak=null; sweepResult=null; sweeping=true;
     const F0=20,F1=160,DUR=18000;
-    sweepOsc=audioCtx.createOscillator(); sweepOsc.type='sine';
-    const g=audioCtx.createGain(); g.gain.value=0.35;
-    sweepOsc.connect(g).connect(audioCtx.destination);
-    const t0=audioCtx.currentTime;
-    sweepOsc.frequency.setValueAtTime(F0,t0);
-    sweepOsc.frequency.exponentialRampToValueAtTime(F1,t0+DUR/1000);
-    sweepOsc.start();
+    sweepOsc=null;
+    if(!opt.listen){ sweepOsc=playSweepTone(audioCtx,F0,F1,DUR); }
     sweepMeta={F0,F1,DUR,t0:performance.now()};
     const btn=document.getElementById('btnSweep'); btn.classList.add('on'); btn.innerHTML='<span class="icn">🌊</span> กำลังกวาด…';
     document.getElementById('sugBox').innerHTML='<div class="empty">กำลังกวาดความถี่เบส… เร่งเสียงระบบให้ดังพอ <b>จ่อมือถือที่ช่องลมตะแกรงซ้าย</b> (ทางออกเบสของตู้ bandpass) รอ ~18 วิ</div>';
@@ -1144,14 +1151,14 @@
     if(pk){
       const thr=pk.db-10, below=sweepData.filter(p=>p.f<pk.f).sort((a,b)=>a.f-b.f);
       let edge=pk.f; for(let i=below.length-1;i>=0;i--){ if(below[i].db>=thr)edge=below[i].f; else break; }
-      const subsonic=Math.max(30,Math.round(0.7*pk.f),Math.round(edge)); // bandpass: ~0.7x peak, never below the -10dB edge
+      const subsonic=Math.max(30,Math.round(0.7*pk.f)); // ~0.7× box peak (edge shown for reference only — raising subsonic to a narrow peak's edge would cut the box output)
       sweepResult={peakF:pk.f,subsonic,edge:Math.round(edge)};
       setTimeout(renderWiz,0);
       box.innerHTML=
         '<div class="sug note"><h4>จูนตู้ (จุดดังสุด) ≈ '+Math.round(pk.f)+' Hz</h4>'+
         '<p>ตู้ bandpass ออเดอร์ 4 ให้เอาต์พุตสูงสุดแถวนี้ = ย่านที่ตู้ทำงานจริง นอกช่วงนี้จะร่วง เน้นเบสให้เล่นในกรอบนี้</p></div>'+
         '<div class="sug under"><h4>ตั้ง Subsonic HPF ≈ '+subsonic+' Hz</h4>'+
-        '<p>คิดจาก ~0.7 เท่าของพีค (ไม่ต่ำกว่า 30Hz และไม่ต่ำกว่าขอบ −10dB ~'+sweepResult.edge+'Hz) · ต่ำกว่านี้ตู้หมดแรง ดอกสะบัดจนแตก ตั้ง HPF ชันๆ กันแตก แล้วเร่งดังได้ขึ้น</p>'+
+        '<p>คิดจาก ~0.7 เท่าของพีค (ไม่ต่ำกว่า 30Hz) · ขอบ −10dB ด้านต่ำของตู้ ~'+sweepResult.edge+'Hz · ต่ำกว่านี้ตู้หมดแรง ดอกสะบัดจนแตก ตั้ง HPF ชันๆ กันแตก แล้วเร่งดังได้ขึ้น</p>'+
         '<div class="fix">DSPico (ช่องซับ) → HPF · Butterworth 18–24 · F≈'+subsonic+'Hz</div></div>'+
         '<div class="sug over"><h4>พีคตู้ '+Math.round(pk.f)+'Hz อาจโด่ง/โหน่ง</h4>'+
         '<p>ถ้าฟังแล้วบวมโหน่งจุดเดียว ให้ตัดพีคลงแล้วเร่งเกนซับรวม จะได้เบสอิ่มและดังสะอาดกว่าบูสต์จุดเดียว</p>'+
@@ -1170,8 +1177,8 @@
     if(sweeping){
       const el=performance.now()-sweepMeta.t0;
       if(el<sweepMeta.DUR){
-        const fNow=sweepMeta.F0*Math.pow(sweepMeta.F1/sweepMeta.F0, el/sweepMeta.DUR), db=levelAt(fNow);
-        sweepData.push({f:fNow,db}); if(!sweepPeak||db>sweepPeak.db)sweepPeak={f:fNow,db};
+        const fNow=sweepMeta.F0*Math.pow(sweepMeta.F1/sweepMeta.F0, el/sweepMeta.DUR), det=detectTone(fNow), db=det.db;
+        sweepData.push({f:det.f,db}); if(!sweepPeak||db>sweepPeak.db)sweepPeak={f:det.f,db};
         drawSweep(fNow);
         document.getElementById('rLevel').textContent=Math.round(fNow);
         document.getElementById('rBand').textContent='Hz · กวาด';
@@ -1206,14 +1213,13 @@
   }
 
   // ---------- phase / polarity check ----------
-  function startPhase(){
+  function startPhase(opt){
+    opt=(opt&&opt.type)?{}:(opt||{});
     if(!running||phasing||sweeping)return;
     if(noiseOn)toggleNoise();
     measured=null; sweepFrozen=false; abOn=false; phaseLog=[]; phasing=true;
-    const XF=XMARK[0]; // crossover freq to test (100Hz sub<->mid)
-    phaseOsc=audioCtx.createOscillator(); phaseOsc.type='sine'; phaseOsc.frequency.value=XF;
-    phaseGain=audioCtx.createGain(); phaseGain.gain.value=0.3;
-    phaseOsc.connect(phaseGain).connect(audioCtx.destination); phaseOsc.start();
+    const XF=opt.f||xoMarks()[0]; // sub↔mid crossover of the current tuning set
+    phaseOsc=opt.listen?null:playToneFor(audioCtx,XF,8600);
     phaseMeta={f:XF,t0:performance.now(),DUR:8000};
     const b=document.getElementById('btnPhase'); b.classList.add('on'); b.innerHTML='<span class="icn">🔄</span> กำลังเช็ก…';
     document.getElementById('sugBox').innerHTML='<div class="empty">กำลังปล่อยโทน '+XF+'Hz ที่จุดตัดครอส… <b>ถือมือถือนิ่งๆ ตำแหน่งฟัง</b> รอ 8 วิ แล้วระบบจะบอกค่าอ้างอิง<br><br>จากนั้นให้ไปสลับ Phase/Polarity ช่องซับใน DSPico (0°↔180°) แล้วกดเช็กซ้ำ — <b>ค่าไหนดังกว่า = เฟสนั้นถูก</b></div>';
@@ -1971,7 +1977,7 @@
     const top=Math.max(fin.sub,fin.mid,fin.twe); if(top>0) for(const k of CHK){ fin[k]-=top; }
     for(const k of CHK){ fin[k]=r05(fin[k]); const dlt=fin[k]-(+chX[k].gain||0);
       if(Math.abs(dlt)>=1){ const val=fin[k];
-        const bal=r05(g[k]), why=[]; if(Math.abs(bal)>=1)why.push((bal<0?'ย่านนี้ดังกว่าเป้า':'ย่านนี้เบากว่าเป้า')+' ราว '+Math.abs(bal).toFixed(1)+' dB'); if(top>0)why.push('ลดอีก '+r05(top)+' dB เท่ากันทุกช่อง ให้ไม่มีช่องไหนเกิน 0 dB (กันแอมป์คลิป)');
+        const bal=r05(g[k]), why=[]; if(Math.abs(bal)>=1)why.push((bal<0?'ย่านนี้ดังกว่าเป้า':'ย่านนี้เบากว่าเป้า')+' ราว '+Math.abs(bal).toFixed(1)+' dB'); if(r05(top)>=0.5)why.push('ลดอีก '+r05(top)+' dB เท่ากันทุกช่อง ให้ไม่มีช่องไหนเกิน 0 dB (กันแอมป์คลิป)');
         items.push({ch:k,t:'เกน '+CHN[k]+': '+sgn(chX[k].gain)+' → '+sgn(val)+' dB',d:why.join(' · '),ap:c=>{c[k].gain=val;}});
         chX[k].gain=val; } }
     // ③ 150–300 Hz gap
@@ -2311,7 +2317,7 @@
   const RM_OPS={mic:'btnMic',measure:'btnMeasure',mmm:'btnMMM',sweep:'btnSweep',phase:'btnPhase',clear:'btnClear'};
   function stExec(c){
     const id=RM_OPS[c.op]; if(!id)return; FB.remoteCmd=true;
-    const go=()=>{ const b=dq(id); if(b&&!b.disabled)b.click(); };
+    const go=()=>{ if(c.listen&&c.op==='sweep'){ abOn=false; startSweep({listen:true}); return; } if(c.listen&&c.op==='phase'){ startPhase({listen:true,f:c.f}); return; } const b=dq(id); if(b&&!b.disabled)b.click(); };
     if(c.op!=='mic'&&!running){ dq('btnMic').click(); setTimeout(go,1600); } else go();
     appToast('🎮 คำสั่งจาก'+(c.from||'รีโมต')+': '+({mic:'ไมค์',measure:'วัด 4 วิ',mmm:'MMM',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง'})[c.op]);
   }
@@ -2339,7 +2345,13 @@
     const op=Object.keys(RM_OPS).find(k=>RM_OPS[k]===b.id); if(!op)return;
     e.stopImmediatePropagation(); e.preventDefault();
     if(op==='clear'){ measured=null; measuredVar=null; draw(); }
-    FB.root.child('live/cmd').set({op,id:Date.now()+'-'+Math.random().toString(36).slice(2,6),at:Date.now(),from:SY.name});
+    const cmd={op,id:Date.now()+'-'+Math.random().toString(36).slice(2,6),at:Date.now(),from:SY.name};
+    if(op==='sweep'||op==='phase'){ cmd.listen=true; if(op==='phase')cmd.f=xoMarks()[0];
+      if(noiseOn)toggleNoise(); if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); audioCtx.resume();
+      const lag=(FB.st&&FB.st.running)?300:2000;
+      setTimeout(()=>{ if(op==='sweep')playSweepTone(audioCtx,20,160,18000); else playToneFor(audioCtx,cmd.f,8600); },lag);
+      appToast(op==='sweep'?'🌊 มือถือเล่นเสียงกวาด 18 วิ (ผ่านบลูทูธ) — เครื่องรับเสียงกำลังฟัง':'🔄 มือถือเล่นโทน '+cmd.f+' Hz 8 วิ — เครื่องรับเสียงกำลังฟัง'); }
+    FB.root.child('live/cmd').set(cmd);
     appToast('🎮 ส่งคำสั่ง '+({mic:'ไมค์',measure:'วัด 4 วิ',mmm:'MMM 30 วิ',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง'})[op]+' ไปที่'+(FB.st&&FB.st.name||'เครื่องวัด'));
   },true);
   function rmRender(){
