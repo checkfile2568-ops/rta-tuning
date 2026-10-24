@@ -896,7 +896,7 @@
   };
   const targetNames={dstack:'ดีสแต็ก',bass:'เน้นเบส',music:'ฟังเพลิน',vocal:'ประกาศ/พูด',flat:'Flat'};
 
-  let audioCtx=null, analyser=null, micStream=null, srcNode=null;
+  let audioCtx=null, analyser=null, micStream=null, srcNode=null, recDest=null;
   let noiseNode=null, noiseOn=false, running=false, holdOn=false;
   let perOct=3, bandF=centers(3), bandLabels=bandF.map(niceLabel);
   let lastLive=null, RAW=null, measSeq=0, freqData=null, peakHold=[], measured=null, target='dstack', raf=null, measuring=false;
@@ -921,7 +921,7 @@
       await audioCtx.resume();
       if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) throw new Error('เบราว์เซอร์นี้เข้าถึงไมค์ไม่ได้ (ต้องเป็นหน้า https)');
       micStream=await navigator.mediaDevices.getUserMedia(micConstraints());
-      srcNode=audioCtx.createMediaStreamSource(micStream);
+      srcNode=audioCtx.createMediaStreamSource(micStream); if(recDest){ try{ srcNode.connect(recDest); }catch(_){} }
       analyser=audioCtx.createAnalyser(); analyser.fftSize=16384; analyser.smoothingTimeConstant=0.7;
       freqData=new Float32Array(analyser.frequencyBinCount); srcNode.connect(analyser);
       running=true; rebuildBands();
@@ -2645,9 +2645,100 @@ let gPinOn=true; try{ gPinOn=localStorage.getItem('rta_pin')!=='0'; }catch(_){}
 function gPinApply(){ document.body.classList.toggle('gpin',gPinOn); const b=dq('gPin'); b.textContent=gPinOn?'📌 ตรึงกราฟ':'📍 ไม่ตรึง'; b.classList.toggle('on',gPinOn); resize(); if(!running)draw(); }
 dq('gPin').addEventListener('click',()=>{ gPinOn=!gPinOn; try{ localStorage.setItem('rta_pin',gPinOn?'1':'0'); }catch(_){} gPinApply(); });
 ['btnAB','btnMeasure','btnMMM','btnSweep','btnPhase','btnHold'].forEach(id=>{ const b=dq(id); if(b)b.addEventListener('click',()=>setTimeout(showGraph,60)); });
+// Fragmented MP4 (MediaRecorder output) -> regular MP4 with full sample tables + durations.
+function fmp4ToMp4(buf){
+  const u8=new Uint8Array(buf), dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);
+  const r32=o=>dv.getUint32(o), r64=o=>dv.getUint32(o)*4294967296+dv.getUint32(o+4), rs32=o=>dv.getInt32(o);
+  const typ=o=>String.fromCharCode(u8[o+4],u8[o+5],u8[o+6],u8[o+7]);
+  function boxes(s,e){ const out=[]; let o=s; while(o+8<=e){ let sz=r32(o), h=8; if(sz===1){ sz=r64(o+8); h=16; } else if(sz===0) sz=e-o; if(sz<h||o+sz>e) break; out.push({t:typ(o),o,sz,h,end:o+sz}); o+=sz; } return out; }
+  const CONT={moov:1,trak:1,mdia:1,minf:1,stbl:1,mvex:1,moof:1,traf:1,edts:1,dinf:1};
+  function tree(b){ const n={t:b.t,o:b.o,sz:b.sz,h:b.h}; if(CONT[b.t]) n.kids=boxes(b.o+b.h,b.end).map(tree); return n; }
+  const top=boxes(0,u8.length);
+  const ftyp=top.find(b=>b.t==='ftyp'), moovB=top.find(b=>b.t==='moov');
+  if(!ftyp||!moovB) throw new Error('no ftyp/moov');
+  if(!top.some(b=>b.t==='moof')) throw new Error('not fragmented');
+  const moov=tree(moovB), kid=(n,t)=>n&&n.kids&&n.kids.find(k=>k.t===t);
+  // trex defaults
+  const trex={}; const mvex=kid(moov,'mvex');
+  if(mvex) for(const k of mvex.kids) if(k.t==='trex'){ const p=k.o+k.h+4; trex[r32(p)]={sdi:r32(p+4),dur:r32(p+8),size:r32(p+12),flags:r32(p+16)}; }
+  const tracks={};
+  for(const t of moov.kids.filter(k=>k.t==='trak')){ const tk=kid(t,'tkhd'), v=u8[tk.o+tk.h]; const id=r32(tk.o+tk.h+4+(v===1?16:8)); tracks[id]={id,trak:t,samples:[],chunks:[]}; }
+  // walk fragments
+  for(const b of top){ if(b.t!=='moof') continue; const mf=tree(b);
+    for(const tf of mf.kids.filter(k=>k.t==='traf')){
+      const th=kid(tf,'tfhd'); let p=th.o+th.h; const fl=r32(p)&0xffffff; p+=4; const id=r32(p); p+=4; const T=tracks[id]; if(!T) continue; const d=trex[id]||{dur:0,size:0,flags:0};
+      let base=b.o; if(fl&1){ base=r64(p); p+=8; } if(fl&2)p+=4; let ddur=d.dur,dsize=d.size,dflags=d.flags; if(fl&8){ddur=r32(p);p+=4;} if(fl&0x10){dsize=r32(p);p+=4;} if(fl&0x20){dflags=r32(p);p+=4;}
+      const td=kid(tf,'tfdt'); let dts=null; if(td){ const v=u8[td.o+td.h]; dts=v===1?r64(td.o+td.h+4):r32(td.o+td.h+4); }
+      if(dts==null) dts=T.samples.length?T.samples[T.samples.length-1].dts+T.samples[T.samples.length-1].dur:0;
+      for(const tr of tf.kids.filter(k=>k.t==='trun')){ let q=tr.o+tr.h; const v=u8[q], f=r32(q)&0xffffff; q+=4; const n=r32(q); q+=4;
+        let off=base; if(f&1){ off=base+rs32(q); q+=4; } let first=null; if(f&4){ first=r32(q); q+=4; }
+        const chunkStart=T.samples.length;
+        for(let i=0;i<n;i++){ let dur=ddur,size=dsize,flg=(i===0&&first!=null)?first:dflags,cto=0;
+          if(f&0x100){dur=r32(q);q+=4;} if(f&0x200){size=r32(q);q+=4;} if(f&0x400){flg=r32(q);q+=4;} if(f&0x800){cto=v===0?r32(q):rs32(q);q+=4;}
+          T.samples.push({off,size,dur,dts,sync:!(flg&0x10000),cto}); off+=size; dts+=dur; }
+        if(n) T.chunks.push({first:chunkStart,count:n});
+      } } }
+  // durations from DTS deltas (keeps gaps)
+  for(const T of Object.values(tracks)){ const s=T.samples; for(let i=0;i<s.length-1;i++){ if(s[i+1].dts<=s[i].dts) s[i+1].dts=s[i].dts+1; s[i].dur=s[i+1].dts-s[i].dts; } if(s.length&&!(s[s.length-1].dur>0)) s[s.length-1].dur=1; }
+  const ids=Object.keys(tracks).map(Number).filter(id=>tracks[id].samples.length);
+  if(!ids.length) throw new Error('no samples');
+  // output helpers
+  const be32=n=>[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255];
+  const str=s=>[...s].map(c=>c.charCodeAt(0));
+  const mk=(t,body)=>{ const out=new Uint8Array(8+body.length); out.set(be32(8+body.length),0); out.set(str(t),4); out.set(body,8); return out; };
+  const full=(t,v,fl,arr)=>mk(t,Uint8Array.from([v,(fl>>16)&255,(fl>>8)&255,fl&255,...arr]));
+  const cat=list=>{ let n=0; for(const a of list)n+=a.length; const o=new Uint8Array(n); let p=0; for(const a of list){o.set(a,p);p+=a.length;} return o; };
+  const raw=b=>u8.subarray(b.o,b.o+b.sz);
+  // timescales
+  const mvhd=kid(moov,'mvhd'), mvV=u8[mvhd.o+mvhd.h], movieTS=r32(mvhd.o+mvhd.h+4+(mvV===1?16:8));
+  // compute mdat layout (interleave by fragment order: chunks sorted by original file offset)
+  const allChunks=[]; for(const id of ids){ const T=tracks[id]; for(const c of T.chunks) allChunks.push({id,c,src:T.samples[c.first].off}); }
+  allChunks.sort((a,b)=>a.src-b.src);
+  let dataLen=0; for(const x of allChunks){ const s=tracks[x.id].samples; for(let i=x.c.first;i<x.c.first+x.c.count;i++) dataLen+=s[i].size; }
+  function buildMoov(mdatDataStart){
+    let pos=mdatDataStart; const chunkOff={}; for(const id of ids) chunkOff[id]=[];
+    for(const x of allChunks){ chunkOff[x.id].push(pos); const s=tracks[x.id].samples; for(let i=x.c.first;i<x.c.first+x.c.count;i++) pos+=s[i].size; }
+    // per-track order of chunks must follow sample order: chunks were pushed in sample order per track; offsets list built in file order which matches sample order for each track
+    let movieDur=0;
+    const traks=[];
+    for(const t of moov.kids.filter(k=>k.t==='trak')){
+      const tk=kid(t,'tkhd'), v=u8[tk.o+tk.h], id=r32(tk.o+tk.h+4+(v===1?16:8)), T=tracks[id]; if(!T||!T.samples.length) continue;
+      const s=T.samples, mdia=kid(t,'mdia'), mdhd=kid(mdia,'mdhd'), mv=u8[mdhd.o+mdhd.h], ts=r32(mdhd.o+mdhd.h+4+(mv===1?16:8));
+      let tot=0; for(const x of s) tot+=x.dur;
+      const tdur=Math.round(tot*movieTS/ts); movieDur=Math.max(movieDur,tdur);
+      // stts
+      const stts=[]; for(const x of s){ const l=stts[stts.length-1]; if(l&&l[1]===x.dur)l[0]++; else stts.push([1,x.dur]); }
+      const sttsB=full('stts',0,0,[...be32(stts.length),...stts.flatMap(e=>[...be32(e[0]),...be32(e[1])])]);
+      const stszB=full('stsz',0,0,[...be32(0),...be32(s.length),...s.flatMap(x=>be32(x.size))]);
+      const ch=T.chunks, stsc=[]; ch.forEach((c,i)=>{ const l=stsc[stsc.length-1]; if(!l||l[1]!==c.count) stsc.push([i+1,c.count]); });
+      const stscB=full('stsc',0,0,[...be32(stsc.length),...stsc.flatMap(e=>[...be32(e[0]),...be32(e[1]),...be32(1)])]);
+      const stcoB=full('stco',0,0,[...be32(chunkOff[id].length),...chunkOff[id].flatMap(be32)]);
+      const syncIdx=[]; s.forEach((x,i)=>{ if(x.sync)syncIdx.push(i+1); });
+      const stssB=syncIdx.length<s.length?full('stss',0,0,[...be32(syncIdx.length),...syncIdx.flatMap(be32)]):null;
+      let cttsB=null; if(s.some(x=>x.cto)){ const c=[]; for(const x of s){ const l=c[c.length-1]; if(l&&l[1]===x.cto)l[0]++; else c.push([1,x.cto]); } cttsB=full('ctts',1,0,[...be32(c.length),...c.flatMap(e=>[...be32(e[0]),...be32(e[1]>>>0)])]); }
+      const rebuild=(n)=>{ if(n.t==='stbl'){ const stsd=kid(n,'stsd'); return mk('stbl',cat([raw(stsd),sttsB,...(cttsB?[cttsB]:[]),stscB,stszB,stcoB,...(stssB?[stssB]:[])])); }
+        if(n.t==='mdhd'){ const b=raw(n).slice(); const p=n.h+4+(mv===1?20:12); if(mv===1){ b.set([0,0,0,0,...be32(tot)],p); } else b.set(be32(Math.min(tot,0xffffffff)),p); return b; }
+        if(n.t==='tkhd'){ const b=raw(n).slice(); const p=n.h+4+(v===1?24:16); if(v===1) b.set([0,0,0,0,...be32(tdur)],p); else b.set(be32(tdur),p); return b; }
+        if(n.kids) return mk(n.t,cat(n.kids.map(rebuild)));
+        return raw(n); };
+      traks.push(rebuild(t));
+    }
+    const mvb=raw(mvhd).slice(); { const p=mvhd.h+4+(mvV===1?20:12); if(mvV===1) mvb.set([0,0,0,0,...be32(movieDur)],p); else mvb.set(be32(movieDur),p); }
+    const others=moov.kids.filter(k=>k.t!=='mvhd'&&k.t!=='trak'&&k.t!=='mvex').map(raw);
+    return mk('moov',cat([mvb,...traks,...others]));
+  }
+  const ft=raw(ftyp);
+  let moovOut=buildMoov(0); const big=dataLen+8>0xffffffff; if(big) throw new Error('too big');
+  moovOut=buildMoov(ft.length+moovOut.length+8); // offsets independent of moov size change? sizes identical: only offsets differ
+  const out=new Uint8Array(ft.length+moovOut.length+8+dataLen); let p=0;
+  out.set(ft,p); p+=ft.length; out.set(moovOut,p); p+=moovOut.length; out.set(be32(8+dataLen),p); out.set(str('mdat'),p+4); p+=8;
+  for(const x of allChunks){ const s=tracks[x.id].samples; for(let i=x.c.first;i<x.c.first+x.c.count;i++){ out.set(u8.subarray(s[i].off,s[i].off+s[i].size),p); p+=s[i].size; } }
+  return out;
+}
 const REC_V={mr:null,chunks:[],t0:0,timer:null,cv:null,url:null,cam:null,camV:null,camH:0,mode:'graph',face:'environment'};
 try{ const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}'); if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode; if(['environment','user'].includes(o.face))REC_V.face=o.face; }catch(_){}
 function recMime(){ if(!window.MediaRecorder)return null; const ts=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']; for(const t of ts){ try{ if(MediaRecorder.isTypeSupported(t))return t; }catch(_){} } return ''; }
+function recEl(){ const R=REC_V; return (performance.now()-R.t0-(R.pausedMs||0)-(R.pausedAt?performance.now()-R.pausedAt:0))/1000; }
 function recSrc(){ return (DV.open&&dq('dvCv'))?dq('dvCv'):cv; }
 function drawCover(x,v,dx,dy,dw,dh,mirror){ const vw=v.videoWidth,vh=v.videoHeight; if(!vw||!vh)return; const s=Math.max(dw/vw,dh/vh), sw=dw/s, sh=dh/s;
   x.save(); x.beginPath(); x.rect(dx,dy,dw,dh); x.clip(); if(mirror){ x.translate(dx*2+dw,0); x.scale(-1,1); } x.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,dx,dy,dw,dh); x.restore(); }
@@ -2657,7 +2748,7 @@ function recFrame(){ const R=REC_V, rc=R.cv, x=rc.getContext('2d'), src=recSrc()
   const fg=PLr.bg?'#1c1f26':'#e9ecf2', mu=PLr.bg?'#6b7080':'#8a90a0';
   x.textBaseline='top'; x.textAlign='left'; x.font='bold 38px '+MONO(); x.fillStyle='#ff6a1a'; x.fillText('RTA จูน 3 ทาง',18,10);
   x.font='28px '+MONO(); x.fillStyle=fg; const st=STEPS[wStep]; x.fillText((measured?'● ผลวัด':'● สด')+' · '+(st?('ขั้น '+(wStep+1)+' '+st.t):''),18,60);
-  x.textAlign='right'; x.fillStyle='#ff4d4d'; const el=(performance.now()-R.t0)/1000; x.font='bold 36px '+MONO(); x.fillText('⏺ '+Math.floor(el/60)+':'+String(Math.floor(el%60)).padStart(2,'0'),w-18,10);
+  x.textAlign='right'; x.fillStyle='#ff4d4d'; const el=recEl(); x.font='bold 36px '+MONO(); x.fillText('⏺ '+Math.floor(el/60)+':'+String(Math.floor(el%60)).padStart(2,'0'),w-18,10);
   x.font='26px '+MONO(); x.fillStyle=mu; x.fillText(dq('rLevel').textContent+' dB · '+dq('rBand').textContent,w-18,62); x.textAlign='left';
   const camOn=R.camV&&R.camV.readyState>=2&&R.camV.videoWidth>0, mir=R.face==='user';
   if(R.mode==='camfull'){
@@ -2703,18 +2794,21 @@ async function recStart(){
   const src=recSrc(), w=1080, gh=Math.round(src.height*w/Math.max(1,src.width)); R.camH=R.mode==='stack'?810:0;
   R.cv=document.createElement('canvas'); R.cv.width=w; R.cv.height=(104+R.camH+gh)&~1;
   if(R.mode==='camfull'){ for(let i=0;i<30&&!(R.camV&&R.camV.videoWidth);i++) await new Promise(r=>setTimeout(r,100));
-    const vw=(R.camV&&R.camV.videoWidth)||1280, vh=(R.camV&&R.camV.videoHeight)||720; R.cv.height=Math.min(1920,Math.round(w*vh/vw))&~1; } R.t0=performance.now(); recFrame();
-  const vs=R.cv.captureStream(30), tr=micStream&&micStream.getAudioTracks()[0], ms=new MediaStream([...vs.getVideoTracks(),...(tr?[tr]:[])]);
-  const mime=recMime(), vbr=R.mode==='graph'?2500000:5000000;
+    const vw=(R.camV&&R.camV.videoWidth)||1280, vh=(R.camV&&R.camV.videoHeight)||720; R.cv.height=Math.min(1920,Math.round(w*vh/vw))&~1; } R.t0=performance.now(); R.pausedMs=0; R.pausedAt=0; recFrame();
+  if(!recDest&&audioCtx){ recDest=audioCtx.createMediaStreamDestination(); if(srcNode){ try{ srcNode.connect(recDest); }catch(_){} } }
+  const vs=R.cv.captureStream(30), tr=recDest?recDest.stream.getAudioTracks()[0]:(micStream&&micStream.getAudioTracks()[0]), ms=new MediaStream([...vs.getVideoTracks(),...(tr?[tr]:[])]);
+  const mime=recMime(), vbr=R.mode==='graph'?2500000:4000000;
   try{ R.mr=new MediaRecorder(ms,mime?{mimeType:mime,videoBitsPerSecond:vbr,audioBitsPerSecond:128000}:undefined); }catch(e){ try{ R.mr=new MediaRecorder(ms); }catch(e2){ recCamOff(); appToast('⚠ อัดไม่ได้: '+e2.message,true); return; } }
   R.chunks=[]; R.mr.ondataavailable=e=>{ if(e.data&&e.data.size)R.chunks.push(e.data); };
   R.mr.onstop=()=>recDone(); R.mr.start(1000);
-  R.timer=setInterval(()=>{ recFrame(); const el=(performance.now()-R.t0)/1000; dq('gRecT').textContent='⏺ '+Math.floor(el/60)+':'+String(Math.floor(el%60)).padStart(2,'0'); if(el>600)recStop(); },1000/30);
+  R.timer=setInterval(()=>{ if(R.pausedAt)return; recFrame(); const el=recEl(); dq('gRecT').textContent='⏺ '+Math.floor(el/60)+':'+String(Math.floor(el%60)).padStart(2,'0'); if(el>600){ recStop(); appToast('⏹ อัดครบ 10 นาที — หยุดและบันทึกไฟล์ให้แล้ว'); } },1000/30);
   const b=dq('gRec'); b.classList.add('on'); b.textContent='⏹ หยุดอัด'; showGraph();
   appToast('🎬 กำลังอัด'+(R.mode==='graph'?'กราฟ':' กล้อง + กราฟ')+' + เสียงไมค์ — กดวัดผล/เปิด Pink Noise ได้ตามปกติ'); }
 function recCamOff(){ const R=REC_V; if(R.cam){ R.cam.getTracks().forEach(t=>t.stop()); R.cam=null; } R.camV=null; recCamPreview(false); if(R.mode0){ R.mode=R.mode0; R.mode0=null; } }
-function recStop(){ const R=REC_V; clearInterval(R.timer); R.timer=null; if(R.mr&&R.mr.state!=='inactive')R.mr.stop(); recCamOff(); const b=dq('gRec'); b.classList.remove('on'); b.textContent='🎬 อัดวิดีโอ'; dq('gRecT').textContent=''; }
-function recDone(){ const R=REC_V, type=(R.mr&&R.mr.mimeType)||'video/webm', ext=type.includes('mp4')?'mp4':'webm', blob=new Blob(R.chunks,{type}); R.mr=null;
+function recStop(){ const R=REC_V; clearInterval(R.timer); R.timer=null; if(R.pausedAt){ R.pausedMs+=performance.now()-R.pausedAt; R.pausedAt=0; } if(R.mr&&R.mr.state!=='inactive'){ try{ R.mr.requestData(); }catch(_){} R.mr.stop(); } recCamOff(); const b=dq('gRec'); b.classList.remove('on'); b.textContent='🎬 อัดวิดีโอ'; dq('gRecT').textContent=''; }
+async function recDone(){ const R=REC_V, type=(R.mr&&R.mr.mimeType)||'video/webm', ext=type.includes('mp4')?'mp4':'webm'; let blob=new Blob(R.chunks,{type}); R.mr=null; R.chunks=[];
+  if(blob.size&&ext==='mp4'){ const p0=dq('gVid'); p0.innerHTML='<b>⏳ กำลังจัดไฟล์วิดีโอให้เล่นได้ครบทุกเครื่อง…</b>'; p0.classList.add('show');
+    try{ const fixed=fmp4ToMp4(await blob.arrayBuffer()); blob=new Blob([fixed],{type:'video/mp4'}); R.fixed=true; }catch(e){ R.fixed=false; console.warn('mp4 fix skipped',e); } }
   if(!blob.size){ appToast('⚠ ไม่ได้ข้อมูลวิดีโอ',true); return; }
   if(R.url)URL.revokeObjectURL(R.url); R.url=URL.createObjectURL(blob);
   const d=new Date(), nm='rta-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'.'+ext;
@@ -2726,6 +2820,10 @@ function recDone(){ const R=REC_V, type=(R.mr&&R.mr.mimeType)||'video/webm', ext
   const sh=dq('gVidShare'); if(sh)sh.onclick=()=>navigator.share({files:[R.file],title:'RTA ผลวัด'}).catch(()=>{});
   dq('gVidX').onclick=()=>p.classList.remove('show'); }
 dq('gRec').addEventListener('click',()=>{ if(REC_V.timer)recStop(); else recAsk(); });
+document.addEventListener('visibilitychange',()=>{ const R=REC_V; if(!R.timer||!R.mr)return;
+  if(document.hidden){ if(R.mr.state==='recording'){ try{ R.mr.pause(); R.pausedAt=performance.now(); }catch(_){} } }
+  else if(R.mr.state==='paused'){ try{ R.mr.resume(); }catch(_){} if(R.pausedAt){ R.pausedMs+=performance.now()-R.pausedAt; R.pausedAt=0; } appToast('▶ อัดต่อแล้ว — ช่วงที่สลับแอป/ปิดจอ ถูกข้ามไป ไม่มีภาพค้าง'); } });
+dq('btnMic').addEventListener('click',()=>{ const was=running; if(REC_V.timer&&was) setTimeout(()=>{ if(!running) appToast('⚠ ปิดไมค์ระหว่างอัด — วิดีโอยังอัดต่อ แต่ช่วงนี้จะไม่มีเสียง (กดเริ่มไมค์เพื่อมีเสียงต่อ)',true); },50); },true);
 gPinApply();
   resize();renderWiz(); uiInit(); mlRender(); micInfoRender();
 })();
