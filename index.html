@@ -60,6 +60,21 @@
     body.gpin #vMeas #cv{height:250px}
   }
   @media(max-width:600px){ header .brand small{display:none} header{padding:9px 12px;gap:8px} }
+  .controls .bigrow button{min-height:52px;font-size:16px}
+  details.adv,details.wsetup{margin-top:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 10px}
+  details.adv>summary,details.wsetup>summary{cursor:pointer;padding:12px 2px;font-weight:600;list-style:none}
+  details.adv>summary::-webkit-details-marker,details.wsetup>summary::-webkit-details-marker{display:none}
+  details.adv>summary,details.wsetup>summary{position:relative;padding-right:24px}
+  details.adv>summary::after,details.wsetup>summary::after{content:'▾';position:absolute;right:4px;top:12px;color:var(--muted)}
+  details[open].adv>summary::after,details[open].wsetup>summary::after{content:'▴'}
+  details.adv>summary small,details.wsetup>summary small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:2px}
+  details.adv[open]{padding-bottom:10px}
+  .advchk{display:block;font-size:13px;margin:2px 0 10px}.advchk small{color:var(--muted)}
+  .wsi{border-top:1px dashed var(--line);padding:10px 0}
+  .wsi b{display:block;margin-bottom:3px}.wsi p{margin:0 0 6px;font-size:13px;line-height:1.5}
+  .wsi .dsp{font-size:12px;color:var(--accent2);font-family:var(--mono);margin-bottom:6px}
+  .wsi .wacts{display:flex;gap:6px;flex-wrap:wrap}.wsi .wacts button{flex:1;min-width:120px}
+  .wnav{display:flex;gap:8px}.wnav #wReset{flex:0 0 auto}
   .graphwrap{position:relative;margin:12px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
   canvas{display:block;width:100%;height:300px;touch-action:none}
   .overlay-legend{position:absolute;top:6px;left:40px;display:flex;gap:10px;font-family:var(--mono);font-size:10px;pointer-events:none;flex-wrap:wrap;max-width:60%}
@@ -354,6 +369,7 @@
   .devopt select{width:100%;min-height:40px;background:#0c0e12;border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13px;padding:6px 9px}
   /* ===== app shell: tabs · level meter · outdoor ===== */
   .legacy{display:none!important}
+  .devopt .danger{color:#d33;border-color:#e3a5a5}
   body{padding-bottom:92px}
   .view{display:none}
   body[data-view="meas"] #vMeas,body[data-view="tune"] #vMeas,body[data-view="prof"] #vProf,body[data-view="guide"] #vGuide{display:block}
@@ -474,12 +490,13 @@
 
 
 <div class="view" id="vMeas">
-<div class="label">🧭 จูนทีละขั้น — ทำตามลำดับ · กราฟจะไฮไลต์ย่านที่ต้องดูให้</div>
+<div class="label">🧭 จูน 3 ขั้น — วัด → ปรับ → วัดซ้ำ</div>
 <div class="wiz" id="wiz">
   <div class="wchips" id="wChips"></div>
   <div class="wcard" id="wCard"></div>
   <div class="whint" id="wHint"></div>
-  <div class="wnav"><button id="wPrev">◀ ขั้นก่อนหน้า</button><button id="wNext" class="primary">ขั้นถัดไป ▶</button></div>
+  <div class="wnav"><button id="wPrev">◀ ก่อนหน้า</button><button id="wReset" title="เริ่มใหม่">↺ เริ่มใหม่</button><button id="wNext" class="primary">ถัดไป ▶</button></div>
+  <details class="wsetup" id="wSetup"><summary>🔧 ตั้งค่าครั้งแรก <small>ทำครั้งเดียว · ตู้ · Subsonic · ครอส+เฟส · Limiter</small></summary><div id="wSetupBody"></div></details>
 </div>
 
 <div class="graphwrap">
@@ -498,36 +515,36 @@
 <div class="controls">
   <div class="rmbar" id="rmBar"></div>
   <div class="stylechip" id="styleChip"></div>
+  <div class="lvl off"><span class="st">⚪ ไมค์ปิด</span><div class="bar"><div class="fill"></div></div><span class="db"></span></div>
+  <div class="row bigrow">
+    <button id="btnMeasure" class="primary"><span class="icn">📸</span> วัดผล (4 วิ)</button>
+    <button id="btnMMM"><span class="icn">🚶</span> เดินวัด 30 วิ</button>
+  </div>
   <div class="row">
-    <button id="btnMic" class="primary"><span class="icn">🎙️</span> เริ่มวัดด้วยไมค์</button>
+    <button id="btnMic"><span class="icn">🎙️</span> เริ่มวัดด้วยไมค์</button>
     <button id="btnNoise"><span class="icn">📻</span> Pink Noise</button>
   </div>
-  <div class="lvl off"><span class="st">⚪ ไมค์ปิด</span><div class="bar"><div class="fill"></div></div><span class="db"></span></div>
+  <details class="adv" id="advTools"><summary>⚙ เครื่องมือเพิ่มเติม <small>ไมค์ · คาลิเบรต · Peak · Sweep · เฟส · A/B · ความละเอียด</small></summary>
+  <label class="advchk"><input type="checkbox" id="autoPink"> 📻 กดวัดแล้วเปิด Pink Noise ให้อัตโนมัติ <small>(ปิดไว้ถ้าจะวัดด้วยเพลง)</small></label>
   <div class="microw"><select id="micSel"><option value="">🎤 ไมค์เริ่มต้นของเครื่อง</option></select><button id="calBtn">📐 ไฟล์คาลิเบรต</button><input type="file" id="calFile" accept=".txt,.cal,.frd,.csv,text/plain" style="display:none"></div>
   <div class="micinfo" id="micInfo"></div>
   <div class="row">
-    <button id="btnMeasure" disabled><span class="icn">📸</span> วัดผล (4 วิ)</button>
     <button id="btnHold" disabled><span class="icn">⤒</span> Peak</button>
-    <button id="btnClear" disabled><span class="icn">↺</span> ล้าง</button>
-    <button id="btnMMM" disabled><span class="icn">🚶</span> เดินวัด · MMM</button>
-  </div>
-  <div class="row">
-    <button id="btnSweep" disabled><span class="icn">🌊</span> Sweep เบส · หาจูนตู้ (20–160Hz)</button>
-  </div>
-  <div class="row">
-    <button id="btnPhase" disabled><span class="icn">🔄</span> เช็กเฟส/โพลาริตี้</button>
+    <button id="btnClear" disabled><span class="icn">↺</span> ล้างกราฟ</button>
     <button id="btnFloor"><span class="icn">🔇</span> เสียงพื้นหลัง</button>
+  </div>
+  <div class="row">
+    <button id="btnSweep" disabled><span class="icn">🌊</span> Sweep เบส · หาจูนตู้</button>
+    <button id="btnPhase" disabled><span class="icn">🔄</span> เช็กเฟส</button>
     <button id="btnPreset" class="legacy"><span class="icn">🎛️</span> ชุดจูน</button>
     <button id="btnGuide" class="legacy"><span class="icn">📖</span> คู่มือ · WiFi</button>
   </div>
-
   <div class="label" style="margin-left:2px">เทียบก่อน–หลัง (A/B)</div>
   <div class="row">
     <button id="btnSaveA" disabled><span class="icn">Ⓐ</span> เก็บเป็น A</button>
     <button id="btnSaveB" disabled><span class="icn">Ⓑ</span> เก็บเป็น B</button>
     <button id="btnAB" disabled><span class="icn">⇄</span> ซ้อน A/B</button>
   </div>
-
   <div class="label legacy" style="margin-left:2px">เส้นเป้าหมาย</div>
   <div class="seg legacy" id="segTarget">
     <button data-t="dstack" class="sel">ดีสแต็ก</button>
@@ -536,16 +553,16 @@
     <button data-t="vocal">พูด</button>
     <button data-t="flat">Flat</button>
   </div>
-
   <div class="label" style="margin-left:2px">ความละเอียด</div>
   <div class="seg" id="segRes">
     <button data-r="1">1/1</button><button data-r="3" class="sel">1/3 Oct</button><button data-r="6">1/6</button>
   </div>
+  </details>
 </div>
 
 <div class="label" style="margin-left:14px">📋 ผลวัดล่าสุด</div>
 <div class="card" id="sugBox">
-  <div class="empty">กด <span class="kbd">🎙️ เริ่มวัดด้วยไมค์</span> → <span class="kbd">📻 Pink Noise</span> → ดูแถบระดับเสียงให้เป็น 🟢 → กด <span class="kbd">📸 วัดผล</span> หรือ <span class="kbd">🚶 MMM</span> — ผลสรุปและปุ่มคำแนะนำจะขึ้นตรงนี้</div>
+  <div class="empty">วางมือถือที่จุดฟัง สูงระดับหู แล้วกด <span class="kbd">📸 วัดผล</span> — ระบบเปิดไมค์ + Pink Noise ให้เอง · ผลสรุปและปุ่มคำแนะนำจะขึ้นตรงนี้</div>
 </div>
 </div>
 
@@ -922,7 +939,7 @@
     document.getElementById('stMode').textContent='พร้อมใช้งาน';
     document.getElementById('stDot').classList.remove('live');
     const b=document.getElementById('btnMic'); b.classList.remove('on'); b.innerHTML='<span class="icn">🎙️</span> เริ่มวัดด้วยไมค์';
-    ['btnMeasure','btnMMM','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=true);
+    ['btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=true);
     sweepFrozen=false;
     draw();
   }
@@ -1621,33 +1638,22 @@
   /* ===== guided stepper + graph annotations ===== */
   const ZC={sub:'255,90,138',mid:'53,208,192',twe:'110,168,255',look:'255,176,32',ph:'255,210,74'};
   const STEPS=[
-    {t:'เช็กตู้ + ตั้งเกน', do:'หารอยรั่วรอบอะคริลิกและห้องปิดฝั่งกรวย · มือถือ 85–90% · ปุ่ม BASS/MID/TREBLE หลังตู้ไว้ตรงกลาง',
-     look:'ขั้นนี้ยังไม่ต้องดูกราฟ — ถ้าตู้รั่วหรือแอมป์คลิป ค่าที่วัดต่อจากนี้จะผิดหมด',
-     enter:'Reset EQ ทุกช่อง · เปิด Limiter ทุกช่อง', acts:[{act:'guide',label:'📦 เปิดเช็กลิสต์ตู้'}], zones:[], lines:[]},
-    {t:'Sweep หาจูนตู้ → Subsonic', do:'กดเริ่มไมค์ แล้วกด Sweep · จ่อมือถือที่ช่องลมตะแกรงซ้าย รอ 18 วิ',
-     look:'ดูพีคเบสใน<b>แถบส้ม</b> = ย่านที่ตู้ทำงาน · ระบบคำนวณ subsonic ≈ 0.7 × พีค ให้อัตโนมัติ',
-     enter:'ช่องซับ → HPF · Butterworth 24 · F = ค่าที่ได้', acts:[{id:'btnMic'},{id:'btnSweep'}],
-     zones:[{f0:20,f1:160,c:'look',l:'ย่าน Sweep 20–160Hz'}], lines:[]},
-    {t:'ตั้งครอส 3 ทาง', do:'ไปหน้า 🎛️ จูน → แท็บ ✂️ ครอส กด “ใช้ค่าแนะนำ” ทั้ง 3 ช่อง (หรือลากจุด ◆ บนกราฟ) แล้วกรอกลง DSPico · ยังไม่แตะ EQ',
-     look:'<b>แถบสี</b> = ย่านของแต่ละดอก · <b>เส้นประ</b> = จุดตัด 100Hz และ 3.9kHz',
-     enter:'ซับ LPF 100 LR24 · กลาง HPF 120 LR24 / LPF 3.9k LR24 · แหลม HPF 3.9k LR24 (เฟสปกติทุกช่อง)', acts:[{act:'tune',label:'🎛️ ไปตั้งครอส'}],
-     zones:[{f0:20,f1:100,c:'sub',l:'ซับ'},{f0:120,f1:3910,c:'mid',l:'กลาง 4″'},{f0:3910,f1:20000,c:'twe',l:'แหลม 2″'}], lines:[100,3910]},
-    {t:'เฟส / ดีเลย์ ที่จุดตัด', do:'กดเช็กเฟส ถือนิ่งที่จุดฟัง 8 วิ → สลับ Phase ซับ 0/180 ใน DSPico → กดเช็กซ้ำ',
-     look:'ดู<b>แถบเหลือง</b>รอบ 100Hz · ค่าไหนดังกว่า = เฟสนั้นถูก · ยังเป็นดิพอยู่ค่อยปรับดีเลย์ทีละ 0.5ms',
-     enter:'ช่องซับ → Phase 0/180 · Delay', acts:[{id:'btnPhase'}],
-     zones:[{f0:70,f1:140,c:'ph',l:'จุดตัด ซับ↔กลาง'}], lines:[100]},
-    {t:'เลเวลสมดุล 3 ทาง', do:'เปิด Pink Noise → วัดผล 4 วิ → ปรับ Gain ซับ/กลาง/แหลม ทีละ 1–2dB แล้ววัดซ้ำ',
-     look:'ให้แต่ละแถบเกาะ<b>เส้นเป้าหมาย</b> (เหลืองประ) · ซับควรสูงกว่ากลางราว +6dB',
-     enter:'Gain แต่ละช่อง', acts:[{id:'btnNoise'},{id:'btnMeasure'}],
+    {t:'📸 วัด', do:'วางมือถือที่จุดฟัง สูงระดับหู ห่างลำโพง 1–2 ม. · กด 📸 วัด 4 วิ (หรือ 🚶 เดินวัด 30 วิ ทั่วโซนฟัง) — ระบบเปิดไมค์ + Pink Noise ให้เอง',
+     look:'รอแถบระดับเสียงเป็น 🟢 · หลังวัดต้องขึ้น “✓ คุณภาพการวัดดี” ถ้าขึ้น ⚠ ให้แก้ตามที่บอกแล้ววัดใหม่',
+     enter:'ยังไม่ต้องแก้อะไร', acts:[{act:'measure',label:'📸 วัด 4 วิ'},{act:'mmm',label:'🚶 เดินวัด 30 วิ'}], zones:[], lines:[]},
+    {t:'💡 ปรับตามคำแนะนำ', do:'เลือกแนวเสียง → ได้รายการ Gain · ครอส · เฟส · PEQ ในหน้า 🎛️ จูน → กดใช้ (ดูเส้นส้มคาดการณ์) → กรอกตามลง DSPico → กด “✔ กรอกลงเครื่องแล้ว”',
+     look:'<b>แดง</b> = เกินเป้า · <b>ฟ้า</b> = ขาดเป้า · ซับควรสูงกว่ากลางราว +6dB · แก้ทีละไม่กี่ข้อ ใหญ่ก่อนเล็ก',
+     enter:'ตามรายการคำแนะนำ (บูสต์ไม่เกิน +3dB)', acts:[{act:'recs',label:'💡 ดูคำแนะนำ'},{act:'tune',label:'🎛️ ไปหน้าจูน'}],
      zones:[{f0:20,f1:100,c:'sub',l:'ซับ ≈ +6dB'},{f0:120,f1:3910,c:'mid',l:'กลาง ≈ 0dB'},{f0:3910,f1:20000,c:'twe',l:'แหลม ≈ 0dB'}], lines:[100,3910]},
-    {t:'PEQ ละเอียด', do:'กดเดินวัด MMM เดินไมค์ช้าๆ ทั่วโซนฟัง 30 วิ → เลือกแนวเสียง → กดใช้คำแนะนำในหน้า 🎛️ จูน',
-     look:'<b>แดง</b> = เกินเป้า → ตัด · <b>ฟ้า</b> = ขาด → ถมได้เฉพาะที่ไม่ขึ้น 🚫 · จับตา<b>แถบส้ม</b> 50–150Hz (โหนกตู้ bandpass)',
-     enter:'Band ว่าง · Peak(PEQ) · ไม่เกิน 5 แบนด์ · บูสต์ ≤ +3dB', acts:[{id:'btnMMM'}],
-     zones:[{f0:50,f1:150,c:'look',l:'โหนกเบส bandpass'}], lines:[]},
-    {t:'Limiter + เทียบ A/B + เซฟ', do:'ตั้ง Limiter → เร่งพร้อมดูดอกผ่านช่องโครง → เก็บ Ⓐ ก่อนแก้ / Ⓑ หลังแก้ → เซฟพรีเซ็ต',
-     look:'กด ⇄ ซ้อน A/B · เส้น Ⓑ ต้องเกาะเป้าดีกว่า Ⓐ ถึงจะเซฟ · ในชุดจูนกด 📈 เก็บกราฟ ไว้เทียบครั้งหน้า',
-     enter:'แหลม −6dB · กลาง −4dB · ซับ −2~−3dB · บันทึกเป็นชุดจูน 🎛️ (Base → กลางแจ้ง / ในบ้าน)', acts:[{id:'btnSaveA'},{id:'btnSaveB'},{id:'btnAB'},{act:'tune',label:'🎛️ ไปหน้าจูน · บันทึก'}],
-     zones:[], lines:[]}
+    {t:'✔ วัดซ้ำยืนยัน', do:'หลังกรอกลง DSPico แล้ว กดวัดซ้ำที่จุดเดิม — ระบบเทียบกับครั้งก่อนและบันทึกประวัติให้เอง · ดีขึ้นแล้วกด 💾 บันทึกชุดจูน',
+     look:'กด ⇄ ซ้อนกับครั้งก่อน: เส้นสีเขียว (ครั้งนี้) ต้องเกาะเป้าดีกว่าเส้นเทา (ครั้งก่อน) · ยังไม่ดีพอ → กลับขั้น 2',
+     enter:'💾 บันทึกชุดจูน', acts:[{act:'measure',label:'📸 วัดซ้ำ'},{act:'cmp',label:'⇄ ซ้อนกับครั้งก่อน'},{act:'tune',label:'💾 ไปบันทึกชุดจูน'}], zones:[], lines:[]}
+  ];
+  const SETUP=[
+    {t:'📦 เช็กตู้ + เกนแอมป์', do:'หารอยรั่วรอบอะคริลิกและห้องปิดฝั่งกรวย · วอลุ่มมือถือ 85–90% · ปุ่ม BASS/MID/TREBLE หลังตู้ไว้ตรงกลาง', enter:'Reset EQ ทุกช่อง · เปิด Limiter ทุกช่อง', acts:[{act:'guide',label:'📦 เปิดเช็กลิสต์ตู้'}]},
+    {t:'🌊 Sweep หาจูนตู้ → Subsonic', do:'จ่อมือถือที่ช่องลมตะแกรงตู้ซับ กด Sweep รอ 18 วิ — ระบบคำนวณ Subsonic ≈ 0.7 × พีคตู้ให้', enter:'ช่องซับ → HPF · Butterworth 24 · F = ค่าที่ได้', acts:[{act:'sweep',label:'🌊 Sweep เบส'}]},
+    {t:'✂️ ครอส + เฟส', do:'ตั้งครอสตามค่าแนะนำในหน้าจูน แล้วกดเช็กเฟสที่จุดฟัง → สลับ Phase ซับ 0/180 ใน DSPico → เลือกค่าที่ดังกว่า', enter:'ซับ LPF 100 LR24 · กลาง HPF 120 LR24 / LPF 3.9k LR24 · แหลม HPF 3.9k LR24', acts:[{act:'tunexo',label:'✂️ ตั้งครอส'},{act:'phase',label:'🔄 เช็กเฟส'}]},
+    {t:'🛡 Limiter กันดอกขาด', do:'ตั้ง Limiter ทุกช่อง แล้วเร่งเสียงพร้อมดูดอกผ่านช่องโครง ไม่ควรสะบัดแรง', enter:'แหลม −6dB · กลาง −4dB · ซับ −2~−3dB', acts:[{act:'tunelim',label:'🛡 ไปตั้ง Limiter'}]}
   ];
   let wStep=0; try{ const v=parseInt(localStorage.getItem('rtaWizStep'),10); if(v>=0&&v<STEPS.length)wStep=v; }catch(_){}
   function drawStepOverlay(){
@@ -1675,7 +1681,8 @@
     const st=STEPS[wStep];
     document.getElementById('wChips').innerHTML=STEPS.map((s,i)=>'<button data-i="'+i+'" class="'+(i===wStep?'cur':(i<wStep?'done':''))+'" title="'+s.t+'">'+(i<wStep?'✓':(i+1))+'</button>').join('');
     let res='';
-    if(wStep===1&&sweepResult) res='<div class="wres">ผลล่าสุด: พีค '+Math.round(sweepResult.peakF)+' Hz → ตั้ง subsonic <b>'+sweepResult.subsonic+' Hz</b></div>';
+    if(wStep===2&&measured){ const pv=prevMeas(), a=pv?devRMS(pv.d):null, b2=devRMS(measured); if(a!=null&&b2!=null){ const d=b2-a; res='<div class="wres">ครั้งก่อน ±'+a.toFixed(1)+' dB → ครั้งนี้ <b>±'+b2.toFixed(1)+' dB</b> '+(d<-0.5?'✔ ดีขึ้น':d>0.5?'✖ แย่ลง — ย้อนค่าใน DSPico':'≈ ใกล้เดิม')+'</div>'; } else if(b2!=null) res='<div class="wres">คลาดจากเป้า ±'+b2.toFixed(1)+' dB — ยังไม่มีผลครั้งก่อนให้เทียบ</div>'; }
+    renderSetup();
     const acts=st.acts.map(a=>a.act?'<button data-act="'+a.act+'">'+a.label+'</button>':'<button data-btn="'+a.id+'">'+btnLabel(a.id)+'</button>').join('');
     document.getElementById('wCard').innerHTML=
       '<h3><em>'+(wStep+1)+'/'+STEPS.length+'</em>'+st.t+'</h3>'+
@@ -1685,7 +1692,7 @@
       (acts?'<div class="wacts">'+acts+'</div>':'');
     document.getElementById('wHint').textContent='';
     document.getElementById('wPrev').disabled=wStep===0;
-    document.getElementById('wNext').innerHTML=wStep===STEPS.length-1?'✓ ครบทุกขั้น':'ขั้นถัดไป ▶';
+    document.getElementById('wNext').innerHTML=wStep===STEPS.length-1?'✓ ครบแล้ว':'ถัดไป ▶';
     document.getElementById('gCap').innerHTML='<b>ขั้น '+(wStep+1)+' · '+st.t+'</b> — '+st.look;
     try{ localStorage.setItem('rtaWizStep',String(wStep)); }catch(_){}
     if(!running) draw();
@@ -1693,9 +1700,35 @@
   document.getElementById('wChips').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return; wStep=+b.dataset.i; renderWiz(); });
   document.getElementById('wPrev').addEventListener('click',()=>{ if(wStep>0){wStep--;renderWiz();} });
   document.getElementById('wNext').addEventListener('click',()=>{ if(wStep<STEPS.length-1){wStep++;renderWiz();} });
+  function renderSetup(){ const el=document.getElementById('wSetupBody'); if(!el)return; const sw=sweepResult||(cur&&cur.sweep);
+    el.innerHTML=SETUP.map((st,i)=>'<div class="wsi"><b>'+(i+1)+' · '+st.t+'</b><p>'+st.do+'</p><div class="dsp">DSPico: '+st.enter+'</div>'+
+      (i===1&&sw?'<div class="wres">ผลล่าสุด: พีคตู้ '+Math.round(sw.peakF)+' Hz → Subsonic <b>'+sw.subsonic+' Hz</b></div>':'')+
+      '<div class="wacts">'+st.acts.map(a=>'<button data-act="'+a.act+'">'+a.label+'</button>').join('')+'</div></div>').join(''); }
+  async function ensureMic(){ if(running)return true; if(SY.role==='remote')return true; document.getElementById('btnMic').click(); for(let i=0;i<50&&!running;i++) await new Promise(r=>setTimeout(r,100)); if(!running){ appToast('⚠ เปิดไมค์ไม่ได้ — กดอนุญาตไมค์ใน Chrome ก่อน',true); return false; } return true; }
+  let autoPinkOn=false;
+  async function autoMeasure(kind){ const id=kind==='mmm'?'btnMMM':'btnMeasure';
+    if(SY.role==='remote'){ document.getElementById(id).click(); return; }
+    if(measuring||sweeping||phasing)return;
+    if(!await ensureMic())return;
+    let ap=true; try{ ap=localStorage.getItem('rta_autopink')!=='0'; }catch(_){}
+    if(ap&&!noiseOn){ toggleNoise(); autoPinkOn=true; appToast('📻 เปิด Pink Noise ให้แล้ว — รอเสียงนิ่ง 1.5 วิ แล้วเริ่มวัด'); await new Promise(r=>setTimeout(r,1500)); }
+    document.getElementById(id).click(); }
+  async function wAct(b){ const a=b.dataset.act;
+    if(a==='tune'||a==='tunexo'||a==='tunelim'){ if(a==='tunexo'){DV.tab='xo';DV.ch='sub';} if(a==='tunelim'){DV.tab='lim';DV.ch='sub';} setView('tune'); if(DV.open)dvRenderAll(); return; }
+    if(a==='measure'||a==='mmm'){ autoMeasure(a); return; }
+    if(a==='recs'){ if(!measured){ appToast('วัดก่อน (ขั้น 1) แล้วค่อยดูคำแนะนำ',true); return; } askStyle(true); return; }
+    if(a==='cmp'){ const pv=prevMeas(); if(!pv||!measured){ appToast('ต้องวัดอย่างน้อย 2 ครั้งก่อนถึงจะเทียบได้',true); return; }
+      snapA={data:pv.d.slice(),perOct,t:'ครั้งก่อน'}; snapB={data:measured.slice(),perOct,t:'ครั้งนี้'}; document.getElementById('btnAB').disabled=false;
+      if(!abOn)toggleAB(); else draw(); setTimeout(showGraph,60); return; }
+    if(a==='sweep'||a==='phase'){ if(!await ensureMic())return; document.getElementById(a==='sweep'?'btnSweep':'btnPhase').click(); setTimeout(showGraph,60); return; }
+  }
+  document.getElementById('wSetupBody').addEventListener('click',e=>{ const b=e.target.closest('button[data-act]'); if(!b)return;
+    if(b.dataset.act==='guide'){ setView('guide'); const gp=document.getElementById('guidePanel'); gp.classList.add('show'); const tb=document.querySelector('.gtabs button[data-m="subplan"]'); if(tb)tb.click(); gp.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+    wAct(b); });
+  ['btnMeasure','btnMMM'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{ if(!running&&SY.role!=='remote'){ e.stopImmediatePropagation(); e.preventDefault(); autoMeasure(id==='btnMMM'?'mmm':'measure'); } },true));
   document.getElementById('wCard').addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b)return;
-    if(b.dataset.act==='tune'){ setView('tune'); return; }
+    if(b.dataset.act&&b.dataset.act!=='guide'){ wAct(b); return; }
     if(b.dataset.act==='guide'){ setView('guide'); const gp=document.getElementById('guidePanel'); gp.classList.add('show');
       const tb=document.querySelector('.gtabs button[data-m="subplan"]'); if(tb)tb.click(); gp.scrollIntoView({behavior:'smooth',block:'start'}); return; }
     const t=document.getElementById(b.dataset.btn); if(!t)return;
@@ -2112,8 +2145,10 @@
     else if(b.dataset.r==='all') recApply(REC.items);
     else if(b.dataset.r==='undo'){ if(REC.undo){ cur.ch=REC.undo; REC.undo=null; REC.items.forEach(x=>x.done=false); dvChanged(true); dvRenderRec(); dvToast('ย้อนกลับแล้ว'); } }
     else if(b.dataset.r==='style') askStyle(); });
-  dq('dvApplied').addEventListener('click',()=>{ setDevice(cur.ch,cur.name,false); dvRenderDev(); dvToast('ตั้ง “'+cur.name+'” เป็นค่าในเครื่องแล้ว — วัดใหม่ 📸/🚶 เพื่อดูผลจริง'); });
+  dq('dvApplied').addEventListener('click',()=>{ if(wStep<2){ wStep=2; renderWiz(); } setDevice(cur.ch,cur.name,false); dvRenderDev(); dvToast('ตั้ง “'+cur.name+'” เป็นค่าในเครื่องแล้ว — วัดใหม่ 📸/🚶 เพื่อดูผลจริง'); });
   function afterMeasure(){
+    if(autoPinkOn){ autoPinkOn=false; if(noiseOn)toggleNoise(); }
+    if(wStep===0){ wStep=1; } setTimeout(renderWiz,0);
     snrCompute(); { const w=qVerdict(); measQW=w?{for:measured,w}:null; measQ=null;
       if(w){ const bad=w; if(bad.length) appToast('⚠ คุณภาพการวัด: '+bad[0].l,true); else if(!w.length) appToast('✓ คุณภาพการวัดดี — ไม่คลิป ระดับพอดี'); } }
     SM.lastT=Date.now(); SM.lastFrom=SY.name; syMetaSave(); pushMeasHist(); mlAdd(); syncSoon(); if(measured)analyze(); if(DV.open){ DV.dirty=true; dvRenderResult(); }
@@ -2196,11 +2231,11 @@
   document.addEventListener('keydown',e=>{ if(!DV.open||e.target.matches('input,select,textarea'))return; const k=e.key.toLowerCase();
     if((e.ctrlKey||e.metaKey)&&k==='z'){ e.preventDefault(); histGo(e.shiftKey?1:-1); } else if((e.ctrlKey||e.metaKey)&&k==='y'){ e.preventDefault(); histGo(1); } });
   // unified steps (same 7 steps as the measure tab)
-  const STEPMAP=[{ch:null,tab:'lim'},{ch:'sub',tab:'xo'},{ch:'sub',tab:'xo'},{ch:'sub',tab:'gp'},{ch:'mid',tab:'gp'},{ch:'sub',tab:'eq'},{ch:'sub',tab:'lim'}];
+  const STEPMAP=[{},{ch:'sub',tab:'gp'},{}];
   function dvRenderSteps(){
     dq('dvSteps').innerHTML=STEPS.map((s,i)=>'<button data-step="'+i+'" class="'+(i===wStep?'cur':'')+'"><em>'+(i+1)+'</em>'+s.t+'</button>').join('');
     const st=STEPS[wStep], sw=sweepResult||cur.sweep;
-    dq('dvHint').innerHTML='<b>ขั้น '+(wStep+1)+'/'+STEPS.length+' · '+st.t+'</b> — '+st.do+' · <b>DSPico:</b> '+st.enter+(wStep===1&&sw?' · ผลล่าสุด: พีคตู้ <b>'+Math.round(sw.peakF)+'Hz</b> → Subsonic <b>'+sw.subsonic+'Hz</b>':'')+' <span style="color:var(--muted)">(แตะเพื่ออ่านทั้งหมด)</span>';
+    dq('dvHint').innerHTML='<b>ขั้น '+(wStep+1)+'/'+STEPS.length+' · '+st.t+'</b> — '+st.do+' · <b>DSPico:</b> '+st.enter+(false&&sw?' · ผลล่าสุด: พีคตู้ <b>'+Math.round(sw.peakF)+'Hz</b> → Subsonic <b>'+sw.subsonic+'Hz</b>':'')+' <span style="color:var(--muted)">(แตะเพื่ออ่านทั้งหมด)</span>';
   }
   dq('dvHint').addEventListener('click',()=>dq('dvHint').classList.toggle('open'));
   dq('dvSteps').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return; wStep=+b.dataset.step; renderWiz(); const m=STEPMAP[wStep]||{};
@@ -2578,6 +2613,28 @@
   loadProfiles(); { let ch=false; profiles.forEach(p=>{ if(p.curve&&fixLegacyEntry(p.curve))ch=true; }); if(cur&&cur.curve)fixLegacyEntry(cur.curve); if(ch)try{ localStorage.setItem(PF_KEY,JSON.stringify(profiles)); }catch(_){} }
   renderEditor(); renderProfiles();
 
+
+// ===== ↺ reset / start over =====
+(function(){ const c=dq('autoPink'); let ap=true; try{ ap=localStorage.getItem('rta_autopink')!=='0'; }catch(_){} c.checked=ap;
+  c.addEventListener('change',()=>{ try{ localStorage.setItem('rta_autopink',c.checked?'1':'0'); }catch(_){} appToast(c.checked?'📻 กดวัดแล้วเปิด Pink Noise ให้อัตโนมัติ':'📻 ปิด Pink Noise อัตโนมัติแล้ว — เปิดเพลง/สัญญาณเองก่อนกดวัด'); }); })();
+function askReset(){
+  openModal('<h3>↺ เริ่มใหม่</h3><p>เลือกสิ่งที่ต้องการล้าง</p>'+
+    '<div class="devopt"><b>🔁 เริ่มจูนรอบใหม่</b><p>ล้างกราฟ ผลวัดบนจอ และ A/B แล้วกลับไปขั้น 1 · ประวัติผลวัดและชุดจูนยังอยู่ครบ</p><div class="row2"><button class="primary" data-rs="round">เริ่มรอบใหม่</button></div></div>'+
+    '<div class="devopt"><b>🎚 ล้าง EQ ชุดที่เปิดอยู่</b><p>PEQ ทุกช่องของ “'+esc(cur?cur.name:'')+'” เป็นว่าง (เหมือน Reset EQ ใน DSPico) · ครอส เกน เฟส คงเดิม · ย้อนได้ด้วย ↶ ในหน้าจูน แล้วกด 💾 บันทึกเมื่อพอใจ</p><div class="row2"><button data-rs="eq">ล้าง EQ</button></div></div>'+
+    '<div class="devopt"><b>⚠ ล้างข้อมูลทั้งหมดในเครื่องนี้</b><p>ลบประวัติผลวัด ชุดจูน ค่าในเครื่อง คาลิเบรต และการตั้งค่า กลับเป็นเหมือนเปิดครั้งแรก · การตั้งค่าซิงก์ยังอยู่'+(SY.on?' — <b>ซิงก์เปิดอยู่ ข้อมูลบนคลาวด์จะถูกดึงกลับมาอีก</b>':'')+'</p><div class="row2"><button data-rs="all" class="danger">ล้างทั้งหมด…</button></div></div>'+
+    '<div class="dvmfoot"><button data-m="close">ปิด</button></div>'); }
+function resetRound(){ measured=null; measuredVar=null; measQW=null; sweepFrozen=false; snapA=null; snapB=null; abOn=false;
+  const ab=dq('btnAB'); ab.classList.remove('on'); ab.disabled=true; peakHold=new Array(bandF.length).fill(-120);
+  REC.items=[]; REC.seq=-1; wStep=0; renderWiz();
+  dq('sugBox').innerHTML='<div class="empty">เริ่มรอบใหม่แล้ว — วางมือถือที่จุดฟัง สูงระดับหู แล้วกด <span class="kbd">📸 วัดผล</span></div>';
+  if(DV.open){ DV.dirty=true; dvRenderAll(); } else { setView('meas'); } if(!running)draw(); window.scrollTo({top:0,behavior:'smooth'}); appToast('🔁 เริ่มจูนรอบใหม่ — ขั้น 1 วัด'); }
+dq('dvModal').addEventListener('click',e=>{ const b=e.target.closest('[data-rs]'); if(!b)return; const k=b.dataset.rs;
+  if(k==='round'){ closeModal(); resetRound(); return; }
+  if(k==='eq'){ if(!cur)return; CHK.forEach(c=>{ cur.ch[c].peq=[]; }); closeModal(); DV.dirty=true; setView('tune'); dvRenderAll(); try{ histTrack(); }catch(_){} appToast('🎚 ล้าง EQ ทุกช่องแล้ว (ยังไม่บันทึก) — กด 💾 บันทึก หรือ ↶ ย้อน'); return; }
+  if(k==='all'){ if(b.dataset.cf!=='1'){ b.dataset.cf='1'; b.textContent='⚠ แตะอีกครั้งเพื่อยืนยัน ล้างทั้งหมด'; return; }
+    try{ const keep={}; ['rta_fb_cfg','rta_sun2'].forEach(x=>{ const v=localStorage.getItem(x); if(v!=null)keep[x]=v; }); localStorage.clear(); Object.entries(keep).forEach(([x,v])=>localStorage.setItem(x,v)); }catch(_){}
+    location.hash=''; location.reload(); } });
+dq('wReset').addEventListener('click',askReset);
 // ===== graph pin / show-graph / video+audio recorder =====
 function showGraph(){ if(document.body.dataset.view!=='meas')return; const g=document.querySelector('#vMeas .graphwrap'), hd=document.querySelector('header'); if(!g||!hd)return;
   const hh=hd.offsetHeight, r=g.getBoundingClientRect(); if(r.top>=hh-2&&r.bottom<=innerHeight+2)return;
