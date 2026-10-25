@@ -470,11 +470,29 @@
   .microw{display:flex;gap:6px;margin:0 0 6px} .microw select{flex:1;min-width:0;min-height:40px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--text);font-size:13px;padding:4px 8px}
   .microw button{flex:0 0 auto;min-height:40px;font-size:12.5px;padding:6px 10px}
   .micinfo{font-size:11.5px;color:var(--muted);line-height:1.6;margin:0 2px 8px} .micinfo b{color:var(--text)} .micinfo a{color:var(--accent2)}
+
+  /* RTA studio graph and recorder v2 */
+  .graphwrap{background:#0b1423;border-color:#24374d;border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.16)}
+  .graph-head{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;padding:14px 15px 10px;border-bottom:1px solid #21334a}
+  .graph-head small{display:block;font-size:10px;letter-spacing:.5px;color:#9bb0c8}.graph-head b{display:block;font-size:15px;margin-top:4px;color:#e2f1ff;font-variant-numeric:tabular-nums}
+  .graph-head>div+div{border-left:1px solid #283d54;padding-left:12px}.graph-head>div:last-child b{color:#e4bf65}
+  .graph-legend{display:flex;gap:8px 14px;flex-wrap:wrap;padding:10px 15px 0;color:#a5b7ca;font-size:10px}.legend-live{color:#50ddd1}.legend-meas{color:#d9f1ff}.legend-target{color:#e4bf65}
+  #cv{height:320px;outline:none}#cv:focus-visible{outline:2px solid #50ddd1;outline-offset:-3px}
+  .graph-probe{padding:8px 14px;background:#122238;color:#d9f1ff;font-size:11px;min-height:32px;font-variant-numeric:tabular-nums}
+  .graph-quality{font-size:10px;color:#9bb0c8;padding:7px 14px}.rec-status{padding:0 12px 9px;color:#9bb0c8;font-size:11px}
+  .gbar{flex-wrap:wrap;border-color:#21334a}.gbar #gRec{margin-left:auto}.gbar #gScale{font-size:10px;white-space:nowrap}
+  .gvid .video-save{display:flex;align-items:center;justify-content:center;min-height:46px;background:#197c71;color:#fff;border-radius:10px;padding:10px;font-size:14px;font-weight:700}
+  .video-ready{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:4px 0 10px}.video-ready b{font-size:14px}.video-ready span{font-size:11px;color:var(--muted)}
+  body.outdoor .graphwrap{background:#fff;border-color:#d0dce7}body.outdoor .graph-head{border-color:#dce5ed}body.outdoor .graph-head b{color:#173b54}body.outdoor .graph-head>div+div{border-color:#dce5ed}
+  body.outdoor .graph-head small,body.outdoor .graph-quality,body.outdoor .rec-status,body.outdoor .graph-legend{color:#50677d}body.outdoor .graph-head>div:last-child b,body.outdoor .legend-target{color:#906416}
+  body.outdoor .legend-live{color:#087f8c}body.outdoor .legend-meas{color:#155779}body.outdoor .graph-probe{background:#edf4f9;color:#173b54}body.outdoor .gbar{border-color:#dce5ed}
+  @media(max-width:420px){.graph-head{padding:12px 10px 9px;gap:5px}.graph-head small{font-size:9px}.graph-head b{font-size:13px}.graph-head>div+div{padding-left:7px}.graph-legend{padding-left:10px;gap:7px 10px}body.gpin #vMeas #cv{height:225px}.gbar button{font-size:11px;padding:6px 8px}.gbar #gScale{font-size:9px}}
+
 </style>
 <meta name="theme-color" content="#fbfaf6">
 </head>
 <body>
-<script>try{ if(localStorage.getItem('rta_sun2')!=='0')document.body.classList.add('outdoor'); }catch(_){ document.body.classList.add('outdoor'); }</script>
+<script>try{ if(localStorage.getItem('rta_sun2')==='1')document.body.classList.add('outdoor'); }catch(_){}</script>
 
 <header>
   <svg class="logo" viewBox="0 0 100 100" fill="none">
@@ -499,15 +517,15 @@
   <details class="wsetup" id="wSetup"><summary>🔧 ตั้งค่าครั้งแรก <small>ทำครั้งเดียว · ตู้ · Subsonic · ครอส+เฟส · Limiter</small></summary><div id="wSetupBody"></div></details>
 </div>
 
-<div class="graphwrap">
-  <canvas id="cv"></canvas>
-  <div class="overlay-legend">
-    <span><i class="swatch" style="background:var(--spectrum)"></i>เสียงจริง</span>
-    <span><i class="swatch" style="background:var(--target)"></i>เป้าหมาย</span>
-    <span><i class="swatch" style="background:#556"></i>จุดตัดครอส</span>
-  </div>
-  <div class="readout"><b id="rLevel">–</b> dB<br><span id="rBand">—</span></div>
-  <div class="gbar"><button id="gPin" title="ตรึงกราฟไว้บนจอ">📌 ตรึงกราฟ</button><span class="grow" id="gScale"></span><span id="gRecT"></span><button id="gRec" title="อัดวิดีโอกราฟ + เสียงจากไมค์">🎬 อัดวิดีโอ</button></div>
+<div class="graphwrap" data-release="rta-video-graph-v2">
+  <div class="graph-head"><div><small>SPECTRUM ANALYZER</small><b id="graphMode">พร้อมวัด</b></div><div><small>ความถี่พีค</small><b id="graphPeak">—</b></div><div><small>คลาดจากเป้า</small><b id="graphDelta">—</b></div></div>
+  <div class="graph-legend"><span class="legend-live">● เสียงสด</span><span class="legend-meas">● ผลวัด</span><span class="legend-target">┄ เป้าหมาย ±3 dB</span><span id="graphCompareLegend" hidden>เทาประ = ก่อน · ฟ้า = หลัง</span></div>
+  <canvas id="cv" tabindex="0" role="img" aria-label="กราฟเสียงเทียบระดับอ้างอิง แตะกราฟหรือใช้ปุ่มลูกศรซ้ายขวาเพื่ออ่านความถี่"></canvas>
+  <div class="graph-probe" id="graphProbe" aria-live="polite">แตะกราฟเพื่ออ่านค่า · ← → เลื่อนความถี่</div>
+  <div class="graph-quality" id="graphQuality">กราฟ dB เทียบระดับอ้างอิง · ไม่ใช่ dB SPL</div>
+  <div class="readout" hidden><b id="rLevel">–</b><span id="rBand">—</span></div>
+  <div class="gbar"><button id="gPin" title="ตรึงกราฟไว้บนจอ">📌 ตรึงกราฟ</button><span class="grow" id="gScale"></span><span id="gRecT"></span><button id="gRec" title="อัดวิดีโอกราฟและเสียงไมค์">🎬 อัดวิดีโอ</button></div>
+  <div class="rec-status" id="gRecStatus" role="status">พร้อมอัด</div>
 </div>
 <div class="gvid" id="gVid"></div>
 <div class="gcap" id="gCap"></div>
@@ -919,7 +937,7 @@
 
   const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
   let W=0,H=0; const DPR=Math.min(window.devicePixelRatio||1,2.5);
-  const PAD={l:34,r:12,t:16,b:22}, FMIN=20,FMAX=20000; let DB_TOP=18,DB_BOT=-18;
+  const PAD={l:40,r:16,t:28,b:48}, FMIN=20,FMAX=20000; let DB_TOP=18,DB_BOT=-18;
   function fitRange(list,t0,b0){ let t=t0,b=b0,mx=-999,mn=999; for(const d of list){ if(!d||d.length!==bandF.length)continue; for(let i=0;i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX)continue; const v=d[i]; if(v===-19||!(v>-90))continue; if(v>mx)mx=v; if(v<mn)mn=v; } }
     if(mx>t0-1) t=Math.min(48,Math.ceil((mx+2)/6)*6); if(mn<b0+1) b=Math.max(-48,Math.floor((mn-2)/6)*6); return [t,b]; }
   const lminF=Math.log10(FMIN), lmaxF=Math.log10(FMAX);
@@ -1110,66 +1128,76 @@
 
   const GRID_F=[20,50,100,200,500,1000,2000,5000,10000,20000];
   const MONO=()=>getComputedStyle(document.body).getPropertyValue('--mono');
-  function drawBase(){
-    ctx.clearRect(0,0,W,H); const PLm=pal(); if(PLm.bg){ctx.fillStyle=PLm.bg;ctx.fillRect(0,0,W,H);}
-    ctx.font='10px '+MONO(); ctx.textBaseline='middle';
-    for(let db=DB_BOT;db<=DB_TOP;db+=6){ const y=yDb(db);
-      ctx.strokeStyle=db===0?PLm.zero:PLm.grid; ctx.lineWidth=db===0?1.2:1;
-      ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(W-PAD.r,y);ctx.stroke();
-      ctx.fillStyle=PLm.lab;ctx.textAlign='right';ctx.fillText((db>0?'+':'')+db,PAD.l-5,y); }
-    ctx.textAlign='center';
-    for(const f of GRID_F){ const x=xF(f);
-      ctx.strokeStyle=PLm.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();
-      ctx.fillStyle=PLm.lab;ctx.fillText(niceLabel(f),x,H-PAD.b+11); }
-    for(const xo of xoMarks()){ const x=xF(xo);
-      ctx.strokeStyle='rgba(120,130,150,.45)';ctx.lineWidth=1.2;ctx.setLineDash([2,3]);
-      ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]); }
-    { const x=xF(SUBMARK); ctx.strokeStyle='rgba(255,90,138,.4)';ctx.setLineDash([1,4]);
-      ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]); }
-    ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--target');
-    ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
-    let st=false; for(let f=FMIN;f<=FMAX;f*=1.05){ const x=xF(f),y=yDb(TARGETS[target](f)); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke();ctx.setLineDash([]);
-    drawStepOverlay();
+  const GRAPH_PROBE={f:null}; let recordingRange=null;
+  function graphData(){ return abOn&&snapB?snapB.data:measured||lastLive; }
+  function graphStats(){
+    const data=graphData(); let peak=null,sum=0,n=0;
+    if(data)bandF.forEach((f,i)=>{ const v=data[i]; if(f<FMIN||f>FMAX||!Number.isFinite(v)||v<=-100||(measured&&lowSNR(i)))return;
+      if(!peak||v>peak.v)peak={f,v}; if(f>=40&&f<=16000){sum+=(v-TARGETS[target](f))**2;n++;} });
+    return {mode:sweeping?'SWEEP':phasing?'PHASE':measuring?(mmmRunning?'MMM · กำลังวัด':'กำลังวัด'):abOn?'A / B':measured?'ผลวัด':running||rmLive()?'เสียงสด':'พร้อมวัด',peak,delta:n?Math.sqrt(sum/n):null,n};
   }
-  function drawCurve(arr,color,width,dash){
-    ctx.strokeStyle=color;ctx.lineWidth=width;if(dash)ctx.setLineDash(dash);
-    ctx.beginPath();let st=false;
-    for(let i=0;i<arr.length&&i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX)continue;
-      const x=xF(bandF[i]),y=yDb(arr[i]); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);}
-    ctx.stroke();ctx.setLineDash([]);
+  function graphHUD(){ const a=graphStats();
+    dq('graphCompareLegend').hidden=!abOn;
+    dq('graphMode').textContent=a.mode; dq('graphPeak').textContent=a.peak?niceLabel(a.peak.f)+' Hz':'—';
+    dq('graphDelta').textContent=a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB';
+    dq('graphQuality').textContent=measured&&measSNR&&measSNR.some(v=>v<10)?'● สีเทา = สัญญาณต่ำ · ไม่นำมาคิดคะแนน':'กราฟ dB เทียบระดับอ้างอิง · ไม่ใช่ dB SPL';
+  }
+  function drawBase(){
+    const p=pal(), bottom=H-PAD.b; ctx.clearRect(0,0,W,H); ctx.fillStyle=p.bg||'#0b1423';ctx.fillRect(0,0,W,H);
+    ctx.font='10px '+MONO();ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineCap='round';
+    for(let db=Math.ceil(DB_BOT/6)*6;db<=DB_TOP;db+=6){const y=yDb(db);ctx.strokeStyle=db===0?p.zero:p.grid;ctx.lineWidth=db===0?1.3:.6;
+      ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(W-PAD.r,y);ctx.stroke();ctx.fillStyle=p.lab;ctx.textAlign='right';ctx.fillText((db>0?'+':'')+db,PAD.l-6,y);}
+    const fs=W<460?[20,50,100,200,500,1000,2000,5000,10000,20000]:GRID_F;
+    ctx.textAlign='center';for(const f of fs){const x=xF(f);ctx.strokeStyle=p.grid;ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,bottom);ctx.stroke();
+      ctx.fillStyle=p.lab;ctx.fillText(niceLabel(f),Math.max(PAD.l+8,Math.min(W-PAD.r-9,x)),bottom+12);}
+    const tf=[];for(let f=FMIN;f<FMAX;f*=1.04)tf.push(f);tf.push(FMAX);
+    ctx.fillStyle=p.bg?'rgba(166,119,28,.09)':'rgba(220,180,85,.07)';ctx.beginPath();
+    tf.forEach((f,i)=>ctx[i?'lineTo':'moveTo'](xF(f),yDb(TARGETS[target](f)+3)));
+    tf.slice().reverse().forEach(f=>ctx.lineTo(xF(f),yDb(TARGETS[target](f)-3)));ctx.closePath();ctx.fill();
+    drawCurve(tf.map(f=>TARGETS[target](f)),p.tgt,1.5,[6,5],tf);
+    const marks=xoMarks().map(f=>Math.max(FMIN,Math.min(FMAX,f))).sort((a,b)=>a-b);
+    [FMIN,...marks,FMAX].slice(0,-1).forEach((lo,i)=>{const hi=[...marks,FMAX][i],x=xF(lo),w=xF(hi)-x;ctx.fillStyle=[p.bg?'#ad4261':'#db688c',p.bg?'#236889':'#58b7d4',p.bg?'#7751a6':'#ad8ad6'][i];ctx.globalAlpha=.16;ctx.fillRect(x,H-22,w,22);ctx.globalAlpha=1;ctx.fillText(['SUB','MID','HIGH'][i],x+w/2,H-11);});
+    for(const f of marks){ctx.strokeStyle=p.bg?'#8e98a7':'#526279';ctx.setLineDash([2,5]);ctx.beginPath();ctx.moveTo(xF(f),PAD.t);ctx.lineTo(xF(f),bottom);ctx.stroke();ctx.setLineDash([]);}
+    ctx.textAlign='left';ctx.fillStyle=p.lab;ctx.font='9px '+MONO();ctx.fillText('dB อ้างอิง',PAD.l,PAD.t-8);
+  }
+  function drawCurve(arr,color,width,dash,fs=bandF){
+    ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineJoin='round';if(dash)ctx.setLineDash(dash);ctx.beginPath();let st=false;
+    for(let i=0;i<arr.length&&i<fs.length;i++){if(fs[i]<FMIN||fs[i]>FMAX||!Number.isFinite(arr[i])||arr[i]<=-100){st=false;continue;}const x=xF(fs[i]),y=yDb(arr[i]);ctx[st?'lineTo':'moveTo'](x,y);st=true;}ctx.stroke();ctx.restore();
+  }
+  function drawProbe(data){if(!data||GRAPH_PROBE.f==null)return;
+    let i=0;bandF.forEach((f,k)=>{if(Math.abs(Math.log(f/GRAPH_PROBE.f))<Math.abs(Math.log(bandF[i]/GRAPH_PROBE.f)))i=k;});
+    if(!Number.isFinite(data[i]))return;const f=bandF[i],v=data[i],x=xF(f),y=yDb(v),p=pal(),low=measured&&lowSNR(i);
+    const delta=v-TARGETS[target](f),text=niceLabel(f)+' Hz · '+(v>=0?'+':'')+v.toFixed(1)+' dB · Δ '+(delta>=0?'+':'')+delta.toFixed(1)+(low?' · สัญญาณต่ำ':'');
+    ctx.save();ctx.strokeStyle=p.lab;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=low?'#919aa8':p.bg?'#087f8c':'#55d8d1';ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+    ctx.font='10px '+MONO();const w=Math.min(W-PAD.l-PAD.r,ctx.measureText(text).width+16),left=Math.max(PAD.l,Math.min(W-PAD.r-w,x-w/2));
+    ctx.fillStyle=p.bg?'#edf3f8':'#18293c';ctx.fillRect(left,PAD.t+5,w,24);ctx.fillStyle=p.bg?'#17293d':'#e8f4fc';ctx.textAlign='left';ctx.fillText(text,left+8,PAD.t+17,w-16);ctx.restore();
+    dq('graphProbe').textContent=text;
   }
   function draw(live){
     if(live)lastLive=live;
-    { const r=(abOn&&(snapA||snapB))?fitRange([snapA&&snapA.data,snapB&&snapB.data],18,-18):fitRange([measured],18,-18); DB_TOP=r[0]; DB_BOT=r[1];
-      const gs=document.getElementById('gScale'); if(gs) gs.textContent=(DB_TOP>18||DB_BOT<-18)?'⚠ สเกล '+DB_BOT+'…+'+DB_TOP:''; }
-    drawBase();
+    const range=recordingRange?recordingRange:fitRange(abOn?[snapA&&snapA.data,snapB&&snapB.data]:[measured],24,-24);
+    DB_TOP=range[0];DB_BOT=range[1];dq('gScale').textContent=DB_BOT+'…+'+DB_TOP+' dB';drawBase();
+    const data=measured||(live||((running||rmLive())?lastLive:null)),p=pal();
     if(abOn&&(snapA||snapB)){
-      if(snapA&&snapA.data.length===bandF.length) drawCurve(snapA.data,'#8a90a0',2,[5,3]);
-      if(snapB&&snapB.data.length===bandF.length) drawCurve(snapB.data,'#35d0c0',2.4,null);
-      ctx.textAlign='left';ctx.font='bold 10px '+MONO();
-      ctx.fillStyle='#8a90a0';ctx.fillText('Ⓐ ก่อน'+(snapA?'':' (ว่าง)'),PAD.l+2,PAD.t+8);
-      ctx.fillStyle='#35d0c0';ctx.fillText('Ⓑ หลัง'+(snapB?'':' (ว่าง)'),PAD.l+62,PAD.t+8);
-      return;
-    }
-    const data=measured?measured:(live||null);
-    if(data){
-      ctx.beginPath();let s2=false;
-      for(let i=0;i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX)continue; const x=xF(bandF[i]),y=yDb(data[i]); if(!s2){ctx.moveTo(x,y);s2=true;}else ctx.lineTo(x,y);}
-      ctx.lineTo(xF(Math.min(FMAX,bandF[bandF.length-1])),H-PAD.b);ctx.lineTo(xF(Math.max(FMIN,bandF[0])),H-PAD.b);ctx.closePath();
-      const g=ctx.createLinearGradient(0,PAD.t,0,H-PAD.b);g.addColorStop(0,'rgba(53,208,192,.35)');g.addColorStop(1,'rgba(53,208,192,.03)');ctx.fillStyle=g;ctx.fill();
-      ctx.lineWidth=2;
-      for(let i=0;i<bandF.length-1;i++){ if(bandF[i]<FMIN||bandF[i+1]>FMAX)continue;
-        let c=getComputedStyle(document.body).getPropertyValue('--spectrum');
-        if(measured){const d=data[i]-TARGETS[target](bandF[i]); c=d>3.5?'#ff6a6a':d<-3.5?'#6aa8ff':c;}
-        ctx.strokeStyle=c;ctx.beginPath();ctx.moveTo(xF(bandF[i]),yDb(data[i]));ctx.lineTo(xF(bandF[i+1]),yDb(data[i+1]));ctx.stroke(); }
-      if(holdOn&&!measured){ ctx.fillStyle='rgba(255,176,32,.9)';
-        for(let i=0;i<bandF.length;i++){ if(bandF[i]<FMIN||bandF[i]>FMAX||peakHold[i]<=-100)continue; ctx.fillRect(xF(bandF[i])-1.5,yDb(peakHold[i])-1.5,3,3);} }
-    }else{ ctx.fillStyle='#4a4f5c';ctx.textAlign='center';ctx.font='12px '+getComputedStyle(document.body).getPropertyValue('--sans');ctx.fillText('เริ่มวัดด้วยไมค์เพื่อดูสเปกตรัม',W/2,H/2); }
-    if(measured&&measQW&&measQW.for===measured&&measQW.w.length){ ctx.fillStyle=pal().bg?'#b3261e':'#ff7b7b'; ctx.textAlign='left'; ctx.font='bold 11px '+MONO(); ctx.fillText('⚠ '+measQW.w.map(x=>x.s).join(' · '),PAD.l+2,PAD.t+22); }
-    if(measured){ ctx.fillStyle='rgba(255,106,26,.9)';ctx.textAlign='left';ctx.font='bold 11px '+MONO();ctx.fillText('● วัดผลแล้ว',PAD.l+2,PAD.t+8);
-      if(measSNR&&measSNR.length===bandF.length){ ctx.fillStyle='rgba(150,156,170,.9)'; for(let i=0;i<bandF.length;i++){ if(measSNR[i]<10&&bandF[i]>=FMIN&&bandF[i]<=FMAX){ ctx.fillRect(xF(bandF[i])-3,H-PAD.b-6,6,6); } } } }
-    drawSim();
+      if(snapA&&snapA.data.length===bandF.length)drawCurve(snapA.data,p.bg?'#727e8d':'#94a0af',1.8,[6,5]);
+      if(snapB&&snapB.data.length===bandF.length)drawCurve(snapB.data,p.bg?'#087f8c':'#5de0d7',2.6);
+    }else if(data){
+      ctx.save();ctx.beginPath();let st=false,x0=0,x1=0;for(let i=0;i<bandF.length;i++){if(bandF[i]<FMIN||bandF[i]>FMAX||!Number.isFinite(data[i]))continue;const x=xF(bandF[i]),y=yDb(data[i]);if(!st){ctx.moveTo(x,y);st=true;x0=x;}else ctx.lineTo(x,y);x1=x;}
+      if(st){ctx.lineTo(x1,H-PAD.b);ctx.lineTo(x0,H-PAD.b);ctx.closePath();const g=ctx.createLinearGradient(0,PAD.t,0,H-PAD.b);g.addColorStop(0,p.bg?'rgba(10,140,150,.14)':'rgba(68,211,200,.20)');g.addColorStop(1,'rgba(68,211,200,0)');ctx.fillStyle=g;ctx.fill();}ctx.restore();
+      drawCurve(data,measured?(p.bg?'#155779':'#d9f1ff'):(p.bg?'#087f8c':'#50ddd1'),2.3);
+      if(measured)for(let i=0;i<bandF.length-1;i++){if(bandF[i]<FMIN||bandF[i+1]>FMAX||!Number.isFinite(data[i])||!Number.isFinite(data[i+1]))continue;
+        const low=lowSNR(i)||lowSNR(i+1),delta=data[i]-TARGETS[target](bandF[i]);if(!low&&Math.abs(delta)<=3)continue;
+        ctx.strokeStyle=low?(p.bg?'#8993a1':'#8f9aaa'):delta>3?(p.bg?'#ba3f46':'#ff7b83'):(p.bg?'#3568bc':'#77aeff');ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(xF(bandF[i]),yDb(data[i]));ctx.lineTo(xF(bandF[i+1]),yDb(data[i+1]));ctx.stroke();}
+      if(holdOn&&!measured){ctx.fillStyle=p.tgt;bandF.forEach((f,i)=>{if(f>=FMIN&&f<=FMAX&&peakHold[i]>-100)ctx.fillRect(xF(f)-1.5,yDb(peakHold[i])-1.5,3,3);});}
+      drawSim();
+    }else{ctx.fillStyle=p.lab;ctx.textAlign='center';ctx.font='12px '+MONO();ctx.fillText('เปิดไมค์เพื่อดูกราฟเสียงสด',W/2,H/2);}
+    graphHUD();drawProbe(abOn&&snapB?snapB.data:data);
   }
+  function graphInspect(e){const r=cv.getBoundingClientRect(),x=Math.max(PAD.l,Math.min(W-PAD.r,e.clientX-r.left));GRAPH_PROBE.f=Math.pow(10,lminF+(x-PAD.l)/(W-PAD.l-PAD.r)*(lmaxF-lminF));if(!sweeping&&!phasing)draw();}
+  cv.addEventListener('pointerdown',e=>{try{cv.setPointerCapture(e.pointerId);}catch(_){}graphInspect(e);});
+  cv.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='mouse')graphInspect(e);});
+  cv.addEventListener('keydown',e=>{if(e.key==='Escape'){GRAPH_PROBE.f=null;dq('graphProbe').textContent='แตะกราฟเพื่ออ่านค่า · ← → เลื่อนความถี่';draw();return;}if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();GRAPH_PROBE.f=clamp((GRAPH_PROBE.f||1000)*Math.pow(2,(e.key==='ArrowRight'?1:-1)/perOct),FMIN,FMAX);draw();});
 
   function detectTone(fNow){
     analyser.getFloatFrequencyData(freqData);
@@ -1791,7 +1819,7 @@
     for(let db=Math.ceil(DBOT/6)*6;db<=DTOP;db+=6){ const y=dY(db); c.strokeStyle=db===0?PL.zero:PL.grid; c.lineWidth=1; c.beginPath(); c.moveTo(DP.l,y); c.lineTo(W-DP.r,y); c.stroke(); c.fillStyle=PL.lab; c.textAlign='right'; c.fillText(sgn(db),DP.l-5,y); }
     c.textAlign='center';
     for(const f of GRID_F){ const x=dX(f); c.strokeStyle=PL.grid; c.beginPath(); c.moveTo(x,DP.t); c.lineTo(x,H-DP.b); c.stroke(); c.fillStyle=PL.lab; c.fillText(niceLabel(f),x,H-DP.b+11); }
-    if(DV.show.tgt){ const fs=[]; for(let f=FMIN;f<=FMAX;f*=1.05)fs.push(f); dvLine(fs,fs.map(f=>TARGETS[target](f)),PL.tgt,1.4,[5,4]); }
+    if(DV.show.tgt){ const fs=[]; for(let f=FMIN;f<=FMAX;f*=1.05)fs.push(f); c.fillStyle=PL.bg?'rgba(166,119,28,.09)':'rgba(220,180,85,.07)';c.beginPath();fs.forEach((f,i)=>c[i?'lineTo':'moveTo'](dX(f),dY(TARGETS[target](f)+3)));fs.slice().reverse().forEach(f=>c.lineTo(dX(f),dY(TARGETS[target](f)-3)));c.closePath();c.fill();dvLine(fs,fs.map(f=>TARGETS[target](f)),PL.tgt,1.5,[6,5]); }
     if((sweeping||sweepFrozen)&&sweepData.length>1){ let mx=-999; for(const p of sweepData) if(p.db>mx)mx=p.db;
       dvLine(sweepData.map(p=>p.f),sweepData.map(p=>Math.max(DBOT,(p.db-mx)+9)),'#ff7a3a',2.2);
       if(sweepResult&&sweepResult.peakF){ const x=dX(sweepResult.peakF); c.fillStyle='#ff9b9b'; c.font='bold 10px '+MONO(); c.fillText('พีคตู้ '+Math.round(sweepResult.peakF)+'Hz',x,DP.t+6); } }
@@ -1801,7 +1829,7 @@
       for(let i=0;i<bandF.length;i++){ const f=bandF[i]; if(f<FMIN||f>FMAX)continue; const x=dX(f),y=dY(data[i]); if(!st){c.moveTo(x,y);st=true;x0=x;}else c.lineTo(x,y); x1=x; }
       c.lineTo(x1,H-DP.b); c.lineTo(x0,H-DP.b); c.closePath();
       const g=c.createLinearGradient(0,DP.t,0,H-DP.b); g.addColorStop(0,'rgba(53,208,192,'+(measured?.28:.14)+')'); g.addColorStop(1,'rgba(53,208,192,.02)'); c.fillStyle=g; c.fill();
-      dvLine(bandF,data,measured?'#35d0c0':'rgba(53,208,192,.55)',measured?2:1.3);
+      dvLine(bandF,data,measured?(PL.bg?'#155779':'#d9f1ff'):(PL.bg?'#087f8c':'#50ddd1'),measured?2.3:1.8);
     }
     const pv=prevMeas(); if(DV.show.prev&&pv&&measured) dvLine(bandF,pv.d,'rgba(150,156,170,.9)',1.5,[4,3]);
     const sc=simCurves();
@@ -2185,7 +2213,7 @@
   dq('dvResult').addEventListener('click',e=>{ const b=e.target.closest('[data-r="ask"]'); if(b)askStyle(); });
 
   /* ===== app shell: tabs · style · level · outdoor · undo · history ===== */
-  function pal(){ return document.body.classList.contains('outdoor')?{grid:'#ddd8ce',zero:'#8f897d',lab:'#4f4c46',bg:'#ffffff',tgt:'#a87200'}:{grid:'#1d212a',zero:'#3a4150',lab:'#5a6172',bg:null,tgt:'rgba(255,210,74,.8)'}; }
+  function pal(){ return document.body.classList.contains('outdoor')?{grid:'#dce5ed',zero:'#93a5b6',lab:'#465e74',bg:'#ffffff',tgt:'#a7771c'}:{grid:'#1c3047',zero:'#47617e',lab:'#9bb0c8',bg:null,tgt:'#e4bf65'}; }
   function setView(v,fromPop){
     if(v==='tune'){ if(!DV.open)dvOpen(); }
     else if(DV.open) dvClose(true);
@@ -2271,7 +2299,7 @@
   dq('pList').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&(b.dataset.load||b.dataset.dup))setTimeout(()=>setView('tune'),0); });
   dq('pfNew').addEventListener('click',()=>setTimeout(()=>setView('tune'),0));
   function uiInit(){
-    let sun=true; try{ sun=localStorage.getItem('rta_sun2')!=='0'; }catch(_){} setSun(sun);
+    let sun=false; try{ sun=localStorage.getItem('rta_sun2')==='1'; }catch(_){} setSun(sun);
     if(REC.style&&REC.style!==target) setTargetUI(REC.style);
     renderStyleChips(); histReset();
     let v=(location.hash||'').slice(1); if(!['meas','tune','prof','guide'].includes(v)){ try{ v=localStorage.getItem('rta_view')||'meas'; }catch(_){ v='meas'; } } if(!['meas','tune','prof','guide'].includes(v))v='meas';
@@ -2780,95 +2808,116 @@ function fmp4ToMp4(buf){
   for(const x of allChunks){ const s=tracks[x.id].samples; for(let i=x.c.first;i<x.c.first+x.c.count;i++){ out.set(u8.subarray(s[i].off,s[i].off+s[i].size),p); p+=s[i].size; } }
   return out;
 }
-const REC_V={mr:null,chunks:[],t0:0,timer:null,cv:null,url:null,cam:null,camV:null,camH:0,mode:'graph',face:'environment'};
-try{ const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}'); if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode; if(['environment','user'].includes(o.face))REC_V.face=o.face; }catch(_){}
-function recMime(){ if(!window.MediaRecorder)return null; const ts=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']; for(const t of ts){ try{ if(MediaRecorder.isTypeSupported(t))return t; }catch(_){} } return ''; }
-function recEl(){ const R=REC_V; return (performance.now()-R.t0-(R.pausedMs||0)-(R.pausedAt?performance.now()-R.pausedAt:0))/1000; }
-function recSrc(){ return (DV.open&&dq('dvCv'))?dq('dvCv'):cv; }
-function drawCover(x,v,dx,dy,dw,dh,mirror){ const vw=v.videoWidth,vh=v.videoHeight; if(!vw||!vh)return; const s=Math.max(dw/vw,dh/vh), sw=dw/s, sh=dh/s;
-  x.save(); x.beginPath(); x.rect(dx,dy,dw,dh); x.clip(); if(mirror){ x.translate(dx*2+dw,0); x.scale(-1,1); } x.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,dx,dy,dw,dh); x.restore(); }
-function recFrame(){ const R=REC_V, rc=R.cv, x=rc.getContext('2d'), src=recSrc(), HD=104, w=rc.width, h=rc.height;
-  if(!src.width||!src.height)return;
-  const PLr=pal(); x.fillStyle=PLr.bg||'#0d0f13'; x.fillRect(0,0,w,h);
-  const fg=PLr.bg?'#1c1f26':'#e9ecf2', mu=PLr.bg?'#6b7080':'#8a90a0';
-  x.textBaseline='top'; x.textAlign='left'; x.font='bold 38px '+MONO(); x.fillStyle='#ff6a1a'; x.fillText('RTA จูน 3 ทาง',18,10);
-  x.font='28px '+MONO(); x.fillStyle=fg; const st=STEPS[wStep]; x.fillText((measured?'● ผลวัด':'● สด')+' · '+(st?('ขั้น '+(wStep+1)+' '+st.t):''),18,60);
-  x.textAlign='right'; x.fillStyle='#ff4d4d'; const el=recEl(); x.font='bold 36px '+MONO(); x.fillText('⏺ '+Math.floor(el/60)+':'+String(Math.floor(el%60)).padStart(2,'0'),w-18,10);
-  x.font='26px '+MONO(); x.fillStyle=mu; x.fillText(dq('rLevel').textContent+' dB · '+dq('rBand').textContent,w-18,62); x.textAlign='left';
-  const camOn=R.camV&&R.camV.readyState>=2&&R.camV.videoWidth>0, mir=R.face==='user';
-  if(R.mode==='camfull'){
-    if(camOn) drawCover(x,R.camV,0,0,w,h,mir); else { x.fillStyle='#000'; x.fillRect(0,0,w,h); x.fillStyle='#888'; x.font='30px '+MONO(); x.textAlign='center'; x.fillText(R.cam?'กำลังเปิดกล้อง…':'ไม่มีภาพกล้อง',w/2,h/2); x.textAlign='left'; }
-    x.fillStyle='rgba(0,0,0,.45)'; x.fillRect(0,0,w,HD);
-    x.textBaseline='top'; x.font='bold 38px '+MONO(); x.fillStyle='#ff8a3a'; x.fillText('RTA จูน 3 ทาง',18,10);
-    x.font='28px '+MONO(); x.fillStyle='#fff'; x.fillText((measured?'● ผลวัด':'● สด')+' · '+(st?('ขั้น '+(wStep+1)+' '+st.t):''),18,60);
-    x.textAlign='right'; x.fillStyle='#ff5a5a'; x.font='bold 36px '+MONO(); x.fillText('⏺ '+Math.floor(el/60)+':'+String(Math.floor(el%60)).padStart(2,'0'),w-18,10);
-    x.font='26px '+MONO(); x.fillStyle='#ddd'; x.fillText(dq('rLevel').textContent+' dB · '+dq('rBand').textContent,w-18,62); x.textAlign='left';
-    const gw=Math.round(w*(h>w?0.56:0.42)), gh2=Math.round(gw*src.height/src.width), gx=w-gw-24, gy=h-gh2-24;
-    x.fillStyle=PLr.bg?'rgba(255,255,255,.93)':'rgba(13,15,19,.88)'; x.fillRect(gx-6,gy-6,gw+12,gh2+12);
-    x.globalAlpha=.97; x.drawImage(src,gx,gy,gw,gh2); x.globalAlpha=1; return; }
-  if(R.mode==='stack'){ const ch=R.camH;
-    if(camOn) drawCover(x,R.camV,0,HD,w,ch,mir); else { x.fillStyle='#000'; x.fillRect(0,HD,w,ch); x.fillStyle='#888'; x.font='30px '+MONO(); x.textAlign='center'; x.fillText(R.cam?'กำลังเปิดกล้อง…':'ไม่มีภาพกล้อง',w/2,HD+ch/2); x.textAlign='left'; }
-    x.drawImage(src,0,HD+ch,w,h-HD-ch); return; }
-  x.drawImage(src,0,HD,w,h-HD);
-  if(R.mode==='pip'&&camOn){ const pw=Math.round(w*0.27), ar=R.camV.videoHeight/R.camV.videoWidth, ph=Math.round(Math.min(pw*ar,(h-HD)*0.45)), dx=62, dy=h-ph-50;
-    x.fillStyle='#fff'; x.fillRect(dx-5,dy-5,pw+10,ph+10); drawCover(x,R.camV,dx,dy,pw,ph,mir); }
+const REC_V={phase:'idle',token:0,session:null,mr:null,timer:null,url:null,file:null,mode:'graph',face:'environment'};
+try{const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}');if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode;if(['environment','user'].includes(o.face))REC_V.face=o.face;}catch(_){}
+function recMime(){if(!window.MediaRecorder)return null;for(const t of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(_){}}return '';}
+function recUI(phase,msg){const R=REC_V;R.phase=phase;const b=dq('gRec');b.disabled=phase==='processing';b.classList.toggle('on',phase==='recording');
+  b.textContent=({idle:'🎬 อัดวิดีโอ',preparing:'✕ ยกเลิกการเตรียม',recording:'⏹ หยุดอัด',processing:'⏳ กำลังจัดไฟล์',ready:'🎬 อัดคลิปใหม่',error:'🎬 ลองอัดใหม่'})[phase];
+  dq('gRecStatus').textContent=msg||({idle:'พร้อมอัด',preparing:'กำลังเปิดไมค์ / กล้อง',recording:'กำลังอัด · เสียงจากไมค์',processing:'กำลังจัดไฟล์ — กรุณารอ',ready:'พร้อมบันทึก — กดบันทึกลงเครื่อง',error:'อัดไม่สำเร็จ'})[phase];
+  if(phase!=='recording')dq('gRecT').textContent='';
 }
-function recCamPreview(on){ let pv=dq('gCamPv'); if(!on){ if(pv)pv.remove(); return; }
-  if(!pv){ pv=document.createElement('video'); pv.id='gCamPv'; pv.muted=true; pv.playsInline=true; pv.setAttribute('playsinline',''); pv.autoplay=true;
-    pv.style.cssText='position:absolute;left:40px;bottom:46px;width:96px;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:3;pointer-events:none;background:#000'+(REC_V.face==='user'?';transform:scaleX(-1)':'');
-    document.querySelector('#vMeas .graphwrap').appendChild(pv); }
-  pv.srcObject=REC_V.cam; pv.play().catch(()=>{}); return pv; }
-function recAsk(){ const R=REC_V;
-  const modes=[['graph','📈','กราฟอย่างเดียว','ไฟล์เล็ก อ่านค่าชัด'],['camfull','🎥','วิดีโอเต็มจอ · กราฟมุมจอ','ภาพกล้องเต็มจอ กราฟเล็กมุมขวาล่าง'],['pip','🖼','กราฟ + กล้องมุมจอ','กราฟเต็มจอ ภาพกล้องมุมซ้ายล่าง'],['stack','📱','กล้องบน · กราฟล่าง','เห็นลำโพง/จุดวัดชัด คู่กับกราฟ']];
-  openModal('<h3>🎬 อัดวิดีโอ — เลือกรูปแบบ</h3><p>ทุกแบบอัด <b>เสียงจากไมค์</b> พร้อมกราฟ · แบบมีกล้องจะถ่ายภาพจากกล้องมือถือไปพร้อมกัน</p>'+
-    '<div class="stylegrid">'+modes.map(m=>'<button data-rv="mode" data-v="'+m[0]+'" class="'+(R.mode===m[0]?'sel':'')+'"><span class="e">'+m[1]+'</span><div><b>'+m[2]+'</b><span>'+m[3]+'</span></div></button>').join('')+'</div>'+
-    '<div class="strength" id="rvFace" style="'+(R.mode==='graph'?'opacity:.4':'')+'">'+[['environment','📷 กล้องหลัง','ถ่ายลำโพง'],['user','🤳 กล้องหน้า','ถ่ายตัวเอง']].map(c=>'<button data-rv="face" data-v="'+c[0]+'" class="'+(R.face===c[0]?'sel':'')+'">'+c[1]+'<small>'+c[2]+'</small></button>').join('')+'</div>'+
-    '<div class="dvmfoot"><button data-m="close">ยกเลิก</button><button class="primary" data-rv="go">⏺ เริ่มอัด</button></div>'); }
-dq('dvModal').addEventListener('click',e=>{ const b=e.target.closest('[data-rv]'); if(!b)return; const R=REC_V;
-  if(b.dataset.rv==='go'){ try{ localStorage.setItem('rta_recopt',JSON.stringify({mode:R.mode,face:R.face})); }catch(_){} closeModal(); recStart(); return; }
-  R[b.dataset.rv]=b.dataset.v; dq('dvMbox').querySelectorAll('[data-rv="'+b.dataset.rv+'"]').forEach(x=>x.classList.toggle('sel',x===b));
-  const f=dq('rvFace'); if(f)f.style.opacity=R.mode==='graph'?'.4':''; });
-async function recStart(){
-  if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){ appToast('⚠ เบราว์เซอร์นี้อัดวิดีโอไม่ได้ — ใช้ Chrome',true); return; }
-  if(!running){ if(SY.role==='remote'){ appToast('⚠ โหมดรีโมต: ไมค์อยู่ที่คอม — อัดวิดีโอบนเครื่องที่เปิดไมค์',true); return; }
-    dq('btnMic').click(); for(let i=0;i<40&&!running;i++) await new Promise(r=>setTimeout(r,100)); if(!running){ appToast('⚠ เปิดไมค์ไม่ได้ — อัดวิดีโอต้องใช้ไมค์',true); return; } }
-  const R=REC_V; R.cam=null; R.camV=null;
-  if(R.mode!=='graph'){
-    try{ R.cam=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:R.face},width:{ideal:1280},height:{ideal:720}},audio:false}); R.camV=recCamPreview(true); }
-    catch(e){ R.cam=null; recCamPreview(false); appToast('⚠ เปิดกล้องไม่ได้ ('+(e.name||e.message)+') — อัดเฉพาะกราฟ + เสียงแทน',true); R.mode0=R.mode; R.mode='graph'; } }
-  const src=recSrc(), w=1080, gh=Math.round(src.height*w/Math.max(1,src.width)); R.camH=R.mode==='stack'?810:0;
-  R.cv=document.createElement('canvas'); R.cv.width=w; R.cv.height=(104+R.camH+gh)&~1;
-  if(R.mode==='camfull'){ for(let i=0;i<30&&!(R.camV&&R.camV.videoWidth);i++) await new Promise(r=>setTimeout(r,100));
-    const vw=(R.camV&&R.camV.videoWidth)||1280, vh=(R.camV&&R.camV.videoHeight)||720; R.cv.height=Math.min(1920,Math.round(w*vh/vw))&~1; } R.t0=performance.now(); R.pausedMs=0; R.pausedAt=0; recFrame();
-  if(!recDest&&audioCtx){ recDest=audioCtx.createMediaStreamDestination(); if(srcNode){ try{ srcNode.connect(recDest); }catch(_){} } }
-  const vs=R.cv.captureStream(30), tr=recDest?recDest.stream.getAudioTracks()[0]:(micStream&&micStream.getAudioTracks()[0]), ms=new MediaStream([...vs.getVideoTracks(),...(tr?[tr]:[])]);
-  const mime=recMime(), vbr=R.mode==='graph'?2500000:4000000;
-  try{ R.mr=new MediaRecorder(ms,mime?{mimeType:mime,videoBitsPerSecond:vbr,audioBitsPerSecond:128000}:undefined); }catch(e){ try{ R.mr=new MediaRecorder(ms); }catch(e2){ recCamOff(); appToast('⚠ อัดไม่ได้: '+e2.message,true); return; } }
-  R.chunks=[]; R.mr.ondataavailable=e=>{ if(e.data&&e.data.size)R.chunks.push(e.data); };
-  R.mr.onstop=()=>recDone(); R.mr.start(1000);
-  R.timer=setInterval(()=>{ if(R.pausedAt)return; recFrame(); const el=recEl(); dq('gRecT').textContent='⏺ '+Math.floor(el/60)+':'+String(Math.floor(el%60)).padStart(2,'0'); if(el>600){ recStop(); appToast('⏹ อัดครบ 10 นาที — หยุดและบันทึกไฟล์ให้แล้ว'); } },1000/30);
-  const b=dq('gRec'); b.classList.add('on'); b.textContent='⏹ หยุดอัด'; showGraph();
-  appToast('🎬 กำลังอัด'+(R.mode==='graph'?'กราฟ':' กล้อง + กราฟ')+' + เสียงไมค์ — กดวัดผล/เปิด Pink Noise ได้ตามปกติ'); }
-function recCamOff(){ const R=REC_V; if(R.cam){ R.cam.getTracks().forEach(t=>t.stop()); R.cam=null; } R.camV=null; recCamPreview(false); if(R.mode0){ R.mode=R.mode0; R.mode0=null; } }
-function recStop(){ const R=REC_V; clearInterval(R.timer); R.timer=null; if(R.pausedAt){ R.pausedMs+=performance.now()-R.pausedAt; R.pausedAt=0; } if(R.mr&&R.mr.state!=='inactive'){ try{ R.mr.requestData(); }catch(_){} R.mr.stop(); } recCamOff(); const b=dq('gRec'); b.classList.remove('on'); b.textContent='🎬 อัดวิดีโอ'; dq('gRecT').textContent=''; }
-async function recDone(){ const R=REC_V, type=(R.mr&&R.mr.mimeType)||'video/webm', ext=type.includes('mp4')?'mp4':'webm'; let blob=new Blob(R.chunks,{type}); R.mr=null; R.chunks=[];
-  if(blob.size&&ext==='mp4'){ const p0=dq('gVid'); p0.innerHTML='<b>⏳ กำลังจัดไฟล์วิดีโอให้เล่นได้ครบทุกเครื่อง…</b>'; p0.classList.add('show');
-    try{ const fixed=fmp4ToMp4(await blob.arrayBuffer()); blob=new Blob([fixed],{type:'video/mp4'}); R.fixed=true; }catch(e){ R.fixed=false; console.warn('mp4 fix skipped',e); } }
-  if(!blob.size){ appToast('⚠ ไม่ได้ข้อมูลวิดีโอ',true); return; }
-  if(R.url)URL.revokeObjectURL(R.url); R.url=URL.createObjectURL(blob);
-  const d=new Date(), nm='rta-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'.'+ext;
-  R.file=new File([blob],nm,{type}); const canShare=!!(navigator.canShare&&navigator.canShare({files:[R.file]}));
-  const p=dq('gVid'); p.innerHTML='<b>🎬 วิดีโอผลวัด + เสียง</b> · '+(blob.size/1048576).toFixed(1)+' MB<video controls playsinline src="'+R.url+'"></video>'+
-    '<div class="row"><a class="btn" href="'+R.url+'" download="'+nm+'"><button class="primary" style="width:100%">💾 บันทึกลงเครื่อง</button></a>'+(canShare?'<button id="gVidShare">📤 แชร์ (LINE ฯลฯ)</button>':'')+'<button id="gVidX">✕ ปิด</button></div>'+
-    '<small>ไฟล์ '+nm+' · ภาพ = กราฟที่เห็นบนจอ · เสียง = ที่ไมค์ได้ยินจริง (ไม่มีการปรับแต่ง)</small>';
-  p.classList.add('show'); p.scrollIntoView({behavior:'smooth',block:'nearest'});
-  const sh=dq('gVidShare'); if(sh)sh.onclick=()=>navigator.share({files:[R.file],title:'RTA ผลวัด'}).catch(()=>{});
-  dq('gVidX').onclick=()=>p.classList.remove('show'); }
-dq('gRec').addEventListener('click',()=>{ if(REC_V.timer)recStop(); else recAsk(); });
-document.addEventListener('visibilitychange',()=>{ const R=REC_V; if(!R.timer||!R.mr)return;
-  if(document.hidden){ if(R.mr.state==='recording'){ try{ R.mr.pause(); R.pausedAt=performance.now(); }catch(_){} } }
-  else if(R.mr.state==='paused'){ try{ R.mr.resume(); }catch(_){} if(R.pausedAt){ R.pausedMs+=performance.now()-R.pausedAt; R.pausedAt=0; } appToast('▶ อัดต่อแล้ว — ช่วงที่สลับแอป/ปิดจอ ถูกข้ามไป ไม่มีภาพค้าง'); } });
-dq('btnMic').addEventListener('click',()=>{ const was=running; if(REC_V.timer&&was) setTimeout(()=>{ if(!running) appToast('⚠ ปิดไมค์ระหว่างอัด — วิดีโอยังอัดต่อ แต่ช่วงนี้จะไม่มีเสียง (กดเริ่มไมค์เพื่อมีเสียงต่อ)',true); },50); },true);
+function recEl(S=REC_V.session){return S?(performance.now()-S.t0-S.pausedMs-(S.pausedAt?performance.now()-S.pausedAt:0))/1000:0;}
+function recSrc(){return (DV.open&&dq('dvCv')&&dq('dvCv').width&&dq('dvCv').height)?dq('dvCv'):cv;}
+function drawCover(x,v,dx,dy,dw,dh,mirror){const vw=v.videoWidth,vh=v.videoHeight;if(!vw||!vh||dw<=0||dh<=0)return;const s=Math.max(dw/vw,dh/vh),sw=dw/s,sh=dh/s;
+  x.save();x.beginPath();x.rect(dx,dy,dw,dh);x.clip();if(mirror){x.translate(dx*2+dw,0);x.scale(-1,1);}x.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,dx,dy,dw,dh);x.restore();}
+function recGraphFit(x,src,dx,dy,dw,dh){if(!src.width||!src.height||dw<=0||dh<=0)return;const s=Math.min(dw/src.width,dh/src.height),w=src.width*s,h=src.height*s;x.drawImage(src,dx+(dw-w)/2,dy+(dh-h)/2,w,h);}
+function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=rc.getContext('2d'),src=recSrc(),HD=156,w=rc.width,h=rc.height,p=pal(),a=graphStats();
+  x.fillStyle=p.bg||'#0b1423';x.fillRect(0,0,w,h);const camOn=S.camV&&S.camV.readyState>=2&&S.camV.videoWidth>0,mir=S.face==='user';
+  if(S.mode==='camfull'){
+    if(camOn)drawCover(x,S.camV,0,0,w,h,mir);
+    const gw=Math.round(w*.62),gh=Math.min(Math.round(gw*.72),Math.round(h*.38)),gx=w-gw-24,gy=h-gh-24;x.fillStyle=p.bg?'#fff':'#0b1423';x.fillRect(gx-8,gy-8,gw+16,gh+16);recGraphFit(x,src,gx,gy,gw,gh);
+  }else if(S.mode==='stack'){
+    const ch=Math.round((h-HD)*.42);if(camOn)drawCover(x,S.camV,0,HD,w,ch,mir);recGraphFit(x,src,0,HD+ch,w,h-HD-ch);
+  }else if(S.mode==='pip'){
+    const strip=280;if(camOn){x.fillStyle='#e9f5ff';x.fillRect(20,HD+16,248,240);drawCover(x,S.camV,24,HD+20,240,232,mir);}
+    x.fillStyle=p.bg?'#465e74':'#9fb3c9';x.font='25px '+MONO();x.textAlign='left';x.fillText('ภาพกล้อง + กราฟเสียง',300,HD+64,w-324);x.fillText('กราฟไม่ถูกกล้องบัง',300,HD+108,w-324);
+    recGraphFit(x,src,0,HD+strip,w,h-HD-strip);
+  }else{
+    recGraphFit(x,src,0,HD,w,h-HD);
+  }
+  x.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':p.bg?'#f0f5fa':'#111f31';x.fillRect(0,0,w,HD);
+  const fg=S.mode==='camfull'||!p.bg?'#e8f4ff':'#142d44',mu=S.mode==='camfull'||!p.bg?'#9fb3c9':'#50667b';
+  x.textBaseline='top';x.textAlign='left';x.font='bold 36px '+MONO();x.fillStyle=fg;x.fillText('RTA · '+a.mode,24,18,w-240);
+  x.font='25px '+MONO();x.fillStyle=mu;x.fillText('พีค '+(a.peak?niceLabel(a.peak.f)+' Hz':'—')+'   เทียบเป้า '+(a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB'),24,72,w-48);
+  x.font='21px '+MONO();x.fillText('กราฟ dB อ้างอิง · เสียงไมค์ dBFS · ไม่ใช่ dB SPL',24,116,w-48);
+  const t=recEl(S);x.textAlign='right';x.fillStyle='#ff7b83';x.font='bold 32px '+MONO();x.fillText('● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),w-24,20);x.textAlign='left';
+}
+function recCamPreview(S,on){let pv=dq('gCamPv');if(!on){if(pv)pv.remove();return null;}
+  if(!pv){pv=document.createElement('video');pv.id='gCamPv';pv.muted=true;pv.playsInline=true;pv.autoplay=true;pv.style.cssText='position:absolute;left:18px;top:94px;width:80px;border:2px solid #d9f1ff;border-radius:8px;z-index:3;pointer-events:none;background:#000';document.querySelector('#vMeas .graphwrap').appendChild(pv);}
+  pv.style.transform=S.face==='user'?'scaleX(-1)':'';pv.srcObject=S.cam;pv.play().catch(()=>{});return pv;
+}
+function recRelease(S){if(!S)return;S.released=true;clearInterval(S.timer);S.timer=null;clearTimeout(S.stopWatch);if(REC_V.session===S){REC_V.timer=null;recordingRange=null;recCamPreview(S,false);}
+  if(S.videoStream)S.videoStream.getVideoTracks().forEach(t=>t.stop());S.videoStream=null;if(S.cam)S.cam.getTracks().forEach(t=>t.stop());if(S.camV)S.camV.srcObject=null;S.cam=null;S.camV=null;
+}
+function recAsk(){if(['preparing','recording','processing'].includes(REC_V.phase))return;const R=REC_V;
+  const modes=[['graph','📈','กราฟอย่างเดียว','กราฟใหญ่ + เสียงไมค์'],['camfull','🎥','กล้องเต็มจอ','กราฟมุมขวาล่าง + เสียงไมค์'],['pip','🖼','กราฟ + กล้องมุมจอ','กราฟใหญ่ + ภาพกล้องเล็ก'],['stack','📱','กล้องบน · กราฟล่าง','เหมาะกับวิดีโอแนวตั้ง']];
+  openModal('<h3>🎬 บันทึกวิดีโอผลวัด</h3><p>ภาพมีสัดส่วนคงที่ตลอดคลิป · บันทึกเสียงจากไมค์ · สูงสุด 10 นาที</p><div class="stylegrid">'+modes.map(m=>'<button data-rv="mode" data-v="'+m[0]+'" class="'+(R.mode===m[0]?'sel':'')+'"><span class="e">'+m[1]+'</span><div><b>'+m[2]+'</b><span>'+m[3]+'</span></div></button>').join('')+'</div><div class="strength" id="rvFace" style="'+(R.mode==='graph'?'opacity:.4':'')+'">'+[['environment','📷 กล้องหลัง'],['user','🤳 กล้องหน้า']].map(c=>'<button data-rv="face" data-v="'+c[0]+'" class="'+(R.face===c[0]?'sel':'')+'">'+c[1]+'</button>').join('')+'</div><div class="dvmfoot"><button data-m="close">ยกเลิก</button><button class="primary" data-rv="go">⏺ เริ่มอัด</button></div>');
+}
+dq('dvModal').addEventListener('click',e=>{const b=e.target.closest('[data-rv]');if(!b)return;const R=REC_V;if(b.dataset.rv==='go'){try{localStorage.setItem('rta_recopt',JSON.stringify({mode:R.mode,face:R.face}));}catch(_){}closeModal();recStart();return;}
+  R[b.dataset.rv]=b.dataset.v;dq('dvMbox').querySelectorAll('[data-rv="'+b.dataset.rv+'"]').forEach(x=>x.classList.toggle('sel',x===b));const f=dq('rvFace');if(f)f.style.opacity=R.mode==='graph'?'.4':'';
+});
+async function recStart(){const R=REC_V;if(['preparing','recording','processing'].includes(R.phase))return;
+  if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){appToast('เบราว์เซอร์นี้อัดวิดีโอไม่ได้ — ลอง Chrome',true);return;}
+  if(SY.role==='remote'){appToast('โหมดรีโมต: ให้อัดบนเครื่องที่รับเสียงจากไมค์',true);return;}
+  const S={id:++R.token,mode:R.mode,face:R.face,chunks:[],t0:0,pausedMs:0,pausedAt:0,range:[DB_TOP,DB_BOT],timer:null,mr:null,cam:null,camV:null,videoStream:null,released:false,finalized:false};R.session=S;recUI('preparing');
+  const active=()=>R.session===S&&R.token===S.id&&R.phase==='preparing';
+  try{
+    if(!running)await startMic();if(!active())return;if(!running)throw new Error('เปิดไมค์ไม่ได้ — กรุณาอนุญาตไมค์แล้วลองใหม่');
+    if(S.mode!=='graph'){
+      try{S.cam=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.face},width:{ideal:1280},height:{ideal:720}},audio:false});}
+      catch(e){if(!active())return;S.mode='graph';appToast('เปิดกล้องไม่ได้ — อัดกราฟและเสียงไมค์แทน',true);}
+      if(!active())return;
+      if(S.cam){S.camV=recCamPreview(S,true);for(let i=0;i<30&&active()&&!S.camV.videoWidth;i++)await new Promise(r=>setTimeout(r,100));if(!active())return;if(!S.camV.videoWidth)throw new Error('กล้องยังไม่ส่งภาพ — ลองอัดใหม่');}
+    }
+    if(!active()||!running)throw new Error('ไมค์ถูกหยุดระหว่างเตรียมอัด');
+    S.cv=document.createElement('canvas');S.cv.width=1080;S.cv.height=S.mode==='stack'?1920:S.mode==='graph'?810:1080;
+    if(S.mode==='camfull')S.cv.height=S.camV.videoHeight>S.camV.videoWidth?1920:810;
+    S.t0=performance.now();recFrame(S);
+    if(!recDest&&audioCtx){recDest=audioCtx.createMediaStreamDestination();if(srcNode)srcNode.connect(recDest);}
+    const tr=recDest?recDest.stream.getAudioTracks()[0]:micStream&&micStream.getAudioTracks()[0];if(!tr||tr.readyState==='ended')throw new Error('ไม่พบเสียงไมค์สำหรับวิดีโอ');
+    S.videoStream=S.cv.captureStream(30);const ms=new MediaStream([...S.videoStream.getVideoTracks(),tr]),mime=recMime();
+    try{S.mr=new MediaRecorder(ms,mime?{mimeType:mime,videoBitsPerSecond:S.mode==='graph'?2500000:4000000,audioBitsPerSecond:128000}:undefined);}catch(_){S.mr=new MediaRecorder(ms);}
+    R.mr=S.mr;S.mr.ondataavailable=e=>{if(!S.finalized&&e.data&&e.data.size)S.chunks.push(e.data);};
+    S.mr.onerror=e=>{S.error=(e.error&&e.error.message)||'ตัวบันทึกวิดีโอขัดข้อง';recStop(S.error);};
+    S.mr.onstop=()=>{recRelease(S);recDone(S);};
+    S.mr.start(1000);recordingRange=S.range;recUI('recording');
+    S.timer=setInterval(()=>{if(S.pausedAt)return;try{recFrame(S);}catch(e){recStop(e.message);return;}const t=recEl(S);dq('gRecT').textContent='● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');if(t>=600){recStop();appToast('อัดครบ 10 นาที — กำลังจัดไฟล์ กรุณากดบันทึกลงเครื่อง');}},1000/30);R.timer=S.timer;showGraph();
+  }catch(e){S.error=e.message||String(e);recRelease(S);if(R.session===S){R.mr=null;R.session=null;recUI('error',S.error);appToast('อัดไม่ได้: '+S.error,true);}}
+  finally{if(R.session!==S||R.token!==S.id||R.phase==='idle')recRelease(S);}
+}
+function recStop(error){const R=REC_V,S=R.session;if(!S)return;
+  if(R.phase==='preparing'){R.token++;recRelease(S);R.session=null;R.mr=null;recUI('idle','ยกเลิกการเตรียมอัดแล้ว');return;}
+  if(R.phase!=='recording')return;if(error)S.error=error;
+  if(S.pausedAt){S.pausedMs+=performance.now()-S.pausedAt;S.pausedAt=0;}clearInterval(S.timer);S.timer=null;R.timer=null;recUI('processing');
+  try{if(S.mr&&S.mr.state!=='inactive'){try{S.mr.requestData();}catch(_){}S.mr.stop();}S.stopWatch=setTimeout(()=>{recRelease(S);recDone(S);},3000);}
+  catch(e){S.error=e.message;recRelease(S);recDone(S);}
+}
+async function recDone(S=REC_V.session){const R=REC_V;if(!S||S.finalized)return;S.finalized=true;recRelease(S);if(R.session!==S)return;recUI('processing');
+  try{
+    const type=(S.mr&&S.mr.mimeType)||(S.chunks[0]&&S.chunks[0].type)||'video/webm',ext=type.includes('mp4')?'mp4':'webm';let blob=new Blob(S.chunks,{type});S.chunks=[];if(!blob.size)throw new Error(S.error||'ไม่ได้ข้อมูลวิดีโอ — กรุณาลองใหม่');
+    if(ext==='mp4'){try{const fixed=fmp4ToMp4(await blob.arrayBuffer());blob=new Blob([fixed],{type});}catch(e){console.warn('MP4: ใช้ไฟล์ต้นฉบับ',e);}}
+    if(R.session!==S)return;
+    const d=new Date(),stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0')+'-'+String(d.getMilliseconds()).padStart(3,'0')+'-'+S.id;
+    const nm='rta-'+stamp+'.'+ext,file=new File([blob],nm,{type}),url=URL.createObjectURL(blob);if(R.url)URL.revokeObjectURL(R.url);R.url=url;R.file=file;
+    let canShare=false;try{canShare=!!(navigator.canShare&&navigator.canShare({files:[file]}));}catch(_){}
+    const p=dq('gVid');p.innerHTML='<div class="video-ready"><b>✓ วิดีโอพร้อมบันทึก</b><span>'+((blob.size/1048576).toFixed(1))+' MB · '+ext.toUpperCase()+'</span></div><video controls playsinline src="'+url+'"></video><div class="row"><a class="btn video-save" id="gVidSave" href="'+url+'" download="'+nm+'">💾 บันทึกลงเครื่อง</a>'+(canShare?'<button id="gVidShare">📤 แชร์</button>':'')+'<button id="gVidX">✕ ปิด</button></div><small id="gVidNote">ยังไม่ได้บันทึกลงเครื่อง — กรุณากดปุ่มบันทึก · '+nm+'</small>';
+    if(S.error){const note=document.createElement('small');note.textContent='⚠ คลิปหยุดเพราะ: '+S.error+' — ไฟล์อาจไม่ครบ';p.appendChild(note);}
+    p.classList.add('show');p.scrollIntoView({behavior:'smooth',block:'nearest'});
+    dq('gVidSave').onclick=()=>{dq('gVidNote').textContent='ส่งคำขอดาวน์โหลดแล้ว — ตรวจไฟล์ในโฟลเดอร์ดาวน์โหลดของเครื่อง';};
+    const sh=dq('gVidShare');if(sh)sh.onclick=()=>navigator.share({files:[file],title:'RTA ผลวัด'}).catch(e=>{if(e.name!=='AbortError')appToast('แชร์ไม่ได้ — กดบันทึกลงเครื่องแทน',true);});
+    dq('gVidX').onclick=()=>p.classList.remove('show');R.session=null;R.mr=null;recUI('ready');
+  }catch(e){if(R.session===S){R.session=null;R.mr=null;recUI('error',e.message);appToast('จัดไฟล์ไม่ได้: '+e.message,true);}}
+}
+dq('gRec').addEventListener('click',()=>{if(['recording','preparing'].includes(REC_V.phase))recStop();else if(REC_V.phase!=='processing')recAsk();});
+document.addEventListener('visibilitychange',()=>{const R=REC_V,S=R.session;if(R.phase!=='recording'||!S||!S.mr)return;
+  if(document.hidden&&S.mr.state==='recording'){try{S.mr.pause();S.pausedAt=performance.now();}catch(e){recStop('พักการอัดไม่ได้: '+e.message);}}
+  else if(!document.hidden&&S.mr.state==='paused'){try{S.mr.resume();if(S.pausedAt){S.pausedMs+=performance.now()-S.pausedAt;S.pausedAt=0;}appToast('อัดต่อแล้ว — ข้ามช่วงที่สลับแอป');}catch(e){recStop('อัดต่อไม่ได้: '+e.message);}}
+});
+window.addEventListener('beforeunload',e=>{if(['preparing','recording','processing'].includes(REC_V.phase)){e.preventDefault();e.returnValue='';}});
+window.addEventListener('pagehide',()=>{if(REC_V.session)recRelease(REC_V.session);});
+dq('btnMic').addEventListener('click',()=>{if(REC_V.phase==='recording'&&running)setTimeout(()=>{if(!running)appToast('ไมค์หยุดแล้ว — วิดีโอยังอัดต่อ แต่ไม่มีเสียงจนกว่าจะเปิดไมค์ใหม่',true);},50);},true);
+recUI('idle');
+
 gPinApply();
   resize();renderWiz(); uiInit(); mlRender(); micInfoRender();
 })();
@@ -2877,3 +2926,4 @@ gPinApply();
 </script>
 </body>
 </html>
+
