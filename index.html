@@ -897,7 +897,20 @@
   const targetNames={dstack:'ดีสแต็ก',bass:'เน้นเบส',music:'ฟังเพลิน',vocal:'ประกาศ/พูด',flat:'Flat'};
 
   let audioCtx=null, analyser=null, micStream=null, srcNode=null, recDest=null;
-  let noiseNode=null, noiseOn=false, running=false, holdOn=false;
+  let noiseNode=null, noiseOn=false, running=false, holdOn=false, micStarting=false;
+  let jobEpoch=0, preparing=false, floorRunning=false, measureMethod='4s';
+  function jobBusy(){ return preparing||measuring||sweeping||phasing||floorRunning; }
+  function cancelMeasurement(){
+    jobEpoch++; preparing=false; floorRunning=false; measuring=false; mmmRunning=false;
+    sweeping=false; phasing=false; RAW=null; measQ=null;
+    try{ if(sweepOsc)sweepOsc.stop(); }catch(_){} try{ if(phaseOsc)phaseOsc.stop(); }catch(_){}
+    sweepOsc=null; phaseOsc=null;
+    if(analyser)analyser.smoothingTimeConstant=0.7;
+    if(autoPinkOn){ autoPinkOn=false; if(noiseOn)toggleNoise(); }
+    [['btnMeasure','📸 วัดผล (4 วิ)'],['btnMMM','🚶 เดินวัด · MMM'],['btnSweep','🌊 Sweep เบส · หาจูนตู้ (20–160Hz)'],['btnPhase','🔄 เช็กเฟส/โพลาริตี้'],['btnFloor','🔇 เสียงพื้นหลัง']].forEach(([id,t])=>{ const b=document.getElementById(id); if(b){b.textContent=t;b.classList.remove('on');} });
+  }
+  function resetMeasurementData(method){ measured=null; measuredVar=null; measSNR=null; measQW=null; measureMethod=method; }
+
   let perOct=3, bandF=centers(3), bandLabels=bandF.map(niceLabel);
   let lastLive=null, RAW=null, measSeq=0, freqData=null, peakHold=[], measured=null, target='dstack', raf=null, measuring=false;
   let sweeping=false, sweepData=[], sweepPeak=null, sweepResult=null, sweepOsc=null, sweepMeta=null, sweepFrozen=false;
@@ -916,6 +929,8 @@
   window.addEventListener('resize',resize);
 
   async function startMic(){
+    if(running||micStarting)return;
+    micStarting=true;
     try{
       audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
       await audioCtx.resume();
@@ -931,9 +946,10 @@
       const b=document.getElementById('btnMic'); b.classList.add('on'); b.innerHTML='<span class="icn">⏹</span> หยุดไมค์';
       ['btnMeasure','btnMMM','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=false);
       loop(); afterMicStart();
-    }catch(e){ if(e&&e.name==='OverconstrainedError'){ try{ localStorage.removeItem(MIC_KEY); }catch(_){} } showMicError(e); }
+    }catch(e){ if(e&&e.name==='OverconstrainedError'){ try{ localStorage.removeItem(MIC_KEY); }catch(_){} } showMicError(e); }finally{ micStarting=false; }
   }
   function stopMic(){
+    cancelMeasurement();
     running=false; if(raf)cancelAnimationFrame(raf);
     if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
     document.getElementById('stMode').textContent='พร้อมใช้งาน';
@@ -990,15 +1006,16 @@
   }
 
   function measure(){
-    if(!running||measuring)return; measuring=true; RAW={p:new Array(bandF.length).fill(0),n:0}; sweepFrozen=false; sweepResult=null;
+    if(!running||jobBusy())return; resetMeasurementData('4s'); const epoch=++jobEpoch; measuring=true; RAW={p:new Array(bandF.length).fill(0),n:0}; sweepFrozen=false; sweepResult=null;
     const btn=document.getElementById('btnMeasure'), accP=new Array(bandF.length).fill(0), acc=new Array(bandF.length).fill(0);
     const t0=performance.now(),DUR=4000; measQ=qNew();
     (function tick(){
+      if(epoch!==jobEpoch||!running)return;
       const raw=computeBands(); qTick(measQ);
       for(let i=0;i<bandF.length;i++){ if(raw[i]>-100){accP[i]+=Math.pow(10,raw[i]/10);acc[i]++;} }
       const el=performance.now()-t0; btn.innerHTML='<span class="icn">⏱</span> วัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
       if(el<DUR)requestAnimationFrame(tick);
-      else{ measured=normalize(bandF.map((_,i)=>acc[i]?10*Math.log10(accP[i]/acc[i]):-120)); measuring=false; measBase=devBaseCh(); measSeq++; setTimeout(simReport,0); setTimeout(afterMeasure,120);
+      else{ measured=normalize(bandF.map((_,i)=>acc[i]?10*Math.log10(accP[i]/acc[i]):-120)); measuring=false; measBase=devBaseCh(); measSeq++; setTimeout(()=>{ if(epoch===jobEpoch)simReport(); },0); setTimeout(()=>{ if(epoch===jobEpoch)afterMeasure(); },120);
         btn.innerHTML='<span class="icn">📸</span> วัดผล (4 วิ)'; analyze(); }
     })();
   }
@@ -1024,22 +1041,24 @@
   let measuredVar=null, mmmRunning=false;
   function rVar(i0,i1){ if(!measuredVar||measuredVar.length!==bandF.length)return 0; let s=0,c=0; for(let i=i0;i<=i1;i++){s+=measuredVar[i];c++;} return c?s/c:0; }
   function measureMMM(){
-    if(!running||measuring||mmmRunning)return;
+    if(!running||jobBusy())return;
+    resetMeasurementData('mmm'); const epoch=++jobEpoch;
     mmmRunning=true; measuring=true; RAW={p:new Array(bandF.length).fill(0),n:0}; sweepFrozen=false; sweepResult=null; measured=null; measuredVar=null;
     const btn=document.getElementById('btnMMM');
     const accP=new Array(bandF.length).fill(0),sDb=new Array(bandF.length).fill(0),sDb2=new Array(bandF.length).fill(0),cnt=new Array(bandF.length).fill(0);
     const t0=performance.now(),DUR=30000; measQ=qNew();
     document.getElementById('sugBox').innerHTML='<div class="empty">เดินไมค์ช้าๆ ทั่วโซนฟัง (สูงระดับหู · อย่าจ่อลำโพงตัวเดียว) ขณะเปิด Pink Noise — ระบบเฉลี่ยหลายจุดให้ ~30 วิ</div>';
     (function tick(){
+      if(epoch!==jobEpoch||!running)return;
       const n=normalize(computeBands()); qTick(measQ);
       for(let i=0;i<bandF.length;i++){const v=n[i]; if(v>-100){accP[i]+=Math.pow(10,v/10);sDb[i]+=v;sDb2[i]+=v*v;cnt[i]++;}}
       const el=performance.now()-t0;
       btn.innerHTML='<span class="icn">🚶</span> เดินวัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
       if(el<DUR)requestAnimationFrame(tick);
       else{
-        measured=normalize(bandF.map((_,i)=>cnt[i]?10*Math.log10(accP[i]/cnt[i]):-120)); measBase=devBaseCh(); measSeq++; setTimeout(simReport,0);
+        measured=normalize(bandF.map((_,i)=>cnt[i]?10*Math.log10(accP[i]/cnt[i]):-120)); measBase=devBaseCh(); measSeq++; setTimeout(()=>{ if(epoch===jobEpoch)simReport(); },0);
         measuredVar=bandF.map((_,i)=>{ if(cnt[i]<4)return 0; const m=sDb[i]/cnt[i]; return Math.sqrt(Math.max(0,sDb2[i]/cnt[i]-m*m)); });
-        measuring=false; mmmRunning=false; setTimeout(afterMeasure,120);
+        measuring=false; mmmRunning=false; setTimeout(()=>{ if(epoch===jobEpoch)afterMeasure(); },120);
         btn.innerHTML='<span class="icn">🚶</span> เดินวัด · MMM';
         analyze();
       }
@@ -1109,7 +1128,7 @@
       ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,H-PAD.b);ctx.stroke();ctx.setLineDash([]); }
     ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--target');
     ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
-    let st=false; for(let f=FMIN;f<=FMAX;f*=1.05){ const x=xF(f),y=yDb(TARGETS[target](f)); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke();ctx.setLineDash([]);
+    let st=false; for(let f=FMIN;f<=FMAX;f*=1.05){ const x=xF(f),y=yDb(TARGETS[target](f)); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);} ctx.stroke();ctx.setLineDash([]);
     drawStepOverlay();
   }
   function drawCurve(arr,color,width,dash){
@@ -1148,7 +1167,7 @@
     }else{ ctx.fillStyle='#4a4f5c';ctx.textAlign='center';ctx.font='12px '+getComputedStyle(document.body).getPropertyValue('--sans');ctx.fillText('เริ่มวัดด้วยไมค์เพื่อดูสเปกตรัม',W/2,H/2); }
     if(measured&&measQW&&measQW.for===measured&&measQW.w.length){ ctx.fillStyle=pal().bg?'#b3261e':'#ff7b7b'; ctx.textAlign='left'; ctx.font='bold 11px '+MONO(); ctx.fillText('⚠ '+measQW.w.map(x=>x.s).join(' · '),PAD.l+2,PAD.t+22); }
     if(measured){ ctx.fillStyle='rgba(255,106,26,.9)';ctx.textAlign='left';ctx.font='bold 11px '+MONO();ctx.fillText('● วัดผลแล้ว',PAD.l+2,PAD.t+8);
-      if(measSNR&&measSNR.length===bandF.length){ ctx.fillStyle='rgba(150,156,170,.9)'; for(let i=0;i<bandF.length;i++){ if(measSNR[i]<10&&bandF[i]>=FMIN&&bandF[i]<=FMAX){ ctx.fillRect(xF(bandF[i])-3,H-PAD.b-6,6,6); } } } }
+      if(measSNR&&measSNR.length===bandF.length){ ctx.fillStyle='rgba(150,156,170,.9)'; for(let i=0;i<bandF.length;i++){ if(measSNR[i]<10&&bandF[i]>=FMIN&&bandF[i]<=FMAX){ ctx.fillRect(xF(bandF[i])-3,H-PAD.b-6,6,6); } } } }
     drawSim();
   }
 
@@ -1188,7 +1207,7 @@
 
   function startSweep(opt){
     opt=opt||{};
-    if(!running||sweeping)return;
+    if(!running||jobBusy())return;
     if(analyser)analyser.smoothingTimeConstant=0;
     if(noiseOn)toggleNoise();            // noise off during sweep
     measured=null; sweepFrozen=false; sweepData=[]; sweepPeak=null; sweepResult=null; sweeping=true;
@@ -1272,7 +1291,7 @@
   // ---------- phase / polarity check ----------
   function startPhase(opt){
     opt=(opt&&opt.type)?{}:(opt||{});
-    if(!running||phasing||sweeping)return;
+    if(!running||jobBusy())return;
     if(noiseOn)toggleNoise();
     measured=null; sweepFrozen=false; abOn=false; phaseLog=[]; phasing=true;
     const XF=opt.f||xoMarks()[0]; // sub↔mid crossover of the current tuning set
@@ -1510,7 +1529,7 @@
     const now=sysResp(cur.ch,bandF).tot, base=sysResp(src.base,bandF).tot;
     let p=bandF.map((f,i)=>src.data[i]>-100?src.data[i]+now[i]-base[i]:src.data[i]);
     const r=normRef(p.map((v,i)=>v>-100?v:0),bandF); p=p.map(v=>v>-100?v-r:v); return {pred:p,src}; }
-  function devRMS(arr){ let s=0,c=0; for(let i=0;i<bandF.length;i++){ const f=bandF[i]; if(f<40||f>16000||arr[i]<=-100)continue; const d=arr[i]-TARGETS[target](f); s+=d*d; c++; } return c?Math.sqrt(s/c):null; }
+  function devRMS(arr){ let s=0,c=0; for(let i=0;i<bandF.length;i++){ const f=bandF[i]; if(f<40||f>16000||!Number.isFinite(arr[i])||arr[i]<=-100||(arr===measured&&lowSNR(i)))continue; const d=arr[i]-TARGETS[target](f); s+=d*d; c++; } return c?Math.sqrt(s/c):null; }
   function drawSim(){
     if(!simOn||!cur)return; const sc=simCurves(); if(!sc)return;
     const off=normRef(sc.tot,sc.f);
@@ -1706,13 +1725,20 @@
       '<div class="wacts">'+st.acts.map(a=>'<button data-act="'+a.act+'">'+a.label+'</button>').join('')+'</div></div>').join(''); }
   async function ensureMic(){ if(running)return true; if(SY.role==='remote')return true; document.getElementById('btnMic').click(); for(let i=0;i<50&&!running;i++) await new Promise(r=>setTimeout(r,100)); if(!running){ appToast('⚠ เปิดไมค์ไม่ได้ — กดอนุญาตไมค์ใน Chrome ก่อน',true); return false; } return true; }
   let autoPinkOn=false;
-  async function autoMeasure(kind){ const id=kind==='mmm'?'btnMMM':'btnMeasure';
-    if(SY.role==='remote'){ document.getElementById(id).click(); return; }
-    if(measuring||sweeping||phasing)return;
-    if(!await ensureMic())return;
-    let ap=true; try{ ap=localStorage.getItem('rta_autopink')!=='0'; }catch(_){}
-    if(ap&&!noiseOn){ toggleNoise(); autoPinkOn=true; appToast('📻 เปิด Pink Noise ให้แล้ว — รอเสียงนิ่ง 1.5 วิ แล้วเริ่มวัด'); await new Promise(r=>setTimeout(r,1500)); }
-    document.getElementById(id).click(); }
+  async function autoMeasure(kind){
+    if(SY.role==='remote'){ document.getElementById(kind==='mmm'?'btnMMM':'btnMeasure').click(); return; }
+    if(jobBusy())return;
+    const epoch=++jobEpoch; preparing=true;
+    try{
+      if(!running)await startMic();
+      if(epoch!==jobEpoch||!running)return;
+      let ap=true; try{ ap=localStorage.getItem('rta_autopink')!=='0'; }catch(_){}
+      // A remote supplies the test signal when this device is the station.
+      if(SY.role!=='station'&&ap&&!noiseOn){ toggleNoise(); autoPinkOn=true; appToast('📻 เปิด Pink Noise — รอเสียงนิ่ง 1.5 วิ'); await new Promise(r=>setTimeout(r,1500)); }
+      if(epoch!==jobEpoch||!running)return;
+      preparing=false; if(kind==='mmm')measureMMM(); else measure();
+    }finally{ if(epoch===jobEpoch)preparing=false; }
+  }
   async function wAct(b){ const a=b.dataset.act;
     if(a==='tune'||a==='tunexo'||a==='tunelim'){ if(a==='tunexo'){DV.tab='xo';DV.ch='sub';} if(a==='tunelim'){DV.tab='lim';DV.ch='sub';} setView('tune'); if(DV.open)dvRenderAll(); return; }
     if(a==='measure'||a==='mmm'){ autoMeasure(a); return; }
@@ -1725,7 +1751,7 @@
   document.getElementById('wSetupBody').addEventListener('click',e=>{ const b=e.target.closest('button[data-act]'); if(!b)return;
     if(b.dataset.act==='guide'){ setView('guide'); const gp=document.getElementById('guidePanel'); gp.classList.add('show'); const tb=document.querySelector('.gtabs button[data-m="subplan"]'); if(tb)tb.click(); gp.scrollIntoView({behavior:'smooth',block:'start'}); return; }
     wAct(b); });
-  ['btnMeasure','btnMMM'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{ if(!running&&SY.role!=='remote'){ e.stopImmediatePropagation(); e.preventDefault(); autoMeasure(id==='btnMMM'?'mmm':'measure'); } },true));
+  ['btnMeasure','btnMMM'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{ if(SY.role!=='remote'){ e.stopImmediatePropagation(); e.preventDefault(); autoMeasure(id==='btnMMM'?'mmm':'measure'); } },true));
   document.getElementById('wCard').addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b)return;
     if(b.dataset.act&&b.dataset.act!=='guide'){ wAct(b); return; }
@@ -2181,11 +2207,12 @@
   // new measurement summary (replaces long legacy list)
   function analyze(){ const box=document.getElementById('sugBox'); if(!measured)return;
     const st=STYLES.find(s=>s.k===target)||STYLES[1], dv=devRMS(measured); let over=0,under=0;
-    bandF.forEach((f,i)=>{ if(f<40||f>16000||measured[i]<=-100)return; const d=measured[i]-TARGETS[target](f); if(d>3.5)over++; else if(d<-3.5)under++; });
+    bandF.forEach((f,i)=>{ if(f<40||f>16000||!Number.isFinite(measured[i])||measured[i]<=-100||lowSNR(i))return; const d=measured[i]-TARGETS[target](f); if(d>3.5)over++; else if(d<-3.5)under++; });
     const prev=measHist.length>1?measHist[measHist.length-2]:null, pd=prev&&prev.d.length===bandF.length?devRMS(prev.d):null;
     box.innerHTML='<div class="msum"><div><small>คลาดจากเป้า “'+st.t+'”</small><b>±'+(dv!=null?dv.toFixed(1):'–')+' dB</b></div><div class="mc"><span class="o">▲ เกิน '+over+'</span><span class="u">▼ ขาด '+under+'</span></div></div>'+
       (pd!=null?'<div class="empty" style="padding:2px 0 0">ครั้งก่อน ±'+pd.toFixed(1)+' dB → ครั้งนี้ ±'+dv.toFixed(1)+' dB '+(dv<pd-0.2?'✔ ดีขึ้น':dv>pd+0.2?'✘ แย่ลง':'≈ ใกล้เดิม')+'</div>':'')+
       (measSNR&&measSNR.some(x=>x<10)?'<div class="empty" style="padding:2px 0 0;color:#ffb98a">⚠ '+measSNR.filter(x=>x<10).length+' ย่าน Pink Noise ดังกว่าเสียงพื้นหลังไม่ถึง 10 dB (จุดเทาบนกราฟ) — ไม่ใช้คำนวณ · เร่งเสียงขึ้นแล้ววัดใหม่จะแม่นขึ้น</div>':'')+
+      '<div class="empty">ใช้คำนวณ '+bandF.filter((f,i)=>f>=40&&f<=16000&&Number.isFinite(measured[i])&&measured[i]>-100&&!lowSNR(i)).length+' ย่าน · หากสัญญาณไม่พอ กรุณาวัดใหม่</div>'+
       '<div class="row" style="margin:10px 0 6px"><button class="primary" data-go="rec">💡 เลือกแนว + ดูคำแนะนำ</button><button data-go="tune">🎛️ ไปหน้าจูน</button></div>'+
       '<div class="empty" style="padding:0 0 10px">บนกราฟ: <b style="color:#ff8a8a">แดง</b> = ดังเกินเป้า · <b style="color:#8ab8ff">ฟ้า</b> = เบากว่าเป้า · คำแนะนำแบบกดใช้ได้อยู่ในหน้า 🎛️ จูน</div>'; }
   dq('sugBox').addEventListener('click',e=>{ const b=e.target.closest('[data-go]'); if(!b)return; if(b.dataset.go==='rec')askStyle(false); else if(b.dataset.go==='tune')setView('tune'); });
@@ -2266,8 +2293,11 @@
   window.addEventListener('popstate',e=>{
     if(dq('dvModal').classList.contains('show')){ closeModal(); history.pushState({v:curView},'','#'+curView); return; }
     const v=(e.state&&e.state.v)||'meas'; setView(v,true); });
+  document.addEventListener('click',e=>{ if(SY.role==='remote')return; const b=e.target.closest('button'); if(!b||!jobBusy())return;
+    if(['btnClear','btnSweep','btnPhase','btnFloor','btnNoise','btnSaveA','btnSaveB'].includes(b.id)||b.closest('#segRes')){ e.stopImmediatePropagation(); e.preventDefault(); appToast('กำลังวัด — รอให้เสร็จ หรือกดหยุดไมค์เพื่อยกเลิก',true); }
+  },true);
   // --- resolution change guard
-  dq('segRes').parentElement.addEventListener('click',e=>{ const b=e.target.closest('#segRes button'); if(!b||b.classList.contains('sel')||!measured)return;
+  dq('segRes').parentElement.addEventListener('click',e=>{ const b=e.target.closest('#segRes button'); if(b&&jobBusy()){ e.stopImmediatePropagation(); e.preventDefault(); appToast('รอให้การวัดเสร็จ หรือหยุดไมค์ก่อน',true); return; } if(!b||b.classList.contains('sel')||!measured)return;
     if(!confirm('เปลี่ยนความละเอียดจะล้างผลวัดปัจจุบัน (ต้องวัดใหม่) — ทำต่อไหม?')){ e.stopPropagation(); e.preventDefault(); } },true);
 
   // --- 🔄 sync + 📡 remote via Firebase Realtime Database (path rta/<room>/…)
@@ -2325,16 +2355,30 @@
     syncSoon();
   }
   function fbPush(){
-    if(!FB.root)return; const u={};
-    profiles.forEach(p=>{ const j=JSON.stringify(p); if(FB.pushed[p.id]!==j){ u['sync/profiles/'+p.id]={j,t:tsOf(p)}; FB.pushed[p.id]=j; } });
-    Object.entries(SM.tomb||{}).forEach(([id,t])=>{ if(!FB.pushedTomb[id]){ u['sync/tomb/'+id]=t; u['sync/profiles/'+id]=null; FB.pushedTomb[id]=1; } });
-    if(DEVICE){ const j=JSON.stringify(DEVICE); if(j!==FB.pushedDev){ u['sync/device']={j,t:Date.parse(DEVICE.at)||Date.now()}; FB.pushedDev=j; } }
-    if(measured&&SM.lastT>FB.pushedLast){ const L={t:SM.lastT,lid:mlLastId,from:SM.lastFrom||SY.name,perOct,d:measured.map(v=>Math.round(v*10)/10),base:measBase||null,sweep:sweepResult?{peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}:null};
-      u['sync/last']={j:JSON.stringify(L),t:L.t}; FB.pushedLast=SM.lastT; }
-    if((SM.styleT||0)>FB.pushedStyle){ u['sync/style']={k:REC.style,s:REC.strength,t:SM.styleT}; FB.pushedStyle=SM.styleT; }
-    MLOG.forEach(m=>{ if((FB.pushedM[m.id]||-1)!==(m.up||0)){ u['sync/meas/'+m.id]={j:JSON.stringify(m),t:m.up||m.t}; FB.pushedM[m.id]=m.up||0; } });
-    Object.entries(SM.mtomb||{}).forEach(([id,t])=>{ if(!FB.pushedMT[id]){ u['sync/mtomb/'+id]=t; u['sync/meas/'+id]=null; FB.pushedMT[id]=1; } });
-    if(Object.keys(u).length) FB.root.update(u).catch(e=>syStatus('err',fbErr(e)));
+    if(!FB.root||FB.pushBusy)return; const root=FB.root, u={}, ack={}, prior={};
+    ['pushed','pushedTomb','pushedM','pushedMT'].forEach(k=>ack[k]={...FB[k]});
+    ['pushedDev','pushedLast','pushedStyle'].forEach(k=>ack[k]=FB[k]);
+    Object.keys(ack).forEach(k=>prior[k]=typeof ack[k]==='object'?{...ack[k]}:ack[k]);
+    profiles.forEach(p=>{ const j=JSON.stringify(p); if(ack.pushed[p.id]!==j){ u['sync/profiles/'+p.id]={j,t:tsOf(p)}; ack.pushed[p.id]=j; } });
+    Object.entries(SM.tomb||{}).forEach(([id,t])=>{ if(!ack.pushedTomb[id]){ u['sync/tomb/'+id]=t; u['sync/profiles/'+id]=null; ack.pushedTomb[id]=1; } });
+    if(DEVICE){ const j=JSON.stringify(DEVICE); if(j!==ack.pushedDev){ u['sync/device']={j,t:Date.parse(DEVICE.at)||Date.now()}; ack.pushedDev=j; } }
+    if(measured&&SM.lastT>ack.pushedLast){ const L={t:SM.lastT,lid:mlLastId,from:SM.lastFrom||SY.name,perOct,d:measured.map(v=>Math.round(v*10)/10),base:measBase||null,sweep:sweepResult?{peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}:null};
+      u['sync/last']={j:JSON.stringify(L),t:L.t}; ack.pushedLast=SM.lastT; }
+    if((SM.styleT||0)>ack.pushedStyle){ u['sync/style']={k:REC.style,s:REC.strength,t:SM.styleT}; ack.pushedStyle=SM.styleT; }
+    MLOG.forEach(m=>{ if((ack.pushedM[m.id]||-1)!==(m.up||0)){ u['sync/meas/'+m.id]={j:JSON.stringify(m),t:m.up||m.t}; ack.pushedM[m.id]=m.up||0; } });
+    Object.entries(SM.mtomb||{}).forEach(([id,t])=>{ if(!ack.pushedMT[id]){ u['sync/mtomb/'+id]=t; u['sync/meas/'+id]=null; ack.pushedMT[id]=1; } });
+    if(Object.keys(u).length){
+      FB.pushBusy=true; syStatus('busy','กำลังส่งข้อมูล');
+      root.update(u).then(()=>{
+        if(FB.root!==root)return;
+        Object.assign(FB,ack); FB.retryMs=0; syStatus('ok'); syncSoon();
+      }).catch(e=>{
+        if(FB.root!==root)return;
+        Object.assign(FB,prior); syStatus('err',fbErr(e));
+        FB.retryMs=Math.min(30000,(FB.retryMs||1500)*2);
+        clearTimeout(FB.timer); FB.timer=setTimeout(()=>{ if(FB.root===root)fbPush(); },FB.retryMs);
+      }).finally(()=>{ FB.pushBusy=false; });
+    }
   }
   // --- 🟢 connection light + presence (who is online) + share-setup link
   function peersOnline(){ const now=Date.now(); return Object.entries(FB.peers||{}).filter(([id,p])=>p&&now-(p.at||0)<50000).map(([id,p])=>Object.assign({id},p)); }
@@ -2490,7 +2534,7 @@
     if(!measured)return null;
     const sig=noiseOn?{type:'pink',name:''}:{type:mlLastSig.type,name:mlLastSig.type==='pink'?'':mlLastSig.name};
     const lowN=measSNR?measSNR.filter(x=>x<10).length:null;
-    const e={v:2,q:(measQW&&measQW.for===measured)?measQW.w.map(x=>x.s):[],snrLow:lowN,id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:Date.now(),up:Date.now(),from:SY.name,method:(measuredVar&&measuredVar.length===bandF.length)?'MMM 30 วิ':'วัด 4 วิ',
+    const e={v:2,q:(measQW&&measQW.for===measured)?measQW.w.map(x=>x.s):[],snrLow:lowN,id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:Date.now(),up:Date.now(),from:SY.name,method:measureMethod==='mmm'?'MMM 30 วิ':'วัด 4 วิ',
       sig,pos:mlLastSig.pos||'',note:'',style:target,perOct,f:bandF.map(f=>Math.round(f*100)/100),d:measured.map(v=>Math.round(v*10)/10),
       dev:(()=>{ const r=devRMS(measured); return r==null?null:Math.round(r*10)/10; })(),prof:cur?cur.name:'',devName:DEVICE?DEVICE.name:'',base:measBase?clone(measBase):null};
     MLOG.unshift(e); if(MLOG.length>300)MLOG.length=300; mlSave(); mlLastId=e.id; mlRender(); syncSoon(); return e;
@@ -2591,19 +2635,20 @@
     parts.push(CAL?'📐 คาลิเบรต: <b>'+esc(CAL.name)+'</b> <a href="#" data-cal="off">ยกเลิก</a>':'📐 ไม่มีไฟล์คาลิเบรต (ไมค์มือถือ = ค่าแนวโน้ม)');
     parts.push(FLOOR?'🔇 เสียงพื้นหลัง: วัดแล้ว '+new Date(FLOOR.t).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'🔇 ยังไม่ได้วัดเสียงพื้นหลัง');
     el.innerHTML=parts.filter(Boolean).join(' · '); }
-  dq('micSel').addEventListener('change',e=>{ try{ localStorage.setItem(MIC_KEY,e.target.value); }catch(_){} if(running){ stopMic(); setTimeout(()=>dq('btnMic').click(),300); } appToast('เปลี่ยนไมค์แล้ว'); });
+  dq('micSel').addEventListener('change',e=>{ try{ localStorage.setItem(MIC_KEY,e.target.value); }catch(_){} FLOOR=null; measSNR=null; if(running){ stopMic(); setTimeout(()=>dq('btnMic').click(),300); } appToast('เปลี่ยนไมค์แล้ว'); });
   dq('calBtn').addEventListener('click',()=>dq('calFile').click());
   dq('calFile').addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; if(!f)return; const r=new FileReader();
     r.onload=()=>{ const c=parseCal(r.result); if(c.pts.length<5){ appToast('อ่านไฟล์คาลิเบรตไม่ได้ — ต้องเป็นไฟล์ข้อความ "ความถี่  dB" ต่อบรรทัด (เช่นไฟล์ของ UMIK-1)',true); return; }
-      CAL={name:f.name,pts:c.pts,sens:c.sens,t:Date.now()}; try{ localStorage.setItem(CAL_KEY,JSON.stringify(CAL)); }catch(_){} micInfoRender(); appToast('📐 ใช้ไฟล์คาลิเบรต '+f.name+' ('+c.pts.length+' จุด) แล้ว — วัดใหม่เพื่อใช้ค่าที่ถูกต้อง'); };
+      FLOOR=null; measSNR=null; CAL={name:f.name,pts:c.pts,sens:c.sens,t:Date.now()}; try{ localStorage.setItem(CAL_KEY,JSON.stringify(CAL)); }catch(_){} micInfoRender(); appToast('📐 ใช้ไฟล์คาลิเบรต '+f.name+' ('+c.pts.length+' จุด) แล้ว — วัดใหม่เพื่อใช้ค่าที่ถูกต้อง'); };
     r.readAsText(f); e.target.value=''; });
-  dq('micInfo').addEventListener('click',e=>{ const a=e.target.closest('[data-cal]'); if(!a)return; e.preventDefault(); CAL=null; try{ localStorage.removeItem(CAL_KEY); }catch(_){} micInfoRender(); appToast('ยกเลิกไฟล์คาลิเบรตแล้ว'); });
+  dq('micInfo').addEventListener('click',e=>{ const a=e.target.closest('[data-cal]'); if(!a)return; e.preventDefault(); FLOOR=null; measSNR=null; CAL=null; try{ localStorage.removeItem(CAL_KEY); }catch(_){} micInfoRender(); appToast('ยกเลิกไฟล์คาลิเบรตแล้ว'); });
   dq('btnFloor').addEventListener('click',()=>{
     if(!running){ appToast('กด 🎙️ เริ่มวัดด้วยไมค์ ก่อน',true); return; } if(noiseOn){ appToast('ปิด Pink Noise ก่อน แล้วให้รอบข้างเงียบตามปกติ',true); return; }
+    if(jobBusy())return; floorRunning=true; const epoch=++jobEpoch;
     const acc=new Array(bandF.length).fill(0); let n=0; const t0=performance.now(), b=dq('btnFloor');
-    (function tick(){ const raw=computeBands(); raw.forEach((v,i)=>{ if(v>-110)acc[i]+=Math.pow(10,v/10); }); n++;
+    (function tick(){ if(epoch!==jobEpoch||!running)return; const raw=computeBands(); raw.forEach((v,i)=>{ if(v>-110)acc[i]+=Math.pow(10,v/10); }); n++;
       const el=performance.now()-t0; b.innerHTML='<span class="icn">🔇</span> ฟังเสียงพื้น… '+Math.max(0,Math.ceil((3000-el)/1000))+'s';
-      if(el<3000)requestAnimationFrame(tick); else { FLOOR={d:acc.map(p=>p>0?10*Math.log10(p/n):-120),perOct,t:Date.now()}; b.innerHTML='<span class="icn">🔇</span> เสียงพื้นหลัง'; micInfoRender(); appToast('🔇 บันทึกเสียงพื้นหลังแล้ว — ย่านที่ Pink Noise ดังไม่พอจะถูกทำเครื่องหมายไม่ใช้คำนวณ'); } })(); });
+      if(el<3000)requestAnimationFrame(tick); else { floorRunning=false; FLOOR={d:acc.map(p=>p>0?10*Math.log10(p/n):-120),perOct,t:Date.now()}; b.innerHTML='<span class="icn">🔇</span> เสียงพื้นหลัง'; micInfoRender(); appToast('🔇 บันทึกเสียงพื้นหลังแล้ว — ย่านที่ Pink Noise ดังไม่พอจะถูกทำเครื่องหมายไม่ใช้คำนวณ'); } })(); });
   function snrCompute(){ measSNR=null; if(!RAW||!RAW.n||!FLOOR||FLOOR.perOct!==perOct||FLOOR.d.length!==bandF.length)return;
     measSNR=bandF.map((_,i)=>{ const p=RAW.p[i]/RAW.n; return p>0&&FLOOR.d[i]>-115?10*Math.log10(p)-FLOOR.d[i]:99; }); }
   function lowSNR(i){ return measSNR&&measSNR.length===bandF.length&&measSNR[i]<10; }
@@ -2623,7 +2668,7 @@ function askReset(){
     '<div class="devopt"><b>🎚 ล้าง EQ ชุดที่เปิดอยู่</b><p>PEQ ทุกช่องของ “'+esc(cur?cur.name:'')+'” เป็นว่าง (เหมือน Reset EQ ใน DSPico) · ครอส เกน เฟส คงเดิม · ย้อนได้ด้วย ↶ ในหน้าจูน แล้วกด 💾 บันทึกเมื่อพอใจ</p><div class="row2"><button data-rs="eq">ล้าง EQ</button></div></div>'+
     '<div class="devopt"><b>⚠ ล้างข้อมูลทั้งหมดในเครื่องนี้</b><p>ลบประวัติผลวัด ชุดจูน ค่าในเครื่อง คาลิเบรต และการตั้งค่า กลับเป็นเหมือนเปิดครั้งแรก · การตั้งค่าซิงก์ยังอยู่'+(SY.on?' — <b>ซิงก์เปิดอยู่ ข้อมูลบนคลาวด์จะถูกดึงกลับมาอีก</b>':'')+'</p><div class="row2"><button data-rs="all" class="danger">ล้างทั้งหมด…</button></div></div>'+
     '<div class="dvmfoot"><button data-m="close">ปิด</button></div>'); }
-function resetRound(){ measured=null; measuredVar=null; measQW=null; sweepFrozen=false; snapA=null; snapB=null; abOn=false;
+function resetRound(){ cancelMeasurement(); measured=null; measuredVar=null; measQW=null; sweepFrozen=false; snapA=null; snapB=null; abOn=false;
   const ab=dq('btnAB'); ab.classList.remove('on'); ab.disabled=true; peakHold=new Array(bandF.length).fill(-120);
   REC.items=[]; REC.seq=-1; wStep=0; renderWiz();
   dq('sugBox').innerHTML='<div class="empty">เริ่มรอบใหม่แล้ว — วางมือถือที่จุดฟัง สูงระดับหู แล้วกด <span class="kbd">📸 วัดผล</span></div>';
