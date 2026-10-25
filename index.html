@@ -2897,15 +2897,15 @@ try{const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}');if(['graph','pi
 function recMime(){if(!window.MediaRecorder)return null;for(const t of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm']){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(_){}}return '';}
 function recUI(phase,msg){const R=REC_V;R.phase=phase;const b=dq('gRec');b.disabled=phase==='processing';b.classList.toggle('on',phase==='recording');
   b.textContent=({idle:'🎬 อัดวิดีโอ',preparing:'✕ ยกเลิกการเตรียม',recording:'⏹ หยุดอัด',processing:'⏳ กำลังจัดไฟล์',ready:'🎬 อัดคลิปใหม่',error:'🎬 ลองอัดใหม่'})[phase];
-  dq('gRecStatus').textContent=msg||({idle:'พร้อมอัด',preparing:'กำลังเปิดไมค์ / กล้อง',recording:'กำลังอัด · โหมดลื่นไหล 720 · 24 fps · เสียงไมค์',processing:'กำลังจัดไฟล์ — กรุณารอ',ready:'พร้อมบันทึก — กดบันทึกลงเครื่อง',error:'อัดไม่สำเร็จ'})[phase];
+  dq('gRecStatus').textContent=msg||({idle:'พร้อมอัด',preparing:'กำลังเปิดไมค์ / กล้อง',recording:'กำลังอัด · โหมดลื่นไหล 24 fps · เสียงไมค์',processing:'กำลังจัดไฟล์ — กรุณารอ',ready:'พร้อมบันทึก — กดบันทึกลงเครื่อง',error:'อัดไม่สำเร็จ'})[phase];
   if(phase!=='recording')dq('gRecT').textContent='';
 }
 function recEl(S=REC_V.session){return S?(performance.now()-S.t0-S.pausedMs-(S.pausedAt?performance.now()-S.pausedAt:0))/1000:0;}
 function recSrc(){return (DV.open&&dq('dvCv')&&dq('dvCv').width&&dq('dvCv').height)?dq('dvCv'):cv;}
 function drawCover(x,v,dx,dy,dw,dh,mirror){const vw=v.videoWidth,vh=v.videoHeight;if(!vw||!vh||dw<=0||dh<=0)return;const s=Math.max(dw/vw,dh/vh),sw=dw/s,sh=dh/s;
-  x.save();x.beginPath();x.rect(dx,dy,dw,dh);x.clip();if(mirror){x.translate(dx*2+dw,0);x.scale(-1,1);}x.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,dx,dy,dw,dh);x.restore();}
+  if(!mirror){x.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,dx,dy,dw,dh);return;}x.save();x.translate(dx*2+dw,0);x.scale(-1,1);x.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,dx,dy,dw,dh);x.restore();}
 function recGraphFit(x,src,dx,dy,dw,dh){if(!src.width||!src.height||dw<=0||dh<=0)return;const s=Math.min(dw/src.width,dh/src.height),w=src.width*s,h=src.height*s;x.drawImage(src,dx+(dw-w)/2,dy+(dh-h)/2,w,h);}
-function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=rc.getContext('2d'),src=recSrc(),HD=156,scale=rc.width/1080,w=1080,h=rc.height/scale,p=pal();x.setTransform(scale,0,0,scale,0,0);
+function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=S.ctx||(S.ctx=rc.getContext('2d',{alpha:false})),src=recSrc(),HD=156,scale=rc.width/1080,w=1080,h=rc.height/scale,p=pal();x.setTransform(scale,0,0,scale,0,0);
   x.fillStyle=p.bg||'#0b1423';x.fillRect(0,0,w,h);const camOn=S.camV&&S.camV.readyState>=2&&S.camV.videoWidth>0,mir=S.face==='user';
   if(S.mode==='camfull'){
     if(camOn)drawCover(x,S.camV,0,0,w,h,mir);
@@ -2941,7 +2941,7 @@ function recRelease(S){if(!S)return;S.released=true;clearInterval(S.timer);S.tim
 }
 function recAsk(){if(['preparing','recording','processing'].includes(REC_V.phase))return;const R=REC_V;
   const modes=[['graph','📈','กราฟอย่างเดียว','กราฟใหญ่ + เสียงไมค์'],['camfull','🎥','กล้องเต็มจอ','กราฟมุมขวาล่าง + เสียงไมค์'],['pip','🖼','กราฟ + กล้องมุมจอ','กราฟใหญ่ + ภาพกล้องเล็ก'],['stack','📱','กล้องบน · กราฟล่าง','เหมาะกับวิดีโอแนวตั้ง']];
-  openModal('<h3>🎬 บันทึกวิดีโอผลวัด</h3><p>โหมดลื่นไหล 720 · 24 fps · ภาพมีสัดส่วนคงที่ · เสียงจากไมค์ · สูงสุด 10 นาที</p><div class="stylegrid">'+modes.map(m=>'<button data-rv="mode" data-v="'+m[0]+'" class="'+(R.mode===m[0]?'sel':'')+'"><span class="e">'+m[1]+'</span><div><b>'+m[2]+'</b><span>'+m[3]+'</span></div></button>').join('')+'</div><div class="strength" id="rvFace" style="'+(R.mode==='graph'?'opacity:.4':'')+'">'+[['environment','📷 กล้องหลัง'],['user','🤳 กล้องหน้า']].map(c=>'<button data-rv="face" data-v="'+c[0]+'" class="'+(R.face===c[0]?'sel':'')+'">'+c[1]+'</button>').join('')+'</div><div class="dvmfoot"><button data-m="close">ยกเลิก</button><button class="primary" data-rv="go">⏺ เริ่มอัด</button></div>');
+  openModal('<h3>🎬 บันทึกวิดีโอผลวัด</h3><p>โหมดลื่นไหล 24 fps · กราฟอย่างเดียว 720p · แบบมีกล้อง 540p (ลื่นกว่าบนมือถือ) · ภาพมีสัดส่วนคงที่ · เสียงจากไมค์ · สูงสุด 10 นาที</p><div class="stylegrid">'+modes.map(m=>'<button data-rv="mode" data-v="'+m[0]+'" class="'+(R.mode===m[0]?'sel':'')+'"><span class="e">'+m[1]+'</span><div><b>'+m[2]+'</b><span>'+m[3]+'</span></div></button>').join('')+'</div><div class="strength" id="rvFace" style="'+(R.mode==='graph'?'opacity:.4':'')+'">'+[['environment','📷 กล้องหลัง'],['user','🤳 กล้องหน้า']].map(c=>'<button data-rv="face" data-v="'+c[0]+'" class="'+(R.face===c[0]?'sel':'')+'">'+c[1]+'</button>').join('')+'</div><div class="dvmfoot"><button data-m="close">ยกเลิก</button><button class="primary" data-rv="go">⏺ เริ่มอัด</button></div>');
 }
 dq('dvModal').addEventListener('click',e=>{const b=e.target.closest('[data-rv]');if(!b)return;const R=REC_V;if(b.dataset.rv==='go'){try{localStorage.setItem('rta_recopt',JSON.stringify({mode:R.mode,face:R.face}));}catch(_){}closeModal();recStart();return;}
   R[b.dataset.rv]=b.dataset.v;dq('dvMbox').querySelectorAll('[data-rv="'+b.dataset.rv+'"]').forEach(x=>x.classList.toggle('sel',x===b));const f=dq('rvFace');if(f)f.style.opacity=R.mode==='graph'?'.4':'';
@@ -2954,14 +2954,15 @@ async function recStart(){const R=REC_V;if(['preparing','recording','processing'
   try{
     if(!running)await startMic();if(!active())return;if(!running)throw new Error('เปิดไมค์ไม่ได้ — กรุณาอนุญาตไมค์แล้วลองใหม่');
     if(S.mode!=='graph'){
-      try{S.cam=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.face},width:{ideal:960},height:{ideal:540},frameRate:{ideal:24,max:30}},audio:false});}
+      try{S.cam=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.face},width:{ideal:640},height:{ideal:360},frameRate:{ideal:24,max:30}},audio:false});}
       catch(e){if(!active())return;S.mode='graph';appToast('เปิดกล้องไม่ได้ — อัดกราฟและเสียงไมค์แทน',true);}
       if(!active())return;
       if(S.cam){S.camV=recCamPreview(S,true);for(let i=0;i<30&&active()&&!S.camV.videoWidth;i++)await new Promise(r=>setTimeout(r,100));if(!active())return;if(!S.camV.videoWidth)throw new Error('กล้องยังไม่ส่งภาพ — ลองอัดใหม่');}
     }
     if(!active()||!running)throw new Error('ไมค์ถูกหยุดระหว่างเตรียมอัด');
-    S.cv=document.createElement('canvas');S.cv.width=720;S.cv.height=S.mode==='stack'?1280:S.mode==='graph'?540:720;
-    if(S.mode==='camfull')S.cv.height=S.camV.videoHeight>S.camV.videoWidth?1280:540;
+    // camera modes composite at 540 px wide: drawing camera frames is the main-thread bottleneck on phones
+    S.cv=document.createElement('canvas');S.cv.width=S.mode==='graph'?720:540;S.cv.height=S.mode==='stack'?960:540;
+    if(S.mode==='camfull')S.cv.height=S.camV.videoHeight>S.camV.videoWidth?960:304;
     S.t0=performance.now();recFrame(S);
     if(!recDest&&audioCtx){recDest=audioCtx.createMediaStreamDestination();if(srcNode)srcNode.connect(recDest);}
     const tr=recDest?recDest.stream.getAudioTracks()[0]:micStream&&micStream.getAudioTracks()[0];if(!tr||tr.readyState==='ended')throw new Error('ไม่พบเสียงไมค์สำหรับวิดีโอ');
