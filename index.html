@@ -1127,7 +1127,11 @@
   }
 
   const GRID_F=[20,50,100,200,500,1000,2000,5000,10000,20000];
-  const MONO=()=>getComputedStyle(document.body).getPropertyValue('--mono');
+  let monoFont='';const MONO=()=>monoFont||(monoFont=getComputedStyle(document.body).getPropertyValue('--mono'));
+  const RECORD_FPS=24;
+  function frameDue(clock,now,fps){const step=1000/fps,delta=now-clock.at;if(!Number.isFinite(clock.at)||delta>step*3){clock.at=now;return true;}if(delta+.1<step)return false;clock.at+=Math.max(1,Math.floor((delta+.1)/step))*step;return true;}
+  const MAIN_CLOCK={},DSP_CLOCK={},HUD_CLOCK={};
+  const GRID_CACHE={key:'',canvas:null};
   const GRAPH_PROBE={f:null}; let recordingRange=null;
   function graphData(){ return abOn&&snapB?snapB.data:measured||lastLive; }
   function graphStats(){
@@ -1136,13 +1140,19 @@
       if(!peak||v>peak.v)peak={f,v}; if(f>=40&&f<=16000){sum+=(v-TARGETS[target](f))**2;n++;} });
     return {mode:sweeping?'SWEEP':phasing?'PHASE':measuring?(mmmRunning?'MMM · กำลังวัด':'กำลังวัด'):abOn?'A / B':measured?'ผลวัด':running||rmLive()?'เสียงสด':'พร้อมวัด',peak,delta:n?Math.sqrt(sum/n):null,n};
   }
-  function graphHUD(){ const a=graphStats();
+  function graphHUD(){ if(running&&!frameDue(HUD_CLOCK,performance.now(),6))return;const a=graphStats();
     dq('graphCompareLegend').hidden=!abOn;
     dq('graphMode').textContent=a.mode; dq('graphPeak').textContent=a.peak?niceLabel(a.peak.f)+' Hz':'—';
     dq('graphDelta').textContent=a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB';
     dq('graphQuality').textContent=measured&&measSNR&&measSNR.some(v=>v<10)?'● สีเทา = สัญญาณต่ำ · ไม่นำมาคิดคะแนน':'กราฟ dB เทียบระดับอ้างอิง · ไม่ใช่ dB SPL';
   }
   function drawBase(){
+    const key=JSON.stringify([W,H,DPR,DB_TOP,DB_BOT,target,document.body.classList.contains('outdoor'),xoMarks()]);
+    if(GRID_CACHE.key===key&&GRID_CACHE.canvas){ctx.clearRect(0,0,W,H);ctx.drawImage(GRID_CACHE.canvas,0,0,W,H);ctx.font='9px '+MONO();ctx.textBaseline='middle';ctx.textAlign='left';ctx.lineJoin='round';ctx.lineCap='round';ctx.setLineDash([]);return;}
+    drawBaseFresh();if(!W||!H)return;
+    const c=GRID_CACHE.canvas||(GRID_CACHE.canvas=document.createElement('canvas'));c.width=cv.width;c.height=cv.height;c.getContext('2d').drawImage(cv,0,0);GRID_CACHE.key=key;
+  }
+  function drawBaseFresh(){
     const p=pal(), bottom=H-PAD.b; ctx.clearRect(0,0,W,H); ctx.fillStyle=p.bg||'#0b1423';ctx.fillRect(0,0,W,H);
     ctx.font='10px '+MONO();ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineCap='round';
     for(let db=Math.ceil(DB_BOT/6)*6;db<=DB_TOP;db+=6){const y=yDb(db);ctx.strokeStyle=db===0?p.zero:p.grid;ctx.lineWidth=db===0?1.3:.6;
@@ -1176,6 +1186,7 @@
   }
   function draw(live){
     if(live)lastLive=live;
+    if(DV.open&&recordingRange){graphHUD();return;}
     const range=recordingRange?recordingRange:fitRange(abOn?[snapA&&snapA.data,snapB&&snapB.data]:[measured],24,-24);
     DB_TOP=range[0];DB_BOT=range[1];dq('gScale').textContent=DB_BOT+'…+'+DB_TOP+' dB';drawBase();
     const data=measured||(live||((running||rmLive())?lastLive:null)),p=pal();
@@ -1278,6 +1289,7 @@
 
   function loop(){
     if(!running)return;
+    if(recordingRange&&!frameDue(MAIN_CLOCK,performance.now(),RECORD_FPS)){raf=requestAnimationFrame(loop);return;}
     if(sweeping){
       const el=performance.now()-sweepMeta.t0;
       if(el<sweepMeta.DUR){
@@ -2085,7 +2097,7 @@
     dq('dvDot').classList.toggle('live',running); dq('dvStat').textContent=running?(measuring?'กำลังวัด…':'ไมค์ทำงาน'):'ไมค์ปิด';
     if(measured!==DV.lastM||sweepResult!==DV.lastSw){ DV.lastM=measured; DV.lastSw=sweepResult; DV.dirty=true; dvRenderResult(); dvRenderChecks(); dvRenderSteps(); if(DV.tab==='xo'&&!dq('dvBody').contains(document.activeElement))dvRenderBody(); }
   }
-  function dvLoop(){ if(!DV.open)return; dvSync(); if(DV.dirty||running){ dvDraw(); DV.dirty=false; } DV.raf=requestAnimationFrame(dvLoop); }
+  function dvLoop(){ if(!DV.open)return;if(!recordingRange||frameDue(DSP_CLOCK,performance.now(),RECORD_FPS)){dvSync();if(DV.dirty||running){dvDraw();DV.dirty=false;}}DV.raf=requestAnimationFrame(dvLoop); }
   const dvMQ=window.matchMedia('(max-width:979px)');
   function dvLayout(){ const main=document.querySelector('.dvmain'), side=document.querySelector('.dvside'), e=dq('dvEdit'), k=dq('dvChkP'), v=dq('dvSaveP');
     if(dvMQ.matches){ if(e.parentNode!==main){ dq('dvLvl').after(e); main.append(k,v); } }
@@ -2882,10 +2894,10 @@ function fmp4ToMp4(buf){
 }
 const REC_V={phase:'idle',token:0,session:null,mr:null,timer:null,url:null,file:null,mode:'graph',face:'environment'};
 try{const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}');if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode;if(['environment','user'].includes(o.face))REC_V.face=o.face;}catch(_){}
-function recMime(){if(!window.MediaRecorder)return null;for(const t of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(_){}}return '';}
+function recMime(){if(!window.MediaRecorder)return null;for(const t of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm']){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(_){}}return '';}
 function recUI(phase,msg){const R=REC_V;R.phase=phase;const b=dq('gRec');b.disabled=phase==='processing';b.classList.toggle('on',phase==='recording');
   b.textContent=({idle:'🎬 อัดวิดีโอ',preparing:'✕ ยกเลิกการเตรียม',recording:'⏹ หยุดอัด',processing:'⏳ กำลังจัดไฟล์',ready:'🎬 อัดคลิปใหม่',error:'🎬 ลองอัดใหม่'})[phase];
-  dq('gRecStatus').textContent=msg||({idle:'พร้อมอัด',preparing:'กำลังเปิดไมค์ / กล้อง',recording:'กำลังอัด · เสียงจากไมค์',processing:'กำลังจัดไฟล์ — กรุณารอ',ready:'พร้อมบันทึก — กดบันทึกลงเครื่อง',error:'อัดไม่สำเร็จ'})[phase];
+  dq('gRecStatus').textContent=msg||({idle:'พร้อมอัด',preparing:'กำลังเปิดไมค์ / กล้อง',recording:'กำลังอัด · โหมดลื่นไหล 720 · 24 fps · เสียงไมค์',processing:'กำลังจัดไฟล์ — กรุณารอ',ready:'พร้อมบันทึก — กดบันทึกลงเครื่อง',error:'อัดไม่สำเร็จ'})[phase];
   if(phase!=='recording')dq('gRecT').textContent='';
 }
 function recEl(S=REC_V.session){return S?(performance.now()-S.t0-S.pausedMs-(S.pausedAt?performance.now()-S.pausedAt:0))/1000:0;}
@@ -2893,7 +2905,7 @@ function recSrc(){return (DV.open&&dq('dvCv')&&dq('dvCv').width&&dq('dvCv').heig
 function drawCover(x,v,dx,dy,dw,dh,mirror){const vw=v.videoWidth,vh=v.videoHeight;if(!vw||!vh||dw<=0||dh<=0)return;const s=Math.max(dw/vw,dh/vh),sw=dw/s,sh=dh/s;
   x.save();x.beginPath();x.rect(dx,dy,dw,dh);x.clip();if(mirror){x.translate(dx*2+dw,0);x.scale(-1,1);}x.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,dx,dy,dw,dh);x.restore();}
 function recGraphFit(x,src,dx,dy,dw,dh){if(!src.width||!src.height||dw<=0||dh<=0)return;const s=Math.min(dw/src.width,dh/src.height),w=src.width*s,h=src.height*s;x.drawImage(src,dx+(dw-w)/2,dy+(dh-h)/2,w,h);}
-function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=rc.getContext('2d'),src=recSrc(),HD=156,w=rc.width,h=rc.height,p=pal(),a=graphStats();
+function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=rc.getContext('2d'),src=recSrc(),HD=156,scale=rc.width/1080,w=1080,h=rc.height/scale,p=pal();x.setTransform(scale,0,0,scale,0,0);
   x.fillStyle=p.bg||'#0b1423';x.fillRect(0,0,w,h);const camOn=S.camV&&S.camV.readyState>=2&&S.camV.videoWidth>0,mir=S.face==='user';
   if(S.mode==='camfull'){
     if(camOn)drawCover(x,S.camV,0,0,w,h,mir);
@@ -2907,23 +2919,29 @@ function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=rc.getCon
   }else{
     recGraphFit(x,src,0,HD,w,h-HD);
   }
-  x.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':p.bg?'#f0f5fa':'#111f31';x.fillRect(0,0,w,HD);
+  const now=performance.now(),elapsed=recEl(S),second=Math.floor(elapsed),theme=!!p.bg;
+  if(!S.headerCanvas||now-(S.headerAt||0)>=250||S.headerSecond!==second||S.headerTheme!==theme){
+    const head=S.headerCanvas||(S.headerCanvas=document.createElement('canvas'));head.width=rc.width;head.height=Math.ceil(HD*scale);const hc=head.getContext('2d');hc.setTransform(scale,0,0,scale,0,0);const a=graphStats();
+  hc.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':p.bg?'#f0f5fa':'#111f31';hc.fillRect(0,0,w,HD);
   const fg=S.mode==='camfull'||!p.bg?'#e8f4ff':'#142d44',mu=S.mode==='camfull'||!p.bg?'#9fb3c9':'#50667b';
-  x.textBaseline='top';x.textAlign='left';x.font='bold 36px '+MONO();x.fillStyle=fg;x.fillText('RTA · '+a.mode,24,18,w-240);
-  x.font='25px '+MONO();x.fillStyle=mu;x.fillText('พีค '+(a.peak?niceLabel(a.peak.f)+' Hz':'—')+'   เทียบเป้า '+(a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB'),24,72,w-48);
-  x.font='21px '+MONO();x.fillText('กราฟ dB อ้างอิง · เสียงไมค์ dBFS · ไม่ใช่ dB SPL',24,116,w-48);
-  const t=recEl(S);x.textAlign='right';x.fillStyle='#ff7b83';x.font='bold 32px '+MONO();x.fillText('● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),w-24,20);x.textAlign='left';
+  hc.textBaseline='top';hc.textAlign='left';hc.font='bold 36px '+MONO();hc.fillStyle=fg;hc.fillText('RTA · '+a.mode,24,18,w-240);
+  hc.font='25px '+MONO();hc.fillStyle=mu;hc.fillText('พีค '+(a.peak?niceLabel(a.peak.f)+' Hz':'—')+'   เทียบเป้า '+(a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB'),24,72,w-48);
+  hc.font='21px '+MONO();hc.fillText('กราฟ dB อ้างอิง · เสียงไมค์ dBFS · ไม่ใช่ dB SPL',24,116,w-48);
+  const t=elapsed;hc.textAlign='right';hc.fillStyle='#ff7b83';hc.font='bold 32px '+MONO();hc.fillText('● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),w-24,20);hc.textAlign='left';
+    S.headerAt=now;S.headerSecond=second;S.headerTheme=theme;
+  }
+  x.drawImage(S.headerCanvas,0,0,S.headerCanvas.width,S.headerCanvas.height,0,0,w,HD);
 }
 function recCamPreview(S,on){let pv=dq('gCamPv');if(!on){if(pv)pv.remove();return null;}
   if(!pv){pv=document.createElement('video');pv.id='gCamPv';pv.muted=true;pv.playsInline=true;pv.autoplay=true;pv.style.cssText='position:absolute;left:18px;top:94px;width:80px;border:2px solid #d9f1ff;border-radius:8px;z-index:3;pointer-events:none;background:#000';document.querySelector('#vMeas .graphwrap').appendChild(pv);}
   pv.style.transform=S.face==='user'?'scaleX(-1)':'';pv.srcObject=S.cam;pv.play().catch(()=>{});return pv;
 }
-function recRelease(S){if(!S)return;S.released=true;clearInterval(S.timer);S.timer=null;clearTimeout(S.stopWatch);if(REC_V.session===S){REC_V.timer=null;recordingRange=null;recCamPreview(S,false);}
-  if(S.videoStream)S.videoStream.getVideoTracks().forEach(t=>t.stop());S.videoStream=null;if(S.cam)S.cam.getTracks().forEach(t=>t.stop());if(S.camV)S.camV.srcObject=null;S.cam=null;S.camV=null;
+function recRelease(S){if(!S)return;S.released=true;clearInterval(S.timer);S.timer=null;cancelAnimationFrame(S.raf);S.raf=null;clearTimeout(S.stopWatch);if(REC_V.session===S){REC_V.timer=null;recordingRange=null;recCamPreview(S,false);}
+  if(S.videoStream)S.videoStream.getVideoTracks().forEach(t=>t.stop());S.videoStream=null;if(S.cam)S.cam.getTracks().forEach(t=>t.stop());if(S.camV)S.camV.srcObject=null;S.cam=null;S.camV=null;S.headerCanvas=null;
 }
 function recAsk(){if(['preparing','recording','processing'].includes(REC_V.phase))return;const R=REC_V;
   const modes=[['graph','📈','กราฟอย่างเดียว','กราฟใหญ่ + เสียงไมค์'],['camfull','🎥','กล้องเต็มจอ','กราฟมุมขวาล่าง + เสียงไมค์'],['pip','🖼','กราฟ + กล้องมุมจอ','กราฟใหญ่ + ภาพกล้องเล็ก'],['stack','📱','กล้องบน · กราฟล่าง','เหมาะกับวิดีโอแนวตั้ง']];
-  openModal('<h3>🎬 บันทึกวิดีโอผลวัด</h3><p>ภาพมีสัดส่วนคงที่ตลอดคลิป · บันทึกเสียงจากไมค์ · สูงสุด 10 นาที</p><div class="stylegrid">'+modes.map(m=>'<button data-rv="mode" data-v="'+m[0]+'" class="'+(R.mode===m[0]?'sel':'')+'"><span class="e">'+m[1]+'</span><div><b>'+m[2]+'</b><span>'+m[3]+'</span></div></button>').join('')+'</div><div class="strength" id="rvFace" style="'+(R.mode==='graph'?'opacity:.4':'')+'">'+[['environment','📷 กล้องหลัง'],['user','🤳 กล้องหน้า']].map(c=>'<button data-rv="face" data-v="'+c[0]+'" class="'+(R.face===c[0]?'sel':'')+'">'+c[1]+'</button>').join('')+'</div><div class="dvmfoot"><button data-m="close">ยกเลิก</button><button class="primary" data-rv="go">⏺ เริ่มอัด</button></div>');
+  openModal('<h3>🎬 บันทึกวิดีโอผลวัด</h3><p>โหมดลื่นไหล 720 · 24 fps · ภาพมีสัดส่วนคงที่ · เสียงจากไมค์ · สูงสุด 10 นาที</p><div class="stylegrid">'+modes.map(m=>'<button data-rv="mode" data-v="'+m[0]+'" class="'+(R.mode===m[0]?'sel':'')+'"><span class="e">'+m[1]+'</span><div><b>'+m[2]+'</b><span>'+m[3]+'</span></div></button>').join('')+'</div><div class="strength" id="rvFace" style="'+(R.mode==='graph'?'opacity:.4':'')+'">'+[['environment','📷 กล้องหลัง'],['user','🤳 กล้องหน้า']].map(c=>'<button data-rv="face" data-v="'+c[0]+'" class="'+(R.face===c[0]?'sel':'')+'">'+c[1]+'</button>').join('')+'</div><div class="dvmfoot"><button data-m="close">ยกเลิก</button><button class="primary" data-rv="go">⏺ เริ่มอัด</button></div>');
 }
 dq('dvModal').addEventListener('click',e=>{const b=e.target.closest('[data-rv]');if(!b)return;const R=REC_V;if(b.dataset.rv==='go'){try{localStorage.setItem('rta_recopt',JSON.stringify({mode:R.mode,face:R.face}));}catch(_){}closeModal();recStart();return;}
   R[b.dataset.rv]=b.dataset.v;dq('dvMbox').querySelectorAll('[data-rv="'+b.dataset.rv+'"]').forEach(x=>x.classList.toggle('sel',x===b));const f=dq('rvFace');if(f)f.style.opacity=R.mode==='graph'?'.4':'';
@@ -2931,36 +2949,46 @@ dq('dvModal').addEventListener('click',e=>{const b=e.target.closest('[data-rv]')
 async function recStart(){const R=REC_V;if(['preparing','recording','processing'].includes(R.phase))return;
   if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){appToast('เบราว์เซอร์นี้อัดวิดีโอไม่ได้ — ลอง Chrome',true);return;}
   if(SY.role==='remote'){appToast('โหมดรีโมต: ให้อัดบนเครื่องที่รับเสียงจากไมค์',true);return;}
-  const S={id:++R.token,mode:R.mode,face:R.face,chunks:[],t0:0,pausedMs:0,pausedAt:0,range:[DB_TOP,DB_BOT],timer:null,mr:null,cam:null,camV:null,videoStream:null,released:false,finalized:false};R.session=S;recUI('preparing');
+  const S={id:++R.token,mode:R.mode,face:R.face,chunks:[],t0:0,pausedMs:0,pausedAt:0,range:[DB_TOP,DB_BOT],fps:RECORD_FPS,clock:{},raf:null,timer:null,mr:null,cam:null,camV:null,videoStream:null,released:false,finalized:false};R.session=S;recUI('preparing');
   const active=()=>R.session===S&&R.token===S.id&&R.phase==='preparing';
   try{
     if(!running)await startMic();if(!active())return;if(!running)throw new Error('เปิดไมค์ไม่ได้ — กรุณาอนุญาตไมค์แล้วลองใหม่');
     if(S.mode!=='graph'){
-      try{S.cam=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.face},width:{ideal:1280},height:{ideal:720}},audio:false});}
+      try{S.cam=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.face},width:{ideal:960},height:{ideal:540},frameRate:{ideal:24,max:30}},audio:false});}
       catch(e){if(!active())return;S.mode='graph';appToast('เปิดกล้องไม่ได้ — อัดกราฟและเสียงไมค์แทน',true);}
       if(!active())return;
       if(S.cam){S.camV=recCamPreview(S,true);for(let i=0;i<30&&active()&&!S.camV.videoWidth;i++)await new Promise(r=>setTimeout(r,100));if(!active())return;if(!S.camV.videoWidth)throw new Error('กล้องยังไม่ส่งภาพ — ลองอัดใหม่');}
     }
     if(!active()||!running)throw new Error('ไมค์ถูกหยุดระหว่างเตรียมอัด');
-    S.cv=document.createElement('canvas');S.cv.width=1080;S.cv.height=S.mode==='stack'?1920:S.mode==='graph'?810:1080;
-    if(S.mode==='camfull')S.cv.height=S.camV.videoHeight>S.camV.videoWidth?1920:810;
+    S.cv=document.createElement('canvas');S.cv.width=720;S.cv.height=S.mode==='stack'?1280:S.mode==='graph'?540:720;
+    if(S.mode==='camfull')S.cv.height=S.camV.videoHeight>S.camV.videoWidth?1280:540;
     S.t0=performance.now();recFrame(S);
     if(!recDest&&audioCtx){recDest=audioCtx.createMediaStreamDestination();if(srcNode)srcNode.connect(recDest);}
     const tr=recDest?recDest.stream.getAudioTracks()[0]:micStream&&micStream.getAudioTracks()[0];if(!tr||tr.readyState==='ended')throw new Error('ไม่พบเสียงไมค์สำหรับวิดีโอ');
-    S.videoStream=S.cv.captureStream(30);const ms=new MediaStream([...S.videoStream.getVideoTracks(),tr]),mime=recMime();
-    try{S.mr=new MediaRecorder(ms,mime?{mimeType:mime,videoBitsPerSecond:S.mode==='graph'?2500000:4000000,audioBitsPerSecond:128000}:undefined);}catch(_){S.mr=new MediaRecorder(ms);}
+    S.videoStream=S.cv.captureStream(0);S.captureTrack=S.videoStream.getVideoTracks()[0];
+    if(!S.captureTrack||typeof S.captureTrack.requestFrame!=='function'){S.videoStream.getVideoTracks().forEach(t=>t.stop());S.videoStream=S.cv.captureStream(S.fps);S.captureTrack=null;}
+    const ms=new MediaStream([...S.videoStream.getVideoTracks(),tr]),mime=recMime();
+    try{S.mr=new MediaRecorder(ms,mime?{mimeType:mime,videoBitsPerSecond:S.mode==='graph'?1400000:2200000,audioBitsPerSecond:128000}:undefined);}catch(_){S.mr=new MediaRecorder(ms);}
     R.mr=S.mr;S.mr.ondataavailable=e=>{if(!S.finalized&&e.data&&e.data.size)S.chunks.push(e.data);};
     S.mr.onerror=e=>{S.error=(e.error&&e.error.message)||'ตัวบันทึกวิดีโอขัดข้อง';recStop(S.error);};
     S.mr.onstop=()=>{recRelease(S);recDone(S);};
-    S.mr.start(1000);recordingRange=S.range;recUI('recording');
-    S.timer=setInterval(()=>{if(S.pausedAt)return;try{recFrame(S);}catch(e){recStop(e.message);return;}const t=recEl(S);dq('gRecT').textContent='● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');if(t>=600){recStop();appToast('อัดครบ 10 นาที — กำลังจัดไฟล์ กรุณากดบันทึกลงเครื่อง');}},1000/30);R.timer=S.timer;showGraph();
+    S.mr.start(1000);recordingRange=S.range;MAIN_CLOCK.at=null;DSP_CLOCK.at=null;recUI('recording');if(S.captureTrack)S.captureTrack.requestFrame();
+    S.raf=requestAnimationFrame(now=>recTick(S,now));showGraph();
   }catch(e){S.error=e.message||String(e);recRelease(S);if(R.session===S){R.mr=null;R.session=null;recUI('error',S.error);appToast('อัดไม่ได้: '+S.error,true);}}
   finally{if(R.session!==S||R.token!==S.id||R.phase==='idle')recRelease(S);}
+}
+// One display-synchronized compositor; no interval competing with the graph loop.
+function recTick(S,now){
+  if(REC_V.session!==S||REC_V.phase!=='recording'||S.released)return;
+  S.raf=requestAnimationFrame(t=>recTick(S,t));if(S.pausedAt||!frameDue(S.clock,now,S.fps))return;
+  try{recFrame(S);if(S.captureTrack)S.captureTrack.requestFrame();}catch(e){recStop(e.message);return;}
+  const t=recEl(S),second=Math.floor(t);if(second!==S.lastSecond){S.lastSecond=second;dq('gRecT').textContent='● '+Math.floor(t/60)+':'+String(second%60).padStart(2,'0');}
+  if(t>=600){recStop();appToast('อัดครบ 10 นาที — กำลังจัดไฟล์ กรุณากดบันทึกลงเครื่อง');}
 }
 function recStop(error){const R=REC_V,S=R.session;if(!S)return;
   if(R.phase==='preparing'){R.token++;recRelease(S);R.session=null;R.mr=null;recUI('idle','ยกเลิกการเตรียมอัดแล้ว');return;}
   if(R.phase!=='recording')return;if(error)S.error=error;
-  if(S.pausedAt){S.pausedMs+=performance.now()-S.pausedAt;S.pausedAt=0;}clearInterval(S.timer);S.timer=null;R.timer=null;recUI('processing');
+  if(S.pausedAt){S.pausedMs+=performance.now()-S.pausedAt;S.pausedAt=0;}clearInterval(S.timer);S.timer=null;cancelAnimationFrame(S.raf);S.raf=null;R.timer=null;recUI('processing');
   try{if(S.mr&&S.mr.state!=='inactive'){try{S.mr.requestData();}catch(_){}S.mr.stop();}S.stopWatch=setTimeout(()=>{recRelease(S);recDone(S);},3000);}
   catch(e){S.error=e.message;recRelease(S);recDone(S);}
 }
@@ -2983,12 +3011,13 @@ async function recDone(S=REC_V.session){const R=REC_V;if(!S||S.finalized)return;
 dq('gRec').addEventListener('click',()=>{if(['recording','preparing'].includes(REC_V.phase))recStop();else if(REC_V.phase!=='processing')recAsk();});
 document.addEventListener('visibilitychange',()=>{const R=REC_V,S=R.session;if(R.phase!=='recording'||!S||!S.mr)return;
   if(document.hidden&&S.mr.state==='recording'){try{S.mr.pause();S.pausedAt=performance.now();}catch(e){recStop('พักการอัดไม่ได้: '+e.message);}}
-  else if(!document.hidden&&S.mr.state==='paused'){try{S.mr.resume();if(S.pausedAt){S.pausedMs+=performance.now()-S.pausedAt;S.pausedAt=0;}appToast('อัดต่อแล้ว — ข้ามช่วงที่สลับแอป');}catch(e){recStop('อัดต่อไม่ได้: '+e.message);}}
+  else if(!document.hidden&&S.mr.state==='paused'){try{S.mr.resume();if(S.pausedAt){S.pausedMs+=performance.now()-S.pausedAt;S.pausedAt=0;}S.clock.at=null;appToast('อัดต่อแล้ว — ข้ามช่วงที่สลับแอป');}catch(e){recStop('อัดต่อไม่ได้: '+e.message);}}
 });
 window.addEventListener('beforeunload',e=>{if(['preparing','recording','processing'].includes(REC_V.phase)){e.preventDefault();e.returnValue='';}});
 window.addEventListener('pagehide',()=>{if(REC_V.session)recRelease(REC_V.session);});
 dq('btnMic').addEventListener('click',()=>{if(REC_V.phase==='recording'&&running)setTimeout(()=>{if(!running)appToast('ไมค์หยุดแล้ว — วิดีโอยังอัดต่อ แต่ไม่มีเสียงจนกว่าจะเปิดไมค์ใหม่',true);},50);},true);
 recUI('idle');
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{monoFont='';GRID_CACHE.key='';if(!running)draw();});
 
 gPinApply();
   resize();renderWiz(); uiInit(); mlRender(); micInfoRender();
