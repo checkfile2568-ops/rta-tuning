@@ -2610,7 +2610,7 @@
   function openSync(fromLink){
     const c=SY.config||{};
     openModal('<h3>🔄 ซิงก์ + 📡 รีโมต (Firebase)</h3><p>ใช้โปรเจกต์ Firebase เดิม · ข้อมูลอยู่ใต้ <code>rta/&lt;ห้อง&gt;</code> ไม่ปนกับระบบอื่น · ทุกเครื่องใส่ค่าเหมือนกัน</p>'+
-      '<div class="syncform"><label>Firebase config (วางทั้งก้อนจาก Project settings → Web app หรือวางแค่ Database URL ก็ได้)</label><textarea id="syCfg" rows="5" placeholder="const firebaseConfig = { apiKey: &quot;…&quot;, databaseURL: &quot;https://….firebasedatabase.app&quot;, … };">'+(c.apiKey?esc(JSON.stringify(c,null,1)):'')+'</textarea>'+
+      '<div class="syncform"><label>Firebase config (วางทั้งก้อนจาก Project settings → Web app หรือวางแค่ Database URL ก็ได้)</label><textarea id="syCfg" rows="5" placeholder="const firebaseConfig = { apiKey: &quot;…&quot;, databaseURL: &quot;https://….firebasedatabase.app&quot;, … };">'+(c.apiKey?esc(JSON.stringify(c,null,1)):c.databaseURL?esc(c.databaseURL):'')+'</textarea>'+
       '<label>ชื่อห้อง (ตั้งเอง 6–40 ตัว a-z 0-9 - _ · ใส่เหมือนกันทุกเครื่อง)</label><input id="syRoom" placeholder="เช่น dstack-2569" value="'+esc(SY.room)+'">'+
       '<label>ชื่อเครื่องนี้</label><input id="syName" maxlength="20" value="'+esc(SY.name)+'"></div>'+
       '<div class="syncstat" id="syStat"></div>'+
