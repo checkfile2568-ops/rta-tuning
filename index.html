@@ -1071,24 +1071,46 @@
   /* ===== v1 upgrade: MMM + variance-aware analyze ===== */
   let measuredVar=null, mmmRunning=false;
   function rVar(i0,i1){ if(!measuredVar||measuredVar.length!==bandF.length)return 0; let s=0,c=0; for(let i=i0;i<=i1;i++){s+=measuredVar[i];c++;} return c?s/c:0; }
+  // Preserve missing FFT bands before normalization; -19 is a display fallback, not a sample.
+  function mmmSample(raw){
+    const valid=raw.map(v=>Number.isFinite(v)&&v>-100);
+    if(!valid.some((ok,i)=>ok&&bandF[i]>=200&&bandF[i]<=2000))return null;
+    const n=normalize(raw.map((v,i)=>valid[i]?v:-120));
+    return n.map((v,i)=>valid[i]?v:null);
+  }
+  function failMMM(){
+    cancelMeasurement(); resetMeasurementData(MEASURE_METHOD.mmm);
+    REC.items=[]; REC.seq=-1; REC.undo=null;
+    const message='วัด MMM ไม่สำเร็จ: สัญญาณไม่พอหรือขาดหายมาก — ตรวจไมค์ เปิด Pink Noise และปรับระดับเสียง แล้ววัดใหม่';
+    document.getElementById('sugBox').innerHTML='<div class="empty">'+message+' · รอบนี้ไม่บันทึกผลและไม่สร้างคำแนะนำจูน</div>';
+    if(DV.open){ DV.dirty=true; dvRenderAll(); }
+    appToast(message,true);
+  }
   function measureMMM(){
     if(!running||jobBusy())return;
     resetMeasurementData(MEASURE_METHOD.mmm); measureDurationMs=MEASURE_TIME.mmm; const epoch=++jobEpoch;
     mmmRunning=true; measuring=true; RAW={p:new Array(bandF.length).fill(0),n:0}; sweepFrozen=false; sweepResult=null; measured=null; measuredVar=null;
     const btn=document.getElementById('btnMMM');
     const accP=new Array(bandF.length).fill(0),sDb=new Array(bandF.length).fill(0),sDb2=new Array(bandF.length).fill(0),cnt=new Array(bandF.length).fill(0);
+    let frames=0,validFrames=0;
     const t0=performance.now(),DUR=MEASURE_TIME.mmm; measQ=qNew();
     document.getElementById('sugBox').innerHTML='<div class="empty">เดินไมค์ช้าๆ ทั่วโซนฟัง (สูงระดับหู · อย่าจ่อลำโพงตัวเดียว) ขณะเปิด Pink Noise — ระบบเฉลี่ยหลายจุดให้ ~35 วิ</div>';
     (function tick(){
       if(epoch!==jobEpoch||!running)return;
-      const n=normalize(computeBands()); qTick(measQ);
-      for(let i=0;i<bandF.length;i++){const v=n[i]; if(v>-100){accP[i]+=Math.pow(10,v/10);sDb[i]+=v;sDb2[i]+=v*v;cnt[i]++;}}
+      const n=mmmSample(computeBands()); qTick(measQ); frames++;
+      if(n){ validFrames++;
+        for(let i=0;i<bandF.length;i++){const v=n[i]; if(v!==null){accP[i]+=Math.pow(10,v/10);sDb[i]+=v;sDb2[i]+=v*v;cnt[i]++;}}
+      }
       const el=performance.now()-t0;
       btn.innerHTML='<span class="icn">🚶</span> เดินวัด… '+Math.max(0,Math.ceil((DUR-el)/1000))+'s';
       if(el<DUR)requestAnimationFrame(tick);
       else{
-        measured=normalize(bandF.map((_,i)=>cnt[i]?10*Math.log10(accP[i]/cnt[i]):-120)); measBase=devBaseCh(); measSeq++; setTimeout(()=>{ if(epoch===jobEpoch)simReport(); },0);
-        measuredVar=bandF.map((_,i)=>{ if(cnt[i]<4)return 0; const m=sDb[i]/cnt[i]; return Math.sqrt(Math.max(0,sDb2[i]/cnt[i]-m*m)); });
+        // Require at least half the round and four frames, including a usable reference band.
+        const minCount=Math.max(4,Math.ceil(validFrames/2)),usable=cnt.map(c=>c>=minCount);
+        if(validFrames<Math.max(4,Math.ceil(frames/2))||!usable.some((ok,i)=>ok&&bandF[i]>=200&&bandF[i]<=2000)){ failMMM(); return; }
+        measured=normalize(bandF.map((_,i)=>usable[i]?10*Math.log10(accP[i]/cnt[i]):-120)).map((v,i)=>usable[i]?v:-120);
+        measBase=devBaseCh(); measSeq++; setTimeout(()=>{ if(epoch===jobEpoch)simReport(); },0);
+        measuredVar=bandF.map((_,i)=>{ if(!usable[i])return 0; const m=sDb[i]/cnt[i]; return Math.sqrt(Math.max(0,sDb2[i]/cnt[i]-m*m)); });
         measuring=false; mmmRunning=false; setTimeout(()=>{ if(epoch===jobEpoch)afterMeasure(); },120);
         btn.innerHTML=measureButtonHTML('mmm');
         analyze();
