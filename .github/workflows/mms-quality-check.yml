@@ -18,6 +18,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Video event and authorization checks
+        run: node --test tests/video-events*.test.mjs
       - name: Python worker syntax
         run: python -m py_compile media-system/worker/worker.py media-system/worker/health_runner.py
       - name: Extract and check inline JavaScript
@@ -25,17 +30,20 @@ jobs:
         run: |
           python - <<'PY'
           import re,pathlib
-          pages=['media.html','media-library-v3.html','video-studio-v4.html','cctv-analysis.html','cctv-player.html','job-center.html','projects.html','admin-settings-v4.html']
+          pages=['media.html','media-library-v3.html','video-studio-v4.html','video-studio-v5.html','cctv-analysis.html','cctv-player.html','job-center.html','projects.html','admin-settings-v4.html']
           out=pathlib.Path('/tmp/mms-js');out.mkdir(exist_ok=True)
           for page in pages:
               text=pathlib.Path(page).read_text(encoding='utf-8')
               scripts=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',text,re.S|re.I)
               for i,s in enumerate(scripts):
-                  (out/f'{pathlib.Path(page).stem}-{i}.js').write_text(s,encoding='utf-8')
-          print('\n'.join(str(x) for x in out.glob('*.js')))
+                  (out/f'{pathlib.Path(page).stem}-{i}.mjs').write_text(s,encoding='utf-8')
+          print('\n'.join(str(x) for x in out.glob('*.mjs')))
           PY
-          for f in /tmp/mms-js/*.js; do node --check "$f"; done
+          for f in /tmp/mms-js/*.mjs; do node --check "$f"; done
           node --check mms-splitter.js
+          node --check mms-clip.js
+          node --check mms-video-events.js
+          node --check mms-gemini-client.js
       - name: Required integration files and navigation
         shell: bash
         run: |

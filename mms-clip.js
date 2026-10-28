@@ -82,7 +82,7 @@ export async function buildTimeline(parts, onProgress){
     const p = parts[i];
     let d = Number(p.duration_ms) > 0 ? Number(p.duration_ms)/1000 : 0;
     if(!d){ d = await probeDuration(p.url); }
-    list.push({ index:i, url:p.url, name:p.original_name || p.name || ('part-'+(i+1)), start:cursor, end:cursor+d, duration:d, size_bytes:Number(p.size_bytes)||0 });
+    list.push({ id:p.id, index:i, url:p.url, name:p.original_name || p.name || ('part-'+(i+1)), start:cursor, end:cursor+d, duration:d, size_bytes:Number(p.size_bytes)||0 });
     cursor += d;
     onProgress?.((i+1)/parts.length);
   }
@@ -90,7 +90,7 @@ export async function buildTimeline(parts, onProgress){
 }
 
 /* [EXT-2] สร้างสาย filter ของ FFmpeg */
-function buildVideoFilter({ zoom, center, enhance, profile }){
+export function buildVideoFilter({ zoom, center, enhance, profile }){
   const chain = [];
   const z = clamp(zoom,1,4);
   if(z > 1.001){
@@ -201,7 +201,7 @@ export async function exportClip({
     onStage?.('กำลังสร้างไฟล์ดาวน์โหลด');
     const data = await ffmpeg.readFile('output.mp4');
     written.push('output.mp4');
-    const blob = new Blob([data.buffer ? data.buffer : data], { type:'video/mp4' });
+    const blob = new Blob([data], { type:'video/mp4' });
     onProgress?.(1);
 
     const stamp = new Date();
@@ -221,4 +221,19 @@ export function saveBlob(blob, filename){
   document.body.appendChild(a);
   a.click();
   setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 4000);
+}
+
+/* Still image uses exactly the same FFmpeg crop and enhancement as video export. */
+export async function exportFrame({timelineParts, timeSec, zoom=1, center={x:.5,y:.5}, enhance=PRESETS.natural, profile='source_quality', onStage}={}) {
+  const part=timelineParts.find(p=>timeSec>=p.start && timeSec<p.end);
+  if(!part)throw new Error('ไม่พบภาพในช่วงเวลานี้');
+  onStage?.('กำลังเตรียมภาพนิ่งตามค่าซูมเดิม');
+  const {ffmpeg,fetchFile}=await loadFFmpeg();
+  try {
+    await ffmpeg.writeFile('frame-source.mp4',await fetchFile(part.url));
+    const code=await ffmpeg.exec(['-ss',Math.max(0,timeSec-part.start).toFixed(3),'-i','frame-source.mp4','-frames:v','1','-vf',buildVideoFilter({zoom,center,enhance,profile}),'-threads','1','frame.png']);
+    if(code!==0)throw new Error('ส่งออกภาพไม่สำเร็จ');
+    const data=await ffmpeg.readFile('frame.png');
+    return {blob:new Blob([data],{type:'image/png'}),name:`MMs-frame-${timeSec.toFixed(3)}.png`};
+  } finally {for(const name of ['frame-source.mp4','frame.png'])try{await ffmpeg.deleteFile(name)}catch{}}
 }

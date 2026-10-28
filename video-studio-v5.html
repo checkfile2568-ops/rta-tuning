@@ -61,6 +61,8 @@ input[type=range]{width:100%;accent-color:#3d91ff}
 .tabs{display:flex;gap:6px;background:#eef3f9;padding:4px;border-radius:12px}
 .tabs button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px;font-weight:700;color:#5b6d8a;cursor:pointer;font-size:13px}
 .tabs button.on{background:#fff;color:#2f76c9;box-shadow:0 2px 8px rgba(65,91,137,.12)}
+[hidden]{display:none!important}
+.eventcard{padding:12px;border:1px solid #dbe5f2;border-radius:13px;display:grid;gap:8px}.eventcard.chosen{border-color:#3d91ff;background:#f3f8ff}.eventgrid{display:grid;gap:9px;max-height:520px;overflow:auto}.eventcard input{max-width:130px}textarea{font:inherit;resize:vertical;width:100%;border:1px solid #d5e1ef;border-radius:12px;padding:12px}#eventMarks .marker{position:absolute;top:0;bottom:0;background:#ef5fc055;border-left:2px solid #ef5fc0;pointer-events:none}
 </style>
 </head>
 <body>
@@ -86,6 +88,21 @@ input[type=range]{width:100%;accent-color:#3d91ff}
     <div id="srclist" class="srclist"><div class="empty">กำลังโหลดรายการ…</div></div>
   </section>
 
+  <section class="panel" aria-labelledby="eventHeading">
+    <h2 id="eventHeading">ค้นหาเหตุการณ์ด้วยข้อความ</h2>
+    <label for="eventQuestion">ต้องการค้นหาอะไรในวิดีโอ</label>
+    <textarea id="eventQuestion" rows="2" maxlength="800" placeholder="เช่น ไฮไลท์ยิงประตู ผู้เล่นเจ็บ หรือจังหวะเซฟของผู้รักษาประตู">ไฮไลท์ยิงประตู และผู้เล่นเจ็บ</textarea>
+    <div class="rowline">
+      <label for="sampleInterval">อ่านภาพทุก</label><select id="sampleInterval" class="btn"><option value="1">1 วินาที (ละเอียด)</option><option value="2">2 วินาที (เร็วขึ้น)</option><option value="4">4 วินาที (สำรวจ)</option></select>
+      <label><input type="checkbox" id="scanRange"> วิเคราะห์เฉพาะช่วงที่เลือก</label>
+      <button id="scanEvents" class="btn primary" disabled>วิเคราะห์และแบ่งช่วงเวลา</button>
+      <button id="stopEvents" class="btn" hidden>หยุดวิเคราะห์</button>
+      <button id="saveEvents" class="btn" disabled>บันทึกช่วงเวลา JSON</button>
+    </div>
+    <div class="note">AI อ่านภาพจากวิดีโอผ่าน Gemini เป็นชุด ๆ รองรับหลาย Part โดยไม่เปลี่ยนค่าซูม ผลเป็นเหตุการณ์เสนอให้ตรวจ อาจพลาดจังหวะสั้นหรือเหตุการณ์ที่ต้องฟังเสียง ตรวจและปรับเวลาก่อนส่งออก</div>
+    <div id="eventStatus" class="muted" role="status" aria-live="polite">เลือกวิดีโอแล้วพิมพ์สิ่งที่ต้องการค้นหา</div>
+    <div id="eventList" class="eventgrid"></div>
+  </section>
   <div class="grid2">
     <section class="panel">
       <h2><span class="step">ขั้นที่ 2</span> ดูตัวอย่างและกำหนดช่วง</h2>
@@ -97,7 +114,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
 
       <div class="timeline">
         <div class="trange" id="trange">
-          <div class="sel" id="tsel"></div>
+          <div id="eventMarks"></div><div class="sel" id="tsel"></div>
           <div class="ev" id="tev" hidden></div>
           <div class="cur" id="tcur"></div>
         </div>
@@ -173,6 +190,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
     <div id="paneLocal" style="display:flex;flex-direction:column;gap:10px">
       <p class="note">ตัดด้วย FFmpeg ในเบราว์เซอร์ ไม่ต้องรอเครื่องประมวลผล ได้ไฟล์ทันทีในเครื่อง เหมาะกับคลิปสั้น แนะนำไม่เกิน 90 วินาทีต่อครั้ง โดยเฉพาะบนมือถือ</p>
       <div id="localWarn" hidden></div>
+      <button id="saveFrame" class="btn wide" disabled>บันทึกภาพ ณ ตำแหน่งปัจจุบัน (คงค่าซูม)</button>
       <button id="runLocal" class="btn primary wide" disabled>ตัด + ดาวน์โหลด</button>
       <div id="localProgWrap" hidden>
         <div class="prog"><i id="localProg"></i></div>
@@ -194,9 +212,11 @@ input[type=range]{width:100%;accent-color:#3d91ff}
 
 <script src="mms-pro-client.js"></script>
 <script src="mms-workflow-client.js"></script>
+<script src="mms-gemini-client.js"></script>
 <script src="mms-shell-bridge.js"></script>
 <script type="module">
-import { exportClip, saveBlob, buildTimeline, partsForRange, PRESETS, PROFILES } from './mms-clip.js';
+import { scanVideoEvents } from './mms-video-events.js?v=20261029';
+import { exportFrame, exportClip, saveBlob, buildTimeline, partsForRange, PRESETS, PROFILES } from './mms-clip.js?v=20261029';
 
 const $ = s => document.querySelector(s);
 const W = window.MmsWorkflow, P = window.MmsPro;
@@ -206,6 +226,7 @@ const S = {
   parts: [], duration: 0, partIndex: -1,
   start: 0, end: 0, event: null,
   center: { x:.5, y:.5 },
+  busy: false, scanning: false, cancelScan: false, events: [], chosen: -1,
   job: null, jobTimer: null, lastBlob: null
 };
 
@@ -216,7 +237,7 @@ const fmt = t => {
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
 };
 const bytes = n => P?.bytes ? P.bytes(n) : `${n} B`;
-const esc = s => P?.esc ? P.esc(s) : String(s??'');
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clamp = (n,a,b) => Math.max(a, Math.min(b, Number(n)||0));
 
 /* ---------- worker status ---------- */
@@ -257,6 +278,8 @@ function renderSources(){
 
 /* ---------- pick + timeline ---------- */
 async function pick(src){
+  if(S.busy) return;
+  S.parts=[];S.duration=0;S.events=[];S.chosen=-1;renderEvents();
   S.sel = src; renderSources();
   $('#stagehint').textContent = 'กำลังเตรียมตัวอย่าง…';
   setBusy(true);
@@ -272,30 +295,43 @@ async function pick(src){
     $('#stagehint').textContent = `${S.parts.length > 1 ? S.parts.length + ' Part ต่อเนื่องกัน' : 'ไฟล์เดียว'} · แตะภาพเพื่อเลือกจุดซูม`;
     paint();
   }catch(e){
+    S.parts=[];S.duration=0;
     $('#stagehint').textContent = String(e.message || e);
   }finally{ setBusy(false); }
 }
 
 function setBusy(b){
-  $('#runLocal').disabled = b || !S.parts.length;
-  $('#runServer').disabled = b || !S.sel;
+  S.busy=b;
+  document.querySelectorAll('.wrap button,.wrap input,.wrap select,.wrap textarea').forEach(el=>{
+    if(el.matches('[data-mms-close],#stopEvents,#tabLocal,#tabServer'))return;
+    el.disabled=b;
+  });
+  $('#pv').controls=!b;
+  $('#runLocal').disabled=b||!S.parts.length;
+  $('#saveFrame').disabled=b||!S.parts.length;
+  $('#runServer').disabled=b||!S.parts.length;
+  $('#scanEvents').disabled=b||!S.parts.length;
+  $('#saveEvents').disabled=b||!S.events.length;
 }
 
 async function loadPart(i){
-  if(i === S.partIndex) return;
-  const v = $('#pv');
-  S.partIndex = i;
-  v.crossOrigin = 'anonymous';
-  v.src = S.parts[i].url;
-  await new Promise(res => {
-    const ok = () => { v.removeEventListener('loadedmetadata', ok); res(); };
-    v.addEventListener('loadedmetadata', ok);
+  if(i===S.partIndex)return;
+  const v=$('#pv');
+  v.crossOrigin='anonymous';
+  await new Promise((resolve,reject)=>{
+    const cleanup=()=>{clearTimeout(timer);v.removeEventListener('loadedmetadata',ok);v.removeEventListener('error',fail)};
+    const ok=()=>{cleanup();resolve()};
+    const fail=()=>{cleanup();reject(new Error('โหลดตัวอย่างไม่สำเร็จ กรุณาเลือกวิดีโอใหม่'))};
+    const timer=setTimeout(fail,25000);
+    v.addEventListener('loadedmetadata',ok,{once:true});v.addEventListener('error',fail,{once:true});
+    v.src=S.parts[i].url;
   });
+  S.partIndex=i;
 }
 async function seekGlobal(t){
   if(!S.parts.length) return;
   t = clamp(t, 0, Math.max(0, S.duration - 0.05));
-  const i = Math.max(0, S.parts.findIndex(p => t < p.end - 0.001));
+  const i = S.parts.findIndex(p => t < p.end - 0.001);
   await loadPart(i === -1 ? S.parts.length-1 : i);
   const v = $('#pv');
   v.currentTime = Math.max(0, t - S.parts[S.partIndex].start);
@@ -390,7 +426,7 @@ $('#setEvent').addEventListener('click', () => {
 
 $('#stage').addEventListener('click', e => {
   const v = $('#pv');
-  if(!v.videoWidth) return;
+  if(S.busy || !v.videoWidth) return;
   const r = $('#stage').getBoundingClientRect();
   const ar = v.videoWidth/v.videoHeight;
   let dw = r.width, dh = r.width/ar;
@@ -435,7 +471,9 @@ $('#runLocal').addEventListener('click', async () => {
   if(!(len > 0.2)) return alert('กรุณากำหนดช่วงเวลาก่อน');
   if(len > 300 && !confirm('ช่วงที่เลือกยาวมาก อาจทำให้เบราว์เซอร์ค้าง ต้องการทำต่อหรือไม่')) return;
 
-  $('#runLocal').disabled = true;
+  if(S.busy)return;
+  setBusy(true);
+  $('#pv').pause();
   $('#localResult').hidden = true;
   $('#localProgWrap').hidden = false;
   $('#localProg').style.width = '0%';
@@ -470,13 +508,13 @@ $('#runLocal').addEventListener('click', async () => {
     $('#localResult').innerHTML = `<b>ตัดไฟล์ไม่สำเร็จ</b><span class="muted">${esc(e.message||e)}</span>
       <span class="muted">ถ้าเกิดจากหน่วยความจำไม่พอ ให้ย่อช่วงเวลาลง เลือกคุณภาพ 720p หรือใช้แท็บ “ส่งเข้าคิวเซิร์ฟเวอร์”</span>`;
   }finally{
-    $('#runLocal').disabled = false;
+    setBusy(false);
   }
 });
 
 /* ---------- export: server queue ---------- */
 $('#runServer').addEventListener('click', async () => {
-  if(!S.sel) return;
+  if(!S.sel||S.busy) return;
   const body = {
     source_kind: S.sel.kind,
     ...(S.sel.kind === 'set' ? { media_set_id: S.sel.id } : { media_file_id: S.sel.id }),
@@ -521,6 +559,76 @@ async function pollJob(){
   await tick();
   S.jobTimer = setInterval(tick, 5000);
 }
+
+/* ---------- prompt events ---------- */
+function renderEvents(){
+  $('#eventMarks').innerHTML=S.events.map(r=>`<i class="marker" style="left:${r.start/(S.duration||1)*100}%;width:${(r.end-r.start)/(S.duration||1)*100}%"></i>`).join('');
+  $('#eventList').innerHTML=S.events.map((r,i)=>`<article class="eventcard ${S.chosen===i?'chosen':''}">
+    <b>${i+1}. ${esc(r.title)} · รอตรวจ</b><span class="muted">${esc(r.detail)}</span>
+    <div class="rowline"><label>เริ่ม (วินาที) <input type="number" min="0" max="${S.duration}" step="0.1" value="${r.start.toFixed(1)}" data-time="start" data-i="${i}" aria-label="เริ่มเหตุการณ์ ${i+1}"></label>
+    <label>จบ (วินาที) <input type="number" min="0" max="${S.duration}" step="0.1" value="${r.end.toFixed(1)}" data-time="end" data-i="${i}" aria-label="จบเหตุการณ์ ${i+1}"></label></div>
+    <div class="rowline"><button class="btn" data-action="choose" data-i="${i}">เลือกช่วงนี้</button><button class="btn" data-action="clip" data-i="${i}">ตัดคลิปนี้</button><button class="btn" data-action="frame" data-i="${i}">บันทึกภาพเหตุการณ์</button><button class="btn ghost" data-action="remove" data-i="${i}">ตัดออกจากรายการ</button></div>
+    </article>`).join('');
+  $('#saveEvents').disabled=S.busy||!S.events.length;
+  if(S.busy)$('#eventList').querySelectorAll('button,input').forEach(el=>el.disabled=true);
+}
+async function chooseEvent(i){
+  const r=S.events[i];if(!r)return;
+  S.start=r.start;S.end=r.end;S.event=r.at;S.chosen=i;
+  $('#pv').pause();await seekGlobal(r.at);paint();renderEvents();
+}
+$('#eventList').addEventListener('change',e=>{
+  const key=e.target.dataset.time;if(!key||S.busy)return;
+  const r=S.events[Number(e.target.dataset.i)],value=Number(e.target.value);
+  if(!Number.isFinite(value)||value<0||value>S.duration||(key==='start'?value>=r.end:value<=r.start)){
+    $('#eventStatus').textContent='ช่วงเวลาไม่ถูกต้อง จุดจบต้องมากกว่าจุดเริ่ม';renderEvents();return;
+  }
+  r[key]=value;r.at=clamp(r.at,r.start,Math.max(r.start,r.end-.05));
+  if(S.chosen===Number(e.target.dataset.i)){S.start=r.start;S.end=r.end;S.event=r.at;paint()}
+  renderEvents();
+});
+$('#eventList').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-action]');if(!b||S.busy)return;
+  const i=Number(b.dataset.i);
+  try{
+    if(b.dataset.action==='remove'){S.events.splice(i,1);S.chosen=-1;renderEvents();return}
+    await chooseEvent(i);
+    if(b.dataset.action==='clip')$('#runLocal').click();
+    if(b.dataset.action==='frame')$('#saveFrame').click();
+  }catch(e){$('#eventStatus').textContent=e.message}
+});
+$('#scanEvents').addEventListener('click',async()=>{
+  const question=$('#eventQuestion').value.trim();
+  if(S.busy||!S.parts.length)return;
+  if(!question){$('#eventStatus').textContent='กรุณาพิมพ์เหตุการณ์ที่ต้องการค้นหา';return}
+  const api=window.MmsGemini.api;
+  const parts=S.parts.map(p=>({...p}));
+  // Restrict sampled timestamps while retaining each Part's local clock.
+  const range=$('#scanRange').checked?{start:S.start,end:S.end}:null;
+  if(range && range.end-range.start<.2){$('#eventStatus').textContent='กรุณาเลือกช่วงเวลาก่อน';return}
+  S.events=[];S.chosen=-1;S.cancelScan=false;S.scanning=true;
+  $('#pv').pause();setBusy(true);renderEvents();$('#stopEvents').hidden=false;$('#stopEvents').disabled=false;
+  try{
+    const caps=await api('capabilities');
+    if(!caps.ok||!caps.gemini_ready)throw new Error(caps.error||'AI ยังไม่พร้อม กรุณาตั้งค่า Gemini ก่อน');
+    await scanVideoEvents({parts,question,range,interval:Number($('#sampleInterval').value),pre:clamp($('#preRoll').value,0,30),post:clamp($('#postRoll').value,0,30),api,
+      cancelled:()=>S.cancelScan,onProgress:t=>$('#eventStatus').textContent=t,
+      onEvents:rows=>{S.events=rows;renderEvents()}});
+    $('#eventStatus').textContent=(S.cancelScan?'หยุดแล้ว':'วิเคราะห์ครบแล้ว')+` · พบ ${S.events.length} ช่วงที่เสนอให้ตรวจ · เลือกช่วงเพื่อส่งออกโดยคงค่าซูม`;
+  }catch(e){$('#eventStatus').textContent='วิเคราะห์ไม่ครบ: '+(e.message||e)+` · เก็บผลที่ได้แล้ว ${S.events.length} ช่วง`}
+  finally{S.scanning=false;$('#stopEvents').hidden=true;setBusy(false);renderEvents()}
+});
+$('#stopEvents').addEventListener('click',()=>{S.cancelScan=true;$('#stopEvents').disabled=true;$('#eventStatus').textContent='กำลังหยุดหลังคำขอปัจจุบัน ผลที่ได้แล้วจะยังอยู่'});
+$('#saveEvents').addEventListener('click',()=>saveBlob(new Blob([JSON.stringify({source:S.sel,question:$('#eventQuestion').value,events:S.events,zoom:Number($('#zoom').value),center:S.center,enhance:currentEnhance()},null,2)],{type:'application/json'}),'MMs-events.json'));
+$('#saveFrame').addEventListener('click',async()=>{
+  if(S.busy||!S.parts.length)return;
+  setBusy(true);$('#pv').pause();
+  try{
+    const out=await exportFrame({timelineParts:S.parts,timeSec:globalTime(),zoom:Number($('#zoom').value)||1,center:{...S.center},enhance:currentEnhance(),profile:$('#profile').value,onStage:t=>$('#eventStatus').textContent=t});
+    saveBlob(out.blob,out.name);$('#eventStatus').textContent='บันทึกภาพแล้ว โดยคงซูม จุดกึ่งกลาง และค่าปรับภาพ';
+  }catch(e){$('#eventStatus').textContent='บันทึกภาพไม่สำเร็จ: '+(e.message||e)}
+  finally{setBusy(false)}
+});
 
 /* ---------- boot ---------- */
 (async () => {

@@ -19,9 +19,10 @@ async function api(action,payload={}){
   const s=session();
   if(!s)throw new Error('NO_SESSION');
   let r,d;
+  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),120000);
   try{
     r=await fetch(EDGE,{
-      method:'POST',
+      method:'POST',signal:controller.signal,
       headers:{
         'Content-Type':'application/json',
         'apikey':ANON,
@@ -31,8 +32,9 @@ async function api(action,payload={}){
       body:JSON.stringify({action,...payload})
     });
   }catch(e){
+    if(e?.name==='AbortError')return {ok:false,error:'AI ตอบกลับเกินเวลา กรุณาลองวิเคราะห์ช่วงสั้นลง',code:'TIMEOUT'};
     return {ok:false,error:'เชื่อมต่อบริการวิเคราะห์ไม่ได้ กรุณาตรวจอินเทอร์เน็ตแล้วลองใหม่',code:'NETWORK_ERROR'};
-  }
+  }finally{clearTimeout(timer)}
   d=await r.json().catch(()=>null);
 
   if(r.status===401){
