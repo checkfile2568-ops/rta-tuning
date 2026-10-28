@@ -75,6 +75,16 @@
   .wsi .dsp{font-size:12px;color:var(--accent2);font-family:var(--mono);margin-bottom:6px}
   .wsi .wacts{display:flex;gap:6px;flex-wrap:wrap}.wsi .wacts button{flex:1;min-width:120px}
   .wnav{display:flex;gap:8px}.wnav #wReset{flex:0 0 auto}
+  .splbig{display:flex;gap:10px;margin:8px 0}
+  .splbig>div{flex:1;border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:center;background:var(--panel2)}
+  .splbig b{display:block;font-family:var(--mono);font-size:34px;line-height:1.1}
+  .splbig small{color:var(--muted);font-size:12px}
+  .splrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;padding:3px 2px;border-bottom:1px dashed var(--line)}
+  .splwarn{color:#d33;font-weight:700;min-height:1.2em;margin:4px 0}
+  .splcal{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:10px}
+  .splcal input{width:90px;font-size:15px;padding:4px 6px}
+  .splhow{font-size:13px;line-height:1.55;margin:8px 0 0;padding-left:18px}
+  .spllog{font-family:var(--mono);font-size:12px;margin-top:6px;max-height:140px;overflow:auto}
   .graphwrap{position:relative;margin:12px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
   canvas{display:block;width:100%;height:300px;touch-action:none}
   .overlay-legend{position:absolute;top:6px;left:40px;display:flex;gap:10px;font-family:var(--mono);font-size:10px;pointer-events:none;flex-wrap:wrap;max-width:60%}
@@ -545,6 +555,7 @@
     <button id="btnMic"><span class="icn">🎙️</span> เริ่มวัดด้วยไมค์</button>
     <button id="btnNoise"><span class="icn">📻</span> Pink Noise</button>
   </div>
+  <div class="row"><button id="btnSpl"><span class="icn">📏</span> วัดความดัง (เดซิเบล)</button></div>
   <details class="adv" id="advTools"><summary>⚙ เครื่องมือเพิ่มเติม <small>ไมค์ · คาลิเบรต · Peak · Sweep · เฟส · A/B · ความละเอียด</small></summary>
   <label class="advchk"><input type="checkbox" id="autoPink"> 📻 กดวัดแล้วเปิด Pink Noise ให้อัตโนมัติ <small>(ปิดไว้ถ้าจะวัดด้วยเพลง)</small></label>
   <div class="microw"><select id="micSel"><option value="">🎤 ไมค์เริ่มต้นของเครื่อง</option></select><button id="calBtn">📐 ไฟล์คาลิเบรต</button><input type="file" id="calFile" accept=".txt,.cal,.frd,.csv,text/plain" style="display:none"></div>
@@ -3057,6 +3068,77 @@ recUI('idle');
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{monoFont='';GRID_CACHE.key='';if(!running)draw();});
 
 gPinApply();
+
+// ===== 📏 SPL meter (phone mic, A/C weighting, estimated unless calibrated) =====
+const SPL_KEY='rta_spl_cal', SPL_LOG='rta_spl_log', SPL_DEF=120;
+let SPLC={k:SPL_DEF,cal:false,t:0}; try{ Object.assign(SPLC,JSON.parse(localStorage.getItem(SPL_KEY)||'{}')); }catch(_){}
+const SPLX={on:false,timer:null,src:null,nodes:[],aA:null,aC:null,aZ:null,bufA:null,bufC:null,bufZ:null,fa:-200,fc:-200,eA:0,eC:0,n:0,maxA:-200,maxC:-200,pk:-200,clipT:0,t0:0};
+function biq(ctx,b,a,fs){ const K=2*fs,K2=K*K; const B0=b[0]*K2+b[1]*K+b[2],B1=2*b[2]-2*b[0]*K2,B2=b[0]*K2-b[1]*K+b[2],A0=a[0]*K2+a[1]*K+a[2],A1=2*a[2]-2*a[0]*K2,A2=a[0]*K2-a[1]*K+a[2];
+  return ctx.createIIRFilter([B0/A0,B1/A0,B2/A0],[1,A1/A0,A2/A0]); }
+function splChain(ctx,kind){ const fs=ctx.sampleRate,w=f=>2*fs*Math.tan(Math.PI*f/fs),w1=w(20.598997),w2=w(107.65265),w3=w(737.86223),w4=w(12194.217);
+  const secs=kind==='A'?[biq(ctx,[1,0,0],[1,2*w1,w1*w1],fs),biq(ctx,[1,0,0],[1,w2+w3,w2*w3],fs),biq(ctx,[0,0,1],[1,2*w4,w4*w4],fs)]
+                       :[biq(ctx,[1,0,0],[1,2*w1,w1*w1],fs),biq(ctx,[0,0,1],[1,2*w4,w4*w4],fs)];
+  const g=ctx.createGain(), f1=new Float32Array([1000]), m=new Float32Array(1), ph=new Float32Array(1); let mag=1;
+  secs.forEach(x=>{ x.getFrequencyResponse(f1,m,ph); mag*=m[0]; }); g.gain.value=1/mag;
+  for(let i=0;i<secs.length-1;i++) secs[i].connect(secs[i+1]); secs[secs.length-1].connect(g); return {inp:secs[0],out:g,all:[...secs,g]}; }
+function splWire(){ const X=SPLX; splUnwire(); if(!audioCtx||!srcNode)return false;
+  const mk=()=>{ const a=audioCtx.createAnalyser(); a.fftSize=4096; a.smoothingTimeConstant=0; return a; };
+  const A=splChain(audioCtx,'A'), C=splChain(audioCtx,'C'); X.aA=mk(); X.aC=mk(); X.aZ=mk();
+  srcNode.connect(A.inp); A.out.connect(X.aA); srcNode.connect(C.inp); C.out.connect(X.aC); srcNode.connect(X.aZ);
+  X.nodes=[...A.all,...C.all,X.aA,X.aC,X.aZ]; X.src=srcNode; X.bufA=new Float32Array(4096); X.bufC=new Float32Array(4096); X.bufZ=new Float32Array(4096); return true; }
+function splUnwire(){ const X=SPLX; X.nodes.forEach(n=>{ try{ n.disconnect(); }catch(_){} }); X.nodes=[]; if(X.src){ try{ X.src.disconnect(X.aZ); }catch(_){} } X.src=null; }
+function splReset(){ Object.assign(SPLX,{fa:-200,fc:-200,eA:0,eC:0,n:0,maxA:-200,maxC:-200,pk:-200,clipT:0,t0:performance.now()}); }
+function splMS(buf){ let s=0; for(let i=0;i<buf.length;i++) s+=buf[i]*buf[i]; return s/buf.length; }
+function splTick(){ const X=SPLX, box=dq('splBox'); if(!box||!dq('dvModal').classList.contains('show')){ splStop(); return; }
+  if(!running){ dq('splWarn').textContent='⚪ ไมค์ปิดอยู่ — กด 🎙️ เริ่มวัดด้วยไมค์'; return; }
+  if(X.src!==srcNode){ if(!splWire())return; splReset(); }
+  X.aA.getFloatTimeDomainData(X.bufA); X.aC.getFloatTimeDomainData(X.bufC); X.aZ.getFloatTimeDomainData(X.bufZ);
+  const mA=splMS(X.bufA), mC=splMS(X.bufC); let pk=0; for(let i=0;i<X.bufZ.length;i++){ const v=Math.abs(X.bufZ[i]); if(v>pk)pk=v; }
+  const al=Math.exp(-0.1/0.125); // fast: 125 ms time constant at 100 ms ticks
+  X.fa=X.fa<-150?mA:al*X.fa+(1-al)*mA; X.fc=X.fc<-150?mC:al*X.fc+(1-al)*mC; X.eA+=mA; X.eC+=mC; X.n++;
+  const K=SPLC.k, L=v=>10*Math.log10(v+1e-12)+K, la=L(X.fa), lc=L(X.fc), leqA=L(X.eA/X.n), leqC=L(X.eC/X.n);
+  X.maxA=Math.max(X.maxA,la); X.maxC=Math.max(X.maxC,lc); const pkdb=20*Math.log10(pk+1e-9); X.pk=Math.max(X.pk,pkdb+K); if(pkdb>-0.5) X.clipT=performance.now();
+  const f=v=>v<20?'—':v.toFixed(1), sec=Math.round((performance.now()-X.t0)/1000);
+  dq('splA').textContent=f(la); dq('splC').textContent=f(lc);
+  dq('splStats').innerHTML='<div class="splrow"><span>Leq (เฉลี่ย '+sec+' วิ)</span><span>'+f(leqA)+' dBA · '+f(leqC)+' dBC</span></div>'+
+    '<div class="splrow"><span>สูงสุด</span><span>'+f(X.maxA)+' dBA · '+f(X.maxC)+' dBC</span></div>'+
+    '<div class="splrow"><span>ยอดคลื่น (Peak)</span><span>'+f(X.pk)+' dB</span></div>';
+  dq('splWarn').textContent=performance.now()-X.clipT<3000?'🔴 ไมค์คลิป — เสียงดังเกินไมค์มือถือ ค่าที่เห็นต่ำกว่าความจริง ให้ถอยห่างตู้':(la>100?'⚠ เกิน 100 dBA — อย่าฟังระดับนี้นานเกิน 15 นาที':'');
+  SPLX.lastA=la; SPLX.lastLeqA=leqA; SPLX.lastLeqC=leqC; }
+function splStop(){ clearInterval(SPLX.timer); SPLX.timer=null; splUnwire(); SPLX.on=false; }
+function splLogHtml(){ let L=[]; try{ L=JSON.parse(localStorage.getItem(SPL_LOG)||'[]'); }catch(_){}
+  return L.length?L.map(e=>new Date(e.t).toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' · '+esc(e.d)+' · Leq '+e.a+' dBA / '+e.c+' dBC · สูงสุด '+e.m+' dBA'+(e.cal?'':' (ประมาณ)')).join('<br>'):'ยังไม่มีค่าที่จดไว้'; }
+async function splOpen(){
+  if(SY.role==='remote'){ appToast('โหมดรีโมต: ไมค์อยู่ที่เครื่องรับเสียง — เปิดวัดความดังบนเครื่องนั้น',true); return; }
+  openModal('<h3>📏 วัดความดัง (เดซิเบล)</h3><div id="splBox">'+
+    '<div class="splbig"><div><b id="splA">—</b><small>dBA · ตามหูคน</small></div><div><b id="splC">—</b><small>dBC · รวมเบส</small></div></div>'+
+    '<div class="splwarn" id="splWarn"></div><div id="splStats"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:8px"><button style="flex:1" data-spl="reset">↺ เริ่มนับใหม่</button><button class="primary" style="flex:1" data-spl="log">📌 จดค่านี้</button></div>'+
+    '<label style="display:block;margin-top:6px;font-size:13px">ระยะ/จุดที่วัด <input id="splDist" value="'+esc(SPLC.dist||'ห่างตู้ 1 เมตร')+'" style="width:160px"></label>'+
+    '<div class="spllog" id="splLog">'+splLogHtml()+'</div>'+
+    '<div class="splcal"><b>ความแม่นยำ: '+(SPLC.cal?'✔ เทียบค่าแล้ว ('+new Date(SPLC.t).toLocaleDateString('th-TH')+') คลาดราว ±2 dB':'⚠ ยังไม่ได้เทียบค่า — ค่าประมาณ คลาดได้ ±5–10 dB')+'</b>'+
+      '<div style="font-size:13px;margin-top:4px">มีเครื่องวัดเสียงหรือแอปวัดเสียงที่เชื่อถือได้? วางคู่กับมือถือ เปิด Pink Noise ค้าง แล้วใส่ค่าที่เครื่องนั้นอ่านได้ (dBA):</div>'+
+      '<div style="margin-top:6px"><input id="splRef" type="number" step="0.1" placeholder="เช่น 85"> <button data-spl="cal">เทียบค่า</button> '+(SPLC.cal?'<button data-spl="uncal">ล้างค่าเทียบ</button>':'')+'</div></div>'+
+    '<ol class="splhow"><li><b>ถือมือถือระดับหู</b> ที่จุดที่ต้องการรู้ความดัง หรือห่างตู้ 1 เมตรเพื่อเทียบกับสเปก แล้วกรอกระยะไว้</li>'+
+      '<li><b>หันด้านล่างของมือถือ (รูไมค์) ไปทางลำโพง</b> อย่าเอานิ้วปิดรูไมค์ ถอดเคสหนาออก และถือนิ่ง</li>'+
+      '<li>เปิดเพลงหรือ Pink Noise ที่ระดับที่จะใช้จริง กด <b>↺ เริ่มนับใหม่</b> รอ 30 วิ แล้วดู <b>Leq</b> (ค่าเฉลี่ย) — ตัวเลขใหญ่ด้านบนขยับตามจังหวะ ใช้ดูคร่าวๆ</li>'+
+      '<li><b>dBA</b> = ความดังตามที่หูได้ยิน ใช้ดูความปลอดภัยของหู · <b>dBC</b> = รวมเบส ใช้ดูพลังซับ (ปกติ dBC สูงกว่า dBA ยิ่งต่างมากยิ่งเบสเยอะ)</li>'+
+      '<li>ขึ้น <b>🔴 ไมค์คลิป</b> = ดังเกินไมค์มือถือ (มักเกิน 110–120 dB) ให้ถอยห่างตู้ แล้ววัดใหม่</li>'+
+      '<li>ไมค์มือถือแต่ละรุ่นไม่เท่ากัน ถ้ายังไม่ได้เทียบค่า ใช้ตัวเลข<b>เทียบกันเอง</b>ได้ดี (เช่น ก่อน–หลังปรับ ต่างกันกี่ dB) แต่ค่าจริงอาจคลาด ±5–10 dB</li>'+
+      '<li>ความปลอดภัย: 85 dBA ฟังได้ราว 8 ชม. · ทุก +3 dB เวลาที่ปลอดภัยลดครึ่ง · 100 dBA ไม่เกิน 15 นาที</li></ol></div>'+
+    '<div class="dvmfoot"><button data-m="close">ปิด</button></div>');
+  if(!running){ const ok=await ensureMic(); if(!ok){ dq('splWarn')&&(dq('splWarn').textContent='⚠ เปิดไมค์ไม่ได้ — กดอนุญาตไมค์ใน Chrome'); } }
+  splWire(); splReset(); clearInterval(SPLX.timer); SPLX.timer=setInterval(splTick,100); SPLX.on=true; }
+dq('dvModal').addEventListener('click',e=>{ const b=e.target.closest('[data-spl]'); if(!b)return; const a=b.dataset.spl;
+  if(a==='reset'){ splReset(); return; }
+  if(a==='log'){ if(!(SPLX.n>5)){ appToast('รอให้วัดสักครู่ก่อนจดค่า',true); return; } const d=(dq('splDist').value||'').trim().slice(0,40); SPLC.dist=d; try{ localStorage.setItem(SPL_KEY,JSON.stringify(SPLC)); }catch(_){}
+    let L=[]; try{ L=JSON.parse(localStorage.getItem(SPL_LOG)||'[]'); }catch(_){} L.unshift({t:Date.now(),d,a:SPLX.lastLeqA.toFixed(1),c:SPLX.lastLeqC.toFixed(1),m:SPLX.maxA.toFixed(1),cal:!!SPLC.cal}); L=L.slice(0,30);
+    try{ localStorage.setItem(SPL_LOG,JSON.stringify(L)); }catch(_){} dq('splLog').innerHTML=splLogHtml(); appToast('📌 จดค่าแล้ว: Leq '+SPLX.lastLeqA.toFixed(1)+' dBA'); return; }
+  if(a==='cal'){ const ref=parseFloat(dq('splRef').value); if(!(ref>30&&ref<140)){ appToast('ใส่ค่าที่เครื่องวัดอ่านได้ (30–140 dBA)',true); return; } if(!(SPLX.n>10)){ appToast('รอให้วัดอย่างน้อย 1–2 วินาทีก่อน',true); return; }
+    const cur=SPLX.lastLeqA; SPLC.k=SPLC.k+(ref-cur); SPLC.cal=true; SPLC.t=Date.now(); try{ localStorage.setItem(SPL_KEY,JSON.stringify(SPLC)); }catch(_){} splReset(); appToast('✔ เทียบค่าแล้ว — ปรับเพิ่ม/ลด '+(ref-cur).toFixed(1)+' dB'); splOpenRefresh(); return; }
+  if(a==='uncal'){ SPLC={k:SPL_DEF,cal:false,t:0,dist:SPLC.dist}; try{ localStorage.setItem(SPL_KEY,JSON.stringify(SPLC)); }catch(_){} splReset(); splOpenRefresh(); } });
+function splOpenRefresh(){ splStop(); splOpen(); }
+dq('btnSpl').addEventListener('click',splOpen);
   resize();renderWiz(); uiInit(); mlRender(); micInfoRender();
 })();
   document.getElementById('btnGuide').addEventListener('click',function(){ document.getElementById('guidePanel').classList.toggle('show'); });
