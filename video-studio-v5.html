@@ -126,6 +126,12 @@ input[type=range]{width:100%;accent-color:#3d91ff}
       </div>
 
       <div class="rowline">
+        <label for="playbackRate">ความเร็วภาพ</label>
+        <select id="playbackRate" class="btn"><option value="1">ปกติ (1×)</option><option value="0.5">ช้า (0.5×)</option><option value="0.25">ช้ามาก (0.25×)</option></select>
+        <span id="speedHint" class="muted" role="status">ดูตัวอย่างและส่งออกด้วยความเร็วปกติ</span>
+      </div>
+      <p class="muted">เวลาเริ่ม–จบอ้างอิงต้นฉบับเสมอ ภาพช้าเพิ่มความยาวไฟล์และคงระดับเสียงเดิม โดยไม่สร้างรายละเอียดภาพใหม่</p>
+      <div class="rowline">
         <button class="btn" id="setStart">ตั้งจุดเริ่ม</button>
         <button class="btn" id="setEnd">ตั้งจุดจบ</button>
         <button class="btn" id="setEvent">จุดเกิดเหตุ</button>
@@ -147,7 +153,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
     <section class="panel">
       <h2><span class="step">ขั้นที่ 3</span> ซูมและปรับภาพ</h2>
 
-      <div class="sliderrow"><span>ระดับซูม</span><input id="zoom" type="range" min="1" max="4" step="0.05" value="1"><span class="v" id="zoomV">1.00x</span></div>
+      <div class="sliderrow"><span>ระดับซูม</span><input id="zoom" aria-label="ระดับซูม" type="range" min="1" max="4" step="0.05" value="1"><span class="v" id="zoomV">1.00x</span></div>
       <p class="muted">แตะบนภาพตัวอย่างเพื่อเลือกจุดกึ่งกลางที่ต้องการซูม กรอบเหลืองคือส่วนที่จะถูกส่งออก</p>
 
       <div class="field"><label>ชุดปรับภาพสำเร็จรูป</label>
@@ -162,8 +168,12 @@ input[type=range]{width:100%;accent-color:#3d91ff}
       <div class="sliderrow"><span>ความสว่าง</span><input id="brightness" type="range" min="-50" max="50" step="1" value="0"><span class="v" id="brightnessV">0</span></div>
       <div class="sliderrow"><span>คอนทราสต์</span><input id="contrast" type="range" min="-50" max="50" step="1" value="0"><span class="v" id="contrastV">0</span></div>
       <div class="sliderrow"><span>ความอิ่มสี</span><input id="saturation" type="range" min="-50" max="50" step="1" value="0"><span class="v" id="saturationV">0</span></div>
-      <div class="sliderrow"><span>ความคมชัด</span><input id="sharpness" type="range" min="0" max="100" step="1" value="0"><span class="v" id="sharpnessV">0</span></div>
+      <div class="sliderrow"><span>ความคมชัด</span><input id="sharpness" aria-label="ความคมชัด" type="range" min="0" max="100" step="1" value="0"><span class="v" id="sharpnessV">0</span></div>
 
+      <p class="muted">กรอบเหลืองแสดงพื้นที่ซูม ตัวอย่างวิดีโอยังไม่แสดงการเพิ่มความคมชัด กดปุ่มด้านล่างเพื่อตรวจภาพที่ผ่านซูมและความคมชัดจริงแบบเดียวกับไฟล์ส่งออก</p>
+      <button id="renderPreview" class="btn" disabled>ดูผลซูมและความคมชัดจริง ณ เฟรมนี้</button>
+      <div id="previewStatus" class="muted" role="status" aria-live="polite"></div>
+      <figure id="renderedPreview" hidden style="margin:0"><img id="renderedImage" alt="ภาพประมวลผลจริงตามค่าซูมและความคมชัด" style="display:block;width:100%;max-height:360px;object-fit:contain;background:#0b1220;border-radius:12px"><figcaption id="renderedCaption" class="muted"></figcaption></figure>
       <div class="rowline">
         <div class="field" style="flex:1"><label>คุณภาพไฟล์ที่ส่งออก</label>
           <select id="profile">
@@ -202,6 +212,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
     <div id="paneServer" hidden style="display:flex;flex-direction:column;gap:10px">
       <p class="note">ส่งงานให้เครื่องประมวลผลเรนเดอร์ ได้คุณภาพเต็มและรองรับคลิปยาวหรือคลิปที่แบ่งหลาย Part แต่ต้องมีเครื่องประมวลผลออนไลน์</p>
       <div id="serverWarn" hidden></div>
+      <div id="slowServerNote" class="note" hidden>ภาพช้าให้ใช้ “ตัดในเครื่อง แล้วดาวน์โหลดทันที” คิวเซิร์ฟเวอร์รุ่นปัจจุบันยังไม่รองรับภาพช้า</div>
       <button id="runServer" class="btn wide" disabled>ส่งเข้าคิว</button>
       <div id="jobBox" hidden class="result"></div>
     </div>
@@ -216,7 +227,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
 <script src="mms-shell-bridge.js"></script>
 <script type="module">
 import { scanVideoEvents } from './mms-video-events.js?v=20261029';
-import { exportFrame, exportClip, saveBlob, buildTimeline, partsForRange, PRESETS, PROFILES } from './mms-clip.js?v=20261029';
+import { playbackRate, exportFrame, exportClip, saveBlob, buildTimeline, partsForRange, PRESETS, PROFILES } from './mms-clip.js?v=20261029-slow1';
 
 const $ = s => document.querySelector(s);
 const W = window.MmsWorkflow, P = window.MmsPro;
@@ -226,7 +237,7 @@ const S = {
   parts: [], duration: 0, partIndex: -1,
   start: 0, end: 0, event: null,
   center: { x:.5, y:.5 },
-  busy: false, scanning: false, cancelScan: false, events: [], chosen: -1,
+  previewURL: null, busy: false, scanning: false, cancelScan: false, events: [], chosen: -1,
   job: null, jobTimer: null, lastBlob: null
 };
 
@@ -279,6 +290,7 @@ function renderSources(){
 /* ---------- pick + timeline ---------- */
 async function pick(src){
   if(S.busy) return;
+  clearRenderedPreview();
   S.parts=[];S.duration=0;S.events=[];S.chosen=-1;renderEvents();
   S.sel = src; renderSources();
   $('#stagehint').textContent = 'กำลังเตรียมตัวอย่าง…';
@@ -309,7 +321,8 @@ function setBusy(b){
   $('#pv').controls=!b;
   $('#runLocal').disabled=b||!S.parts.length;
   $('#saveFrame').disabled=b||!S.parts.length;
-  $('#runServer').disabled=b||!S.parts.length;
+  $('#runServer').disabled=b||!S.parts.length||currentRate()!==1;
+  $('#renderPreview').disabled=b||!S.parts.length;
   $('#scanEvents').disabled=b||!S.parts.length;
   $('#saveEvents').disabled=b||!S.events.length;
 }
@@ -327,6 +340,7 @@ async function loadPart(i){
     v.src=S.parts[i].url;
   });
   S.partIndex=i;
+  applyPlaybackRate();
 }
 async function seekGlobal(t){
   if(!S.parts.length) return;
@@ -349,7 +363,7 @@ function paint(){
   $('#startLbl').textContent = fmt(S.start);
   $('#endLbl').textContent = fmt(S.end);
   const len = Math.max(0, S.end - S.start);
-  $('#lenLbl').textContent = len.toFixed(1) + ' วิ';
+  $('#lenLbl').textContent = len.toFixed(1) + ' วิ (ต้นฉบับ) · ส่งออก ' + (len/currentRate()).toFixed(1) + ' วิ';
 
   const D = S.duration || 1;
   $('#tsel').style.left = (S.start/D*100) + '%';
@@ -385,7 +399,7 @@ function paintPreviewFilter(){
   $('#pv').style.filter = `brightness(${(1+b/100).toFixed(3)}) contrast(${(1+c/100).toFixed(3)}) saturate(${(1+s/100).toFixed(3)})`;
 }
 function checkLocalLimits(){
-  const len = Math.max(0, S.end - S.start);
+  const len = Math.max(0, S.end - S.start)/currentRate();
   const el = $('#localWarn');
   const needed = S.parts.length ? partsForRange(S.parts, S.start, S.end) : [];
   const mb = needed.reduce((a,p)=>a+(p.size_bytes||0),0)/1048576;
@@ -435,20 +449,20 @@ $('#stage').addEventListener('click', e => {
   const x = (e.clientX - r.left - ox)/dw, y = (e.clientY - r.top - oy)/dh;
   if(x < 0 || x > 1 || y < 0 || y > 1) return;
   S.center = { x: clamp(x,0,1), y: clamp(y,0,1) };
-  paint();
+  markRenderedStale();paint();
 });
 
 ['zoom','brightness','contrast','saturation','sharpness'].forEach(id => {
   $('#'+id).addEventListener('input', () => {
     $('#'+id+'V').textContent = id === 'zoom' ? Number($('#zoom').value).toFixed(2)+'x' : $('#'+id).value;
     if(id !== 'zoom') $('#preset').value = 'custom';
-    paint();
+    markRenderedStale();paint();
   });
 });
 $('#preset').addEventListener('change', () => {
   const p = PRESETS[$('#preset').value] || PRESETS.natural;
   ['brightness','contrast','saturation','sharpness'].forEach(k => { $('#'+k).value = p[k]; $('#'+k+'V').textContent = p[k]; });
-  paint();
+  markRenderedStale();paint();
 });
 window.addEventListener('resize', paintCrop);
 
@@ -465,10 +479,49 @@ function currentEnhance(){
   };
 }
 
+/* Playback speed does not change source event timestamps or crop settings. */
+function currentRate(){return playbackRate($('#playbackRate').value)}
+function applyPlaybackRate(){
+  const v=$('#pv'),rate=currentRate();
+  if(v.defaultPlaybackRate!==rate)v.defaultPlaybackRate=rate;
+  if(v.playbackRate!==rate)v.playbackRate=rate;v.preservesPitch=true;
+  $('#speedHint').textContent=rate===1?'ดูตัวอย่างและส่งออกด้วยความเร็วปกติ':`ดูตัวอย่างและส่งออกช้าลง ${1/rate} เท่า (${rate}×)`;
+  $('#slowServerNote').hidden=rate===1;
+  $('#runServer').disabled=S.busy||!S.parts.length||rate!==1;
+}
+$('#playbackRate').addEventListener('change',()=>{applyPlaybackRate();paint()});
+$('#pv').addEventListener('ratechange',()=>{
+  const rate=$('#pv').playbackRate;
+  if([1,.5,.25].includes(rate))$('#playbackRate').value=String(rate);
+  applyPlaybackRate();paint();
+});
+function clearRenderedPreview(){
+  if(S.previewURL)URL.revokeObjectURL(S.previewURL);
+  S.previewURL=null;$('#renderedImage').removeAttribute('src');$('#renderedPreview').hidden=true;$('#previewStatus').textContent='';
+}
+function markRenderedStale(){
+  if(S.previewURL)$('#previewStatus').textContent='ค่าภาพเปลี่ยนแล้ว กดดูผลจริงอีกครั้งเพื่ออัปเดตภาพด้านล่าง';
+}
+$('#profile').addEventListener('change',markRenderedStale);
+$('#pv').addEventListener('seeked',markRenderedStale);
+$('#renderPreview').addEventListener('click',async()=>{
+  if(S.busy||!S.parts.length)return;
+  $('#pv').pause();const time=globalTime(),zoom=Number($('#zoom').value)||1,enhance=currentEnhance(),profile=$('#profile').value,center={...S.center};
+  setBusy(true);
+  try{
+    const out=await exportFrame({timelineParts:S.parts,timeSec:time,zoom,center,enhance,profile,onStage:t=>$('#previewStatus').textContent=t});
+    clearRenderedPreview();S.previewURL=URL.createObjectURL(out.blob);$('#renderedImage').src=S.previewURL;$('#renderedPreview').hidden=false;
+    $('#renderedCaption').textContent=`เฟรม ${fmt(time)} · ซูม ${zoom.toFixed(2)}× · ความคมชัด ${enhance.sharpness} · ${PROFILES[profile].label}`;
+    $('#previewStatus').textContent='ภาพนี้ผ่านการประมวลผลจริงด้วยตัวกรองเดียวกับไฟล์ส่งออก';
+  }catch(e){$('#previewStatus').textContent='แสดงผลไม่สำเร็จ: '+(e.message||e)}
+  finally{setBusy(false)}
+});
+window.addEventListener('pagehide',()=>{if(S.previewURL)URL.revokeObjectURL(S.previewURL)});
+
 /* ---------- export: in-browser ---------- */
 $('#runLocal').addEventListener('click', async () => {
-  const len = S.end - S.start;
-  if(!(len > 0.2)) return alert('กรุณากำหนดช่วงเวลาก่อน');
+  const len = (S.end - S.start)/currentRate();
+  if(!(S.end - S.start > 0.2)) return alert('กรุณากำหนดช่วงเวลาก่อน');
   if(len > 300 && !confirm('ช่วงที่เลือกยาวมาก อาจทำให้เบราว์เซอร์ค้าง ต้องการทำต่อหรือไม่')) return;
 
   if(S.busy)return;
@@ -488,6 +541,7 @@ $('#runLocal').addEventListener('click', async () => {
       enhance: currentEnhance(),
       profile: $('#profile').value,
       mute: $('#audio').value === 'mute',
+      rate: currentRate(),
       baseName: 'MMs_' + String(S.sel?.name||'clip').replace(/\.[^.]+$/,'').replace(/[^\w฀-๿-]+/g,'_').slice(0,40),
       onStage: stage,
       onProgress: p => $('#localProg').style.width = Math.round(p*100) + '%'
@@ -514,7 +568,7 @@ $('#runLocal').addEventListener('click', async () => {
 
 /* ---------- export: server queue ---------- */
 $('#runServer').addEventListener('click', async () => {
-  if(!S.sel||S.busy) return;
+  if(!S.sel||S.busy||currentRate()!==1) return;
   const body = {
     source_kind: S.sel.kind,
     ...(S.sel.kind === 'set' ? { media_set_id: S.sel.id } : { media_file_id: S.sel.id }),
@@ -619,7 +673,7 @@ $('#scanEvents').addEventListener('click',async()=>{
   finally{S.scanning=false;$('#stopEvents').hidden=true;setBusy(false);renderEvents()}
 });
 $('#stopEvents').addEventListener('click',()=>{S.cancelScan=true;$('#stopEvents').disabled=true;$('#eventStatus').textContent='กำลังหยุดหลังคำขอปัจจุบัน ผลที่ได้แล้วจะยังอยู่'});
-$('#saveEvents').addEventListener('click',()=>saveBlob(new Blob([JSON.stringify({source:S.sel,question:$('#eventQuestion').value,events:S.events,zoom:Number($('#zoom').value),center:S.center,enhance:currentEnhance()},null,2)],{type:'application/json'}),'MMs-events.json'));
+$('#saveEvents').addEventListener('click',()=>saveBlob(new Blob([JSON.stringify({source:S.sel,question:$('#eventQuestion').value,events:S.events,zoom:Number($('#zoom').value),center:S.center,playback_rate:currentRate(),enhance:currentEnhance()},null,2)],{type:'application/json'}),'MMs-events.json'));
 $('#saveFrame').addEventListener('click',async()=>{
   if(S.busy||!S.parts.length)return;
   setBusy(true);$('#pv').pause();

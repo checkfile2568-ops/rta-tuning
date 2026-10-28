@@ -124,6 +124,32 @@ export function partsForRange(timelineParts, startSec, endSec){
   return timelineParts.filter(p => p.end > startSec + 0.001 && p.start < endSec - 0.001);
 }
 
+/* Rates shared by playback, export, and duration labels. */
+export const PLAYBACK_RATES = [1, 0.5, 0.25];
+export function playbackRate(value = 1){
+  const rate=Number(value);
+  if(!PLAYBACK_RATES.includes(rate))throw new Error('ความเร็วต้องเป็น 1, 0.5 หรือ 0.25 เท่า');
+  return rate;
+}
+export function buildClipArgs({offset=0,inputArgs,duration,rate=1,zoom=1,center={x:.5,y:.5},enhance=PRESETS.natural,profile='source_quality',mute=false,output='output.mp4'}){
+  rate=playbackRate(rate);
+  if(!Number.isFinite(duration)||duration<=.2)throw new Error('ช่วงเวลาไม่ถูกต้อง');
+  const video=[buildVideoFilter({zoom,center,enhance,profile})];
+  const audio=[];
+  if(rate!==1){
+    video.push(`setpts=(PTS-STARTPTS)/${rate}`,'tpad=stop_mode=clone:stop_duration=3');
+    audio.push('asetpts=PTS-STARTPTS','atempo=0.5');
+    if(rate===.25)audio.push('atempo=0.5');
+    audio.push('apad');
+  }
+  const prof=PROFILES[profile]||PROFILES.source_quality;
+  return ['-ss',offset.toFixed(3),'-t',duration.toFixed(3),...inputArgs,
+    '-t',(duration/rate).toFixed(3),'-vf',video.join(','),
+    '-c:v','libx264','-preset','veryfast','-crf',String(prof.crf),
+    ...(mute?['-an']:[...(audio.length?['-af',audio.join(',')]:[]),'-c:a','aac','-b:a','128k']),
+    '-movflags','+faststart','-threads','1',output];
+}
+
 /**
  * ตัด + ส่งออกไฟล์ในเบราว์เซอร์
  * @returns {Promise<{blob:Blob,name:string,bytes:number,seconds:number}>}
@@ -132,9 +158,10 @@ export async function exportClip({
   timelineParts, startSec, endSec,
   zoom = 1, center = { x:.5, y:.5 },
   enhance = PRESETS.natural, profile = 'source_quality',
-  mute = false, baseName = 'MMs-clip',
+  mute = false, rate = 1, baseName = 'MMs-clip',
   onStage, onProgress
 } = {}){
+  rate=playbackRate(rate);
   const start = Math.max(0, Number(startSec) || 0);
   const end   = Number(endSec) || 0;
   const dur   = end - start;
@@ -172,20 +199,8 @@ export async function exportClip({
 
     // เวลาเริ่มต้นต้องเทียบกับจุดเริ่มของ Part แรกที่ดึงมา ไม่ใช่จุดเริ่มของทั้งคลิป
     const offset = Math.max(0, start - needed[0].start);
-    const vf = buildVideoFilter({ zoom, center, enhance, profile });
-    const prof = PROFILES[profile] || PROFILES.source_quality;
-
-    const args = [
-      '-ss', offset.toFixed(3),
-      ...inputArgs,
-      '-t', dur.toFixed(3),
-      '-vf', vf,
-      '-c:v','libx264','-preset','veryfast','-crf', String(prof.crf),
-      ...(mute ? ['-an'] : ['-c:a','aac','-b:a','128k']),
-      '-movflags','+faststart',
-      '-threads','1',
-      'output.mp4'
-    ];
+    const args=buildClipArgs({offset,inputArgs,duration:dur,rate,zoom,center,enhance,profile,mute});
+    written.push('output.mp4');
 
     onStage?.('กำลังเรนเดอร์คลิป');
     const handler = ({ progress }) => {
@@ -200,14 +215,13 @@ export async function exportClip({
 
     onStage?.('กำลังสร้างไฟล์ดาวน์โหลด');
     const data = await ffmpeg.readFile('output.mp4');
-    written.push('output.mp4');
     const blob = new Blob([data], { type:'video/mp4' });
     onProgress?.(1);
 
     const stamp = new Date();
     const pad = n => String(n).padStart(2,'0');
-    const name = `${baseName}_${stamp.getFullYear()+543}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}.mp4`;
-    return { blob, name, bytes: blob.size, seconds: dur };
+    const name = `${baseName}${rate===1?'':'_'+rate+'x'}_${stamp.getFullYear()+543}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}.mp4`;
+    return { blob, name, bytes: blob.size, seconds: dur/rate, sourceSeconds: dur, rate };
   } finally {
     await cleanup();
   }

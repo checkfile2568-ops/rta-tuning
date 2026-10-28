@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: '24'
       - name: Video event and authorization checks
-        run: node --test tests/video-events*.test.mjs
+        run: node --test tests/video-*.test.mjs
       - name: Python worker syntax
         run: python -m py_compile media-system/worker/worker.py media-system/worker/health_runner.py
       - name: Extract and check inline JavaScript
