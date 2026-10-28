@@ -452,6 +452,7 @@
   .rmbar>b{font-size:13px} .rmbar>span{flex:1 1 100%;color:var(--muted)} .rmbar>span b{color:var(--text)}
   .rmbar>button{margin-left:auto;flex:0 0 auto;min-height:32px;font-size:12px;padding:4px 10px}
   .rmbar .rmns{flex:1 1 100%;display:flex;align-items:center;gap:6px;flex-wrap:wrap} .rmbar .rmns small{color:var(--muted)}
+  .rmsug{white-space:pre-line;text-align:left} .rmsug b{display:block;margin-bottom:6px;color:var(--text)}
   .usegrid button .usehint{font-weight:600;font-size:11px;color:#ff9b4a;margin-left:4px} .usewarn{color:#ff9b6b;font-size:13px}
   .rmseg{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap} .rmseg button{flex:0 0 auto;min-height:32px;font-size:12px;padding:4px 10px;border-radius:9px}
   .rmseg button.sel{background:rgba(90,209,255,.18);border-color:#5ad1ff;color:var(--text)}
@@ -502,6 +503,12 @@
 
   .controls .bigrow.measure-modes button{flex-direction:column;gap:4px;font-size:13px;min-width:0;min-height:68px;padding:9px 5px}
   .measure-modes small{font-size:12px;font-weight:500;white-space:nowrap}
+  .controls .bigrow.measure-modes{flex-wrap:wrap} .controls .bigrow.measure-modes button{flex:1 1 calc(50% - 6px)}
+  @media(min-width:700px){.controls .bigrow.measure-modes button{flex:1 1 0}}
+  .p3card{margin:0 0 10px;padding:10px 12px;border:1px solid #ff9b4a;border-radius:12px;background:rgba(255,155,74,.08);font-size:13px;line-height:1.5}
+  .p3card .p3h{display:flex;align-items:center;gap:10px} .p3card .p3h span:last-child{margin-left:auto;color:var(--muted)}
+  .p3dots{display:flex;gap:5px} .p3dots i{width:11px;height:11px;border-radius:50%;border:2px solid #ff9b4a;display:block} .p3dots i.ok{background:#ff9b4a} .p3dots i.now{background:rgba(255,155,74,.4)}
+  .p3card p{margin:6px 0} .p3card small{color:var(--muted)} .p3act{display:flex;gap:8px;flex-wrap:wrap} .p3act button{min-height:40px}
 </style>
 <meta name="theme-color" content="#fbfaf6">
 </head>
@@ -552,7 +559,9 @@
     <button id="btnQuick" title="เช็กแนวโน้มเร็ว 10 วินาที"><span>⚡ เช็กเร็ว</span> <small>10 วินาที</small></button>
     <button id="btnMeasure" class="primary" title="วัดมาตรฐาน 20 วินาที"><span>📸 มาตรฐาน</span> <small>20 วินาที</small></button>
     <button id="btnMMM" title="เดินไมค์เฉลี่ยพื้นที่ฟัง 35 วินาที"><span>🚶 เดินไมค์ MMM</span> <small>35 วินาที</small></button>
+    <button id="btnP3" title="วางมือถือนิ่ง วัด 3 จุดรอบที่ฟัง แล้วเฉลี่ย — ใช้แทน MMM เมื่อวางมือถือนิ่ง/คอมสั่งวัด"><span>📍 วางนิ่ง 3 จุด</span> <small>3 × 20 วินาที</small></button>
   </div>
+  <div class="p3card" id="p3Card" hidden></div>
   <div class="row">
     <button id="btnMic"><span class="icn">🎙️</span> เริ่มวัดด้วยไมค์</button>
     <button id="btnNoise"><span class="icn">📻</span> Pink Noise</button>
@@ -867,6 +876,7 @@
         <button id="dvQuick">⚡ เช็กเร็ว 10 วิ</button>
         <button id="dvMeasure">📸 มาตรฐาน 20 วิ</button>
         <button id="dvMMM">🚶 MMM 35 วิ</button>
+        <button id="dvP3">📍 3 จุด</button>
         <button id="dvSweep">🌊 Sweep</button>
         <button id="dvPhase">🔄 เฟส</button>
       </div>
@@ -933,16 +943,18 @@
 
   let audioCtx=null, analyser=null, micStream=null, srcNode=null, recDest=null;
   let noiseNode=null, noiseOn=false, running=false, holdOn=false, micStarting=false;
-  const MEASURE_TIME={quick:10000,measure:20000,mmm:35000};
-  const MEASURE_BUTTON={quick:'btnQuick',measure:'btnMeasure',mmm:'btnMMM'};
-  const MEASURE_METHOD={quick:'quick10s',measure:'standard20s',mmm:'mmm35s'};
-  const MEASURE_TITLE={quick:'⚡ เช็กเร็ว',measure:'📸 มาตรฐาน',mmm:'🚶 เดินไมค์ MMM'};
-  function measureButtonHTML(kind){return '<span>'+MEASURE_TITLE[kind]+'</span> <small>'+MEASURE_TIME[kind]/1000+' วินาที</small>';}
+  const MEASURE_TIME={quick:10000,measure:20000,mmm:35000,p3:20000};
+  const MEASURE_BUTTON={quick:'btnQuick',measure:'btnMeasure',mmm:'btnMMM',p3:'btnP3'};
+  const MEASURE_METHOD={quick:'quick10s',measure:'standard20s',mmm:'mmm35s',p3:'point3'};
+  const MEASURE_TITLE={quick:'⚡ เช็กเร็ว',measure:'📸 มาตรฐาน',mmm:'🚶 เดินไมค์ MMM',p3:'📍 วางนิ่ง 3 จุด'};
+  function measureButtonHTML(kind){return '<span>'+MEASURE_TITLE[kind]+'</span> <small>'+(kind==='p3'?'3 × 20 วินาที':MEASURE_TIME[kind]/1000+' วินาที')+'</small>';}
   function resetMeasurementButtons(){Object.entries(MEASURE_BUTTON).forEach(([kind,id])=>{const b=document.getElementById(id);if(b){b.innerHTML=measureButtonHTML(kind);b.classList.remove('on');}});}
-  function measurementMethodLabel(method){return ({quick10s:'เช็กเร็ว 10 วิ',standard20s:'วัดมาตรฐาน 20 วิ',mmm35s:'MMM 35 วิ','4s':'วัด 4 วิ',mmm:'MMM 30 วิ'})[method]||'วัดมาตรฐาน 20 วิ';}
+  function measurementMethodLabel(method){return ({point3:'วางนิ่ง 3 จุด × 20 วิ',quick10s:'เช็กเร็ว 10 วิ',standard20s:'วัดมาตรฐาน 20 วิ',mmm35s:'MMM 35 วิ','4s':'วัด 4 วิ',mmm:'MMM 30 วิ'})[method]||'วัดมาตรฐาน 20 วิ';}
+  let P3={active:false,pt:0,ph:'',res:[],rawP:null,rawN:0,q:null};   // 📍 วางนิ่ง 3 จุด state (see p3Go/p3Collect)
   let jobEpoch=0, preparing=false, floorRunning=false, measureMethod='standard20s',measureDurationMs=20000;
   function jobBusy(){ return preparing||measuring||sweeping||phasing||floorRunning; }
   function cancelMeasurement(){
+    if(P3.active&&P3.ph==='meas'&&measuring)p3Reset();
     jobEpoch++; preparing=false; floorRunning=false; measuring=false; mmmRunning=false;
     sweeping=false; phasing=false; RAW=null; measQ=null;
     try{ if(sweepOsc)sweepOsc.stop(); }catch(_){} try{ if(phaseOsc)phaseOsc.stop(); }catch(_){}
@@ -987,7 +999,7 @@
       document.getElementById('stDot').classList.add('live');
       document.getElementById('stFs').textContent=(audioCtx.sampleRate/1000).toFixed(1)+' kHz';
       const b=document.getElementById('btnMic'); b.classList.add('on'); b.innerHTML='<span class="icn">⏹</span> หยุดไมค์';
-      ['btnQuick','btnMeasure','btnMMM','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=false);
+      ['btnQuick','btnMeasure','btnMMM','btnP3','btnHold','btnClear','btnSweep','btnPhase','btnSaveA','btnSaveB'].forEach(id=>document.getElementById(id).disabled=false);
       loop(); afterMicStart();
     }catch(e){ if(e&&e.name==='OverconstrainedError'){ try{ localStorage.removeItem(MIC_KEY); }catch(_){} } showMicError(e); }finally{ micStarting=false; }
   }
@@ -1049,7 +1061,7 @@
   }
 
   function measure(kind='measure'){
-    if(kind!=='quick')kind='measure';
+    if(kind!=='quick'&&kind!=='p3')kind='measure';
     if(!running||jobBusy())return; resetMeasurementData(MEASURE_METHOD[kind]); measureDurationMs=MEASURE_TIME[kind]; const epoch=++jobEpoch; measuring=true; RAW={p:new Array(bandF.length).fill(0),n:0}; sweepFrozen=false; sweepResult=null;
     const btn=document.getElementById(MEASURE_BUTTON[kind]), accP=new Array(bandF.length).fill(0), acc=new Array(bandF.length).fill(0);
     const t0=performance.now(),DUR=MEASURE_TIME[kind]; measQ=qNew();
@@ -1818,9 +1830,9 @@
   /* ===== guided stepper + graph annotations ===== */
   const ZC={sub:'255,90,138',mid:'53,208,192',twe:'110,168,255',look:'255,176,32',ph:'255,210,74'};
   const STEPS=[
-    {t:'📸 วัด', do:'วางมือถือที่จุดฟัง สูงระดับหู ห่างลำโพง 1–2 ม. · เลือก ⚡ เช็กเร็ว 10 วิ / 📸 มาตรฐาน 20 วิ / 🚶 เดินไมค์ 35 วิ ทั่วโซนฟัง — ระบบเปิดไมค์ + Pink Noise ให้เอง',
+    {t:'📸 วัด', do:'วางมือถือที่จุดฟัง สูงระดับหู ห่างลำโพง 1–2 ม. · เลือก ⚡ เช็กเร็ว 10 วิ / 📸 มาตรฐาน 20 วิ / 🚶 เดินไมค์ 35 วิ ทั่วโซนฟัง / 📍 วางนิ่ง 3 จุด (มือถือวางนิ่ง หรือคอมสั่งวัด) — ระบบเปิดไมค์ + Pink Noise ให้เอง',
      look:'รอแถบระดับเสียงเป็น 🟢 · หลังวัดต้องขึ้น “✓ คุณภาพการวัดดี” ถ้าขึ้น ⚠ ให้แก้ตามที่บอกแล้ววัดใหม่',
-     enter:'ยังไม่ต้องแก้อะไร', acts:[{act:'quick',label:'⚡ เช็กเร็ว 10 วิ'},{act:'measure',label:'📸 มาตรฐาน 20 วิ'},{act:'mmm',label:'🚶 เดินไมค์ 35 วิ'}], zones:[], lines:[]},
+     enter:'ยังไม่ต้องแก้อะไร', acts:[{act:'quick',label:'⚡ เช็กเร็ว 10 วิ'},{act:'measure',label:'📸 มาตรฐาน 20 วิ'},{act:'mmm',label:'🚶 เดินไมค์ 35 วิ'},{act:'p3',label:'📍 วางนิ่ง 3 จุด'}], zones:[], lines:[]},
     {t:'💡 ปรับตามคำแนะนำ', do:'เลือกแนวเสียง → ได้รายการ Gain · ครอส · เฟส · PEQ ในหน้า 🎛️ จูน → กดใช้ (ดูเส้นส้มคาดการณ์) → กรอกตามลง DSPico → กด “✔ กรอกลงเครื่องแล้ว”',
      look:'<b>แดง</b> = เกินเป้า · <b>ฟ้า</b> = ขาดเป้า · ซับควรสูงกว่ากลางราว +6dB · แก้ทีละไม่กี่ข้อ ใหญ่ก่อนเล็ก',
      enter:'ตามรายการคำแนะนำ (บูสต์ไม่เกิน +3dB)', acts:[{act:'recs',label:'💡 ดูคำแนะนำ'},{act:'tune',label:'🎛️ ไปหน้าจูน'}],
@@ -1889,6 +1901,8 @@
   async function autoMeasure(kind){
     if(SY.role==='remote'){ document.getElementById(MEASURE_BUTTON[kind]||'btnMeasure').click(); return; }
     if(jobBusy())return;
+    if(kind!=='p3'&&P3.active)p3Reset(true);
+    if(kind==='p3'){ if(!P3.active)P3={active:true,pt:1,ph:'meas',res:[],rawP:null,rawN:0,q:null}; else P3.ph='meas'; p3Render(); }
     const epoch=++jobEpoch; preparing=true;
     try{
       if(!running)await startMic();
@@ -1897,11 +1911,14 @@
       // A remote supplies the test signal when this device is the station.
       if((SY.role!=='station'||FB.cmdNs==='st')&&ap&&!noiseOn){ toggleNoise(); autoPinkOn=true; appToast('📻 เปิด Pink Noise — รอเสียงนิ่ง 1.5 วิ'); await new Promise(r=>setTimeout(r,1500)); }
       if(epoch!==jobEpoch||!running)return;
-      preparing=false; if(kind==='mmm')measureMMM(); else measure(kind);
-    }finally{ if(epoch===jobEpoch)preparing=false; }
+      preparing=false; if(kind==='mmm')measureMMM(); else if(kind==='p3')p3Go(); else measure(kind);
+    }finally{ if(epoch===jobEpoch)preparing=false;
+      // mic failed / job replaced before the point started: put the 3-point card back to its waiting state
+      if(kind==='p3'&&P3.active&&P3.ph==='meas'&&!measuring){ if(P3.res.length)P3.ph='wait'; else P3.active=false; p3Render(); } }
   }
   async function wAct(b){ const a=b.dataset.act;
     if(a==='tune'||a==='tunexo'||a==='tunelim'){ if(a==='tunexo'){DV.tab='xo';DV.ch='sub';} if(a==='tunelim'){DV.tab='lim';DV.ch='sub';} setView('tune'); if(DV.open)dvRenderAll(); return; }
+    if(a==='p3'){ dq('btnP3').click(); return; }
     if(a==='quick'||a==='measure'||a==='mmm'){ autoMeasure(a); return; }
     if(a==='recs'){ if(!measured){ appToast('วัดก่อน (ขั้น 1) แล้วค่อยดูคำแนะนำ',true); return; } askStyle(true); return; }
     if(a==='cmp'){ const pv=prevMeas(); if(!pv||!measured){ appToast('ต้องวัดอย่างน้อย 2 ครั้งก่อนถึงจะเทียบได้',true); return; }
@@ -1912,7 +1929,7 @@
   document.getElementById('wSetupBody').addEventListener('click',e=>{ const b=e.target.closest('button[data-act]'); if(!b)return;
     if(b.dataset.act==='guide'){ setView('guide'); const gp=document.getElementById('guidePanel'); gp.classList.add('show'); const tb=document.querySelector('.gtabs button[data-m="subplan"]'); if(tb)tb.click(); gp.scrollIntoView({behavior:'smooth',block:'start'}); return; }
     wAct(b); });
-  ['btnQuick','btnMeasure','btnMMM'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{ if(SY.role!=='remote'){ e.stopImmediatePropagation(); e.preventDefault(); autoMeasure(id==='btnMMM'?'mmm':id==='btnQuick'?'quick':'measure'); } },true));
+  ['btnQuick','btnMeasure','btnMMM','btnP3'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{ if(SY.role!=='remote'){ e.stopImmediatePropagation(); e.preventDefault(); autoMeasure(id==='btnMMM'?'mmm':id==='btnP3'?'p3':id==='btnQuick'?'quick':'measure'); } },true));
   document.getElementById('wCard').addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b)return;
     if(b.dataset.act&&b.dataset.act!=='guide'){ wAct(b); return; }
@@ -2137,7 +2154,7 @@
   dq('dvChecks').addEventListener('click',e=>{ const d=e.target.closest('[data-gch]'); if(!d)return; DV.ch=d.dataset.gch; DV.tab=d.dataset.gtab; DV.sel=0; dvRenderStrips(); dvRenderBody(); DV.dirty=true;
     dq('dvEdit').scrollIntoView({behavior:'smooth',block:'nearest'}); });
   dq('dvShow').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||!b.dataset.show)return; DV.show[b.dataset.show]=!DV.show[b.dataset.show]; b.classList.toggle('on',DV.show[b.dataset.show]); DV.dirty=true; });
-  const DVM=[['dvMic','btnMic','🎙️ ไมค์'],['dvNoise','btnNoise','📻 Pink'],['dvQuick','btnQuick','⚡ เช็กเร็ว 10 วิ'],['dvMeasure','btnMeasure','📸 มาตรฐาน 20 วิ'],['dvMMM','btnMMM','🚶 MMM 35 วิ'],['dvSweep','btnSweep','🌊 Sweep'],['dvPhase','btnPhase','🔄 เฟส']];
+  const DVM=[['dvMic','btnMic','🎙️ ไมค์'],['dvNoise','btnNoise','📻 Pink'],['dvQuick','btnQuick','⚡ เช็กเร็ว 10 วิ'],['dvMeasure','btnMeasure','📸 มาตรฐาน 20 วิ'],['dvMMM','btnMMM','🚶 MMM 35 วิ'],['dvP3','btnP3','📍 3 จุด'],['dvSweep','btnSweep','🌊 Sweep'],['dvPhase','btnPhase','🔄 เฟส']];
   DVM.forEach(([d,m])=>dq(d).addEventListener('click',()=>{ const t=dq(m); if(t.disabled){ dvToast('กด 🎙️ ไมค์ ก่อน (อนุญาตไมโครโฟน) ปุ่มนี้ถึงจะใช้ได้',true); return; } t.click(); }));
   function dvSync(){
     DVM.forEach(([d,m,lab])=>{ const a=dq(d), b=dq(m), busy=/…|⏹|หยุด/.test(b.textContent);
@@ -2333,7 +2350,55 @@
     else if(b.dataset.r==='undo'){ if(REC.undo){ cur.ch=REC.undo; REC.undo=null; REC.items.forEach(x=>x.done=false); dvChanged(true); dvRenderRec(); dvToast('ย้อนกลับแล้ว'); } }
     else if(b.dataset.r==='style') askStyle(); });
   dq('dvApplied').addEventListener('click',()=>{ if(wStep<2){ wStep=2; renderWiz(); } setDevice(cur.ch,cur.name,false); dvRenderDev(); dvToast('ตั้ง “'+cur.name+'” เป็นค่าในเครื่องแล้ว — วัดใหม่ 📸/🚶 เพื่อดูผลจริง'); });
+  /* ===== 📍 วางนิ่ง 3 จุด: three 20 s standard measurements at different seats, energy-averaged (MMM substitute for a fixed phone) ===== */
+  const P3PTS=['จุดฟังกลาง — ตรงที่นั่ง/ยืนฟังจริง สูงระดับหู','ขยับไปทาง<b>ซ้าย</b> ~50 ซม. จากจุดกลาง (สูงเท่าเดิม หันไมค์ไปทางลำโพงเหมือนเดิม)','ขยับไปทาง<b>ขวา</b> ~50 ซม. จากจุดกลาง (สูงเท่าเดิม หันไมค์ไปทางลำโพงเหมือนเดิม)'];
+  function p3Reset(quiet){ const was=P3.active; P3={active:false,pt:0,ph:'',res:[],rawP:null,rawN:0,q:null}; p3Render(); if(was&&!quiet)appToast('ยกเลิกการวัด 3 จุดแล้ว'); }
+  function p3Go(){
+    if(!P3.active){ P3={active:true,pt:1,ph:'meas',res:[],rawP:null,rawN:0,q:null}; }
+    P3.ph='meas'; p3Render(); measure('p3');
+  }
+  function p3Collect(){
+    if(!measured)return false;
+    P3.res.push(measured.slice());
+    if(RAW&&RAW.n){ if(!P3.rawP)P3.rawP=new Array(RAW.p.length).fill(0); RAW.p.forEach((v,i)=>P3.rawP[i]+=v); P3.rawN+=RAW.n; }
+    if(measQ){ const q=P3.q||(P3.q=qNew()); q.f+=measQ.f; q.clip+=measQ.clip; q.low+=measQ.low; q.rs+=measQ.rs; q.pk=Math.max(q.pk,measQ.pk); }
+    const n=P3.res.length;
+    if(n<3){
+      P3.pt=n+1; P3.ph='wait';
+      if(autoPinkOn){ autoPinkOn=false; if(noiseOn)toggleNoise(); }
+      measured=null; measuredVar=null; draw();
+      dq('sugBox').innerHTML='<div class="empty">📍 วัดจุด '+n+'/3 เสร็จแล้ว — ย้ายไมค์ไป: '+P3PTS[n]+' แล้วกด <span class="kbd">▶ วัดจุด '+(n+1)+'</span></div>';
+      p3Render(); appToast('✓ จุด '+n+'/3 เสร็จ — ย้ายไปจุด '+(n+1)+' แล้วกดวัดต่อ');
+      return true;
+    }
+    // energy average across the three seats + per-band spread (feeds the variance-aware recommendations like MMM)
+    const R=P3.res;
+    measured=normalize(bandF.map((_,i)=>{ let p=0,c=0; R.forEach(r=>{ if(r[i]>-100){ p+=Math.pow(10,r[i]/10); c++; } }); return c?10*Math.log10(p/c):-120; }));
+    measuredVar=bandF.map((_,i)=>{ const v=R.map(r=>r[i]).filter(x=>x>-100); if(v.length<2)return 0; const m=v.reduce((a,b)=>a+b,0)/v.length; return Math.sqrt(v.reduce((a,b)=>a+(b-m)*(b-m),0)/v.length); });
+    if(P3.rawP)RAW={p:P3.rawP,n:P3.rawN}; if(P3.q)measQ=P3.q;
+    measureMethod='point3'; measureDurationMs=60000; measBase=devBaseCh();
+    P3={active:false,pt:0,ph:'done',res:[],rawP:null,rawN:0,q:null}; p3Render();
+    appToast('✓ วัดครบ 3 จุด — เฉลี่ยแล้ว'); analyze();
+    return false;
+  }
+  function p3Render(){
+    const el=dq('p3Card'); if(!el)return;
+    const src=SY.role==='remote'?(FB.st&&rmLive()&&FB.st.p3)||null:{a:P3.active,pt:P3.pt,ph:P3.ph};
+    if(!src||!src.a){ if(!el.hidden){ el.hidden=true; el.innerHTML=''; } return; }
+    const pt=src.pt||1, dots=[1,2,3].map(k=>'<i class="'+(k<pt||(k===pt&&src.ph==='done')?'ok':k===pt?'now':'')+'"></i>').join('');
+    el.hidden=false;
+    const html='<div class="p3h"><b>📍 วางนิ่ง 3 จุด</b><span class="p3dots">'+dots+'</span><span>จุด '+pt+'/3</span></div>'+
+      (src.ph==='meas'?'<p>⏱ กำลังวัดจุด '+pt+' — วางนิ่ง อย่าขยับ อย่าพูด</p><div class="p3act"><button data-p3="cancel">✕ ยกเลิก</button></div>':
+        '<p>ย้ายไมค์ไป: '+P3PTS[pt-1]+'</p><div class="p3act"><button class="primary" data-p3="next">▶ วัดจุด '+pt+' (20 วิ)</button><button data-p3="cancel">✕ ยกเลิก</button></div>')+
+      (SY.role==='remote'?'<small>คนที่อยู่ข้างมือถือย้ายเครื่อง แล้วกดวัดที่นี่หรือที่มือถือก็ได้</small>':'');
+    if(el.dataset.h!==html){ el.dataset.h=html; el.innerHTML=html; }   // live updates arrive ~8×/s; rebuilding the buttons each time would swallow clicks
+  }
+  dq('p3Card').addEventListener('click',e=>{ const b=e.target.closest('[data-p3]'); if(!b)return;
+    if(b.dataset.p3==='next'){ dq('btnP3').click(); return; }
+    if(SY.role==='remote'){ rmSend({op:'p3cancel'}); return; }
+    if(measuring)cancelMeasurement(); p3Reset(); resetMeasurementButtons(); dq('sugBox').innerHTML='<div class="empty">ยกเลิกการวัด 3 จุดแล้ว — เริ่มใหม่ได้ที่ <span class="kbd">📍 วางนิ่ง 3 จุด</span></div>'; });
   function afterMeasure(){
+    if(P3.active&&measureMethod==='point3'&&p3Collect())return;
     if(autoPinkOn){ autoPinkOn=false; if(noiseOn)toggleNoise(); }
     if(wStep===0){ wStep=1; } setTimeout(renderWiz,0);
     snrCompute(); { const w=qVerdict(); measQW=w?{for:measured,w}:null; measQ=null;
@@ -2398,7 +2463,7 @@
       el.querySelector('.st').textContent=(LV.state==='ok'?'🟢 ':LV.state==='off'?'⚪ ':LV.state==='low'?'🔵 ':'🔴 ')+LVTXT[LV.state];
       el.querySelector('.db').textContent=LV.state==='off'?'':Math.round(LV.rms)+' dBFS'; }); }
   setInterval(renderLevel,120);
-  ['btnQuick','btnMeasure','btnMMM'].forEach(id=>dq(id).addEventListener('click',()=>{ if(running&&LV.state==='low'){ const m='⚠ เสียงเข้าไมค์เบาไป ค่าที่วัดอาจเพี้ยน — เปิด Pink Noise และเร่งเสียงระบบ'; if(DV.open)dvToast(m,true); } },true));
+  ['btnQuick','btnMeasure','btnMMM','btnP3'].forEach(id=>dq(id).addEventListener('click',()=>{ if(running&&LV.state==='low'){ const m='⚠ เสียงเข้าไมค์เบาไป ค่าที่วัดอาจเพี้ยน — เปิด Pink Noise และเร่งเสียงระบบ'; if(DV.open)dvToast(m,true); } },true));
   // ☀️ outdoor mode
   function setSun(on){ document.body.classList.toggle('outdoor',on); try{localStorage.setItem('rta_sun2',on?'1':'0');}catch(_){} const tc=document.querySelector('meta[name=theme-color]'); if(tc)tc.content=on?'#fbfaf6':'#0a0b0e';
     dq('btnSun').textContent=on?'🌙':'☀️'; dq('dvSun').textContent=on?'🌙':'☀️'; DV.dirty=true; if(!running)draw(); }
@@ -2493,6 +2558,8 @@
       FB.root.child('presence').on('value',s=>{ FB.peers=s.val()||{}; syLight(); });
       FB.root.child('sync').on('value',snap=>{ try{ fbMerge(snap.val()||{}); syStatus('ok'); }catch(e){ console.error(e); } },err=>syStatus('err',fbErr(err)));
       FB.root.child('live/station').on('value',s=>{ FB.st=s.val(); FB.stAt=Date.now(); if(SY.role==='remote')rmApplyStation(); rmRender(); });
+      FB.root.child('live/sug').on('value',s=>{ const v=s.val(); if(SY.role!=='remote'||!v||!v.id||v.id===FB.sugSeen)return; const first=!FB.sugSeen; FB.sugSeen=v.id; if(first&&Date.now()-v.id>10000)return;
+        dq('sugBox').innerHTML='<div class="empty rmsug"><b>📡 ผล'+(v.k==='sweep'?' Sweep เบส':' เช็กเฟส')+' จาก'+esc(v.from||'เครื่องวัด')+'</b>'+esc(v.t)+'</div>'; appToast('📥 ได้ผล'+(v.k==='sweep'?' Sweep':'เช็กเฟส')+'จากเครื่องวัดแล้ว'); });
       FB.root.child('live/cmd').on('value',s=>{ const c=s.val(); if(SY.role==='station'&&c&&c.id&&c.id!==FB.cmdSeen){ const fresh=!FB.cmdSeen; FB.cmdSeen=c.id; if(!fresh||Date.now()-(c.at||0)<5000)stExec(c); } else if(c&&c.id&&!FB.cmdSeen)FB.cmdSeen=c.id; });
       syStatus('ok');
     }catch(e){ syStatus('err',fbErr(e)); }
@@ -2597,8 +2664,8 @@
     else if(msgs.length) appToast('📥 อัปเดตจากอีกเครื่อง: '+msgs.slice(0,3).join(', ')+(msgs.length>3?' …':''));
   }
   // --- 📡 remote: เครื่องวัด (station: mic + noise + video, e.g. phone at the seat) ↔ แผงควบคุม (remote: e.g. computer beside DSPico)
-  const RM_OPS={mic:'btnMic',quick:'btnQuick',measure:'btnMeasure',mmm:'btnMMM',sweep:'btnSweep',phase:'btnPhase',clear:'btnClear',noise:'btnNoise'};
-  const RM_NAME={mic:'ไมค์',quick:'เช็กเร็ว 10 วิ',measure:'มาตรฐาน 20 วิ',mmm:'MMM 35 วิ',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง',noise:'Pink Noise',rec:'เริ่มอัดวิดีโอ',recstop:'หยุดอัดวิดีโอ'};
+  const RM_OPS={mic:'btnMic',quick:'btnQuick',measure:'btnMeasure',mmm:'btnMMM',p3:'btnP3',sweep:'btnSweep',phase:'btnPhase',clear:'btnClear',noise:'btnNoise'};
+  const RM_NAME={p3:'วางนิ่ง 3 จุด',p3cancel:'ยกเลิก 3 จุด',mic:'ไมค์',quick:'เช็กเร็ว 10 วิ',measure:'มาตรฐาน 20 วิ',mmm:'MMM 35 วิ',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง',noise:'Pink Noise',rec:'เริ่มอัดวิดีโอ',recstop:'หยุดอัดวิดีโอ'};
   if(SY.ns!=='st'&&SY.ns!=='rm')SY.ns='st';   // who plays the test signal: st = เครื่องวัด (Bluetooth into the rig) · rm = แผงควบคุม (AUX cable)
   FB.cmdNs='st'; FB.recRemote=false;
   let rmAutoNoise=false, rmSawMeas=false;
@@ -2607,6 +2674,7 @@
     appToast('🎮 คำสั่งจาก'+(c.from||'แผงควบคุม')+': '+(RM_NAME[c.op]||c.op));
     if(c.op==='rec'){ if(['graph','pip','stack','camfull'].includes(c.mode))REC_V.mode=c.mode; if(['environment','user'].includes(c.face))REC_V.face=c.face; FB.recRemote=true; recStart(); return; }
     if(c.op==='recstop'){ recStop(); return; }
+    if(c.op==='p3cancel'){ if(measuring)cancelMeasurement(); p3Reset(); resetMeasurementButtons(); return; }
     if(c.op==='noise'){ if(!!c.on!==noiseOn)toggleNoise(); autoPinkOn=false; return; }
     const id=RM_OPS[c.op]; if(!id)return;
     const go=()=>{ if(c.listen&&c.op==='sweep'){ abOn=false; startSweep({listen:true}); return; } if(c.listen&&c.op==='phase'){ startPhase({listen:true,f:c.f}); return; } const b=dq(id); if(b&&!b.disabled)b.click(); };
@@ -2617,11 +2685,18 @@
     if(!running&&!recBusy&&now-FB.pub<3000)return; if((running||recBusy)&&now-FB.pub<120)return; FB.pub=now;
     const data=measured||lastLive, pick=id=>{ const b=dq(id); return b?{t:b.textContent.replace(/\s+/g,' ').trim(),d:b.disabled,on:b.classList.contains('on')}:null; };
     FB.root.child('live/station').set({name:SY.name,at:now,running,measuring:!!(measuring||preparing),sweeping:!!sweeping,perOct,lv:{s:LV.state,r:Math.round(LV.rms)},noise:!!noiseOn,
-      vis:document.visibilityState==='visible',rec:{ph:REC_V.phase,t:Math.floor(recEl()),m:REC_V.mode},
+      vis:document.visibilityState==='visible',p3:{a:P3.active,pt:P3.pt,ph:P3.ph},rec:{ph:REC_V.phase,t:Math.floor(recEl()),m:REC_V.mode},
       s:data&&data.length===bandF.length?data.map(v=>Math.round(v*2)/2).join(','):'',m:!!measured,
-      b:{mic:pick('btnMic'),quick:pick('btnQuick'),measure:pick('btnMeasure'),mmm:pick('btnMMM'),sweep:pick('btnSweep'),phase:pick('btnPhase'),noise:pick('btnNoise')}}).catch(()=>{});
+      b:{mic:pick('btnMic'),quick:pick('btnQuick'),measure:pick('btnMeasure'),mmm:pick('btnMMM'),p3:pick('btnP3'),sweep:pick('btnSweep'),phase:pick('btnPhase'),noise:pick('btnNoise')}}).catch(()=>{});
   }
   setInterval(stPublish,60);
+  // sweep / phase results are text in the station's result box — mirror them to the panel once per finished job
+  let stJobWas='', stJobKind='', stJobAt=0, stSugLast='';
+  setInterval(()=>{ if(SY.role!=='station'||!FB.root)return;
+    const now=sweeping?'sweep':phasing?'phase':''; if(stJobWas&&!now){ stJobKind=stJobWas; stJobAt=Date.now(); } stJobWas=now;
+    if(!stJobKind)return; const t=(dq('sugBox').innerText||'').trim();
+    if(t&&t!==stSugLast&&Date.now()-stJobAt<4000){ stSugLast=t; FB.root.child('live/sug').set({id:Date.now(),k:stJobKind,t:t.slice(0,900),from:SY.name}).catch(()=>{}); stJobKind=''; }
+    else if(Date.now()-stJobAt>=4000)stJobKind=''; },250);
   document.addEventListener('visibilitychange',()=>{ if(SY.role==='station'){ FB.pub=0; stPublish(); } });
   function rmLive(){ return SY.role==='remote'&&FB.st&&Date.now()-FB.stAt<6000&&Date.now()-(FB.st.at||0)<15000; }
   function rmRecUI(){
@@ -2639,7 +2714,7 @@
       dq('btnClear').disabled=false;
       // test signal from this panel: stop it once the station finishes the measurement it was started for
       if(st.measuring)rmSawMeas=true; else if(rmAutoNoise&&rmSawMeas){ rmAutoNoise=false; rmSawMeas=false; if(noiseOn)toggleNoise(); }
-      rmRecUI();
+      rmRecUI(); p3Render();
     }
     if(!measured&&st.s){ const arr=st.s.split(',').map(Number); if(arr.length===bandF.length){ lastLive=arr; if(curView==='meas')draw(arr);
         let mx=-999,mi=0; arr.forEach((v,i)=>{ if(v>mx){mx=v;mi=i;} }); dq('rLevel').textContent=(mx>0?'+':'')+mx.toFixed(0); dq('rBand').textContent='พีค '+bandLabels[mi]+'Hz · จาก'+st.name; if(DV.open)DV.dirty=true; } }
@@ -2667,27 +2742,27 @@
         setTimeout(()=>{ if(op==='sweep')playSweepTone(audioCtx,20,160,18000); else playToneFor(audioCtx,cmd.f,8600); },lag);
         appToast(op==='sweep'?'🌊 เครื่องนี้เล่นเสียงกวาด 18 วิ — เครื่องวัดกำลังฟัง':'🔄 เครื่องนี้เล่นโทน '+cmd.f+' Hz 8 วิ — เครื่องวัดกำลังฟัง'); } }
     let ap=true; try{ ap=localStorage.getItem('rta_autopink')!=='0'; }catch(_){}
-    if((op==='quick'||op==='measure'||op==='mmm')&&SY.ns==='rm'&&ap&&!noiseOn){
+    if((op==='quick'||op==='measure'||op==='mmm'||op==='p3')&&SY.ns==='rm'&&ap&&!noiseOn){
       toggleNoise(); rmAutoNoise=true; rmSawMeas=false; appToast('📻 เครื่องนี้เปิด Pink Noise — รอเสียงนิ่ง 1.5 วิ แล้วสั่งวัด');
       setTimeout(()=>rmSend(cmd),1500); return; }
     rmSend(cmd);
   },true);
   function rmSetRole(r,quiet){
-    if(SY.role==='remote'&&r!=='remote'){ ['btnQuick','btnMeasure','btnMMM','btnSweep','btnPhase','btnClear'].forEach(id=>dq(id).disabled=!running); lastLive=null; draw(); if(REC_V.phase==='idle')recUI('idle'); }
+    if(SY.role==='remote'&&r!=='remote'){ ['btnQuick','btnMeasure','btnMMM','btnP3','btnSweep','btnPhase','btnClear'].forEach(id=>dq(id).disabled=!running); resetMeasurementButtons(); lastLive=null; draw(); if(REC_V.phase==='idle')recUI('idle'); }
     SY.role=r; syCfgSave(); presBeat(); if(r==='remote'&&running)dq('btnMic').click(); rmApplyStation(); rmRender(); syStatus(FB.state,FB.msg);
-    if(r==='remote')rmRecUI();
+    if(r==='remote')rmRecUI(); p3Render();
     if(!quiet)appToast(r==='station'?'📍 เครื่องนี้เป็นเครื่องวัด — วางที่จุดฟัง เปิดจอค้างไว้ แผงควบคุมสั่งวัด/อัดวิดีโอได้':r==='remote'?'🎮 เครื่องนี้เป็นแผงควบคุม — ปุ่มวัดและอัดวิดีโอจะสั่งเครื่องวัด':'ใช้เครื่องเดียว (ปิดโหมดคู่)');
   }
   function rmRender(){
     const el=dq('rmBar'); if(!el)return;
     const R=SY.role, st=FB.st, live=st&&Date.now()-(st.at||0)<15000, mode='<button data-use="ask" title="เปลี่ยนรูปแบบการใช้งาน">🧭 รูปแบบ</button>';
-    if(!syOn()){ el.innerHTML='<b>📱+💻 ใช้คู่กับอีกเครื่อง</b><span>'+(R!=='off'?'⚠ เลือกแบบใช้คู่ไว้แล้ว แต่ยังไม่ได้ตั้งค่าซิงก์ Firebase — ตั้งค่าก่อน (ใส่เหมือนกันทั้งสองเครื่อง)':'มือถือวางวัดที่จุดฟัง + คอมกดสั่งวัดและดูคำแนะนำ (ต้องตั้งค่าซิงก์ Firebase ก่อน)')+'</span><button data-sy="open">ตั้งค่า</button>'+mode; el.className='rmbar'+(R!=='off'?' on':''); return; }
-    el.className='rmbar'+(R!=='off'?' on':'');
-    el.innerHTML='<b>📱+💻 ใช้คู่</b><div class="rmseg"><button data-rm="off" class="'+(R==='off'?'sel':'')+'">เครื่องเดียว</button><button data-rm="station" class="'+(R==='station'?'sel':'')+'">📍 เครื่องวัด</button><button data-rm="remote" class="'+(R==='remote'?'sel':'')+'">🎮 แผงควบคุม</button></div>'+mode+
+    const put=(h,c)=>{ if(el.dataset.h!==h){ el.dataset.h=h; el.innerHTML=h; } el.className=c; };
+    if(!syOn()){ put('<b>📱+💻 ใช้คู่กับอีกเครื่อง</b><span>'+(R!=='off'?'⚠ เลือกแบบใช้คู่ไว้แล้ว แต่ยังไม่ได้ตั้งค่าซิงก์ Firebase — ตั้งค่าก่อน (ใส่เหมือนกันทั้งสองเครื่อง)':'มือถือวางวัดที่จุดฟัง + คอมกดสั่งวัดและดูคำแนะนำ (ต้องตั้งค่าซิงก์ Firebase ก่อน)')+'</span><button data-sy="open">ตั้งค่า</button>'+mode,'rmbar'+(R!=='off'?' on':'')); return; }
+    put('<b>📱+💻 ใช้คู่</b><div class="rmseg"><button data-rm="off" class="'+(R==='off'?'sel':'')+'">เครื่องเดียว</button><button data-rm="station" class="'+(R==='station'?'sel':'')+'">📍 เครื่องวัด</button><button data-rm="remote" class="'+(R==='remote'?'sel':'')+'">🎮 แผงควบคุม</button></div>'+mode+
       '<span>'+(R==='station'?'📍 วางเครื่องนี้ที่จุดฟัง · เปิดจอค้างไว้ · รอคำสั่งจากแผงควบคุม · กราฟส่งสดไปอีกเครื่อง · '+(running?'🟢 ไมค์ทำงาน':'⚪ ไมค์ปิด (แผงควบคุมสั่งเปิดได้)')+(SY.ns!=='rm'?' · 📻 Noise ออกจากเครื่องนี้ (ต่อบลูทูธเข้าเครื่องเสียง)':''):
         R==='remote'?(live?'🟢 เชื่อมกับ <b>'+esc(st.name)+'</b> · '+(st.running?'ไมค์ทำงาน':'ไมค์ปิด')+(st.vis===false?' · <b style="color:#ff9b6b">⚠ จอเครื่องวัดไม่ได้อยู่หน้าแอป — ไมค์อาจหยุด</b>':'')+' · ปุ่มวัด / Noise / อัดวิดีโอ จะสั่งเครื่องนั้น':'🟠 ยังไม่เจอเครื่องวัด — เปิดแอปบนมือถือ เลือก “📍 เครื่องวัด”'):
         'เลือกบทบาทของเครื่องนี้')+'</span>'+
-      (R==='remote'?'<div class="rmseg rmns"><small>📻 เสียงทดสอบออกจาก</small><button data-ns="st" class="'+(SY.ns!=='rm'?'sel':'')+'">📍 เครื่องวัด (บลูทูธ)</button><button data-ns="rm" class="'+(SY.ns==='rm'?'sel':'')+'">🎮 เครื่องนี้ (สาย AUX)</button></div>':'');
+      (R==='remote'?'<div class="rmseg rmns"><small>📻 เสียงทดสอบออกจาก</small><button data-ns="st" class="'+(SY.ns!=='rm'?'sel':'')+'">📍 เครื่องวัด (บลูทูธ)</button><button data-ns="rm" class="'+(SY.ns==='rm'?'sel':'')+'">🎮 เครื่องนี้ (สาย AUX)</button></div>':''),'rmbar'+(R!=='off'?' on':''));
   }
   dq('rmBar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
     if(b.dataset.sy==='open'){ openSync(); return; }
@@ -2894,7 +2969,7 @@ function askReset(){
     '<div class="devopt"><b>🎚 ล้าง EQ ชุดที่เปิดอยู่</b><p>PEQ ทุกช่องของ “'+esc(cur?cur.name:'')+'” เป็นว่าง (เหมือน Reset EQ ใน DSPico) · ครอส เกน เฟส คงเดิม · ย้อนได้ด้วย ↶ ในหน้าจูน แล้วกด 💾 บันทึกเมื่อพอใจ</p><div class="row2"><button data-rs="eq">ล้าง EQ</button></div></div>'+
     '<div class="devopt"><b>⚠ ล้างข้อมูลทั้งหมดในเครื่องนี้</b><p>ลบประวัติผลวัด ชุดจูน ค่าในเครื่อง คาลิเบรต และการตั้งค่า กลับเป็นเหมือนเปิดครั้งแรก · การตั้งค่าซิงก์ยังอยู่'+(SY.on?' — <b>ซิงก์เปิดอยู่ ข้อมูลบนคลาวด์จะถูกดึงกลับมาอีก</b>':'')+'</p><div class="row2"><button data-rs="all" class="danger">ล้างทั้งหมด…</button></div></div>'+
     '<div class="dvmfoot"><button data-m="close">ปิด</button></div>'); }
-function resetRound(){ cancelMeasurement(); measured=null; measuredVar=null; measQW=null; sweepFrozen=false; snapA=null; snapB=null; abOn=false;
+function resetRound(){ p3Reset(true); cancelMeasurement(); measured=null; measuredVar=null; measQW=null; sweepFrozen=false; snapA=null; snapB=null; abOn=false;
   const ab=dq('btnAB'); ab.classList.remove('on'); ab.disabled=true; peakHold=new Array(bandF.length).fill(-120);
   REC.items=[]; REC.seq=-1; wStep=0; renderWiz();
   dq('sugBox').innerHTML='<div class="empty">เริ่มรอบใหม่แล้ว — วางมือถือที่จุดฟัง สูงระดับหู แล้วกด <span class="kbd">📸 วัดผล</span></div>';
@@ -2915,7 +2990,7 @@ function showGraph(){ if(document.body.dataset.view!=='meas')return; const g=doc
 let gPinOn=true; try{ gPinOn=localStorage.getItem('rta_pin')!=='0'; }catch(_){}
 function gPinApply(){ document.body.classList.toggle('gpin',gPinOn); const b=dq('gPin'); b.textContent=gPinOn?'📌 ตรึงกราฟ':'📍 ไม่ตรึง'; b.classList.toggle('on',gPinOn); resize(); if(!running)draw(); }
 dq('gPin').addEventListener('click',()=>{ gPinOn=!gPinOn; try{ localStorage.setItem('rta_pin',gPinOn?'1':'0'); }catch(_){} gPinApply(); });
-['btnAB','btnQuick','btnMeasure','btnMMM','btnSweep','btnPhase','btnHold'].forEach(id=>{ const b=dq(id); if(b)b.addEventListener('click',()=>setTimeout(showGraph,60)); });
+['btnAB','btnQuick','btnMeasure','btnMMM','btnP3','btnSweep','btnPhase','btnHold'].forEach(id=>{ const b=dq(id); if(b)b.addEventListener('click',()=>setTimeout(showGraph,60)); });
 // Fragmented MP4 (MediaRecorder output) -> regular MP4 with full sample tables + durations.
 function fmp4ToMp4(buf){
   const u8=new Uint8Array(buf), dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);
