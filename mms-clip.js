@@ -13,27 +13,62 @@ const CORE_BASE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
 const FFMPEG_ESM = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
 const UTIL_ESM  = 'https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js';
 
-let ffmpegPromise = null;
+let ffmpegPromise = null, activeFFmpeg = null, sourceCache = null, sourceController = null, processingGeneration = 0;
+export function cancelProcessing(){
+  processingGeneration++;
+  sourceController?.abort();sourceController=null;
+  activeFFmpeg?.terminate();activeFFmpeg=null;ffmpegPromise=null;sourceCache=null;
+}
+async function cachedSource(ffmpeg,part,onStage){
+  if(sourceCache?.url===part.url)return sourceCache.name;
+  if(sourceCache){try{await ffmpeg.deleteFile(sourceCache.name)}catch{}sourceCache=null}
+  const controller=new AbortController();sourceController=controller;
+  try{
+    const response=await fetch(part.url,{signal:controller.signal});
+    if(!response.ok)throw new Error('ดาวน์โหลดต้นทางไม่สำเร็จ HTTP '+response.status);
+    const total=Number(response.headers.get('content-length'))||part.size_bytes||0;
+    const chunks=[];let received=0;
+    if(response.body){
+      const reader=response.body.getReader();
+      for(;;){const {done,value}=await reader.read();if(done)break;chunks.push(value);received+=value.length;
+        onStage?.(`กำลังอ่านต้นทาง ${(received/1048576).toFixed(1)}${total?' / '+(total/1048576).toFixed(1):''} MB`)}
+    }else{const value=new Uint8Array(await response.arrayBuffer());chunks.push(value);received=value.length}
+    controller.signal.throwIfAborted();
+    const data=new Uint8Array(received);let offset=0;for(const c of chunks){data.set(c,offset);offset+=c.length}
+    const name='cached-source.mp4';await ffmpeg.writeFile(name,data);sourceCache={url:part.url,name};return name;
+  }finally{if(sourceController===controller)sourceController=null}
+}
+
 
 /* โหลด FFmpeg-WASM ครั้งเดียวแล้วใช้ซ้ำ
    หมายเหตุสำคัญ: worker ของ FFmpeg ต้องเป็น same-origin ไม่งั้น Chromium/Android จะสร้าง Worker ข้ามโดเมนไม่ได้
    จึงต้องชี้ classWorkerURL ไปที่ ./vendor/ffmpeg-0.12.10/worker.js ที่อยู่ในโดเมนเดียวกัน */
 export async function loadFFmpeg(onLoadProgress){
   if(ffmpegPromise) return ffmpegPromise;
+  const generation=processingGeneration;
   ffmpegPromise = (async () => {
     const [{ FFmpeg }, { fetchFile, toBlobURL }] = await Promise.all([
       import(FFMPEG_ESM),
       import(UTIL_ESM)
     ]);
-    const ffmpeg = new FFmpeg();
+    if(generation!==processingGeneration)throw new DOMException('Cancelled','AbortError');
+    const ffmpeg = new FFmpeg();activeFFmpeg=ffmpeg;
     const classWorkerURL = new URL('./vendor/ffmpeg-0.12.10/worker.js', import.meta.url).href;
     onLoadProgress?.(0.2);
-    const coreURL = await toBlobURL(CORE_BASE + '/ffmpeg-core.js', 'text/javascript');
-    onLoadProgress?.(0.6);
-    const wasmURL = await toBlobURL(CORE_BASE + '/ffmpeg-core.wasm', 'application/wasm');
-    onLoadProgress?.(0.9);
-    await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
-    onLoadProgress?.(1);
+    const controller=new AbortController();sourceController=controller;
+    let coreURL,wasmURL;
+    try{
+      const core=await fetch(CORE_BASE+'/ffmpeg-core.js',{signal:controller.signal});
+      if(!core.ok)throw new Error('โหลดตัวตัดวิดีโอไม่สำเร็จ');coreURL=URL.createObjectURL(await core.blob());
+      onLoadProgress?.(.6);
+      const wasm=await fetch(CORE_BASE+'/ffmpeg-core.wasm',{signal:controller.signal});
+      if(!wasm.ok)throw new Error('โหลดตัวตัดวิดีโอไม่สำเร็จ');wasmURL=URL.createObjectURL(await wasm.blob());
+      if(generation!==processingGeneration)throw new DOMException('Cancelled','AbortError');
+      onLoadProgress?.(.9);await ffmpeg.load({coreURL,wasmURL,classWorkerURL});onLoadProgress?.(1);
+    }finally{
+      if(coreURL)URL.revokeObjectURL(coreURL);if(wasmURL)URL.revokeObjectURL(wasmURL);
+      if(sourceController===controller)sourceController=null;
+    }
     return { ffmpeg, fetchFile };
   })();
   try { return await ffmpegPromise; }
@@ -51,6 +86,7 @@ export const PRESETS = {
 
 /* [EXT-3] โปรไฟล์ส่งออก */
 export const PROFILES = {
+  quick:          { label:'เร็ว ไม่เกิน 720p', height:720, cap:true, crf:24, preset:'ultrafast' },
   source_quality: { label:'เท่าต้นฉบับ', height:0,    crf:20 },
   full_hd:        { label:'Full HD 1080p', height:1080, crf:21 },
   hd:             { label:'HD 720p',       height:720,  crf:23 },
@@ -105,7 +141,7 @@ export function buildVideoFilter({ zoom, center, enhance, profile }){
     );
   }
   const prof = PROFILES[profile] || PROFILES.source_quality;
-  if(prof.height) chain.push(`scale=-2:${prof.height}:flags=bicubic`);
+  if(prof.height) chain.push(prof.cap?`scale=-2:min(${prof.height}\\,ih):flags=fast_bilinear`:`scale=-2:${prof.height}:flags=bicubic`);
 
   const e = enhance || {};
   const b = clamp(e.brightness,-50,50), c = clamp(e.contrast,-50,50), s = clamp(e.saturation,-50,50), sh = clamp(e.sharpness,0,100);
@@ -137,7 +173,7 @@ export function buildClipArgs({offset=0,inputArgs,duration,rate=1,zoom=1,center=
   const video=[buildVideoFilter({zoom,center,enhance,profile})];
   const audio=[];
   if(rate!==1){
-    video.push(`setpts=(PTS-STARTPTS)/${rate}`,'tpad=stop_mode=clone:stop_duration=3');
+    video.push(`setpts=(PTS-STARTPTS)/${rate}`,`fps=fps=source_fps*${rate}`,'tpad=stop_mode=clone:stop_duration=3');
     audio.push('asetpts=PTS-STARTPTS','atempo=0.5');
     if(rate===.25)audio.push('atempo=0.5');
     audio.push('apad');
@@ -145,7 +181,8 @@ export function buildClipArgs({offset=0,inputArgs,duration,rate=1,zoom=1,center=
   const prof=PROFILES[profile]||PROFILES.source_quality;
   return ['-ss',offset.toFixed(3),'-t',duration.toFixed(3),...inputArgs,
     '-t',(duration/rate).toFixed(3),'-vf',video.join(','),
-    '-c:v','libx264','-preset','veryfast','-crf',String(prof.crf),
+    '-c:v','libx264','-preset',prof.preset||'veryfast','-crf',String(prof.crf),
+    ...(rate!==1?['-vsync','vfr']:[]),
     ...(mute?['-an']:[...(audio.length?['-af',audio.join(',')]:[]),'-c:a','aac','-b:a','128k']),
     '-movflags','+faststart','-threads','1',output];
 }
@@ -178,23 +215,21 @@ export async function exportClip({
 
   try{
     // 1) ดึงเฉพาะ Part ที่เกี่ยวข้องเข้าหน่วยความจำของ FFmpeg
-    for(let i=0;i<needed.length;i++){
-      onStage?.(`กำลังดึงไฟล์ต้นทาง ${i+1}/${needed.length}`);
-      const fname = `src-${String(i+1).padStart(3,'0')}.mp4`;
-      await ffmpeg.writeFile(fname, await fetchFile(needed[i].url));
-      written.push(fname);
-      onProgress?.(0.08 + ((i+1)/needed.length) * 0.30);
-    }
-
-    // 2) เตรียม input — ไฟล์เดียวใช้ตรง ๆ หลายไฟล์ใช้ concat demuxer
     let inputArgs;
-    if(written.length === 1){
-      inputArgs = ['-i', written[0]];
+    if(needed.length===1){
+      const name=await cachedSource(ffmpeg,needed[0],onStage);inputArgs=['-i',name];onProgress?.(.38);
     }else{
-      const list = written.map(n => `file '${n}'`).join('\n') + '\n';
-      await ffmpeg.writeFile('concat.txt', new TextEncoder().encode(list));
-      written.push('concat.txt');
-      inputArgs = ['-f','concat','-safe','0','-i','concat.txt'];
+      for(let i=0;i<needed.length;i++){
+        onStage?.(`กำลังดึงไฟล์ต้นทาง ${i+1}/${needed.length}`);
+        const fname=`src-${String(i+1).padStart(3,'0')}.mp4`;
+        // The one-Part cache is copied before moving on to the next Part.
+        const cached=await cachedSource(ffmpeg,needed[i],onStage);
+        await ffmpeg.writeFile(fname,await ffmpeg.readFile(cached));written.push(fname);
+        onProgress?.(.08+(i+1)/needed.length*.30);
+      }
+      await ffmpeg.writeFile('concat.txt',new TextEncoder().encode(written.map(n=>`file '${n}'`).join('\n')+'\n'));
+      if(sourceCache){try{await ffmpeg.deleteFile(sourceCache.name)}catch{}sourceCache=null}
+      written.push('concat.txt');inputArgs=['-f','concat','-safe','0','-i','concat.txt'];
     }
 
     // เวลาเริ่มต้นต้องเทียบกับจุดเริ่มของ Part แรกที่ดึงมา ไม่ใช่จุดเริ่มของทั้งคลิป
@@ -244,10 +279,10 @@ export async function exportFrame({timelineParts, timeSec, zoom=1, center={x:.5,
   onStage?.('กำลังเตรียมภาพนิ่งตามค่าซูมเดิม');
   const {ffmpeg,fetchFile}=await loadFFmpeg();
   try {
-    await ffmpeg.writeFile('frame-source.mp4',await fetchFile(part.url));
-    const code=await ffmpeg.exec(['-ss',Math.max(0,timeSec-part.start).toFixed(3),'-i','frame-source.mp4','-frames:v','1','-vf',buildVideoFilter({zoom,center,enhance,profile}),'-threads','1','frame.png']);
+    const input=await cachedSource(ffmpeg,part,onStage);
+    const code=await ffmpeg.exec(['-ss',Math.max(0,timeSec-part.start).toFixed(3),'-i',input,'-frames:v','1','-vf',buildVideoFilter({zoom,center,enhance,profile}),'-threads','1','frame.png']);
     if(code!==0)throw new Error('ส่งออกภาพไม่สำเร็จ');
     const data=await ffmpeg.readFile('frame.png');
     return {blob:new Blob([data],{type:'image/png'}),name:`MMs-frame-${timeSec.toFixed(3)}.png`};
-  } finally {for(const name of ['frame-source.mp4','frame.png'])try{await ffmpeg.deleteFile(name)}catch{}}
+  } finally {for(const name of ['frame.png'])try{await ffmpeg.deleteFile(name)}catch{}}
 }

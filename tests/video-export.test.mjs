@@ -20,12 +20,13 @@ test('real exports preserve crop, sharpening, duration and audio at all three sp
     const probes=[];
     for(const rate of [1,.5,.25]){
       const output=join(dir,`rate-${rate}.mp4`);
-      run(buildClipArgs({offset:2,inputArgs:['-i',source],duration:2,rate,zoom:2,center:{x:.25,y:.75},enhance:{sharpness:60},output}));
+      run(buildClipArgs({offset:2,inputArgs:['-i',source],duration:2,rate,profile:'quick',zoom:2,center:{x:.25,y:.75},enhance:{sharpness:60},output}));
       const info=JSON.parse(execFileSync('ffprobe',['-v','error','-show_streams','-show_format','-of','json',output],{encoding:'utf8'}));
       const v=info.streams.find(s=>s.codec_type==='video'),a=info.streams.find(s=>s.codec_type==='audio');
       assert.equal(v.width,160);assert.equal(v.height,90);
+      if(rate!==1)assert.ok(Number(v.nb_frames)<=50,'slow motion should avoid encoding duplicate frames');
       assert.ok(Math.abs(Number(info.format.duration)-2/rate)<.10,`duration at ${rate}: ${info.format.duration}`);
-      assert.ok(a);assert.ok(Math.abs(Number(a.duration)-Number(v.duration))<.10);
+      assert.ok(a);assert.ok(Math.abs(Number(a.duration)-Number(v.duration))<.10,JSON.stringify({rate,audio:a.duration,video:v.duration,frames:v.nb_frames}));
       probes.push({rate,seconds:info.format.duration,width:v.width,height:v.height,audio:a.duration});
     }
     // Pixel comparison proves sharpness changes the rendered result, beyond presence of an option.

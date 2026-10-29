@@ -10,7 +10,7 @@
 :root{--ok:#1c9c74;--warnc:#b8781f;--bad:#c9463f}
 body{font-family:'Sarabun',sans-serif}
 .wrap{max-width:1180px;margin:auto;padding:10px;display:flex;flex-direction:column;gap:12px}
-.top{display:flex;align-items:center;gap:11px;padding:12px 15px;border:1px solid #e0e9f4;border-radius:19px;background:rgba(255,255,255,.82)}
+.top{position:static;display:flex;align-items:center;gap:11px;padding:12px 15px;border:1px solid #e0e9f4;border-radius:19px;background:rgba(255,255,255,.82)}
 .mark{font-size:32px;font-weight:800;letter-spacing:-3px;background:linear-gradient(135deg,#3d91ff,#8c68ff,#ef5fc0);-webkit-background-clip:text;background-clip:text;color:transparent}
 .spacer{flex:1}
 .btn{border:1px solid #cfdef0;background:#fff;border-radius:12px;padding:10px 14px;color:#254c7b;font-weight:700;cursor:pointer}
@@ -63,6 +63,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
 .tabs button.on{background:#fff;color:#2f76c9;box-shadow:0 2px 8px rgba(65,91,137,.12)}
 [hidden]{display:none!important}
 .eventcard{padding:12px;border:1px solid #dbe5f2;border-radius:13px;display:grid;gap:8px}.eventcard.chosen{border-color:#3d91ff;background:#f3f8ff}.eventgrid{display:grid;gap:9px;max-height:520px;overflow:auto}.eventcard input{max-width:130px}textarea{font:inherit;resize:vertical;width:100%;border:1px solid #d5e1ef;border-radius:12px;padding:12px}#eventMarks .marker{position:absolute;top:0;bottom:0;background:#ef5fc055;border-left:2px solid #ef5fc0;pointer-events:none}
+.top>div:nth-child(2){flex:1;min-width:0}.top b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top .mark,.top [data-mms-close]{flex-shrink:0}.top .pill{white-space:nowrap;flex-shrink:0}.wrap{min-width:0}.grid2>*{min-width:0}@media(max-width:600px){.top{gap:7px;padding:8px}.top b{font-size:13px}.top small{display:none!important}.top .mark{font-size:26px}.top .pill{display:none}.wrap{padding:3px}.sliderrow{grid-template-columns:78px minmax(0,1fr) 45px}.panel{padding:10px}.rowline{min-width:0}.top .spacer{display:none}}
 </style>
 </head>
 <body>
@@ -75,7 +76,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
       <small class="muted" style="display:block">VIDEO STUDIO v5 · ตัดและดาวน์โหลดได้ในเครื่อง</small>
     </div>
     <div class="spacer"></div>
-    <span id="workerPill" class="pill">กำลังตรวจสถานะ…</span>
+    <span class="pill on">ดาวน์โหลดตรง</span>
     <button class="btn" data-mms-close>ปิด</button>
   </header>
 
@@ -177,6 +178,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
       <div class="rowline">
         <div class="field" style="flex:1"><label>คุณภาพไฟล์ที่ส่งออก</label>
           <select id="profile">
+            <option value="quick" selected>เร็ว (ไม่เกิน 720p)</option>
             <option value="source_quality">เท่าต้นฉบับ</option>
             <option value="full_hd">Full HD 1080p</option>
             <option value="hd">HD 720p</option>
@@ -192,16 +194,12 @@ input[type=range]{width:100%;accent-color:#3d91ff}
 
   <section class="panel">
     <h2><span class="step">ขั้นที่ 4</span> ส่งออกไฟล์</h2>
-    <div class="tabs">
-      <button id="tabLocal" class="on">ตัดในเครื่อง แล้วดาวน์โหลดทันที</button>
-      <button id="tabServer">ส่งเข้าคิวเซิร์ฟเวอร์</button>
-    </div>
-
     <div id="paneLocal" style="display:flex;flex-direction:column;gap:10px">
-      <p class="note">ตัดด้วย FFmpeg ในเบราว์เซอร์ ไม่ต้องรอเครื่องประมวลผล ได้ไฟล์ทันทีในเครื่อง เหมาะกับคลิปสั้น แนะนำไม่เกิน 90 วินาทีต่อครั้ง โดยเฉพาะบนมือถือ</p>
+      <p class="note">ตัดและดาวน์โหลดในเครื่องโดยตรง ไม่มีคิว โหมดเร็วจำกัดความละเอียดไม่เกิน 720p เพื่อให้ประมวลผลเบาลง เหมาะกับคลิปสั้น แนะนำไม่เกิน 90 วินาทีต่อครั้ง โดยเฉพาะบนมือถือ</p>
       <div id="localWarn" hidden></div>
       <button id="saveFrame" class="btn wide" disabled>บันทึกภาพ ณ ตำแหน่งปัจจุบัน (คงค่าซูม)</button>
-      <button id="runLocal" class="btn primary wide" disabled>ตัด + ดาวน์โหลด</button>
+      <button id="runLocal" class="btn primary wide" disabled>ตัด + ดาวน์โหลดตรง</button>
+      <button id="stopLocal" class="btn wide" hidden>หยุดการตัด</button>
       <div id="localProgWrap" hidden>
         <div class="prog"><i id="localProg"></i></div>
         <p class="muted" id="localStage" style="margin-top:6px">—</p>
@@ -209,13 +207,6 @@ input[type=range]{width:100%;accent-color:#3d91ff}
       <div id="localResult" hidden class="result"></div>
     </div>
 
-    <div id="paneServer" hidden style="display:flex;flex-direction:column;gap:10px">
-      <p class="note">ส่งงานให้เครื่องประมวลผลเรนเดอร์ ได้คุณภาพเต็มและรองรับคลิปยาวหรือคลิปที่แบ่งหลาย Part แต่ต้องมีเครื่องประมวลผลออนไลน์</p>
-      <div id="serverWarn" hidden></div>
-      <div id="slowServerNote" class="note" hidden>ภาพช้าให้ใช้ “ตัดในเครื่อง แล้วดาวน์โหลดทันที” คิวเซิร์ฟเวอร์รุ่นปัจจุบันยังไม่รองรับภาพช้า</div>
-      <button id="runServer" class="btn wide" disabled>ส่งเข้าคิว</button>
-      <div id="jobBox" hidden class="result"></div>
-    </div>
   </section>
 
   <p class="muted" style="text-align:center;padding-bottom:10px">MMs Video Studio v5 · รวมการตัดคลิปในเบราว์เซอร์และการปรับแสงจากระบบวิเคราะห์วิดีโอเดิม เข้ากับคลังไฟล์กลางของ MMs</p>
@@ -227,7 +218,7 @@ input[type=range]{width:100%;accent-color:#3d91ff}
 <script src="mms-shell-bridge.js"></script>
 <script type="module">
 import { scanVideoEvents } from './mms-video-events.js?v=20261029';
-import { playbackRate, exportFrame, exportClip, saveBlob, buildTimeline, partsForRange, PRESETS, PROFILES } from './mms-clip.js?v=20261029-slow1';
+import { cancelProcessing, playbackRate, exportFrame, exportClip, saveBlob, buildTimeline, partsForRange, PRESETS, PROFILES } from './mms-clip.js?v=20261029-fast2';
 
 const $ = s => document.querySelector(s);
 const W = window.MmsWorkflow, P = window.MmsPro;
@@ -238,7 +229,7 @@ const S = {
   start: 0, end: 0, event: null,
   center: { x:.5, y:.5 },
   previewURL: null, busy: false, scanning: false, cancelScan: false, events: [], chosen: -1,
-  job: null, jobTimer: null, lastBlob: null
+  cancelled:false,lastBlob: null
 };
 
 /* ---------- utils ---------- */
@@ -250,19 +241,6 @@ const fmt = t => {
 const bytes = n => P?.bytes ? P.bytes(n) : `${n} B`;
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clamp = (n,a,b) => Math.max(a, Math.min(b, Number(n)||0));
-
-/* ---------- worker status ---------- */
-async function refreshWorker(){
-  try{
-    const d = await W.api('status');
-    const on = !!d?.worker_online;
-    const el = $('#workerPill');
-    el.className = 'pill ' + (on ? 'on' : 'off');
-    el.textContent = on ? 'เครื่องประมวลผลออนไลน์' : 'ไม่มีเครื่องประมวลผล';
-    $('#serverWarn').hidden = on;
-    $('#serverWarn').innerHTML = on ? '' : '<div class="note warn">ตอนนี้ยังไม่มีเครื่องประมวลผลออนไลน์ งานที่ส่งเข้าคิวจะรออยู่จนกว่าจะเปิดเครื่อง — ถ้าต้องการไฟล์ตอนนี้ ให้ใช้แท็บ “ตัดในเครื่อง”</div>';
-  }catch{ /* เงียบไว้ ไม่ให้ขวางการใช้งานหลัก */ }
-}
 
 /* ---------- source list ---------- */
 async function loadSources(){
@@ -315,13 +293,12 @@ async function pick(src){
 function setBusy(b){
   S.busy=b;
   document.querySelectorAll('.wrap button,.wrap input,.wrap select,.wrap textarea').forEach(el=>{
-    if(el.matches('[data-mms-close],#stopEvents,#tabLocal,#tabServer'))return;
+    if(el.matches('[data-mms-close],#stopEvents,#stopLocal'))return;
     el.disabled=b;
   });
   $('#pv').controls=!b;
   $('#runLocal').disabled=b||!S.parts.length;
   $('#saveFrame').disabled=b||!S.parts.length;
-  $('#runServer').disabled=b||!S.parts.length||currentRate()!==1;
   $('#renderPreview').disabled=b||!S.parts.length;
   $('#scanEvents').disabled=b||!S.parts.length;
   $('#saveEvents').disabled=b||!S.events.length;
@@ -406,7 +383,7 @@ function checkLocalLimits(){
   if(!S.parts.length){ el.hidden = true; return; }
   if(len > 300){
     el.hidden = false;
-    el.innerHTML = '<div class="note bad">ช่วงที่เลือกยาวเกิน 5 นาที การตัดในเบราว์เซอร์อาจทำให้แท็บค้าง แนะนำให้ย่อช่วงลง หรือใช้แท็บ “ส่งเข้าคิวเซิร์ฟเวอร์”</div>';
+    el.innerHTML = '<div class="note bad">ช่วงที่เลือกยาวเกิน 5 นาที การตัดในเบราว์เซอร์อาจทำให้แท็บค้าง แนะนำให้ย่อช่วงลง หรือเลือกโหมดเร็ว 720p</div>';
   }else if(len > 90 || mb > 120){
     el.hidden = false;
     el.innerHTML = `<div class="note warn">ช่วงที่เลือกยาว ${len.toFixed(0)} วินาที และต้องดึงไฟล์ต้นทางราว ${mb.toFixed(0)} MB — บนมือถืออาจใช้เวลาหลายนาที ถ้าต้องการเร็วกว่านี้ให้ย่อช่วงหรือเลือกคุณภาพ 720p</div>`;
@@ -466,9 +443,6 @@ $('#preset').addEventListener('change', () => {
 });
 window.addEventListener('resize', paintCrop);
 
-$('#tabLocal').addEventListener('click', () => { $('#tabLocal').classList.add('on'); $('#tabServer').classList.remove('on'); $('#paneLocal').style.display='flex'; $('#paneServer').hidden = true; });
-$('#tabServer').addEventListener('click', () => { $('#tabServer').classList.add('on'); $('#tabLocal').classList.remove('on'); $('#paneLocal').style.display='none'; $('#paneServer').hidden = false; });
-
 function currentEnhance(){
   return {
     preset: $('#preset').value,
@@ -486,8 +460,6 @@ function applyPlaybackRate(){
   if(v.defaultPlaybackRate!==rate)v.defaultPlaybackRate=rate;
   if(v.playbackRate!==rate)v.playbackRate=rate;v.preservesPitch=true;
   $('#speedHint').textContent=rate===1?'ดูตัวอย่างและส่งออกด้วยความเร็วปกติ':`ดูตัวอย่างและส่งออกช้าลง ${1/rate} เท่า (${rate}×)`;
-  $('#slowServerNote').hidden=rate===1;
-  $('#runServer').disabled=S.busy||!S.parts.length||rate!==1;
 }
 $('#playbackRate').addEventListener('change',()=>{applyPlaybackRate();paint()});
 $('#pv').addEventListener('ratechange',()=>{
@@ -525,7 +497,8 @@ $('#runLocal').addEventListener('click', async () => {
   if(len > 300 && !confirm('ช่วงที่เลือกยาวมาก อาจทำให้เบราว์เซอร์ค้าง ต้องการทำต่อหรือไม่')) return;
 
   if(S.busy)return;
-  setBusy(true);
+  S.cancelled=false;setBusy(true);
+  $('#stopLocal').hidden=false;$('#stopLocal').disabled=false;
   $('#pv').pause();
   $('#localResult').hidden = true;
   $('#localProgWrap').hidden = false;
@@ -556,63 +529,17 @@ $('#runLocal').addEventListener('click', async () => {
       <button class="btn primary" id="dlAgain">ดาวน์โหลดอีกครั้ง</button>`;
     $('#dlAgain').addEventListener('click', () => saveBlob(S.lastBlob.blob, S.lastBlob.name));
   }catch(e){
+    if(S.cancelled){stage('หยุดแล้ว สามารถปรับช่วงและเริ่มตัดใหม่ได้');return}
     stage('ไม่สำเร็จ');
     $('#localResult').hidden = false;
     $('#localResult').style.background = '#fdeeed';
     $('#localResult').innerHTML = `<b>ตัดไฟล์ไม่สำเร็จ</b><span class="muted">${esc(e.message||e)}</span>
-      <span class="muted">ถ้าเกิดจากหน่วยความจำไม่พอ ให้ย่อช่วงเวลาลง เลือกคุณภาพ 720p หรือใช้แท็บ “ส่งเข้าคิวเซิร์ฟเวอร์”</span>`;
+      <span class="muted">ถ้าเกิดจากหน่วยความจำไม่พอ ให้ย่อช่วงเวลาลง เลือกคุณภาพ 720p หรือเลือกโหมดเร็ว 720p</span>`;
   }finally{
-    setBusy(false);
+    $('#stopLocal').hidden=true;setBusy(false);
   }
 });
-
-/* ---------- export: server queue ---------- */
-$('#runServer').addEventListener('click', async () => {
-  if(!S.sel||S.busy||currentRate()!==1) return;
-  const body = {
-    source_kind: S.sel.kind,
-    ...(S.sel.kind === 'set' ? { media_set_id: S.sel.id } : { media_file_id: S.sel.id }),
-    trim_start_ms: Math.round(S.start*1000),
-    trim_end_ms: Math.round(S.end*1000),
-    event_time_ms: S.event == null ? null : Math.round(S.event*1000),
-    zoom_mode: (Number($('#zoom').value)||1) > 1.001 ? 'fixed' : 'original',
-    zoom_level: Number($('#zoom').value)||1,
-    center_x: S.center.x, center_y: S.center.y,
-    enhance: currentEnhance(),
-    output_profile: $('#profile').value
-  };
-  $('#runServer').disabled = true;
-  const d = await W.api('video-export-queue', body, { timeoutMs: 30000 });
-  $('#runServer').disabled = false;
-  if(!d.ok){ $('#jobBox').hidden = false; $('#jobBox').innerHTML = `<b>ส่งเข้าคิวไม่สำเร็จ</b><span class="muted">${esc(d.error||'')}</span>`; return; }
-  S.job = d.job;
-  $('#jobBox').hidden = false;
-  pollJob();
-});
-async function pollJob(){
-  clearInterval(S.jobTimer);
-  const tick = async () => {
-    if(!S.job) return;
-    const d = await W.api('job-status', { id: S.job.id });
-    if(!d.ok) return;
-    S.job = d.job;
-    const st = { queued:'รออยู่ในคิว', processing:'กำลังประมวลผล', completed:'เสร็จแล้ว', failed:'ล้มเหลว', cancelled:'ยกเลิกแล้ว' }[d.job.status] || d.job.status;
-    $('#jobBox').innerHTML = `<b>สถานะงาน: ${st} ${d.job.progress?('· '+d.job.progress+'%'):''}</b>
-      <span class="muted">รหัสงาน ${esc(d.job.id)}</span>
-      ${d.job.error_message ? `<span class="muted">${esc(d.job.error_message)}</span>` : ''}
-      ${d.job.status==='completed' ? '<button class="btn primary" id="getUrl">ดาวน์โหลดไฟล์ผลลัพธ์</button>' : ''}
-      ${d.job.status==='queued' ? '<span class="muted">งานจะเริ่มทันทีที่เปิดเครื่องประมวลผล — ระหว่างนี้ใช้แท็บ “ตัดในเครื่อง” ได้เลย</span>' : ''}`;
-    const g = $('#getUrl');
-    if(g) g.addEventListener('click', async () => {
-      const r = await W.api('job-result-url', { id: S.job.id });
-      if(r.ok && r.url) window.open(r.url, '_blank', 'noopener');
-      else alert(r.error || 'ยังไม่มีไฟล์ผลลัพธ์');
-    });
-    if(['completed','failed','cancelled'].includes(d.job.status)) clearInterval(S.jobTimer);
-  };
-  await tick();
-  S.jobTimer = setInterval(tick, 5000);
-}
+$('#stopLocal').addEventListener('click',()=>{S.cancelled=true;$('#stopLocal').disabled=true;cancelProcessing()});
 
 /* ---------- prompt events ---------- */
 function renderEvents(){
@@ -690,8 +617,6 @@ $('#saveFrame').addEventListener('click',async()=>{
     $('#srclist').innerHTML = '<div class="empty">กรุณาเข้าสู่ระบบจากหน้าเมนูหลักก่อน</div>';
     return;
   }
-  refreshWorker();
-  setInterval(refreshWorker, 30000);
   await loadSources();
 })();
 </script>
