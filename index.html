@@ -451,6 +451,38 @@
   .rmbar.on{border-color:rgba(90,209,255,.55);background:rgba(90,209,255,.06)}
   .rmbar>b{font-size:13px} .rmbar>span{flex:1 1 100%;color:var(--muted)} .rmbar>span b{color:var(--text)}
   .rmbar>button{margin-left:auto;flex:0 0 auto;min-height:32px;font-size:12px;padding:4px 10px}
+  /* 📻 Pink Noise card */
+  .pinkcard{margin:0 0 10px;padding:12px;border:1.5px solid var(--accent2);border-radius:14px;background:linear-gradient(180deg,rgba(255,176,32,.10),rgba(255,176,32,.02))}
+  .pinkcard .pkh{display:flex;flex-direction:column;gap:2px;margin-bottom:8px} .pinkcard .pkh b{font-size:16px} .pinkcard .pkh small{color:var(--muted);font-size:12px}
+  .pinkcard .pkbtn{width:100%;min-height:58px;font-size:18px;font-weight:700;border-color:var(--accent2)} .pinkcard .pkbtn.on{background:var(--accent2);color:#1a1200;border-color:var(--accent2)}
+  .pkband{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:9px} .pkband small{flex:1 1 100%;color:var(--muted);font-size:12px}
+  .pkband button{min-height:34px;padding:4px 10px;font-size:13px;flex:1 0 auto;border-radius:9px} .pkband button.sel{background:rgba(255,176,32,.22);border-color:var(--accent2);color:var(--text)}
+  .pksrc{display:block;margin-top:7px;color:var(--muted);font-size:12px;line-height:1.5}
+  /* 🎵 test songs + 📐 placement */
+  details.songcard,details.placecard{margin:0 0 10px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 10px}
+  details.songcard>summary,details.placecard>summary{cursor:pointer;padding:12px 24px 12px 2px;font-weight:700;list-style:none;position:relative}
+  details.songcard>summary::-webkit-details-marker,details.placecard>summary::-webkit-details-marker{display:none}
+  details.songcard>summary::after,details.placecard>summary::after{content:'▾';position:absolute;right:4px;top:12px;color:var(--muted)}
+  details.songcard>summary small,details.placecard>summary small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:2px}
+  details.songcard[open],details.placecard[open]{padding-bottom:10px} details.placecard[open]{border-color:rgba(255,155,74,.6)}
+  .shelp{color:var(--muted);font-size:12px;line-height:1.55;margin:0 0 8px;display:block}
+  .srow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--line)} .srow.on{background:rgba(53,208,192,.07)}
+  .sinfo{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:2px} .sinfo b{font-size:14px} .sinfo span{font-size:12px;color:var(--muted)}
+  .sfoc{display:flex;flex-wrap:wrap;gap:4px} .sfoc i{font-style:normal;font-size:11px;padding:1px 6px;border-radius:7px;border:1px solid var(--line);color:var(--muted)}
+  .snote{font-size:12px} .sact{display:flex;gap:6px;flex-wrap:wrap;flex:1 1 auto;justify-content:flex-end} .sact button{min-height:38px;font-size:13px;padding:4px 10px;flex:1 1 auto;white-space:nowrap}
+  .ytbox{margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:10px} .ytbox iframe{width:100%;max-width:420px;aspect-ratio:16/9;height:auto;border:0;border-radius:8px;display:block}
+  .ytbox p{font-size:13px;margin:6px 0} .ytbox a{color:var(--accent2)}
+  .sform input{width:100%} .srng{display:flex;gap:8px;align-items:center} .srng input{width:90px}
+  .sfocus{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px} .sfocus label{display:flex;gap:4px;align-items:center;margin:0;font-weight:400}
+  .rmsug .sdl{display:block;padding:2px 0} .rmsug .sdl.up b{color:var(--over)} .rmsug .sdl.dn b{color:var(--under)}
+  .placesvg{width:100%;max-width:420px;display:block;margin:4px auto 8px;font-family:inherit}
+  .placesvg .pt{fill:var(--muted);font-size:11px;font-weight:700} .placesvg .pl{fill:var(--text);font-size:11px} .placesvg .ps{fill:var(--muted);font-size:9.5px} .placesvg .pn{fill:#1a1200;font-size:11px;font-weight:700}
+  .placesvg .pspk{fill:var(--panel2);stroke:var(--text);stroke-width:1.2} .placesvg .pcone{fill:none;stroke:var(--muted);stroke-width:1.2}
+  .placesvg .pdash{stroke:var(--accent2);stroke-width:1.2;stroke-dasharray:4 4;fill:none} .placesvg .parr{stroke:var(--muted);stroke-width:1.2;fill:none}
+  .placesvg .p1{fill:var(--accent2)} .placesvg .p2{fill:rgba(255,176,32,.45);stroke:var(--accent2)} .placesvg .pgnd{stroke:var(--muted);stroke-width:1.5}
+  .placesvg .pstand{stroke:var(--text);stroke-width:2;fill:none} .placesvg .pphone{fill:var(--panel2);stroke:var(--text);stroke-width:1.4} .placesvg .pmic{fill:var(--over)}
+  .pchk{display:flex;flex-direction:column;gap:6px;font-size:13px} .pchk span small{color:var(--muted)} .pchk label{display:flex;gap:8px;align-items:flex-start;margin:0;font-weight:400}
+  .pchk span.ok{color:var(--spectrum)}
   .rmbar .rmns{flex:1 1 100%;display:flex;align-items:center;gap:6px;flex-wrap:wrap} .rmbar .rmns small{color:var(--muted)}
   .rmsug{white-space:pre-line;text-align:left} .rmsug b{display:block;margin-bottom:6px;color:var(--text)}
   .usegrid button .usehint{font-weight:600;font-size:11px;color:#ff9b4a;margin-left:4px} .usewarn{color:#ff9b6b;font-size:13px}
@@ -553,8 +585,15 @@
 
 <div class="controls">
   <div class="rmbar" id="rmBar"></div>
+  <details class="placecard" id="placeCard"><summary>📐 วิธีวางมือถือวัดเสียง (กลางแจ้ง) <small>ระยะ · ความสูง · ทิศรูไมค์ · 3 จุด</small></summary><div id="placeBody"></div></details>
   <div class="stylechip" id="styleChip"></div>
   <div class="lvl off"><span class="st">⚪ ไมค์ปิด</span><div class="bar"><div class="fill"></div></div><span class="db"></span></div>
+  <div class="pinkcard" id="pinkCard">
+    <div class="pkh"><b>📻 Pink Noise</b><small>สัญญาณมาตรฐานสำหรับวัด — ทุกย่านดังเท่ากัน นิ่ง วัดกี่รอบก็เทียบกันได้</small></div>
+    <button id="btnNoise" class="pkbtn"><span class="icn">📻</span> เปิด Pink Noise</button>
+    <div class="pkband" id="pkBand"></div>
+    <small class="pksrc" id="pkSrc"></small>
+  </div>
   <div class="row bigrow measure-modes">
     <button id="btnQuick" title="เช็กแนวโน้มเร็ว 10 วินาที"><span>⚡ เช็กเร็ว</span> <small>10 วินาที</small></button>
     <button id="btnMeasure" class="primary" title="วัดมาตรฐาน 20 วินาที"><span>📸 มาตรฐาน</span> <small>20 วินาที</small></button>
@@ -562,9 +601,9 @@
     <button id="btnP3" title="วางมือถือนิ่ง วัด 3 จุดรอบที่ฟัง แล้วเฉลี่ย — ใช้แทน MMM เมื่อวางมือถือนิ่ง/คอมสั่งวัด"><span>📍 วางนิ่ง 3 จุด</span> <small>3 × 20 วินาที</small></button>
   </div>
   <div class="p3card" id="p3Card" hidden></div>
+  <details class="songcard" id="songCard"><summary>🎵 เพลงทดสอบ <small>กดเล่น · วัดด้วยเพลง · เทียบก่อน/หลังปรับ</small></summary><div id="songBody"></div></details>
   <div class="row">
     <button id="btnMic"><span class="icn">🎙️</span> เริ่มวัดด้วยไมค์</button>
-    <button id="btnNoise"><span class="icn">📻</span> Pink Noise</button>
   </div>
   <div class="row"><button id="btnSpl"><span class="icn">📏</span> วัดความดัง (เดซิเบล)</button></div>
   <details class="adv" id="advTools"><summary>⚙ เครื่องมือเพิ่มเติม <small>ไมค์ · คาลิเบรต · Peak · Sweep · เฟส · A/B · ความละเอียด</small></summary>
@@ -943,13 +982,13 @@
 
   let audioCtx=null, analyser=null, micStream=null, srcNode=null, recDest=null;
   let noiseNode=null, noiseOn=false, running=false, holdOn=false, micStarting=false;
-  const MEASURE_TIME={quick:10000,measure:20000,mmm:35000,p3:20000};
+  const MEASURE_TIME={quick:10000,measure:20000,mmm:35000,p3:20000,song:20000};
   const MEASURE_BUTTON={quick:'btnQuick',measure:'btnMeasure',mmm:'btnMMM',p3:'btnP3'};
-  const MEASURE_METHOD={quick:'quick10s',measure:'standard20s',mmm:'mmm35s',p3:'point3'};
+  const MEASURE_METHOD={quick:'quick10s',measure:'standard20s',mmm:'mmm35s',p3:'point3',song:'song'};
   const MEASURE_TITLE={quick:'⚡ เช็กเร็ว',measure:'📸 มาตรฐาน',mmm:'🚶 เดินไมค์ MMM',p3:'📍 วางนิ่ง 3 จุด'};
-  function measureButtonHTML(kind){return '<span>'+MEASURE_TITLE[kind]+'</span> <small>'+(kind==='p3'?'3 × 20 วินาที':MEASURE_TIME[kind]/1000+' วินาที')+'</small>';}
+  function measureButtonHTML(kind){if(kind==='song')kind='measure';return '<span>'+MEASURE_TITLE[kind]+'</span> <small>'+(kind==='p3'?'3 × 20 วินาที':MEASURE_TIME[kind]/1000+' วินาที')+'</small>';}
   function resetMeasurementButtons(){Object.entries(MEASURE_BUTTON).forEach(([kind,id])=>{const b=document.getElementById(id);if(b){b.innerHTML=measureButtonHTML(kind);b.classList.remove('on');}});}
-  function measurementMethodLabel(method){return ({point3:'วางนิ่ง 3 จุด × 20 วิ',quick10s:'เช็กเร็ว 10 วิ',standard20s:'วัดมาตรฐาน 20 วิ',mmm35s:'MMM 35 วิ','4s':'วัด 4 วิ',mmm:'MMM 30 วิ'})[method]||'วัดมาตรฐาน 20 วิ';}
+  function measurementMethodLabel(method){return ({song:'เพลง (เทียบก่อน/หลัง)',songabs:'เพลงเทียบต้นฉบับ',point3:'วางนิ่ง 3 จุด × 20 วิ',quick10s:'เช็กเร็ว 10 วิ',standard20s:'วัดมาตรฐาน 20 วิ',mmm35s:'MMM 35 วิ','4s':'วัด 4 วิ',mmm:'MMM 30 วิ'})[method]||'วัดมาตรฐาน 20 วิ';}
   let P3={active:false,pt:0,ph:'',res:[],rawP:null,rawN:0,q:null};   // 📍 วางนิ่ง 3 จุด state (see p3Go/p3Collect)
   let jobEpoch=0, preparing=false, floorRunning=false, measureMethod='standard20s',measureDurationMs=20000;
   function jobBusy(){ return preparing||measuring||sweeping||phasing||floorRunning; }
@@ -1032,14 +1071,26 @@
       d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;}
     return buf;
   }
+  // Pink Noise: full band for measuring, or one octave band at a time for 🎧 listening by ear
+  let NOISE_BAND=0, noiseGain=null, noiseFilt=[];
+  function noiseRoute(){
+    if(!noiseNode||!noiseGain)return;
+    try{ noiseNode.disconnect(); }catch(_){} noiseFilt.forEach(f=>{ try{ f.disconnect(); }catch(_){} }); noiseFilt=[];
+    if(NOISE_BAND){ noiseFilt=[0,1].map(()=>{ const f=audioCtx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=NOISE_BAND; f.Q.value=1.2; return f; });
+      noiseNode.connect(noiseFilt[0]); noiseFilt[0].connect(noiseFilt[1]); noiseFilt[1].connect(noiseGain); }
+    else noiseNode.connect(noiseGain);
+  }
+  function noiseLabel(){ const btn=document.getElementById('btnNoise'); if(!btn)return;
+    btn.classList.toggle('on',noiseOn); btn.innerHTML=noiseOn?'<span class="icn">⏹</span> หยุด Pink Noise'+(NOISE_BAND?' · '+niceLabel(NOISE_BAND)+' Hz':''):'<span class="icn">📻</span> เปิด Pink Noise'; }
+  function setNoiseBand(b){ NOISE_BAND=+b||0; noiseRoute(); noiseLabel(); if(typeof pkRender==='function')pkRender(); }
   function toggleNoise(){
     if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); audioCtx.resume();
-    const btn=document.getElementById('btnNoise');
-    if(noiseOn){ try{noiseNode.stop();}catch(_){}; noiseNode=null;noiseOn=false; btn.classList.remove('on'); btn.innerHTML='<span class="icn">📻</span> Pink Noise'; }
+    if(noiseOn){ try{noiseNode.stop();}catch(_){}; try{ noiseGain.disconnect(); }catch(_){} noiseNode=null; noiseGain=null; noiseOn=false; }
     else{ noiseNode=audioCtx.createBufferSource(); noiseNode.buffer=makePinkNoise(); noiseNode.loop=true;
-      const g=audioCtx.createGain(); g.gain.value=0.5; noiseNode.connect(g).connect(audioCtx.destination); noiseNode.start();
-      noiseOn=true; btn.classList.add('on'); btn.innerHTML='<span class="icn">⏹</span> หยุด Noise'; }
+      noiseGain=audioCtx.createGain(); noiseGain.gain.value=0.5; noiseGain.connect(audioCtx.destination); noiseRoute(); noiseNode.start(); noiseOn=true; }
+    noiseLabel(); if(typeof pkRender==='function')pkRender();
   }
+
 
   function rebuildBands(){ bandF=centers(perOct); bandLabels=bandF.map(niceLabel); peakHold=new Array(bandF.length).fill(-120); }
   function computeBands(){
@@ -1061,9 +1112,9 @@
   }
 
   function measure(kind='measure'){
-    if(kind!=='quick'&&kind!=='p3')kind='measure';
+    if(kind!=='quick'&&kind!=='p3'&&kind!=='song')kind='measure';
     if(!running||jobBusy())return; resetMeasurementData(MEASURE_METHOD[kind]); measureDurationMs=MEASURE_TIME[kind]; const epoch=++jobEpoch; measuring=true; RAW={p:new Array(bandF.length).fill(0),n:0}; sweepFrozen=false; sweepResult=null;
-    const btn=document.getElementById(MEASURE_BUTTON[kind]), accP=new Array(bandF.length).fill(0), acc=new Array(bandF.length).fill(0);
+    const btn=document.getElementById(MEASURE_BUTTON[kind]||'btnMeasure'), accP=new Array(bandF.length).fill(0), acc=new Array(bandF.length).fill(0);
     const t0=performance.now(),DUR=MEASURE_TIME[kind]; measQ=qNew();
     (function tick(){
       if(epoch!==jobEpoch||!running)return;
@@ -1909,6 +1960,7 @@
       if(epoch!==jobEpoch||!running)return;
       let ap=true; try{ ap=localStorage.getItem('rta_autopink')!=='0'; }catch(_){}
       // A remote supplies the test signal when this device is the station.
+      if(noiseOn&&NOISE_BAND)setNoiseBand(0);   // measuring always uses full-band pink
       if((SY.role!=='station'||FB.cmdNs==='st')&&ap&&!noiseOn){ toggleNoise(); autoPinkOn=true; appToast('📻 เปิด Pink Noise — รอเสียงนิ่ง 1.5 วิ'); await new Promise(r=>setTimeout(r,1500)); }
       if(epoch!==jobEpoch||!running)return;
       preparing=false; if(kind==='mmm')measureMMM(); else if(kind==='p3')p3Go(); else measure(kind);
@@ -2399,12 +2451,15 @@
     if(measuring)cancelMeasurement(); p3Reset(); resetMeasurementButtons(); dq('sugBox').innerHTML='<div class="empty">ยกเลิกการวัด 3 จุดแล้ว — เริ่มใหม่ได้ที่ <span class="kbd">📍 วางนิ่ง 3 จุด</span></div>'; });
   function afterMeasure(){
     if(P3.active&&measureMethod==='point3'&&p3Collect())return;
+    if(measureMethod==='song')songAfter(); else lastSongMeta=null;
+    const songM=(measureMethod==='song'||measureMethod==='songabs')?lastSongMeta:null; SM.lastSong=songM;
     if(autoPinkOn){ autoPinkOn=false; if(noiseOn)toggleNoise(); }
     if(wStep===0){ wStep=1; } setTimeout(renderWiz,0);
     snrCompute(); { const w=qVerdict(); measQW=w?{for:measured,w}:null; measQ=null;
       if(w){ const bad=w; if(bad.length) appToast('⚠ คุณภาพการวัด: '+bad[0].l,true); else if(!w.length) appToast('✓ คุณภาพการวัดดี — ไม่คลิป ระดับพอดี'); } }
     SM.lastT=Date.now(); SM.lastFrom=SY.name; syMetaSave(); pushMeasHist(); mlAdd(); syncSoon(); if(measured)analyze(); if(DV.open){ DV.dirty=true; dvRenderResult(); }
     let ask=true; try{ ask=localStorage.getItem(ASK_KEY)!=='0'; }catch(_){}
+    if(songM&&SY.role!=='station'){ songCompare(songM,measured,songM.rel); if(songM.rel)return; }
     if(ask&&SY.role!=='station') askStyle(true);
     else if(DV.open){ setTargetUI(REC.style); runRecs(); dvRenderAll(); }
   }
@@ -2590,7 +2645,7 @@
     profiles.forEach(p=>{ const j=JSON.stringify(p); if(ack.pushed[p.id]!==j){ u['sync/profiles/'+p.id]={j,t:tsOf(p)}; ack.pushed[p.id]=j; } });
     Object.entries(SM.tomb||{}).forEach(([id,t])=>{ if(!ack.pushedTomb[id]){ u['sync/tomb/'+id]=t; u['sync/profiles/'+id]=null; ack.pushedTomb[id]=1; } });
     if(DEVICE){ const j=JSON.stringify(DEVICE); if(j!==ack.pushedDev){ u['sync/device']={j,t:Date.parse(DEVICE.at)||Date.now()}; ack.pushedDev=j; } }
-    if(measured&&SM.lastT>ack.pushedLast){ const L={t:SM.lastT,lid:mlLastId,from:SM.lastFrom||SY.name,perOct,d:measured.map(v=>Math.round(v*10)/10),base:measBase||null,sweep:sweepResult?{peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}:null};
+    if(measured&&SM.lastT>ack.pushedLast){ const L={t:SM.lastT,lid:mlLastId,from:SM.lastFrom||SY.name,perOct,d:measured.map(v=>Math.round(v*10)/10),base:measBase||null,sweep:sweepResult?{peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}:null,song:SM.lastSong||null};
       u['sync/last']={j:JSON.stringify(L),t:L.t}; ack.pushedLast=SM.lastT; }
     if((SM.styleT||0)>ack.pushedStyle){ u['sync/style']={k:REC.style,s:REC.strength,t:SM.styleT}; ack.pushedStyle=SM.styleT; }
     MLOG.forEach(m=>{ if((ack.pushedM[m.id]||-1)!==(m.up||0)){ u['sync/meas/'+m.id]={j:JSON.stringify(m),t:m.up||m.t}; ack.pushedM[m.id]=m.up||0; } });
@@ -2660,13 +2715,14 @@
     syMetaSave();
     if(changed){ try{ localStorage.setItem(PF_KEY,JSON.stringify(profiles)); }catch(_){} renderEditor(); renderProfiles(); }
     if(changed||gotMeas){ if(DV.open){ if(gotMeas&&REC.seq>=0)runRecs(); dvRenderAll(); } }
-    if(gotMeas){ appToast('📥 ได้ผลวัดใหม่จาก'+(L.from||'อีกเครื่อง')+' แล้ว'); if(SY.role==='remote'){ let ask=true; try{ ask=localStorage.getItem(ASK_KEY)!=='0'; }catch(_){} if(ask)askStyle(true); } }
+    if(gotMeas&&L.song){ appToast('📥 ได้ผลวัดเพลง “'+(L.song.name||'')+'” จาก'+(L.from||'อีกเครื่อง')+' แล้ว'); songCompare(L.song,measured,L.song.rel); if(L.song.rel)return; }
+    if(gotMeas){ if(!L.song)appToast('📥 ได้ผลวัดใหม่จาก'+(L.from||'อีกเครื่อง')+' แล้ว'); if(SY.role==='remote'){ let ask=true; try{ ask=localStorage.getItem(ASK_KEY)!=='0'; }catch(_){} if(ask)askStyle(true); } }
     else if(msgs.length) appToast('📥 อัปเดตจากอีกเครื่อง: '+msgs.slice(0,3).join(', ')+(msgs.length>3?' …':''));
   }
   // --- 📡 remote: เครื่องวัด (station: mic + noise + video, e.g. phone at the seat) ↔ แผงควบคุม (remote: e.g. computer beside DSPico)
   const RM_OPS={mic:'btnMic',quick:'btnQuick',measure:'btnMeasure',mmm:'btnMMM',p3:'btnP3',sweep:'btnSweep',phase:'btnPhase',clear:'btnClear',noise:'btnNoise'};
-  const RM_NAME={p3:'วางนิ่ง 3 จุด',p3cancel:'ยกเลิก 3 จุด',mic:'ไมค์',quick:'เช็กเร็ว 10 วิ',measure:'มาตรฐาน 20 วิ',mmm:'MMM 35 วิ',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง',noise:'Pink Noise',rec:'เริ่มอัดวิดีโอ',recstop:'หยุดอัดวิดีโอ'};
-  if(SY.ns!=='st'&&SY.ns!=='rm')SY.ns='st';   // who plays the test signal: st = เครื่องวัด (Bluetooth into the rig) · rm = แผงควบคุม (AUX cable)
+  const RM_NAME={song:'วัดด้วยเพลง',p3:'วางนิ่ง 3 จุด',p3cancel:'ยกเลิก 3 จุด',mic:'ไมค์',quick:'เช็กเร็ว 10 วิ',measure:'มาตรฐาน 20 วิ',mmm:'MMM 35 วิ',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง',noise:'Pink Noise',rec:'เริ่มอัดวิดีโอ',recstop:'หยุดอัดวิดีโอ'};
+  if(SY.ns!=='st'&&SY.ns!=='rm')SY.ns='rm'; if(!SY.nsv){ SY.ns='rm'; SY.nsv=2; }   // who plays the test signal: st = เครื่องวัด (Bluetooth into the rig) · rm = แผงควบคุม (AUX cable)
   FB.cmdNs='st'; FB.recRemote=false;
   let rmAutoNoise=false, rmSawMeas=false;
   function stExec(c){
@@ -2675,7 +2731,8 @@
     if(c.op==='rec'){ if(['graph','pip','stack','camfull'].includes(c.mode))REC_V.mode=c.mode; if(['environment','user'].includes(c.face))REC_V.face=c.face; FB.recRemote=true; recStart(); return; }
     if(c.op==='recstop'){ recStop(); return; }
     if(c.op==='p3cancel'){ if(measuring)cancelMeasurement(); p3Reset(); resetMeasurementButtons(); return; }
-    if(c.op==='noise'){ if(!!c.on!==noiseOn)toggleNoise(); autoPinkOn=false; return; }
+    if(c.op==='noise'){ if(c.band!=null)setNoiseBand(c.band); if(!!c.on!==noiseOn)toggleNoise(); autoPinkOn=false; return; }
+    if(c.op==='song'){ stSong(c); return; }
     const id=RM_OPS[c.op]; if(!id)return;
     const go=()=>{ if(c.listen&&c.op==='sweep'){ abOn=false; startSweep({listen:true}); return; } if(c.listen&&c.op==='phase'){ startPhase({listen:true,f:c.f}); return; } const b=dq(id); if(b&&!b.disabled)b.click(); };
     if(c.op!=='mic'&&!running){ dq('btnMic').click(); setTimeout(go,1600); } else go();
@@ -2684,7 +2741,7 @@
     if(SY.role!=='station'||!FB.root)return; const now=Date.now(), recBusy=REC_V.phase==='recording'||REC_V.phase==='preparing';
     if(!running&&!recBusy&&now-FB.pub<3000)return; if((running||recBusy)&&now-FB.pub<120)return; FB.pub=now;
     const data=measured||lastLive, pick=id=>{ const b=dq(id); return b?{t:b.textContent.replace(/\s+/g,' ').trim(),d:b.disabled,on:b.classList.contains('on')}:null; };
-    FB.root.child('live/station').set({name:SY.name,at:now,running,measuring:!!(measuring||preparing),sweeping:!!sweeping,perOct,lv:{s:LV.state,r:Math.round(LV.rms)},noise:!!noiseOn,
+    FB.root.child('live/station').set({name:SY.name,at:now,running,measuring:!!(measuring||preparing),sweeping:!!sweeping,perOct,lv:{s:LV.state,r:Math.round(LV.rms)},noise:!!noiseOn,nb:NOISE_BAND,
       vis:document.visibilityState==='visible',p3:{a:P3.active,pt:P3.pt,ph:P3.ph},rec:{ph:REC_V.phase,t:Math.floor(recEl()),m:REC_V.mode},
       s:data&&data.length===bandF.length?data.map(v=>Math.round(v*2)/2).join(','):'',m:!!measured,
       b:{mic:pick('btnMic'),quick:pick('btnQuick'),measure:pick('btnMeasure'),mmm:pick('btnMMM'),p3:pick('btnP3'),sweep:pick('btnSweep'),phase:pick('btnPhase'),noise:pick('btnNoise')}}).catch(()=>{});
@@ -2733,7 +2790,7 @@
     if(op==='noise'&&SY.ns==='rm')return;              // panel plays the noise itself (AUX)
     e.stopImmediatePropagation(); e.preventDefault();
     if(op==='clear'){ measured=null; measuredVar=null; draw(); }
-    if(op==='noise'){ rmSend({op,on:!(FB.st&&FB.st.noise)}); return; }
+    if(op==='noise'){ const on=!(FB.st&&FB.st.noise); rmSend(on?{op,on,band:0}:{op,on}); return; }
     const cmd={op};
     if(op==='sweep'||op==='phase'){ if(op==='phase')cmd.f=xoMarks()[0];
       if(SY.ns==='rm'){ cmd.listen=true;
@@ -2743,14 +2800,14 @@
         appToast(op==='sweep'?'🌊 เครื่องนี้เล่นเสียงกวาด 18 วิ — เครื่องวัดกำลังฟัง':'🔄 เครื่องนี้เล่นโทน '+cmd.f+' Hz 8 วิ — เครื่องวัดกำลังฟัง'); } }
     let ap=true; try{ ap=localStorage.getItem('rta_autopink')!=='0'; }catch(_){}
     if((op==='quick'||op==='measure'||op==='mmm'||op==='p3')&&SY.ns==='rm'&&ap&&!noiseOn){
-      toggleNoise(); rmAutoNoise=true; rmSawMeas=false; appToast('📻 เครื่องนี้เปิด Pink Noise — รอเสียงนิ่ง 1.5 วิ แล้วสั่งวัด');
+      setNoiseBand(0); toggleNoise(); rmAutoNoise=true; rmSawMeas=false; appToast('📻 เครื่องนี้เปิด Pink Noise — รอเสียงนิ่ง 1.5 วิ แล้วสั่งวัด');
       setTimeout(()=>rmSend(cmd),1500); return; }
     rmSend(cmd);
   },true);
   function rmSetRole(r,quiet){
     if(SY.role==='remote'&&r!=='remote'){ ['btnQuick','btnMeasure','btnMMM','btnP3','btnSweep','btnPhase','btnClear'].forEach(id=>dq(id).disabled=!running); resetMeasurementButtons(); lastLive=null; draw(); if(REC_V.phase==='idle')recUI('idle'); }
     SY.role=r; syCfgSave(); presBeat(); if(r==='remote'&&running)dq('btnMic').click(); rmApplyStation(); rmRender(); syStatus(FB.state,FB.msg);
-    if(r==='remote')rmRecUI(); p3Render();
+    if(r==='remote')rmRecUI(); p3Render(); songRoleUI();
     if(!quiet)appToast(r==='station'?'📍 เครื่องนี้เป็นเครื่องวัด — วางที่จุดฟัง เปิดจอค้างไว้ แผงควบคุมสั่งวัด/อัดวิดีโอได้':r==='remote'?'🎮 เครื่องนี้เป็นแผงควบคุม — ปุ่มวัดและอัดวิดีโอจะสั่งเครื่องวัด':'ใช้เครื่องเดียว (ปิดโหมดคู่)');
   }
   function rmRender(){
@@ -2759,16 +2816,16 @@
     const put=(h,c)=>{ if(el.dataset.h!==h){ el.dataset.h=h; el.innerHTML=h; } el.className=c; };
     if(!syOn()){ put('<b>📱+💻 ใช้คู่กับอีกเครื่อง</b><span>'+(R!=='off'?'⚠ เลือกแบบใช้คู่ไว้แล้ว แต่ยังไม่ได้ตั้งค่าซิงก์ Firebase — ตั้งค่าก่อน (ใส่เหมือนกันทั้งสองเครื่อง)':'มือถือวางวัดที่จุดฟัง + คอมกดสั่งวัดและดูคำแนะนำ (ต้องตั้งค่าซิงก์ Firebase ก่อน)')+'</span><button data-sy="open">ตั้งค่า</button>'+mode,'rmbar'+(R!=='off'?' on':'')); return; }
     put('<b>📱+💻 ใช้คู่</b><div class="rmseg"><button data-rm="off" class="'+(R==='off'?'sel':'')+'">เครื่องเดียว</button><button data-rm="station" class="'+(R==='station'?'sel':'')+'">📍 เครื่องวัด</button><button data-rm="remote" class="'+(R==='remote'?'sel':'')+'">🎮 แผงควบคุม</button></div>'+mode+
-      '<span>'+(R==='station'?'📍 วางเครื่องนี้ที่จุดฟัง · เปิดจอค้างไว้ · รอคำสั่งจากแผงควบคุม · กราฟส่งสดไปอีกเครื่อง · '+(running?'🟢 ไมค์ทำงาน':'⚪ ไมค์ปิด (แผงควบคุมสั่งเปิดได้)')+(SY.ns!=='rm'?' · 📻 Noise ออกจากเครื่องนี้ (ต่อบลูทูธเข้าเครื่องเสียง)':''):
+      '<span>'+(R==='station'?'📍 วางเครื่องนี้ที่จุดฟัง · เปิดจอค้างไว้ · รอคำสั่งจากแผงควบคุม · กราฟส่งสดไปอีกเครื่อง · '+(running?'🟢 ไมค์ทำงาน':'⚪ ไมค์ปิด (แผงควบคุมสั่งเปิดได้)')+(FB.cmdNs!=='rm'?' · 📻 Noise ออกจากเครื่องนี้ (ต่อบลูทูธเข้าเครื่องเสียง)':' · 📻 เสียงทดสอบเล่นจากแผงควบคุม'):
         R==='remote'?(live?'🟢 เชื่อมกับ <b>'+esc(st.name)+'</b> · '+(st.running?'ไมค์ทำงาน':'ไมค์ปิด')+(st.vis===false?' · <b style="color:#ff9b6b">⚠ จอเครื่องวัดไม่ได้อยู่หน้าแอป — ไมค์อาจหยุด</b>':'')+' · ปุ่มวัด / Noise / อัดวิดีโอ จะสั่งเครื่องนั้น':'🟠 ยังไม่เจอเครื่องวัด — เปิดแอปบนมือถือ เลือก “📍 เครื่องวัด”'):
         'เลือกบทบาทของเครื่องนี้')+'</span>'+
-      (R==='remote'?'<div class="rmseg rmns"><small>📻 เสียงทดสอบออกจาก</small><button data-ns="st" class="'+(SY.ns!=='rm'?'sel':'')+'">📍 เครื่องวัด (บลูทูธ)</button><button data-ns="rm" class="'+(SY.ns==='rm'?'sel':'')+'">🎮 เครื่องนี้ (สาย AUX)</button></div>':''),'rmbar'+(R!=='off'?' on':''));
+      (R==='remote'?'<div class="rmseg rmns"><small>📻 เสียงทดสอบออกจาก</small><button data-ns="st" class="'+(SY.ns!=='rm'?'sel':'')+'">📍 เครื่องวัด (บลูทูธ)</button><button data-ns="rm" class="'+(SY.ns==='rm'?'sel':'')+'">🎮 เครื่องนี้ (บลูทูธ/สาย)</button></div>':''),'rmbar'+(R!=='off'?' on':''));
   }
   dq('rmBar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
     if(b.dataset.sy==='open'){ openSync(); return; }
     if(b.dataset.use==='ask'){ useAsk(true); return; }
     if(b.dataset.ns){ if(noiseOn&&SY.ns==='rm'&&b.dataset.ns==='st'){ toggleNoise(); rmAutoNoise=false; } SY.ns=b.dataset.ns; syCfgSave(); rmRender(); rmApplyStation();
-      appToast(SY.ns==='rm'?'📻 เสียงทดสอบเล่นจากเครื่องนี้ — ต่อสายออกหูฟังเข้าช่องเสียงภายนอก':'📻 เสียงทดสอบเล่นจากเครื่องวัด — ให้เครื่องวัดต่อบลูทูธเข้าเครื่องเสียง'); return; }
+      appToast(SY.ns==='rm'?'📻 เสียงทดสอบเล่นจากเครื่องนี้ — ต่อบลูทูธหรือสายเข้าเครื่องเสียง':'📻 เสียงทดสอบเล่นจากเครื่องวัด — ให้เครื่องวัดต่อบลูทูธเข้าเครื่องเสียง'); return; }
     const r=b.dataset.rm; if(!r)return; rmSetRole(r); });
   // --- 🧭 รูปแบบการใช้งาน: ถามตอนเปิดแอป
   const USE_ASK='rta_useask';
@@ -2792,6 +2849,224 @@
     if(r!=='off'&&!syOn())setTimeout(()=>openSync(),200);
     setTimeout(showGraph,100); });
   dq('dvModal').addEventListener('change',e=>{ if(e.target&&e.target.id==='useNoAsk'){ try{ localStorage.setItem(USE_ASK,e.target.checked?'0':'1'); }catch(_){} } });
+  // ===== 📻 Pink Noise card: big toggle + 🎧 one octave at a time =====
+  const PK_BANDS=[[0,'เต็มย่าน','ใช้วัด — ทุกย่านพร้อมกัน'],[63,'63','ซับ / ลูกกระเดื่อง — แน่นหรือหวึ่ง'],[125,'125','ลูกเบส / รอยต่อซับ↔กลาง'],[250,'250','ย่านบวม / อู้'],[500,'500','body เสียงร้อง-กีตาร์'],[1000,'1k','เสียงร้อง'],[2000,'2k','ความชัด'],[4000,'4k','จัดจ้าน / แสบหู'],[8000,'8k','ความใส / ฟู่']];
+  function pkRemoteNoise(){ return SY.role==='remote'&&SY.ns!=='rm'; }
+  function pkRender(){
+    const el=dq('pkBand'); if(!el)return;
+    const st=FB.st, remote=pkRemoteNoise(), band=remote?((st&&st.nb)||0):NOISE_BAND, on=remote?!!(st&&st.noise):noiseOn;
+    const html='<small>🎧 ไล่ฟังทีละย่าน</small>'+PK_BANDS.map(([f,l])=>'<button data-nb="'+f+'" class="'+(on&&band===f?'sel':'')+'">'+l+'</button>').join('');
+    if(el.dataset.h!==html){ el.dataset.h=html; el.innerHTML=html; }
+    const cur=PK_BANDS.find(x=>x[0]===band)||PK_BANDS[0];
+    const src=SY.role==='remote'?(SY.ns==='rm'?'เล่นจากเครื่องนี้ → บลูทูธ/สายเข้าเครื่องเสียง':'เล่นที่เครื่องวัด (บลูทูธเข้าเครื่องเสียง)'):SY.role==='station'?(FB.cmdNs==='rm'?'แผงควบคุมเป็นคนเล่นเสียงทดสอบ':'เล่นจากเครื่องนี้ — ต่อบลูทูธเข้าเครื่องเสียง'):'เล่นจากเครื่องนี้ — ต่อบลูทูธหรือสายเข้าเครื่องเสียง';
+    const t=(on?(band?'🎧 กำลังเล่นเฉพาะ '+niceLabel(band)+' Hz · '+cur[2]+' · ฟังทีละย่าน ย่านที่ดังเด่น/ก้องกว่าย่านอื่นคือจุดที่ควรลด':'📻 กำลังเล่นเต็มย่าน · พร้อมวัด'):'📍 '+src)+(on&&band?' · กดวัดแล้วระบบจะกลับเป็นเต็มย่านให้เอง':'');
+    const ps=dq('pkSrc'); if(ps&&ps.textContent!==t)ps.textContent=t;
+  }
+  dq('pkBand').addEventListener('click',e=>{ const b=e.target.closest('[data-nb]'); if(!b)return; const nb=+b.dataset.nb;
+    if(pkRemoteNoise()){ rmSend({op:'noise',on:true,band:nb}); return; }
+    setNoiseBand(nb); if(!noiseOn)toggleNoise(); });
+
+  // ===== 🎵 เพลงทดสอบ: play from this device (YouTube or own file) and measure on the station =====
+  const SONG_KEY='rta_songs', SONGH_KEY='rta_songhist';
+  const FOCUS={kick:'กระเดื่อง 60–125',bass:'ลูกเบส 40–250',body:'body 250–500',vocal:'เสียงร้อง 1–3k',high:'แหลม 5–12k'};
+  const SONG_DEF=[
+    {id:'s-hc',title:'Hotel California (Live 1994 · Hell Freezes Over)',artist:'Eagles',yt:'',q:'Eagles Hotel California Live 1994 Hell Freezes Over',start:30,end:60,focus:['kick','body','vocal'],note:'เพลงประจำ · กีตาร์โปร่ง + กระเดื่องหนัก ฟังความชัดและความแน่น'},
+    {id:'s-bj',title:'Billie Jean',artist:'Michael Jackson',yt:'Zi_XLOBDo_Y',start:30,end:60,focus:['kick','bass','vocal'],note:'กระเดื่องกับเบสไลน์ต้องแยกกันชัด ไม่บวมรวมเป็นก้อน'},
+    {id:'s-ic',title:'Instant Crush',artist:'Daft Punk',yt:'',q:'Daft Punk Instant Crush official video',start:30,end:60,focus:['bass','vocal'],note:'สมดุลเบส-เสียงร้อง'},
+    {id:'s-rwy',title:'Rock With You',artist:'Michael Jackson',yt:'',q:'Michael Jackson Rock With You official video',start:30,end:60,focus:['kick','bass'],note:'กระเดื่องกับเบสแยกชั้น'},
+    {id:'s-iwr',title:'I Will Remember',artist:'Toto',yt:'',q:'Toto I Will Remember official audio',start:30,end:60,focus:['body','vocal'],note:'body ย่าน 250–500 · เสียงร้อง'},
+    {id:'s-ut',title:'Undertow',artist:'Warpaint',yt:'',q:'Warpaint Undertow official video',start:30,end:60,focus:['bass'],note:'เบสลึกต่ำกว่า 50 Hz'}];
+  let SONGS=[], SONG_RM=[]; try{ SONGS=JSON.parse(localStorage.getItem(SONG_KEY)||'[]'); SONG_RM=JSON.parse(localStorage.getItem(SONG_KEY+'_rm')||'[]'); }catch(_){ SONGS=[]; }
+  if(!Array.isArray(SONGS))SONGS=[]; if(!Array.isArray(SONG_RM))SONG_RM=[]; SONG_DEF.forEach(d=>{ if(!SONGS.some(x=>x.id===d.id)&&!SONG_RM.includes(d.id))SONGS.push(Object.assign({},d)); });
+  function songSave(){ try{ localStorage.setItem(SONG_KEY,JSON.stringify(SONGS)); }catch(_){} }
+  let SONGH={}; try{ SONGH=JSON.parse(localStorage.getItem(SONGH_KEY)||'{}')||{}; }catch(_){ SONGH={}; }
+  const SP={id:null,kind:'',node:null,player:null,pend:null,ytErr:null,t0:0,timer:null}, SONGBUF={};
+  let SONGM=null, lastSongMeta=null;
+  function ytId(u){ u=String(u||'').trim(); if(/^[\w-]{11}$/.test(u))return u; const m=u.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/|\/live\/)([\w-]{11})/); return m?m[1]:''; }
+  function mmss(t){ t=Math.max(0,Math.round(+t||0)); return Math.floor(t/60)+':'+String(t%60).padStart(2,'0'); }
+  function parseT(v){ v=String(v||'').trim(); if(!v)return 0; const m=v.match(/^(\d+):(\d{1,2})$/); return m?(+m[1])*60+(+m[2]):Math.max(0,Math.round(+v||0)); }
+  function songSeg(s){ const a=Math.max(0,s.start||0), b=Math.max(a+10,s.end||a+30); return [a,b]; }
+  function songKey(s){ const [a,b]=songSeg(s); return s.id+'@'+a+'-'+b+(s.file?':f':':'+(s.yt||'')); }
+  function songSrc(s){ return s.file?'📁 ไฟล์ '+esc(s.fname||''):s.yt?'📺 YouTube':'⚠ ยังไม่มีลิงก์'; }
+  // IndexedDB for the user's own song files (stay on this device only)
+  function idb(){ return new Promise((ok,no)=>{ const r=indexedDB.open('rta_songs',1); r.onupgradeneeded=()=>r.result.createObjectStore('f'); r.onsuccess=()=>ok(r.result); r.onerror=()=>no(r.error); }); }
+  async function idbDo(mode,fn){ const d=await idb(); return new Promise((ok,no)=>{ const t=d.transaction('f',mode), st=t.objectStore('f'), r=fn(st); t.oncomplete=()=>ok(r&&r.result); t.onerror=()=>no(t.error); }); }
+  function songRender(){
+    const body=dq('songBody'); if(!body)return;
+    if(!dq('songList')){ body.innerHTML='<p class="shelp">เล่นท่อนเดิม ดังเท่าเดิม ทุกครั้ง · <b>📺 YouTube</b> = เทียบก่อน/หลังปรับ (ย่านไหนเปลี่ยนกี่ dB) · <b>📁 ไฟล์ของคุณ</b> = วัดค่าจริงได้แบบ Pink Noise เพราะระบบรู้เสียงต้นฉบับ · หาค่า EQ ยังใช้ 📻 Pink Noise เป็นหลัก</p>'+
+      '<div id="songList"></div><div id="ytBox" class="ytbox" hidden><div id="ytFrame"></div><div id="ytMsg"></div></div>'+
+      '<div class="row"><button data-sg="addyt">＋ ลิงก์ YouTube</button><button data-sg="addfile">＋ ไฟล์เพลงของคุณ</button></div><input type="file" id="songFile" accept="audio/*" hidden><small class="shelp" id="songHint"></small>'; }
+    const rows=SONGS.map(s=>{ const [a,b]=songSeg(s), playing=SP.id===s.id, has=s.file||s.yt;
+      return '<div class="srow'+(playing?' on':'')+'" data-id="'+esc(s.id)+'"><div class="sinfo"><b>'+esc(s.title)+'</b><span>'+esc(s.artist||'')+' · '+songSrc(s)+' · ท่อน '+mmss(a)+'–'+mmss(b)+'</span>'+
+        '<span class="sfoc">'+(s.focus||[]).map(k=>'<i>'+(FOCUS[k]||k)+'</i>').join('')+'</span>'+(s.note?'<span class="snote">'+esc(s.note)+'</span>':'')+'</div>'+
+        '<div class="sact">'+(has?'<button data-sg="play">'+(playing?'⏹ หยุด':'▶ เล่น')+'</button><button data-sg="meas" class="primary">📸 วัดด้วยเพลงนี้</button>':
+          '<button data-sg="find">🔍 หาใน YouTube</button>')+'<button data-sg="edit">'+(has?'✎':'✎ วางลิงก์')+'</button></div></div>'; }).join('');
+    const L=dq('songList'); if(L.dataset.h!==rows){ L.dataset.h=rows; L.innerHTML=rows; }
+    dq('songHint').textContent=(SY.role==='remote'?'เพลงเล่นจากเครื่องนี้ (ต่อบลูทูธ/สายเข้าเครื่องเสียง) · เครื่องวัดฟังแล้วส่งผลกลับมา':'เพลงเล่นจากเครื่องนี้ — ต่อบลูทูธ/สายเข้าเครื่องเสียง')+' · ลิงก์และไฟล์เก็บในเครื่องนี้เท่านั้น';
+    dq('ytBox').hidden=!(SP.kind==='yt'&&(SP.id||SP.player))&&!SP.ytErr;
+    ytMsg();
+  }
+  function ytMsg(){ const m=dq('ytMsg'); if(!m)return; const s=SONGS.find(x=>x.id===(SP.ytErr&&SP.ytErr.id)); if(!SP.ytErr||!s){ m.innerHTML=''; return; } const [a,b]=songSeg(s);
+    m.innerHTML='<p>⚠ วิดีโอนี้เล่นในเว็บอื่นไม่ได้ (เจ้าของปิดไว้) — <a href="https://www.youtube.com/watch?v='+esc(s.yt)+'&t='+a+'s" target="_blank" rel="noopener">เปิดใน YouTube เริ่ม '+mmss(a)+'</a> แล้วกด <button data-sg="measnow" data-id="'+esc(s.id)+'">📸 วัด '+(b-a-3)+' วิ ตอนนี้</button> ทันทีที่เพลงเริ่ม</p>'; }
+  function songStop(){ clearTimeout(SP.timer); SP.timer=null; SP.pend=null;
+    if(SP.node){ try{ SP.node.stop(); }catch(_){} SP.node=null; }
+    if(SP.player&&SP.player.pauseVideo){ try{ SP.player.pauseVideo(); }catch(_){} }
+    SP.id=null; songRender(); }
+  function ytApi(){ return new Promise((ok,no)=>{ if(window.YT&&YT.Player)return ok(); const prev=window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady=()=>{ if(prev)try{prev();}catch(_){} ok(); };
+    loadScript('https://www.youtube.com/iframe_api').catch(no); setTimeout(()=>{ if(!(window.YT&&YT.Player))no(new Error('โหลดตัวเล่น YouTube ไม่ได้ (เช็กเน็ต)')); },12000); }); }
+  async function songPlay(s,measure){
+    songStop(); SP.ytErr=null; const [a,b]=songSeg(s), mdur=Math.max(5,b-a-3);
+    if(s.file){
+      try{
+        if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); await audioCtx.resume();
+        if(noiseOn)toggleNoise();
+        let buf=SONGBUF[s.id]; if(!buf){ const blob=await idbDo('readonly',st=>st.get(s.id)); if(!blob)throw new Error('ไม่พบไฟล์ในเครื่องนี้ — เพิ่มไฟล์ใหม่'); buf=SONGBUF[s.id]=await audioCtx.decodeAudioData(await blob.arrayBuffer()); }
+        const src=measure?srcBands(buf,a+2,a+2+mdur):null;
+        const n=audioCtx.createBufferSource(); n.buffer=buf; n.connect(audioCtx.destination); n.onended=()=>{ if(SP.node===n){ SP.node=null; SP.id=null; songRender(); } };
+        n.start(0,Math.min(a,Math.max(0,buf.duration-1)),b-a); SP.node=n; SP.id=s.id; SP.kind='file'; songRender();
+        if(measure)SP.timer=setTimeout(()=>songMeasure(s,mdur,src),2000);
+      }catch(e){ appToast('เล่นไฟล์ไม่ได้: '+(e.message||e),true); SP.id=null; songRender(); }
+      return;
+    }
+    const id=ytId(s.yt); if(!id){ appToast('ยังไม่มีลิงก์ YouTube ของเพลงนี้',true); return; }
+    if(noiseOn&&!pkRemoteNoise())toggleNoise();
+    SP.id=s.id; SP.kind='yt'; SP.pend=measure?{s,mdur}:null; songRender();
+    try{ await ytApi(); }catch(e){ appToast(e.message,true); SP.id=null; songRender(); return; }
+    const box=dq('ytBox'); if(box)box.hidden=false;
+    if(SP.player&&SP.player.loadVideoById){ SP.player.loadVideoById({videoId:id,startSeconds:a,endSeconds:b}); return; }
+    SP.player=new YT.Player('ytFrame',{width:320,height:180,videoId:id,playerVars:{start:a,end:b,autoplay:1,playsinline:1,rel:0,modestbranding:1},
+      events:{onReady:e=>{ try{ e.target.playVideo(); }catch(_){} },
+        onStateChange:e=>{ if(e.data===1&&SP.pend){ const p=SP.pend; SP.pend=null; SP.timer=setTimeout(()=>songMeasure(p.s,p.mdur,null),2000); }
+          if(e.data===0){ SP.id=null; songRender(); } },
+        onError:e=>{ SP.ytErr=SONGS.find(x=>x.id===SP.id)||null; SP.pend=null; SP.id=null; songRender(); appToast('YouTube เล่นวิดีโอนี้ในหน้าเว็บไม่ได้ (รหัส '+e.data+') — เปิดใน YouTube แทน',true); }}});
+  }
+  // long-term band spectrum of the source over the measured window, banded exactly like computeBands
+  function fftRe(re,im){ const n=re.length; for(let i=1,j=0;i<n;i++){ let bit=n>>1; for(;j&bit;bit>>=1)j^=bit; j^=bit; if(i<j){ let t=re[i];re[i]=re[j];re[j]=t; t=im[i];im[i]=im[j];im[j]=t; } }
+    for(let len=2;len<=n;len<<=1){ const ang=-2*Math.PI/len, wr=Math.cos(ang), wi=Math.sin(ang); for(let i=0;i<n;i+=len){ let cr=1,ci=0; for(let k=0;k<len/2;k++){ const a=i+k,b=a+len/2, xr=re[b]*cr-im[b]*ci, xi=re[b]*ci+im[b]*cr; re[b]=re[a]-xr; im[b]=im[a]-xi; re[a]+=xr; im[a]+=xi; const t=cr*wr-ci*wi; ci=cr*wi+ci*wr; cr=t; } } } }
+  function srcBands(buf,t0,t1){
+    const sr=buf.sampleRate, N=16384, hop=8192, ch=[]; for(let c=0;c<buf.numberOfChannels;c++)ch.push(buf.getChannelData(c));
+    const i0=Math.max(0,Math.floor(t0*sr)), i1=Math.min(buf.length,Math.floor(t1*sr)), acc=new Float64Array(N/2), win=new Float32Array(N); for(let i=0;i<N;i++)win[i]=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));
+    let frames=0; const re=new Float64Array(N), im=new Float64Array(N);
+    for(let p=i0;p+N<=i1;p+=hop){ for(let i=0;i<N;i++){ let v=0; for(const d of ch)v+=d[p+i]; re[i]=v/ch.length*win[i]; im[i]=0; } fftRe(re,im); for(let k=0;k<N/2;k++)acc[k]+=re[k]*re[k]+im[k]*im[k]; frames++; }
+    if(!frames)return null; const hz=sr/N, half=Math.pow(2,1/(2*perOct));
+    return bandF.map(fc=>{ const fl=fc/half, fh=fc*half; let p=0; const k0=Math.max(1,Math.floor(fl/hz+0.5)), k1=Math.min(N/2-1,Math.floor(fh/hz+0.5));
+      for(let k=k0;k<=k1;k++){ const lo=Math.max(fl,(k-0.5)*hz), hi=Math.min(fh,(k+0.5)*hz), w=(hi-lo)/hz; if(w>0)p+=w*acc[k]/frames; } return p>0?10*Math.log10(p):-120; });
+  }
+  function songMeasure(s,mdur,src){
+    const meta={op:'song',name:s.title,key:songKey(s),dur:mdur,po:perOct,rel:!src,src:src?src.map(v=>Math.round(v*10)/10):null};
+    if(SY.role==='remote'){ rmSend(meta); return; }
+    stSong(meta);
+  }
+  async function stSong(c){   // runs on the device that holds the mic
+    if(jobBusy()){ appToast('กำลังวัดอย่างอื่นอยู่ — รอให้เสร็จก่อน',true); return; }
+    if(P3.active)p3Reset(true);
+    if(!running){ await startMic(); for(let i=0;i<30&&!running;i++)await new Promise(r=>setTimeout(r,100)); if(!running)return; }
+    if(noiseOn&&SY.role!=='remote')toggleNoise();
+    SONGM={name:c.name,key:c.key,src:(c.src&&c.po===perOct&&c.src.length===bandF.length)?c.src:null};
+    MEASURE_TIME.song=Math.max(5,Math.min(120,+c.dur||20))*1000; measure('song');
+    appToast('🎵 วัดด้วยเพลง “'+c.name+'” '+Math.round(MEASURE_TIME.song/1000)+' วิ'+(SONGM.src?' · เทียบกับต้นฉบับ':' · เทียบก่อน/หลัง'));
+  }
+  function songAfter(){   // called from afterMeasure on the mic device
+    const S=SONGM; SONGM=null; if(!S||!measured){ lastSongMeta=null; return; }
+    let lvl=null; if(RAW&&RAW.n){ let p=0; RAW.p.forEach(v=>p+=v); if(p>0)lvl=Math.round(10*Math.log10(p/RAW.n)*10)/10; }
+    let rel=true;
+    if(S.src){ const ok=S.src.filter(v=>v>-100), mx=ok.length?Math.max(...ok):-120;
+      measured=normalize(measured.map((v,i)=>S.src[i]>mx-35&&v>-100?v-S.src[i]:-120)); rel=false; }
+    lastSongMeta={key:S.key,name:S.name,rel,lvl,t:Date.now()}; measureMethod=rel?'song':'songabs';
+  }
+  function songCompare(meta,d){
+    if(!meta||!d||!meta.key)return; const h=SONGH[meta.key]||(SONGH[meta.key]=[]);
+    const prev=h.filter(x=>x.t!==meta.t&&x.po===perOct&&x.d&&x.d.length===d.length).slice(-1)[0]||null;
+    if(!h.some(x=>x.t===meta.t)){ h.push({t:meta.t,d:d.slice(),lvl:meta.lvl,po:perOct}); if(h.length>10)h.splice(0,h.length-10); try{ localStorage.setItem(SONGH_KEY,JSON.stringify(SONGH)); }catch(_){} }
+    if(!meta.rel)return;   // absolute (file vs. original) results go through the normal recommendation flow
+    const box=dq('sugBox');
+    if(!prev){ box.innerHTML='<div class="empty rmsug"><b>🎵 “'+esc(meta.name)+'” — บันทึกเป็นค่าตั้งต้นของเพลงนี้แล้ว</b>ปรับ EQ ใน DSPico แล้ววัดเพลงเดิม ท่อนเดิม ดังเท่าเดิม อีกครั้ง ระบบจะบอกว่าแต่ละย่านเปลี่ยนไปกี่ dB'+(meta.rel?'\nผลนี้เป็นรูปของเพลง ใช้เทียบเท่านั้น — ค่าแนะนำ EQ ให้วัดด้วย 📻 Pink Noise':'')+'</div>'; return; }
+    const R=[['ซับ / กระเดื่อง',40,80],['ลูกเบส',80,160],['ย่านบวม',160,300],['body',300,600],['เสียงร้อง',1000,3000],['แหลม',5000,12000]];
+    // both curves are normalised to their own 200 Hz–2 kHz average, so one changed band shifts all the others; re-align on the median difference
+    const diffs=[]; bandF.forEach((f,i)=>{ if(f>=40&&f<=12000&&d[i]>-100&&prev.d[i]>-100)diffs.push(d[i]-prev.d[i]); }); diffs.sort((x,y)=>x-y);
+    const off=diffs.length?diffs[Math.floor(diffs.length/2)]:0;
+    const lines=R.map(([n,a,b])=>{ let s=0,c=0; bandF.forEach((f,i)=>{ if(f>=a&&f<=b&&d[i]>-100&&prev.d[i]>-100){ s+=d[i]-prev.d[i]-off; c++; } }); if(!c)return ''; const v=s/c;
+      return '<span class="sdl '+(v>0.7?'up':v<-0.7?'dn':'eq')+'">'+n+' '+a+'–'+(b>=1000?(b/1000)+'k':b)+' Hz: <b>'+(v>0?'+':'')+v.toFixed(1)+' dB</b> '+(v>0.7?'▲ เพิ่มขึ้น':v<-0.7?'▼ ลดลง':'≈ เท่าเดิม')+'</span>'; }).join('');
+    const lv=(meta.lvl!=null&&prev.lvl!=null)?meta.lvl-prev.lvl:null;
+    // show A/B on the graph without toggleAB(): its verdict compares against the tuning target, which is meaningless for a song's own spectrum
+    snapA={data:prev.d.slice(),perOct,t:'ครั้งก่อน'}; snapB={data:d.slice(),perOct,t:'ครั้งนี้'}; dq('btnAB').disabled=false; abOn=true; dq('btnAB').classList.add('on'); draw(); setTimeout(showGraph,60);
+    box.innerHTML='<div class="empty rmsug"><b>🎵 เทียบ “'+esc(meta.name)+'” กับครั้งก่อน ('+new Date(prev.t).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'})+')</b>'+lines+
+      (lv!=null&&Math.abs(lv)>1.5?'\n⚠ ความดังรวมต่างจากครั้งก่อน '+(lv>0?'+':'')+lv.toFixed(1)+' dB — ตั้งวอลุ่มให้เท่าเดิม ผลเทียบจะแม่นกว่า':'')+
+      '\nกราฟ: A = ครั้งก่อน · B = ครั้งนี้'+(meta.rel?' · ใช้เทียบเท่านั้น ค่าแนะนำ EQ ให้วัดด้วย 📻 Pink Noise':'')+'</div>';
+  }
+  async function songAddFile(f){
+    if(!f)return; if(f.size>80*1048576){ appToast('ไฟล์ใหญ่เกิน 80 MB',true); return; }
+    try{ if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); const buf=await audioCtx.decodeAudioData(await f.arrayBuffer());
+      const id='f'+Date.now().toString(36); await idbDo('readwrite',st=>st.put(f,id)); SONGBUF[id]=buf;
+      const s={id,title:f.name.replace(/\.[^.]+$/,''),artist:'',file:true,fname:f.name,dur:Math.round(buf.duration),start:Math.min(30,Math.max(0,Math.round(buf.duration)-35)),end:0,focus:['kick','bass','body'],note:''};
+      s.end=Math.min(Math.round(buf.duration),s.start+30); SONGS.unshift(s); songSave(); songRender(); songEdit(s.id); appToast('📁 เพิ่มไฟล์แล้ว — ตั้งชื่อและท่อนที่ใช้ทดสอบ');
+    }catch(e){ appToast('อ่านไฟล์เพลงไม่ได้: '+(e.message||e),true); } }
+  function songEdit(id){
+    const s=id?SONGS.find(x=>x.id===id):{id:'y'+Date.now().toString(36),title:'',artist:'',yt:'',start:30,end:60,focus:['kick','bass'],note:'',isNew:true}; if(!s)return; const [a,b]=songSeg(s);
+    openModal('<h3>'+(s.isNew?'＋ เพิ่มเพลง YouTube':'✎ แก้ไขเพลงทดสอบ')+'</h3><div class="syncform sform">'+
+      '<label>ชื่อเพลง</label><input id="sgT" value="'+esc(s.title)+'"><label>ศิลปิน</label><input id="sgA" value="'+esc(s.artist||'')+'">'+
+      (s.file?'<p>📁 '+esc(s.fname||'')+' · ยาว '+mmss(s.dur)+'</p>':'<label>ลิงก์ YouTube (วางลิงก์จากแอป YouTube ได้เลย)</label><input id="sgY" placeholder="https://youtu.be/…" value="'+(s.yt?'https://youtu.be/'+esc(s.yt):'')+'">')+
+      '<label>ท่อนที่ใช้ทดสอบ (นาที:วินาที) · แนะนำ 30 วิ ช่วงที่ครบทุกเสียง</label><div class="srng"><input id="sgS" value="'+mmss(a)+'"> ถึง <input id="sgE" value="'+mmss(b)+'"></div>'+
+      '<label>ใช้ฟังย่าน</label><div class="sfocus">'+Object.entries(FOCUS).map(([k,v])=>'<label><input type="checkbox" data-fk="'+k+'"'+((s.focus||[]).includes(k)?' checked':'')+'> '+v+'</label>').join('')+'</div>'+
+      '<label>หมายเหตุ</label><input id="sgN" value="'+esc(s.note||'')+'"></div>'+
+      '<div class="row"><button class="primary" data-sgm="save" data-id="'+esc(s.id)+'">💾 บันทึก</button>'+(s.isNew?'':'<button data-sgm="del" data-id="'+esc(s.id)+'">🗑 ลบ</button>')+'<button data-m="close">ยกเลิก</button></div>');
+    songEdit.pending=s.isNew?s:null;
+  }
+  dq('dvModal').addEventListener('click',async e=>{ const b=e.target.closest('[data-sgm]'); if(!b)return;
+    const id=b.dataset.id; let s=SONGS.find(x=>x.id===id)||(songEdit.pending&&songEdit.pending.id===id?songEdit.pending:null); if(!s)return;
+    if(b.dataset.sgm==='del'){ if(SP.id===id)songStop(); SONGS=SONGS.filter(x=>x.id!==id); if(s.file){ try{ await idbDo('readwrite',st=>st.delete(id)); }catch(_){} } if(SONG_DEF.some(d=>d.id===id)){ SONG_RM.push(id); try{ localStorage.setItem(SONG_KEY+'_rm',JSON.stringify(SONG_RM)); }catch(_){} } songSave(); closeModal(); songRender(); return; }
+    const t=dq('sgT').value.trim(), y=dq('sgY')?ytId(dq('sgY').value):null, st=parseT(dq('sgS').value), en=parseT(dq('sgE').value);
+    if(!t){ appToast('ใส่ชื่อเพลง',true); return; } if(dq('sgY')&&dq('sgY').value.trim()&&!y){ appToast('ลิงก์ YouTube ไม่ถูกต้อง',true); return; } if(en<=st+9){ appToast('ท่อนทดสอบต้องยาวอย่างน้อย 10 วินาที',true); return; }
+    s.title=t; s.artist=dq('sgA').value.trim(); if(y!==null)s.yt=y; s.start=st; s.end=en; s.note=dq('sgN').value.trim(); s.focus=[...dq('dvMbox').querySelectorAll('[data-fk]')].filter(x=>x.checked).map(x=>x.dataset.fk);
+    if(s.isNew){ delete s.isNew; SONGS.unshift(s); } songEdit.pending=null; songSave(); closeModal(); songRender(); appToast('💾 บันทึกเพลงทดสอบแล้ว'); });
+  dq('songBody').addEventListener('click',e=>{ const b=e.target.closest('[data-sg]'); if(!b)return; const a=b.dataset.sg, row=b.closest('[data-id]'), s=row?SONGS.find(x=>x.id===row.dataset.id):(b.dataset.id?SONGS.find(x=>x.id===b.dataset.id):null);
+    if(a==='addyt'){ songEdit(null); return; }
+    if(a==='addfile'){ dq('songFile').click(); return; }
+    if(!s)return;
+    if(a==='play'){ if(SP.id===s.id)songStop(); else songPlay(s,false); return; }
+    if(a==='meas'){ songPlay(s,true); return; }
+    if(a==='measnow'){ const [x,y]=songSeg(s); songMeasure(s,Math.max(5,y-x-3),null); return; }
+    if(a==='find'){ window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(s.q||(s.artist+' '+s.title)),'_blank','noopener'); appToast('เลือกคลิปทางการ คัดลอกลิงก์ แล้วกด ✎ วางลิงก์'); return; }
+    if(a==='edit'){ songEdit(s.id); return; } });
+  dq('songBody').addEventListener('change',e=>{ if(e.target.id==='songFile'){ songAddFile(e.target.files[0]); e.target.value=''; } });
+
+  // ===== 📐 วิธีวางมือถือ (กลางแจ้ง) =====
+  const PLACE_TICK={};
+  function placeSvg(){ return '<svg viewBox="0 0 340 250" class="placesvg" role="img" aria-label="มุมบน: ชุดลำโพงอยู่ด้านบน มือถือจุดที่ 1 ห่าง 2 เมตรตรงกลาง จุดที่ 2 และ 3 ห่างซ้ายขวา 50 เซนติเมตร">'+
+    '<text x="8" y="16" class="pt">มุมบน</text>'+
+    '<rect x="135" y="22" width="70" height="30" rx="5" class="pspk"/><text x="170" y="41" class="pl" text-anchor="middle">ชุดลำโพง</text>'+
+    '<line x1="170" y1="52" x2="170" y2="190" class="pdash"/>'+
+    '<line x1="250" y1="52" x2="250" y2="190" class="parr"/><path d="M246 60 L250 52 L254 60 M246 182 L250 190 L254 182" class="parr"/><text x="258" y="118" class="pl">1.5–2.5 ม.</text><text x="258" y="133" class="ps">(แนะนำ 2 ม.)</text>'+
+    '<circle cx="170" cy="200" r="10" class="p1"/><text x="170" y="204" class="pn" text-anchor="middle">1</text>'+
+    '<circle cx="128" cy="200" r="9" class="p2"/><text x="128" y="204" class="pn" text-anchor="middle">2</text>'+
+    '<circle cx="212" cy="200" r="9" class="p2"/><text x="212" y="204" class="pn" text-anchor="middle">3</text>'+
+    '<text x="128" y="228" class="ps" text-anchor="middle">ซ้าย 50 ซม.</text><text x="170" y="228" class="ps" text-anchor="middle">จุดฟังกลาง</text><text x="212" y="228" class="ps" text-anchor="middle">ขวา 50 ซม.</text>'+
+    '<text x="8" y="246" class="ps">รอบข้างโล่ง ≥ 1 ม. (ผนัง · รถ · ต้นไม้ · คนยืนบัง)</text></svg>'+
+    '<svg viewBox="0 0 340 200" class="placesvg" role="img" aria-label="มุมข้าง: มือถืออยู่บนขาตั้งสูง 1.2 ถึง 1.5 เมตร รูไมค์หันเข้าหาลำโพง">'+
+    '<text x="8" y="16" class="pt">มุมข้าง</text><line x1="10" y1="175" x2="330" y2="175" class="pgnd"/>'+
+    '<rect x="30" y="105" width="44" height="70" rx="4" class="pspk"/><circle cx="52" cy="128" r="10" class="pcone"/><circle cx="52" cy="158" r="7" class="pcone"/><circle cx="52" cy="113" r="3" class="pcone"/>'+
+    '<line x1="74" y1="128" x2="236" y2="92" class="pdash"/>'+
+    '<line x1="250" y1="98" x2="250" y2="175" class="pstand"/><path d="M236 175 L250 158 L264 175" class="pstand"/>'+
+    '<rect x="238" y="70" width="24" height="30" rx="4" class="pphone"/><circle cx="240" cy="92" r="2.6" class="pmic"/>'+
+    '<line x1="296" y1="85" x2="296" y2="175" class="parr"/><path d="M292 93 L296 85 L300 93 M292 167 L296 175 L300 167" class="parr"/><text x="302" y="125" class="pl">1.2–1.5</text><text x="302" y="139" class="pl">ม.</text>'+
+    '<text x="150" y="62" class="ps" text-anchor="middle">รูไมค์ (ขอบล่าง) หันหาลำโพง</text><text x="160" y="194" class="ps" text-anchor="middle">ใช้ขาตั้ง · ไม่วางบนพื้น/โต๊ะ/หลังคารถ (เสียงสะท้อน)</text></svg>'; }
+  function placeRender(){
+    const body=dq('placeBody'); if(!body)return; const card=dq('placeCard'); if(!card.open&&body.dataset.done)return;
+    const lvOk=LV.state==='ok', live=running||(SY.role==='remote'&&rmLive());
+    const auto=[[lvOk,live?(lvOk?'ระดับเสียงพอดี (แถบเขียว)':LV.state==='low'?'เสียงเบาไป — เร่งเสียงหรือเปิด Pink Noise':LV.state==='clip'||LV.state==='hot'?'เสียงดังเกินไมค์ — ลดวอลุ่มหรือถอยห่าง':'รอแถบระดับเสียง'):'เปิดไมค์เพื่อเช็กระดับเสียง'],
+      [SY.role==='remote'?!!(FB.st&&FB.st.vis!==false&&rmLive()):!!wakeLock||document.visibilityState==='visible',SY.role==='remote'?'จอเครื่องวัดเปิดอยู่หน้าแอป':'จอเปิดค้างอยู่หน้าแอป']];
+    const man=[['d','ระยะ 1.5–2.5 ม. ตรงกลางชุดลำโพง'],['h','สูงระดับหู 1.2–1.5 ม. บนขาตั้ง'],['m','รูไมค์หันหาลำโพง ไม่มีเคส/มือบัง'],['w','ลมสงบ (ลมทำให้ย่านเบสเพี้ยน) · ปิดเพลงอื่น'],['p','จะวัด 3 จุด: ขยับซ้าย/ขวา 50 ซม. สูงเท่าเดิม']];
+    const html=placeSvg()+'<div class="pchk">'+auto.map(([ok,t])=>'<span class="'+(ok?'ok':'')+'">'+(ok?'✅':'⬜')+' '+t+' <small>(ระบบเช็ก)</small></span>').join('')+
+      man.map(([k,t])=>'<label><input type="checkbox" data-pk="'+k+'"'+(PLACE_TICK[k]?' checked':'')+'> '+t+'</label>').join('')+'</div>';
+    if(body.dataset.h!==html){ body.dataset.h=html; body.innerHTML=html; } body.dataset.done='1';
+  }
+  dq('placeBody').addEventListener('change',e=>{ const k=e.target.dataset&&e.target.dataset.pk; if(k){ PLACE_TICK[k]=e.target.checked; placeRender(); } });
+  dq('placeCard').addEventListener('toggle',placeRender);
+  setInterval(()=>{ placeRender(); pkRender(); },1000);
+  function songRoleUI(){ const sc=dq('songCard'), pc=dq('placeCard'); if(!sc||!pc)return;
+    if(SY.role==='remote'){ sc.open=true; pc.open=false; } else if(SY.role==='station'){ pc.open=true; sc.open=false; }
+    songRender(); placeRender(); pkRender(); }
+  songRoleUI();
   // --- settings
   function parseCfg(t){ t=String(t||''); try{ const j=JSON.parse(t); if(j&&(j.apiKey||j.databaseURL))return j; }catch(_){}
     const um=t.match(/https:\/\/[a-z0-9.-]+\.(firebaseio\.com|firebasedatabase\.app)\/?/i);
@@ -2833,11 +3108,12 @@
   function mlSave(){ try{ localStorage.setItem(ML_KEY,JSON.stringify(MLOG)); }catch(_){ appToast('⚠ พื้นที่เก็บในเครื่องเต็ม — ลบประวัติเก่าหรือส่งออก CSV',true); } }
   function mlAdd(){
     if(!measured)return null;
-    const sig=noiseOn?{type:'pink',name:''}:{type:mlLastSig.type,name:mlLastSig.type==='pink'?'':mlLastSig.name};
+    const songM=(measureMethod==='song'||measureMethod==='songabs')?lastSongMeta:null;
+    const sig=songM?{type:'song',name:songM.name}:noiseOn?{type:'pink',name:''}:{type:mlLastSig.type,name:mlLastSig.type==='pink'?'':mlLastSig.name};
     const lowN=measSNR?measSNR.filter(x=>x<10).length:null;
     const e={v:2,q:(measQW&&measQW.for===measured)?measQW.w.map(x=>x.s):[],snrLow:lowN,id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:Date.now(),up:Date.now(),from:SY.name,method:measurementMethodLabel(measureMethod),durationMs:measureDurationMs,
       sig,pos:mlLastSig.pos||'',note:'',style:target,perOct,f:bandF.map(f=>Math.round(f*100)/100),d:measured.map(v=>Math.round(v*10)/10),
-      dev:(()=>{ const r=devRMS(measured); return r==null?null:Math.round(r*10)/10; })(),prof:cur?cur.name:'',devName:DEVICE?DEVICE.name:'',base:measBase?clone(measBase):null};
+      dev:(()=>{ const r=devRMS(measured); return r==null?null:Math.round(r*10)/10; })(),prof:cur?cur.name:'',devName:DEVICE?DEVICE.name:'',base:measBase?clone(measBase):null,song:songM?{key:songM.key,rel:songM.rel,lvl:songM.lvl}:null};
     MLOG.unshift(e); if(MLOG.length>300)MLOG.length=300; mlSave(); mlLastId=e.id; mlRender(); syncSoon(); return e;
   }
   function mlFind(id){ return MLOG.find(e=>e.id===id); }
