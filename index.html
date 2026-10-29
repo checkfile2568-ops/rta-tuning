@@ -2922,7 +2922,7 @@
         if(noiseOn)toggleNoise();
         let buf=SONGBUF[s.id]; if(!buf){ const blob=await idbDo('readonly',st=>st.get(s.id)); if(!blob)throw new Error('ไม่พบไฟล์ในเครื่องนี้ — เพิ่มไฟล์ใหม่'); buf=SONGBUF[s.id]=await audioCtx.decodeAudioData(await blob.arrayBuffer()); }
         const src=measure?srcBands(buf,a+2,a+2+mdur):null;
-        const n=audioCtx.createBufferSource(); n.buffer=buf; n.connect(audioCtx.destination); n.onended=()=>{ if(SP.node===n){ SP.node=null; SP.id=null; songRender(); } };
+        const n=audioCtx.createBufferSource(); n.buffer=buf; const g=audioCtx.createGain(); g.gain.value=0.7; n.connect(g).connect(audioCtx.destination);   // −3 dB: many MP3s decode with peaks above 0 dBFS, which would clip at the output n.onended=()=>{ if(SP.node===n){ SP.node=null; SP.id=null; songRender(); } };
         n.start(0,Math.min(a,Math.max(0,buf.duration-1)),b-a); SP.node=n; SP.id=s.id; SP.kind='file'; songRender();
         if(measure)SP.timer=setTimeout(()=>songMeasure(s,mdur,src),2000);
       }catch(e){ appToast('เล่นไฟล์ไม่ได้: '+(e.message||e),true); SP.id=null; songRender(); }
