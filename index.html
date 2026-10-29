@@ -2870,6 +2870,9 @@
   const SONG_KEY='rta_songs', SONGH_KEY='rta_songhist';
   const FOCUS={kick:'กระเดื่อง 60–125',bass:'ลูกเบส 40–250',body:'body 250–500',vocal:'เสียงร้อง 1–3k',high:'แหลม 5–12k'};
   const SONG_DEF=[
+    {id:'s-tla',top:1,want:'file',title:'Take A Look Around',artist:'Limp Bizkit',match:'take.?a.?look.?around|tak.?a.?look',start:175,end:205,focus:['kick','bass'],note:'เบส/กระเดื่อง 63–125 Hz แน่น เต็ม เหมาะกลางแจ้ง'},
+    {id:'s-as15',top:1,want:'file',title:'Always Somewhere (2015 Remaster)',artist:'Scorpions',match:'always.?somewhere',start:230,end:260,focus:['bass','body','vocal'],note:'ฟังรวมทุกย่าน · เบสลึกถึง 31.5 Hz · ใช้เวอร์ชัน 2015 Remaster'},
+    {id:'s-woc',top:1,want:'file',title:'Wind of Change',artist:'Scorpions',match:'wind.?of.?chang',start:190,end:220,focus:['body','vocal','high'],note:'เสียงกลาง/เสียงร้อง · ช่วงเบา-ดังกว้าง'},
     {id:'s-hc',title:'Hotel California (Live 1994 · Hell Freezes Over)',artist:'Eagles',yt:'',q:'Eagles Hotel California Live 1994 Hell Freezes Over',start:30,end:60,focus:['kick','body','vocal'],note:'เพลงประจำ · กีตาร์โปร่ง + กระเดื่องหนัก ฟังความชัดและความแน่น'},
     {id:'s-bj',title:'Billie Jean',artist:'Michael Jackson',yt:'Zi_XLOBDo_Y',start:30,end:60,focus:['kick','bass','vocal'],note:'กระเดื่องกับเบสไลน์ต้องแยกกันชัด ไม่บวมรวมเป็นก้อน'},
     {id:'s-ic',title:'Instant Crush',artist:'Daft Punk',yt:'',q:'Daft Punk Instant Crush official video',start:30,end:60,focus:['bass','vocal'],note:'สมดุลเบส-เสียงร้อง'},
@@ -2877,7 +2880,8 @@
     {id:'s-iwr',title:'I Will Remember',artist:'Toto',yt:'',q:'Toto I Will Remember official audio',start:30,end:60,focus:['body','vocal'],note:'body ย่าน 250–500 · เสียงร้อง'},
     {id:'s-ut',title:'Undertow',artist:'Warpaint',yt:'',q:'Warpaint Undertow official video',start:30,end:60,focus:['bass'],note:'เบสลึกต่ำกว่า 50 Hz'}];
   let SONGS=[], SONG_RM=[]; try{ SONGS=JSON.parse(localStorage.getItem(SONG_KEY)||'[]'); SONG_RM=JSON.parse(localStorage.getItem(SONG_KEY+'_rm')||'[]'); }catch(_){ SONGS=[]; }
-  if(!Array.isArray(SONGS))SONGS=[]; if(!Array.isArray(SONG_RM))SONG_RM=[]; SONG_DEF.forEach(d=>{ if(!SONGS.some(x=>x.id===d.id)&&!SONG_RM.includes(d.id))SONGS.push(Object.assign({},d)); });
+  if(!Array.isArray(SONGS))SONGS=[]; if(!Array.isArray(SONG_RM))SONG_RM=[];
+  { const miss=SONG_DEF.filter(d=>!SONGS.some(x=>x.id===d.id)&&!SONG_RM.includes(d.id)).map(d=>Object.assign({},d)); SONGS=[...miss.filter(d=>d.top),...SONGS,...miss.filter(d=>!d.top)]; }
   function songSave(){ try{ localStorage.setItem(SONG_KEY,JSON.stringify(SONGS)); }catch(_){} }
   let SONGH={}; try{ SONGH=JSON.parse(localStorage.getItem(SONGH_KEY)||'{}')||{}; }catch(_){ SONGH={}; }
   const SP={id:null,kind:'',node:null,player:null,pend:null,ytErr:null,t0:0,timer:null}, SONGBUF={};
@@ -2887,7 +2891,7 @@
   function parseT(v){ v=String(v||'').trim(); if(!v)return 0; const m=v.match(/^(\d+):(\d{1,2})$/); return m?(+m[1])*60+(+m[2]):Math.max(0,Math.round(+v||0)); }
   function songSeg(s){ const a=Math.max(0,s.start||0), b=Math.max(a+10,s.end||a+30); return [a,b]; }
   function songKey(s){ const [a,b]=songSeg(s); return s.id+'@'+a+'-'+b+(s.file?':f':':'+(s.yt||'')); }
-  function songSrc(s){ return s.file?'📁 ไฟล์ '+esc(s.fname||''):s.yt?'📺 YouTube':'⚠ ยังไม่มีลิงก์'; }
+  function songSrc(s){ return s.file?'📁 ไฟล์ '+esc(s.fname||''):s.yt?'📺 YouTube':s.want==='file'?'📁 ยังไม่ได้เลือกไฟล์ในเครื่องนี้':'⚠ ยังไม่มีลิงก์'; }
   // IndexedDB for the user's own song files (stay on this device only)
   function idb(){ return new Promise((ok,no)=>{ const r=indexedDB.open('rta_songs',1); r.onupgradeneeded=()=>r.result.createObjectStore('f'); r.onsuccess=()=>ok(r.result); r.onerror=()=>no(r.error); }); }
   async function idbDo(mode,fn){ const d=await idb(); return new Promise((ok,no)=>{ const t=d.transaction('f',mode), st=t.objectStore('f'), r=fn(st); t.oncomplete=()=>ok(r&&r.result); t.onerror=()=>no(t.error); }); }
@@ -2900,7 +2904,7 @@
       return '<div class="srow'+(playing?' on':'')+'" data-id="'+esc(s.id)+'"><div class="sinfo"><b>'+esc(s.title)+'</b><span>'+esc(s.artist||'')+' · '+songSrc(s)+' · ท่อน '+mmss(a)+'–'+mmss(b)+'</span>'+
         '<span class="sfoc">'+(s.focus||[]).map(k=>'<i>'+(FOCUS[k]||k)+'</i>').join('')+'</span>'+(s.note?'<span class="snote">'+esc(s.note)+'</span>':'')+'</div>'+
         '<div class="sact">'+(has?'<button data-sg="play">'+(playing?'⏹ หยุด':'▶ เล่น')+'</button><button data-sg="meas" class="primary">📸 วัดด้วยเพลงนี้</button>':
-          '<button data-sg="find">🔍 หาใน YouTube</button>')+'<button data-sg="edit">'+(has?'✎':'✎ วางลิงก์')+'</button></div></div>'; }).join('');
+          s.want==='file'?'<button data-sg="pickfile" class="primary">📁 เลือกไฟล์</button>':'<button data-sg="find">🔍 หาใน YouTube</button>')+'<button data-sg="edit">'+(has||s.want==='file'?'✎':'✎ วางลิงก์')+'</button></div></div>'; }).join('');
     const L=dq('songList'); if(L.dataset.h!==rows){ L.dataset.h=rows; L.innerHTML=rows; }
     dq('songHint').textContent=(SY.role==='remote'?'เพลงเล่นจากเครื่องนี้ (ต่อบลูทูธ/สายเข้าเครื่องเสียง) · เครื่องวัดฟังแล้วส่งผลกลับมา':'เพลงเล่นจากเครื่องนี้ — ต่อบลูทูธ/สายเข้าเครื่องเสียง')+' · ลิงก์และไฟล์เก็บในเครื่องนี้เท่านั้น';
     dq('ytBox').hidden=!(SP.kind==='yt'&&(SP.id||SP.player))&&!SP.ytErr;
@@ -2994,9 +2998,15 @@
       (lv!=null&&Math.abs(lv)>1.5?'\n⚠ ความดังรวมต่างจากครั้งก่อน '+(lv>0?'+':'')+lv.toFixed(1)+' dB — ตั้งวอลุ่มให้เท่าเดิม ผลเทียบจะแม่นกว่า':'')+
       '\nกราฟ: A = ครั้งก่อน · B = ครั้งนี้'+(meta.rel?' · ใช้เทียบเท่านั้น ค่าแนะนำ EQ ให้วัดด้วย 📻 Pink Noise':'')+'</div>';
   }
+  let songPickFor=null;
   async function songAddFile(f){
     if(!f)return; if(f.size>80*1048576){ appToast('ไฟล์ใหญ่เกิน 80 MB',true); return; }
     try{ if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); const buf=await audioCtx.decodeAudioData(await f.arrayBuffer());
+      const nm=f.name.replace(/[_.]+/g,' ');
+      const tgt=SONGS.find(x=>x.id===songPickFor)||SONGS.find(x=>x.want==='file'&&!x.file&&x.match&&new RegExp(x.match,'i').test(nm)); songPickFor=null;
+      if(tgt){ if(SP.id===tgt.id)songStop(); await idbDo('readwrite',st=>st.put(f,tgt.id)); SONGBUF[tgt.id]=buf; const D=Math.round(buf.duration);
+        tgt.file=true; tgt.fname=f.name; tgt.dur=D; if(tgt.end>D){ tgt.end=D; tgt.start=Math.max(0,D-30); }
+        songSave(); songRender(); appToast('📁 ใส่ไฟล์ให้ “'+tgt.title+'” แล้ว · ท่อน '+mmss(tgt.start)+'–'+mmss(tgt.end)+' ตั้งไว้ให้แล้ว'); return; }
       const id='f'+Date.now().toString(36); await idbDo('readwrite',st=>st.put(f,id)); SONGBUF[id]=buf;
       const s={id,title:f.name.replace(/\.[^.]+$/,''),artist:'',file:true,fname:f.name,dur:Math.round(buf.duration),start:Math.min(30,Math.max(0,Math.round(buf.duration)-35)),end:0,focus:['kick','bass','body'],note:''};
       s.end=Math.min(Math.round(buf.duration),s.start+30); SONGS.unshift(s); songSave(); songRender(); songEdit(s.id); appToast('📁 เพิ่มไฟล์แล้ว — ตั้งชื่อและท่อนที่ใช้ทดสอบ');
@@ -3021,8 +3031,9 @@
     if(s.isNew){ delete s.isNew; SONGS.unshift(s); } songEdit.pending=null; songSave(); closeModal(); songRender(); appToast('💾 บันทึกเพลงทดสอบแล้ว'); });
   dq('songBody').addEventListener('click',e=>{ const b=e.target.closest('[data-sg]'); if(!b)return; const a=b.dataset.sg, row=b.closest('[data-id]'), s=row?SONGS.find(x=>x.id===row.dataset.id):(b.dataset.id?SONGS.find(x=>x.id===b.dataset.id):null);
     if(a==='addyt'){ songEdit(null); return; }
-    if(a==='addfile'){ dq('songFile').click(); return; }
+    if(a==='addfile'){ songPickFor=null; dq('songFile').click(); return; }
     if(!s)return;
+    if(a==='pickfile'){ songPickFor=s.id; dq('songFile').click(); return; }
     if(a==='play'){ if(SP.id===s.id)songStop(); else songPlay(s,false); return; }
     if(a==='meas'){ songPlay(s,true); return; }
     if(a==='measnow'){ const [x,y]=songSeg(s); songMeasure(s,Math.max(5,y-x-3),null); return; }
