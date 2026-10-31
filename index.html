@@ -1609,6 +1609,17 @@
     profiles.forEach(p=>{ if(p.id===cur.id)delete p.auto; }); delete cur.auto;
     persist(); renderEditor(); renderProfiles(); pfMsg('บันทึก "'+cur.name+'" แล้ว ✔');
   }
+  /* ===== 🔗 EQ รวมทุกช่อง (D-Stack): one 8-band EQ in front of all outputs. Stored as identical peq lists on every channel
+     (so prediction/summing stays per-channel), kept identical here whenever any editor touches one channel. ===== */
+  const peqKey=a=>JSON.stringify((a||[]).map(b=>[+b.f,+b.q,+b.g,b.t||'PK']));
+  function eqIsGlobal(p){ p=p||cur; if(!p||!p.ch)return false;
+    if(p.eqGlobal===undefined){ const k=peqKey(p.ch.sub.peq); p.eqGlobal=!!(p.ch.sub.peq&&p.ch.sub.peq.length)&&k===peqKey(p.ch.mid.peq)&&k===peqKey(p.ch.twe.peq); }
+    return !!p.eqGlobal; }
+  function eqSync(src){   // copy the edited channel's list to the others; without src, the odd one out is the edited one
+    if(!eqIsGlobal())return; const C=cur.ch, K=['sub','mid','twe'].map(k=>peqKey(C[k].peq));
+    if(!src){ if(K[0]===K[1]&&K[1]===K[2])return; src=K[1]===K[2]?'sub':K[0]===K[2]?'mid':K[0]===K[1]?'twe':null; if(!src)return; }
+    ['sub','mid','twe'].forEach(k=>{ if(k!==src)C[k].peq=clone(C[src].peq); }); }
+  function eqSetGlobal(on,src){ if(!cur)return; cur.eqGlobal=!!on; if(on)['sub','mid','twe'].forEach(k=>{ if(k!==src)cur.ch[k].peq=clone(cur.ch[src].peq); }); }
   function fillFromMeasurement(){
     let added=0;
     if(sweepResult){ cur.sweep={peakF:sweepResult.peakF,subsonic:sweepResult.subsonic}; cur.ch.sub.hpf=sweepResult.subsonic; }
@@ -1620,9 +1631,11 @@
         .sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
       for(const o of cand){
         if(added>=5)break;
-        const ch=o.f<X.subLP?'sub':(o.f<X.tweHP?'mid':'twe'), fc=nearestFc(o.f), arr=cur.ch[ch].peq;
-        if(arr.length>=8||arr.some(b=>Math.abs(Math.log2(b.f/fc))<0.34))continue;
-        arr.push({f:fc,q:1.2,g:o.d>0?-Math.min(10,Math.round(o.d*2)/2):Math.min(3,Math.round(-o.d*2)/2)}); added++;   // cut ≤ −10dB, boost ≤ +3dB
+        const G=eqIsGlobal(), ch=G?'sub':(o.f<X.subLP?'sub':(o.f<X.tweHP?'mid':'twe')), fc=nearestFc(o.f), arr=cur.ch[ch].peq;
+        if(arr.some(b=>Math.abs(Math.log2(b.f/fc))<0.34))continue;
+        const nb={t:'PK',f:fc,q:1.2,g:o.d>0?-Math.min(10,Math.round(o.d*2)/2):Math.min(3,Math.round(-o.d*2)/2)};   // cut ≤ −10dB, boost ≤ +3dB
+        if(arr.length<8)arr.push(nb); else{ const fr=arr.findIndex(b=>Math.abs(+b.g||0)<0.25); if(fr<0)continue; arr[fr]=nb; }
+        added++; if(G)eqSync('sub');
       }
     }
     cur.target=target;
@@ -1712,6 +1725,7 @@
     else if(t.dataset.pt){ cur.ch[curCh].peq[+t.dataset.pi].t=t.value; }
     else if(t.dataset.pk){ cur.ch[curCh].peq[+t.dataset.pi][t.dataset.pk]=t.value===''?0:+t.value; }
     else if(t.id==='pfName')cur.name=t.value;
+    if(t.dataset.pk||t.dataset.pt)eqSync(curCh);
     else if(t.id==='pfNote')cur.note=t.value;
     if(simOn)simRefresh();
   });
@@ -1719,8 +1733,8 @@
   document.getElementById('pfEditor').addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b)return;
     if(b.dataset.ch){ curCh=b.dataset.ch; renderEditor(); }
-    else if(b.dataset.padd){ const ref=curCh==='sub'?60:(curCh==='mid'?500:6300); cur.ch[curCh].peq.push({f:ref,q:1.2,g:0}); renderEditor(); }
-    else if(b.dataset.pdel!=null){ cur.ch[curCh].peq.splice(+b.dataset.pdel,1); renderEditor(); }
+    else if(b.dataset.padd){ const ref=curCh==='sub'?60:(curCh==='mid'?500:6300); cur.ch[curCh].peq.push({f:ref,q:1.2,g:0}); eqSync(curCh); renderEditor(); }
+    else if(b.dataset.pdel!=null){ cur.ch[curCh].peq.splice(+b.dataset.pdel,1); eqSync(curCh); renderEditor(); }
   });
   document.getElementById('pList').addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b)return;
@@ -1857,7 +1871,7 @@
 
   /* FIX: ปุ่มไมค์ไม่เคยถูกผูก event — เป็นสาเหตุที่ทุกอย่างใช้งานไม่ได้ */
   document.getElementById('btnMic').addEventListener('click',()=>{ running ? stopMic() : startMic(); });
-  document.getElementById('btnNoise').addEventListener('click',toggleNoise);
+  document.getElementById('btnNoise').addEventListener('click',()=>{ if(!noiseOn&&NOISE_BAND)setNoiseBand(0); toggleNoise(); });   // the big button is always full-band pink
   document.getElementById('btnMMM').addEventListener('click',()=>{ if(!running||sweeping||phasing)return; abOn=false; document.getElementById('btnAB').classList.remove('on'); measureMMM(); });
   document.getElementById('btnQuick').addEventListener('click',()=>{if(!sweeping&&!phasing){abOn=false;document.getElementById('btnAB').classList.remove('on');measure('quick');}});
   document.getElementById('btnMeasure').addEventListener('click',()=>{ if(!sweeping&&!phasing){abOn=false;document.getElementById('btnAB').classList.remove('on');measure();} });
@@ -1960,7 +1974,7 @@
       if(epoch!==jobEpoch||!running)return;
       let ap=true; try{ ap=localStorage.getItem('rta_autopink')!=='0'; }catch(_){}
       // A remote supplies the test signal when this device is the station.
-      if(noiseOn&&NOISE_BAND)setNoiseBand(0);   // measuring always uses full-band pink
+      if(NOISE_BAND)setNoiseBand(0);   // measuring always uses full-band pink (also when a 🎧 band was left selected)
       if((SY.role!=='station'||FB.cmdNs==='st')&&ap&&!noiseOn){ toggleNoise(); autoPinkOn=true; appToast('📻 เปิด Pink Noise — รอเสียงนิ่ง 1.5 วิ'); await new Promise(r=>setTimeout(r,1500)); }
       if(epoch!==jobEpoch||!running)return;
       preparing=false; if(kind==='mmm')measureMMM(); else if(kind==='p3')p3Go(); else measure(kind);
@@ -2147,9 +2161,10 @@
       if(sb) h+='<div class="dvsec" style="margin-top:9px"><h5>แบนด์ '+(DV.sel+1)+' · ปรับละเอียด<small>'+fmtHz(sb.f)+'Hz</small></h5>'+
         '<label>ความถี่</label><input type="range" min="0" max="1000" data-pi="'+DV.sel+'" data-pk="f" data-log="1" value="'+logPos(sb.f)+'">'+
         '<div class="dvg2"><label>Q (แคบ/กว้าง)'+numBox('data-pi="'+DV.sel+'" data-pk="q"',sb.q,0.1,'')+'</label><label>เกน'+numBox('data-pi="'+DV.sel+'" data-pk="g"',sb.g,0.5,'dB')+'</label></div></div>';
+      const G=eqIsGlobal();
       h+='<div class="dvbtns">'+(c.peq.length<8?'<button data-act="padd">＋ เพิ่มแบนด์ ('+c.peq.length+'/8)</button>':'')+'<button data-act="fill">✨ แนะนำ EQ จากผลวัด</button></div>'+
-        '<div class="dvbtns"><button data-act="pclr">🧹 ล้าง EQ ช่องนี้</button></div>'+
-        '<div class="dvnote">ลากจุด ● บนกราฟ: ซ้าย-ขวา = ความถี่ · ขึ้น-ลง = เกน · Q มาก = แคบ · <b>ตัด</b>ดีกว่าบูสต์ · ช่องละ 8 แบนด์เท่าใน DSPico</div>';
+        '<div class="dvbtns"><button data-act="pclr">🧹 '+(G?'ล้าง EQ รวม':'ล้าง EQ ช่องนี้')+'</button><button data-act="eqg">'+(G?'↔ เปลี่ยนเป็น EQ แยกช่อง':'🔗 ใช้ EQ รวมทุกช่อง (D-Stack)')+'</button></div>'+
+        '<div class="dvnote">'+(G?'🔗 <b>EQ รวมทุกช่อง</b> — 8 แบนด์ชุดเดียว มีผลกับซับ กลาง แหลม พร้อมกัน (แบบ D-Stack · ตรงกับ “พาราเมตริกอีคิว” ใน DSPico) · ':'')+'ลากจุด ● บนกราฟ: ซ้าย-ขวา = ความถี่ · ขึ้น-ลง = เกน · Q มาก = แคบ · <b>ตัด</b>ดีกว่าบูสต์ · '+(G?'รวม 8 แบนด์':'ช่องละ 8 แบนด์เท่าใน DSPico')+'</div>';
     }else if(DV.tab==='gp'){
       h+='<div class="dvsec"><h5>เกน (Gain)</h5><div class="dvbig">'+sgn(c.gain)+' dB</div><input type="range" min="-24" max="6" step="0.5" data-k="gain" value="'+c.gain+'">'+numBox('data-k="gain"',c.gain,0.5,'dB')+'</div>'+
         '<div class="dvsec"><h5>เฟส (Polarity)</h5><div class="dvseg"><button data-ph="0" class="'+(+c.phase?'':'on')+'">0° ปกติ</button><button data-ph="180" class="'+(+c.phase?'on':'')+'">180° กลับเฟส</button></div></div>'+
@@ -2164,7 +2179,7 @@
     dq('dvBody').innerHTML=h;
   }
   function dvRenderAll(){ dvRenderDev(); dvRenderRec(); dvRenderSteps(); dvRenderStrips(); dvRenderBody(); dvRenderResult(); dvRenderChecks(); DV.dirty=true; }
-  function dvChanged(full){ histTrack(); DV.dirty=true; dvRenderStrips(); dvRenderResult(); dvRenderChecks(); if(full)dvRenderBody(); }
+  function dvChanged(full){ eqSync(DV.ch); histTrack(); DV.dirty=true; dvRenderStrips(); dvRenderResult(); dvRenderChecks(); if(full)dvRenderBody(); }
   function dvToast(t,err){ const m=dq('dvToast'); m.textContent=t||''; m.style.color=err?'#ff9b9b':''; clearTimeout(dvToast.t); dvToast.t=setTimeout(()=>m.textContent='',6000); }
   function dvSet(t){ const c=cur.ch[DV.ch]; let v=t.value;
     if(t.dataset.log)v=posLog(v);
@@ -2196,7 +2211,8 @@
     else if(a==='sweep'){ dq('btnSweep').disabled?dvToast('กด 🎙️ ไมค์ ก่อน แล้วค่อย Sweep',true):dq('btnSweep').click(); }
     else if(a==='rec'){ Object.assign(c,recFor(DV.ch)); dvToast('ใช้ค่าครอสแนะนำของ '+CHN[DV.ch]+' แล้ว'); dvChanged(true); }
     else if(a==='padd'){ if(c.peq.length<8){ c.peq.push({t:'PK',f:{sub:60,mid:500,twe:6300}[DV.ch],q:1.2,g:0}); DV.sel=c.peq.length-1; dvChanged(true); } }
-    else if(a==='pclr'){ if(!c.peq.length||confirm('ล้าง EQ ทั้งหมดของ '+CHN[DV.ch]+' ?')){ c.peq=[]; DV.sel=0; dvChanged(true); } }
+    else if(a==='pclr'){ if(!c.peq.length||confirm(eqIsGlobal()?'ล้าง EQ รวม (มีผลทุกช่อง) ?':'ล้าง EQ ทั้งหมดของ '+CHN[DV.ch]+' ?')){ c.peq=[]; DV.sel=0; dvChanged(true); } }
+    else if(a==='eqg'){ const on=!eqIsGlobal(); if(on&&!confirm('ใช้ EQ ชุดเดียวทุกช่อง (แบบ D-Stack) — คัดลอก EQ ของ '+CHN[DV.ch]+' ไปทุกช่อง ?'))return; eqSetGlobal(on,DV.ch); dvChanged(true); dvToast(on?'🔗 EQ รวมทุกช่อง (D-Stack)':'EQ แยกแต่ละช่อง'); }
     else if(a==='fill'){ renderEditor(); fillFromMeasurement(); dvToast(dq('pfMsg').textContent,dq('pfMsg').classList.contains('err')); dvChanged(true); }
     else if(a==='mute'){ c.mute=!c.mute; dvChanged(true); }
   });
@@ -2322,15 +2338,25 @@
     for(const o of cand){
       if(added>=ST.max)break;
       if(picked.some(f=>Math.abs(Math.log2(f/o.f))<0.5))continue;
-      const k=chOf(o.f,chX), c=chX[k];
+      const k=chOf(o.f,chX), G=eqIsGlobal(), c=G?chX.sub:chX[k], lab=G?'EQ รวม':'PEQ '+CHN[k], allC=G?['sub','mid','twe']:[k];
       if(o.d<0){ if(hasVar&&measuredVar[o.i]>4)continue; if(k==='sub'&&o.f<Math.max(45,(+c.hpf||0)*1.3))continue; if(o.f>12000)continue; }
       let n=1; for(const dir of [-1,1]){ let j=o.i+dir; while(j>=0&&j<bandF.length&&Math.sign(d[j])===Math.sign(o.d)&&Math.abs(d[j])>ST.thr/2){n++;j+=dir;} }
       const bw=Math.max(1/3,n/perOct), q=clamp(Math.round(Math.sqrt(Math.pow(2,bw))/(Math.pow(2,bw)-1)*10)/10,0.7,6);
       const maxB=(REC.style==='bass'&&k==='sub')?4:3, gv=o.d>0?-Math.min(10,r05(o.d*0.85)):Math.min(maxB,r05(-o.d*0.7)); if(Math.abs(gv)<1)continue;
       const fc=nearestFc(o.f), ex=c.peq.findIndex(b=>Math.abs(Math.log2(b.f/fc))<0.34);
       if(ex>=0){ const b=c.peq[ex], ng=clamp(r05((+b.g||0)+gv),-12,maxB); if(ng===+b.g)continue;
-        items.push({ch:k,t:'PEQ '+CHN[k]+' แบนด์ '+(ex+1)+': '+fmtHz(b.f)+'Hz '+sgn(b.g)+' → '+sgn(ng)+' dB',d:'ย่าน '+niceLabel(fc)+'Hz '+(o.d>0?'ดังเกิน':'เบากว่า')+'เป้า '+Math.abs(o.d).toFixed(1)+' dB',ap:c2=>{ const bb=c2[k].peq.find(x=>Math.abs(Math.log2(x.f/fc))<0.34); if(bb)bb.g=ng; }}); b.g=ng; }
-      else{ if(c.peq.length>=8)continue; const nb={t:'PK',f:fc,q,g:gv};
+        items.push({ch:k,t:lab+' แบนด์ '+(ex+1)+': '+fmtHz(b.f)+'Hz '+sgn(b.g)+' → '+sgn(ng)+' dB',d:'ย่าน '+niceLabel(fc)+'Hz '+(o.d>0?'ดังเกิน':'เบากว่า')+'เป้า '+Math.abs(o.d).toFixed(1)+' dB'+(G?' · มีผลทุกช่อง':''),ap:c2=>{ allC.forEach(kk=>{ const bb=c2[kk].peq[ex]; if(bb)bb.g=ng; }); }});
+        allC.forEach(kk=>{ const bb=chX[kk].peq[ex]; if(bb)bb.g=ng; }); }
+      else{ let slot=-1, was=null; if(c.peq.length>=8){ if(!G)continue;
+          // all 8 shared bands in use: take an unused one, else the weakest (≤1.5 dB) that isn't doing anything important
+          slot=c.peq.findIndex(b=>Math.abs(+b.g||0)<0.25);
+          if(slot<0){ let mi=-1,mv=9; c.peq.forEach((b,i)=>{ const a=Math.abs(+b.g||0); if(a<=1.5&&a<mv&&!picked.some(f=>Math.abs(Math.log2(f/b.f))<0.5)){ mv=a; mi=i; } }); slot=mi; if(slot>=0)was=c.peq[slot]; }
+          if(slot<0)continue; }
+        const nb={t:'PK',f:fc,q,g:gv};
+        if(G){ const sl=slot;
+          items.push({ch:k,t:lab+(sl>=0?' แบนด์ '+(sl+1)+(was?' (เดิม '+fmtHz(was.f)+'Hz '+sgn(was.g)+' dB)':' (ว่าง)'):'')+': '+(gv<0?'ตัด ':'เติม ')+'<code>'+fmtHz(fc)+'Hz · Q'+q+' · '+sgn(gv)+'dB</code>',d:'ย่านนี้'+(o.d>0?'ดังเกิน':'เบากว่า')+'เป้า '+Math.abs(o.d).toFixed(1)+' dB · มีผลทุกช่อง (D-Stack ใช้ EQ ชุดเดียว)',
+            ap:c2=>{ allC.forEach(kk=>{ if(sl>=0)c2[kk].peq[sl]=clone(nb); else if(c2[kk].peq.length<8)c2[kk].peq.push(clone(nb)); }); }});
+          allC.forEach(kk=>{ if(sl>=0)chX[kk].peq[sl]=clone(nb); else chX[kk].peq.push(clone(nb)); }); picked.push(o.f); added++; continue; }
         items.push({ch:k,t:'PEQ '+CHN[k]+': '+(gv<0?'ตัด ':'เติม ')+'<code>'+fmtHz(fc)+'Hz · Q'+q+' · '+sgn(gv)+'dB</code>',d:'ย่านนี้'+(o.d>0?'ดังเกิน':'เบากว่า')+'เป้า '+Math.abs(o.d).toFixed(1)+' dB'+(o.d>0&&k==='sub'?' (พีคตู้/ห้อง — ตัดแล้วเบสจะสะอาดขึ้น)':'')+(o.d<0?' · เติมแค่ 70% กันกินกำลังแอมป์':''),ap:c2=>{ if(c2[k].peq.length<8&&!c2[k].peq.some(x=>Math.abs(Math.log2(x.f/fc))<0.34))c2[k].peq.push(clone(nb)); }});
         c.peq.push(clone(nb)); }
       picked.push(o.f); added++; }
