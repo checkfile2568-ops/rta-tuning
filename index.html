@@ -2929,7 +2929,7 @@
       '<div id="songList"></div><div id="ytBox" class="ytbox" hidden><div id="ytFrame"></div><div id="ytMsg"></div></div>'+
       '<div class="row"><button data-sg="addyt">＋ ลิงก์ YouTube</button><button data-sg="addfile">＋ ไฟล์เพลงของคุณ</button></div><input type="file" id="songFile" accept="audio/*" hidden><small class="shelp" id="songHint"></small>'; }
     const rows=SONGS.map(s=>{ const [a,b]=songSeg(s), playing=SP.id===s.id, has=s.file||s.yt;
-      return '<div class="srow'+(playing?' on':'')+'" data-id="'+esc(s.id)+'"><div class="sinfo"><b>'+esc(s.title)+'</b><span>'+esc(s.artist||'')+' · '+songSrc(s)+' · ท่อน '+mmss(a)+'–'+mmss(b)+'</span>'+
+      return '<div class="srow'+(playing?' on':'')+'" data-id="'+esc(s.id)+'"><div class="sinfo"><b>'+esc(s.title)+'</b><span>'+(s.artist?esc(s.artist)+' · ':'')+songSrc(s)+' · ท่อน '+mmss(a)+'–'+mmss(b)+'</span>'+
         '<span class="sfoc">'+(s.focus||[]).map(k=>'<i>'+(FOCUS[k]||k)+'</i>').join('')+'</span>'+(s.note?'<span class="snote">'+esc(s.note)+'</span>':'')+'</div>'+
         '<div class="sact">'+(has?'<button data-sg="play">'+(playing?'⏹ หยุด':'▶ เล่น')+'</button><button data-sg="meas" class="primary">📸 วัดด้วยเพลงนี้</button>'+(s.want==='file'&&!s.file?'<button data-sg="pickfile" title="ใช้ไฟล์ในเครื่อง — วัดค่าจริงได้แม่นกว่า YouTube">📁 ไฟล์</button>':''):
           s.want==='file'?'<button data-sg="pickfile" class="primary">📁 เลือกไฟล์</button>':'<button data-sg="find">🔍 หาใน YouTube</button>')+'<button data-sg="edit">'+(has||s.want==='file'?'✎':'✎ วางลิงก์')+'</button></div></div>'; }).join('');
