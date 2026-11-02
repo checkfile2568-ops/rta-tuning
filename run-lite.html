@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>วิ่งแข่ง · โหมดภาพเบา</title>
+<style>
+:root{font-family:Sarabun,system-ui,sans-serif;color:#f6f8fc;background:#071a33}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:22px;background:radial-gradient(circle at 50% 0,#163d70,#071a33 65%)}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 22px;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}.gold{background:#ffc940;color:#18243a}.ghost{background:#263f61;color:#fff}
+.card{background:#102643e8;border:1px solid #ffffff28;border-radius:22px;padding:22px;box-shadow:0 12px 35px #0005}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 auto 22px;max-width:1300px}
+header h1{margin:0;font-size:clamp(25px,3vw,42px)}#conn{font-size:15px;color:#ffd166}
+#pick{max-width:630px;margin:10vh auto;text-align:center}#pick h2{font-size:34px;margin:0 0 8px}#pick p{color:#ccdaf0}
+.choices{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}.choices button{min-width:190px;font-size:21px}
+#lobby{max-width:1300px;margin:auto;display:grid;grid-template-columns:minmax(210px,1fr) minmax(270px,1.45fr) minmax(210px,1fr);gap:18px;align-items:start}
+.lane{text-align:center;border-top:6px solid #ff4d4d}.lane.blue{border-color:#3d8bff}.lane h2{margin:0 0 12px}.lane .qr{background:white;border-radius:12px;padding:8px;width:min(100%,260px);aspect-ratio:1;margin:auto}.qr svg{width:100%;height:100%}
+.who{font-size:23px;font-weight:800;min-height:30px;margin-top:10px}.state{min-height:50px;color:#d9e5f5;font-size:18px}.state.ok{color:#5be08f}
+#center{text-align:center}#center h2{margin:0 0 12px;font-size:29px}#center ol{text-align:left;line-height:1.65;max-width:400px;margin:12px auto;color:#d9e5f5}
+#status{font-size:20px;font-weight:800;color:#ffc940;min-height:60px;margin:14px auto 6px}
+#start{font-size:24px;min-width:230px}#change{margin-top:12px;text-decoration:underline;background:none;color:#b6d4ff;padding:5px}
+#race,#result{max-width:1100px;margin:4vh auto}#race h2,#result h2{text-align:center;font-size:32px}#call{text-align:center;font-size:clamp(45px,10vw,100px);font-weight:800;color:#ffc940;min-height:100px}#timer{text-align:center;font-size:45px;font-weight:800}
+.track{position:relative;height:100px;border-radius:16px;background:#2479a1;margin:20px 0;overflow:hidden;border:3px solid #d5f4ff}.track.blue{background:#2165a2}.track.ghost-track{background:#48718a}
+.track:after{content:'🏁';position:absolute;right:10px;top:15px;font-size:45px}.label{position:absolute;left:12px;top:8px;font-size:20px;font-weight:800;z-index:2;text-shadow:0 2px 3px #000}
+.runner{position:absolute;left:3%;bottom:5px;font-size:45px;transition:left .08s linear;z-index:2}.meters{position:absolute;right:65px;top:8px;font-size:20px;font-weight:800}
+#result table{width:100%;border-collapse:collapse;font-size:20px}td,th{padding:12px;border-bottom:1px solid #ffffff33;text-align:left}
+.hide{display:none!important}#notice{max-width:1100px;margin:10px auto;color:#ffd166;min-height:25px;text-align:center}
+footer{text-align:center;color:#a7bfdc;margin:30px 0;font-size:14px}
+@media(max-width:850px){#lobby{grid-template-columns:1fr 1fr}#center{grid-column:1/-1;grid-row:1}.lane{grid-row:2}body{padding:12px}}
+@media(max-width:500px){#lobby{grid-template-columns:1fr}.lane{grid-row:auto}#center{grid-row:auto}.track{height:85px}}
+</style>
+<script src="assets/run/qrcode.js"></script>
+<script src="run-net.js"></script>
+</head>
+<body>
+<header><h1>🏃 วิ่งแข่ง <small style="font-size:15px;color:#c8a45a">โหมดภาพเบา</small></h1><span id="conn">กำลังเชื่อมต่อ…</span></header>
+<div id="notice"></div>
+<section id="pick" class="card"><h2>เลือกจำนวนผู้เล่น</h2><p>สแกน QR เพื่อเชื่อมมือถือ แล้วกดเริ่มเล่นบนจอ</p><div class="choices"><button class="gold" data-mode="1">เล่นคนเดียว</button><button class="gold" data-mode="2">เล่น 2 คน</button></div></section>
+<section id="lobby" class="hide">
+  <div class="lane card"><h2>P1 · เลนแดง</h2><div id="qr1" class="qr"></div><div id="who1" class="who"></div><div id="st1" class="state">สแกน QR</div></div>
+  <div id="center" class="card"><h2>วิ่งแข่ง <span id="distance">100</span> ม.</h2><div class="choices"><button class="ghost" data-dist="60">60 ม.</button><button class="ghost" data-dist="100">100 ม.</button></div><ol><li>สแกน QR ตามเลนที่แสดง</li><li>กดเริ่มบนมือถือและคาลิเบรต 5 วินาทีในครั้งแรก</li><li>เมื่อเชื่อมครบ กดเริ่มเล่นบนจอ</li></ol><div id="status">รอผู้เล่นสแกน QR</div><button id="start" class="gold" disabled>เริ่มเล่น</button><br><button id="change">เปลี่ยนจำนวนผู้เล่น</button></div>
+  <div id="lane2" class="lane blue card"><h2>P2 · เลนน้ำเงิน</h2><div id="qr2" class="qr"></div><div id="who2" class="who"></div><div id="st2" class="state">สแกน QR</div></div>
+</section>
+<section id="race" class="card hide"><div id="call"></div><div id="timer">0.00</div><div class="track"><span id="name1" class="label">P1</span><span id="meters1" class="meters">0 ม.</span><span id="runner1" class="runner">🏃</span></div><div id="track2" class="track blue"><span id="name2" class="label">P2</span><span id="meters2" class="meters">0 ม.</span><span id="runner2" class="runner">🏃‍♀️</span></div><div id="ghostTrack" class="track ghost-track hide"><span class="label">นักวิ่งเงา</span><span id="ghostMeters" class="meters">0 ม.</span><span id="ghostRunner" class="runner">👟</span></div></section>
+<section id="result" class="card hide"><h2>ผลการแข่งขัน</h2><div id="resSub" style="text-align:center;color:#ffc940;font-size:20px"></div><table><thead><tr><th>อันดับ</th><th>ผู้เล่น</th><th>เวลา</th><th>สูงสุด</th></tr></thead><tbody id="resBody"></tbody></table><p style="text-align:center"><button id="again" class="gold">อีกรอบ</button></p></section>
+<footer>F เต็มจอ · K ทดสอบด้วยคีย์บอร์ด · A/D เลนแดง · ←/→ เลนน้ำเงิน · Enter เริ่ม/อีกรอบ</footer>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const lanes = ['p1','p2'];
+  const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+  const safe = v => String(v || '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const query = new URLSearchParams(location.search);
+  const local = query.get('local') === '1';
+  const cfgHash = location.hash.match(/(?:^#|&)cfg=([^&]+)/);
+  if(cfgHash){const cfg=RunNet.parseConfig(decodeURIComponent(cfgHash[1]));if(cfg)RunNet.saveConfig(cfg);history.replaceState(null,'',location.pathname+location.search);}
+  const modeKey = 'run_play_mode', roomKey = 'run_room_' + (local ? 'local' : 'firebase');
+  let playMode = ['1','2'].includes(sessionStorage.getItem(modeKey)) ? +sessionStorage.getItem(modeKey) : 0;
+  let room = sessionStorage.getItem(roomKey) || RunNet.makeCode();
+  sessionStorage.setItem(roomKey,room);
+  let dist = Number(localStorage.getItem('run_dist')) === 60 ? 60 : 100;
+  let net = null, base = RunNet.roomPath(room), players = {}, input = {}, state = 'lobby', seq = 0, gunAt = 0, result = null, parts = {}, race = {}, stageAt = performance.now(), last = performance.now(), lastPaint = 0, keyboard = false;
+  const kbd = {p1:{last:'',steps:0,lastStep:0,v:0},p2:{last:'',steps:0,lastStep:0,v:0}};
+  const required = () => playMode === 2 ? lanes : playMode === 1 ? ['p1'] : [];
+  const name = L => players[L]?.name || (keyboard ? 'คีย์บอร์ด '+(L==='p1'?1:2) : L.toUpperCase());
+  const stateOf = L => {
+    const p = players[L], age = net ? net.now()-(p?.seen||0) : 1e9;
+    if (p?.token && p.online!==false && age<7000) return {online:true,cal:!!p.cal,ready:!!p.ready};
+    return keyboard ? {online:true,cal:true,ready:true} : {online:false,cal:false,ready:false};
+  };
+  const canStart = () => !!net?.isConnected() && required().length>0 && required().every(L => {const s=stateOf(L);return s.online&&s.cal&&s.ready;});
+  const publish = () => net.update(base+'/host',{state,seq,dist,playMode,lanes:parts,gunAt,result,solo:playMode===1,updated:net.now()});
+  const notice = s => { $('notice').textContent=s; };
+  function render() {
+    $('pick').classList.toggle('hide',!!playMode || state!=='lobby');
+    $('lobby').classList.toggle('hide',!playMode || !['lobby','countdown'].includes(state));
+    $('race').classList.toggle('hide',!['marks','set','race','foul'].includes(state));
+    $('result').classList.toggle('hide',state!=='result');
+    $('lane2').classList.toggle('hide',playMode===1);
+    $('track2').classList.toggle('hide',playMode===1);
+    $('ghostTrack').classList.toggle('hide',playMode!==1);
+    $('distance').textContent=dist;
+    for(const L of required()) {
+      const n=L==='p1'?1:2,s=stateOf(L),who=$('who'+n),st=$('st'+n),qr=$('qr'+n);
+      who.textContent=s.online?name(L):'';
+      qr.classList.toggle('hide',s.online||keyboard);
+      st.textContent=!s.online?'สแกน QR เพื่อเชื่อมต่อ':!s.cal?'เชื่อมแล้ว · คาลิเบรตบนมือถือ':s.ready?'✔ พร้อมเริ่มเล่น':'รอพร้อม';
+      st.classList.toggle('ok',s.online&&s.cal&&s.ready);
+    }
+    const missing=required().filter(L=>!stateOf(L).online),uncal=required().filter(L=>stateOf(L).online&&!stateOf(L).cal);
+    $('status').textContent=state==='countdown'?'กำลังจะเริ่ม…':!net?.isConnected()?'กำลังเชื่อม Firebase…':missing.length?'รอ '+missing.map(L=>L.toUpperCase()).join(', ')+' สแกน QR':uncal.length?'รอคาลิเบรตบนมือถือ':canStart()?'เชื่อมครบแล้ว · กดเริ่มเล่น':'รอผู้เล่นพร้อม';
+    $('start').disabled=state!=='lobby'||!canStart();
+    $('name1').textContent=name('p1');$('name2').textContent=name('p2');
+    if(state==='result') {
+      $('resBody').innerHTML=required().map(L=>{const r=result?.[L]||{};return '<tr><td>'+(r.dnf?'–':r.place)+'</td><td>'+safe(r.name)+'</td><td>'+(r.time==null?'ไม่จบ':r.time.toFixed(2)+' วิ')+'</td><td>'+Math.round(r.top||0)+' กม./ชม.</td></tr>';}).join('');
+      $('resSub').textContent=playMode===1?'แข่งกับนักวิ่งเงา '+(race.p1?.time!=null && race.p1.time<(dist===60?11:18)?'· เร็วกว่าเงา!':''):'แข่งขัน 2 คน';
+    }
+  }
+  function qr() {
+    for(const L of lanes){const n=L==='p1'?1:2,u=new URL('pad.html',location.href);u.search='';u.hash='';u.searchParams.set('r',room);u.searchParams.set('p',String(n));if(local)u.searchParams.set('local','1');else u.hash='db='+encodeURIComponent(RunNet.loadSavedConfig().config.databaseURL);
+      try{const q=qrcode(0,'M');q.addData(u.toString());q.make();$('qr'+n).innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true});}catch(e){$('qr'+n).textContent='สร้าง QR ไม่สำเร็จ';}
+    }
+  }
+  async function init(){
+    net=await RunNet.connect(local?{mode:'local'}:{config:RunNet.loadSavedConfig().config});
+    net.onConnection(c=>{$('conn').textContent=c?'● เชื่อมต่อแล้ว':'● กำลังเชื่อมต่อ';render();});
+    net.onError(e=>{notice('Firebase: '+(e?.message||e));render();});
+    await Promise.race([(async()=>{await publish();const h=await net.get(base+'/host');if(!h||h.state!=='lobby')throw Error('สร้างเกมไม่ได้ · ตรวจสิทธิ์ Firebase');})(),new Promise((_,bad)=>setTimeout(()=>bad(Error('เชื่อม Firebase ไม่สำเร็จภายใน 12 วินาที')),12000))]);
+    net.onDisconnect(base+'/host/state').set('closed');
+    net.on(base+'/players',v=>{players=v||{};render();});
+    net.on(base+'/input',v=>{input=v||{};});
+    setInterval(()=>net.update(base+'/host',{updated:net.now()}),30000);
+    qr();render();requestAnimationFrame(loop);
+  }
+  function setState(s){state=s;stageAt=performance.now();publish();render();}
+  function begin(){if(!canStart()){notice('รอผู้เล่นเชื่อมและคาลิเบรตครบก่อน');return;}parts={};required().forEach(L=>parts[L]=true);seq++;result=null;race={};required().forEach(L=>{race[L]={x:0,top:0,steps:0,time:null};kbd[L]={last:'',steps:0,lastStep:0,v:0};});setState('countdown');}
+  function inputOf(L,dt){if(!players[L]?.token&&keyboard){const k=kbd[L];k.v*=Math.exp(-dt*2.5);return {v:k.v,n:k.steps,fm:0};}const v=input[L]||{};return {v:net.now()-(v.t||0)<1500?clamp(v.v||0,0,12):0,n:v.n||0,fm:v.fm||0};}
+  function finish(){const order=required().sort((a,b)=>(race[a].time??1e9)-(race[b].time??1e9));result={};order.forEach((L,i)=>{const r=race[L];result[L]={place:r.time==null?0:i+1,time:r.time==null?null:+r.time.toFixed(2),top:+(r.top*3.6).toFixed(1),react:r.react??null,steps:r.steps,dnf:r.time==null,solo:playMode===1,name:name(L)};});setState('result');}
+  function toLobby(){parts={};result=null;required().forEach(L=>{if(players[L])net.update(base+'/players/'+L,{ready:!!players[L].cal});});setState('lobby');}
+  function paint(){for(const L of required()){const n=L==='p1'?1:2,r=race[L];if(!r)continue;$('runner'+n).style.left=(3+clamp(r.x/dist,0,1)*83)+'%';$('meters'+n).textContent=Math.min(dist,Math.floor(r.x))+' ม.';}if(playMode===1){const x=clamp((performance.now()-stageAt)/1000/(dist===60?11:18),0,1)*dist;$('ghostRunner').style.left=(3+x/dist*83)+'%';$('ghostMeters').textContent=Math.floor(x)+' ม.';}}
+  function loop(t){const dt=clamp((t-last)/1000,0,0.1);last=t;const el=(t-stageAt)/1000;
+    if(state==='countdown'){if(!canStart()){parts={};setState('lobby');notice('ผู้เล่นหลุดการเชื่อมต่อ');}else if(el>=3)setState('marks');else $('status').textContent='เริ่มใน '+Math.ceil(3-el);}
+    else if(state==='marks'){ $('call').textContent='เข้าที่';if(el>=1.7)setState('set');}
+    else if(state==='set'){ $('call').textContent='ระวัง…';if(el>=1.5){gunAt=net.now();setState('race');}}
+    else if(state==='race'){
+      $('call').textContent='วิ่ง!';const raceEl=(net.now()-gunAt)/1000;$('timer').textContent=raceEl.toFixed(2);
+      for(const L of required()){const r=race[L];if(r.time!=null)continue;const d=inputOf(L,dt);r.x+=d.v*dt;r.top=Math.max(r.top,d.v);r.steps=d.n;if(d.fm && r.react==null)r.react=+Math.max(0,(d.fm-gunAt)/1000).toFixed(2);if(r.x>=dist)r.time=raceEl;}
+      if(t-lastPaint>80){lastPaint=t;paint();}
+      if(required().every(L=>race[L].time!=null)||raceEl>45)finish();
+    }
+    else if(state==='result' && required().some(L=>players[L]?.again===seq))toLobby();
+    requestAnimationFrame(loop);
+  }
+  document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{playMode=+b.dataset.mode;sessionStorage.setItem(modeKey,String(playMode));if(net)publish();render();});
+  document.querySelectorAll('[data-dist]').forEach(b=>b.onclick=()=>{if(state!=='lobby')return;dist=+b.dataset.dist;localStorage.setItem('run_dist',String(dist));if(net)publish();render();});
+  $('start').onclick=begin;$('again').onclick=toLobby;
+  $('change').onclick=async()=>{if(net)await Promise.race([net.update(base+'/host',{state:'closed'}),new Promise(ok=>setTimeout(ok,1200))]);sessionStorage.removeItem(roomKey);sessionStorage.removeItem(modeKey);location.reload();};
+  addEventListener('keydown',e=>{if(e.key==='f'||e.key==='F')document.documentElement.requestFullscreen?.().catch(()=>{});
+    else if(e.key==='k'||e.key==='K'){keyboard=!keyboard;notice(keyboard?'ทดสอบด้วยคีย์บอร์ด':'ปิดทดสอบคีย์บอร์ด');render();}
+    else if(e.key==='Enter'){if(state==='lobby')begin();else if(state==='result')toLobby();}
+    else if(keyboard && state==='race'){let L='',key=e.key;if(['a','A','d','D'].includes(key)){L='p1';key=key.toLowerCase();}else if(['ArrowLeft','ArrowRight'].includes(key)){L='p2';e.preventDefault();}if(L&&parts[L]){const k=kbd[L];if(k.last!==key){k.last=key;k.steps++;k.lastStep=performance.now();k.v=8;}}}
+  });
+  render();init().catch(e=>{notice(e.message||String(e));$('conn').textContent='● เชื่อมต่อไม่ได้';});
+})();
+</script>
+</body>
+</html>
