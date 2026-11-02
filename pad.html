@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>จอยเกมวิ่ง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--c:#ff4d4d;--cd:#3a0d0c;--cl:#ff9a9a;--bg:#0d0f14}
+body.p2{--c:#3d8bff;--cd:#0a2340;--cl:#9cc4ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:#fff;font-family:Sarabun,system-ui,-apple-system,sans-serif;overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+.scr{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:max(22px,env(safe-area-inset-top)) 22px max(22px,env(safe-area-inset-bottom));text-align:center}
+.scr.on{display:flex}
+.av svg{width:110px;height:110px;display:block}
+.badge{font-size:88px;font-weight:800;line-height:.9;color:var(--c);letter-spacing:2px}
+.badge small{display:block;font-size:20px;font-weight:600;color:#cfd3dc;letter-spacing:0;margin-top:8px}
+h1{font-size:30px;margin:0;font-weight:800;line-height:1.25}
+h2{font-size:22px;margin:0;font-weight:600;line-height:1.35;color:#e8eaf0}
+p{margin:0;font-size:18px;line-height:1.5;color:#c4c8d2;max-width:420px}
+.tip{font-size:15px;color:#9aa0ad;background:#171a22;border:1px solid #262a35;border-radius:12px;padding:10px 14px;max-width:420px;text-align:left;line-height:1.55}
+.tip b{color:#ffd166}
+input{font:inherit;font-size:22px;width:min(360px,100%);padding:12px 16px;border-radius:12px;border:2px solid #2b303c;background:#141720;color:#fff;text-align:center;outline:none}
+input:focus{border-color:var(--c)}
+button{font:inherit;font-size:22px;font-weight:800;border:0;border-radius:16px;padding:16px 28px;min-width:min(360px,100%);background:var(--c);color:#fff;cursor:pointer;box-shadow:0 6px 0 var(--cd)}
+button:active{transform:translateY(3px);box-shadow:0 3px 0 var(--cd)}
+button.ghost{background:transparent;border:2px solid #3a3f4c;box-shadow:none;font-size:18px;font-weight:600;color:#cfd3dc;padding:12px 22px}
+.ring{position:relative;width:210px;height:210px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:14}
+.ring .bgc{stroke:#222733}
+.ring .fg{stroke:var(--c);stroke-linecap:round;transition:stroke-dashoffset .08s linear}
+.ring .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:64px;font-weight:800}
+.ring .lbl small{font-size:16px;font-weight:600;color:#aab}
+.meter{width:min(360px,90%);height:22px;border-radius:11px;background:#1d212b;overflow:hidden;border:1px solid #2b303c}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cl),var(--c));transition:width .08s linear}
+.meterlbl{font-size:15px;color:#9aa0ad;margin-top:-6px}
+#sRace{background:var(--cd);transition:background .15s}
+#sRace .big{font-size:72px;font-weight:800;line-height:1;text-shadow:0 4px 18px rgba(0,0,0,.35)}
+#sRace .spd{font-size:120px;font-weight:800;line-height:1}
+#sRace .spd small{font-size:28px;font-weight:600;opacity:.8}
+#sResult .place{font-size:110px;font-weight:800;line-height:1;color:var(--c)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(380px,100%)}
+.stats div{background:#171a22;border:1px solid #262a35;border-radius:12px;padding:10px}
+.stats b{display:block;font-size:26px}
+.stats span{font-size:14px;color:#9aa0ad}
+#dot{position:fixed;top:max(10px,env(safe-area-inset-top));right:12px;z-index:20;display:flex;align-items:center;gap:6px;font-size:13px;color:#9aa0ad}
+#dot i{width:11px;height:11px;border-radius:50%;background:#666;display:inline-block}
+#dot.ok i{background:#43d17a;box-shadow:0 0 8px #43d17a}
+#dot.bad i{background:#ff5252}
+#lane{position:fixed;top:max(10px,env(safe-area-inset-top));left:12px;z-index:20;font-weight:800;font-size:15px;color:var(--c)}
+body.racing #lane,body.racing #dot{color:rgba(255,255,255,.85)}
+#rot{position:fixed;inset:0;z-index:50;background:#0d0f14;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;font-size:22px;padding:30px;text-align:center}
+@media (orientation:landscape) and (max-height:520px){#rot.need{display:flex}}
+#dbg{position:fixed;left:6px;bottom:6px;z-index:30;font:12px/1.35 ui-monospace,monospace;color:#9f9;background:rgba(0,0,0,.6);padding:6px 8px;border-radius:6px;white-space:pre;pointer-events:none;display:none}
+.err{color:#ff8a80}
+</style>
+</head>
+<body>
+<div id="lane"></div>
+<div id="dot"><i></i><span>กำลังเชื่อมต่อ</span></div>
+
+<!-- 1. เข้าร่วม -->
+<section class="scr" id="sJoin">
+  <div class="av" id="jAv"></div>
+  <div class="badge" id="jBadge">P1<small id="jColor">เลนสีแดง</small></div>
+  <input id="jName" maxlength="16" placeholder="ชื่อผู้เล่น" autocomplete="off">
+  <button id="jGo">เริ่ม · เปิดเซนเซอร์</button>
+  <div class="tip">⚠️ <b>คล้องสายข้อมือหรือจับให้แน่น</b> ก่อนแกว่งแขน<br>ยืนห่างผู้เล่นอื่นอย่างน้อย 1.5 ม. และหันหน้าเข้าจอ</div>
+  <p class="err" id="jErr"></p>
+</section>
+
+<!-- ข้อความทั่วไป -->
+<section class="scr" id="sMsg">
+  <h1 id="mTitle"></h1>
+  <p id="mText"></p>
+  <button id="mBtn" style="display:none"></button>
+</section>
+
+<!-- 2. คาลิเบรต -->
+<section class="scr" id="sCalib">
+  <h1 id="cTitle">คาลิเบรตแรงแกว่ง</h1>
+  <p id="cText">กำมือถือแนวตั้ง แล้วแกว่งแขนหน้า–หลังให้เร็วที่สุดเหมือนวิ่งสปรินต์ 5 วินาที</p>
+  <div class="ring"><svg viewBox="0 0 120 120"><circle class="bgc" cx="60" cy="60" r="52"/><circle class="fg" id="cRing" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg><div class="lbl" id="cNum">5<small>วินาที</small></div></div>
+  <div class="meter"><i id="cMeter"></i></div>
+  <div class="meterlbl">แรงแกว่ง</div>
+  <button id="cGo">เริ่มคาลิเบรต</button>
+</section>
+
+<!-- 3. กดพร้อม -->
+<section class="scr" id="sReady">
+  <h1>ยกมือถือนิ่ง 1 วินาที</h1>
+  <p>ถือมือถือตั้งตรงระดับอกแล้วนิ่งไว้ เพื่อบอกว่าพร้อม</p>
+  <div class="ring"><svg viewBox="0 0 120 120"><circle class="bgc" cx="60" cy="60" r="52"/><circle class="fg" id="rRing" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg><div class="lbl" id="rLbl">✋</div></div>
+  <div class="meter"><i id="rMeter"></i></div>
+  <div class="meterlbl">ลองแกว่งแขนดู · ตัวละครบนจอจะวิ่งตาม</div>
+  <button id="rBtn">พร้อม</button>
+  <button class="ghost" id="rRecal">คาลิเบรตใหม่</button>
+</section>
+
+<!-- 4. รอเริ่ม -->
+<section class="scr" id="sWait">
+  <div class="av" id="wAv"></div>
+  <div class="badge" id="wBadge">P1</div>
+  <h1 id="wTitle">พร้อมแล้ว</h1>
+  <p id="wText">รอผู้เล่นคนอื่น…</p>
+  <div class="meter"><i id="wMeter"></i></div>
+  <div class="meterlbl">แกว่งแขนวอร์มอัปได้</div>
+  <button class="ghost" id="wCancel">ยกเลิกพร้อม</button>
+</section>
+
+<!-- 5. แข่ง -->
+<section class="scr" id="sRace">
+  <div class="big" id="raceTxt">เข้าที่</div>
+  <div class="spd" id="raceSpd" style="display:none">0<small> กม./ชม.</small></div>
+</section>
+
+<!-- 6. ผล -->
+<section class="scr" id="sResult">
+  <div class="place" id="resPlace">1</div>
+  <h1 id="resTitle">อันดับ 1</h1>
+  <div class="stats">
+    <div><b id="resTime">–</b><span>เวลา (วินาที)</span></div>
+    <div><b id="resTop">–</b><span>ความเร็วสูงสุด (กม./ชม.)</span></div>
+    <div><b id="resReact">–</b><span>ปฏิกิริยาออกตัว (วินาที)</span></div>
+    <div><b id="resSteps">–</b><span>จำนวนก้าว</span></div>
+  </div>
+  <button id="resAgain">อีกรอบ</button>
+</section>
+
+<div id="rot"><div style="font-size:54px">📱</div>หมุนมือถือเป็นแนวตั้ง</div>
+<div id="dbg"></div>
+
+<script src="run-net.js"></script>
+<script>
+(function(){
+'use strict';
+/* ====================== ค่าตั้งต้น ====================== */
+const Q = new URLSearchParams(location.search);
+const ROOM = (Q.get('r') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+const LANE = Q.get('p') === '2' ? 'p2' : (Q.get('p') === '1' ? 'p1' : '');
+const LANE_NO = LANE === 'p2' ? 2 : 1;
+const LOCAL = Q.get('local') === '1';
+const DEBUG = Q.get('debug') === '1';
+const RACE_STATES = ['marks', 'set', 'race', 'foul'];
+// ตารางแปลงจังหวะแกว่ง (ก้าว/วินาที) → ความเร็ว (ม./วินาที) — EXTENSION POINT: จูนหลังทดสอบกับคนจริง
+const SPEED_TABLE = [[0, 0], [1, 2], [2.5, 6], [4, 9], [5, 10]];
+const CAL_FLOOR = { gyro: 20, acc: 2.5 };   // เกณฑ์ขั้นต่ำ (องศา / ม./วินาที²)
+const CAL_MIN = { gyro: 45, acc: 5 };       // แรงคาลิเบรตต่ำสุดที่ยอมรับ
+const THR_RATIO = 0.35;                       // เกณฑ์นับก้าว = 35% ของแรงสูงสุด
+
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const store = (() => { try { return JSON.parse(localStorage.getItem('run_pad') || '{}'); } catch (_) { return {}; } })();
+const saveStore = () => { try { localStorage.setItem('run_pad', JSON.stringify(store)); } catch (_) { } };
+const hashDb = (() => { const m = location.hash.match(/db=([^&]+)/); return m ? decodeURIComponent(m[1]) : ''; })();
+if (hashDb) { store.db = hashDb; saveStore(); }
+
+document.body.classList.add(LANE === 'p2' ? 'p2' : 'p1');
+$('lane').textContent = LANE ? 'P' + LANE_NO + ' · ห้อง ' + ROOM : '';
+$('jBadge').firstChild.textContent = 'P' + LANE_NO;
+$('jColor').textContent = LANE_NO === 2 ? 'เลนสีน้ำเงิน' : 'เลนสีแดง';
+$('wBadge').textContent = 'P' + LANE_NO;
+(function () {
+  const s = LANE_NO === 2 ? { ring: '#3d8bff', skin: '#e8b089', hair: '#231a30', band: '#2f86ff', buns: true } : { ring: '#ff4d4d', skin: '#f3c39d', hair: '#3a2214', band: '#ff3b3b', buns: false };
+  const hair = s.buns ? '<circle cx="16" cy="17" r="7.5" fill="' + s.hair + '" stroke="#1d1b2b" stroke-width="1.5"/><circle cx="48" cy="17" r="7.5" fill="' + s.hair + '" stroke="#1d1b2b" stroke-width="1.5"/><path d="M12 33 Q13 13 32 13 Q51 13 52 33 Z" fill="' + s.hair + '" stroke="#1d1b2b" stroke-width="1.5"/>'
+    : '<path d="M13 33 L16 15 L23 24 L29 8 L35 21 L43 10 L45 24 L52 20 L51 33 Z" fill="' + s.hair + '" stroke="#1d1b2b" stroke-width="1.5" stroke-linejoin="round"/>';
+  const svg = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="31" fill="' + s.ring + '" stroke="#fff" stroke-width="2"/><circle cx="32" cy="37" r="20" fill="' + s.skin + '" stroke="#1d1b2b" stroke-width="2"/>' + hair +
+    '<rect x="12" y="26" width="40" height="5" rx="2.5" fill="' + s.band + '" stroke="#1d1b2b" stroke-width="1.2"/><ellipse cx="25" cy="38" rx="3" ry="4" fill="#1d1b2b"/><ellipse cx="39" cy="38" rx="3" ry="4" fill="#1d1b2b"/><circle cx="24" cy="36.5" r="1.1" fill="#fff"/><circle cx="38" cy="36.5" r="1.1" fill="#fff"/><ellipse cx="19.5" cy="45" rx="3.5" ry="2" fill="#ff8fa3"/><ellipse cx="44.5" cy="45" rx="3.5" ry="2" fill="#ff8fa3"/><path d="M27 46 Q32 51 37 46" stroke="#5a2230" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
+  $('jAv').innerHTML = svg; $('wAv').innerHTML = svg;
+})();
+$('jName').value = store.name || ('ผู้เล่น ' + LANE_NO);
+if (DEBUG) $('dbg').style.display = 'block';
+
+const TOK_KEY = 'run_tok_' + ROOM + '_' + LANE;
+let token = null;
+try { token = localStorage.getItem(TOK_KEY); } catch (_) { }
+if (!token) { token = RunNet.makeToken(); try { localStorage.setItem(TOK_KEY, token); } catch (_) { } }
+
+/* ====================== หน้าจอ ====================== */
+let cur = '';
+function show(id) {
+  document.body.classList.toggle('racing', id === 'sRace');
+  if (cur === id) return;
+  document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === id));
+  cur = id;
+}
+function msg(title, text, btn, fn) {
+  $('mTitle').textContent = title; $('mText').innerHTML = text || '';
+  const b = $('mBtn');
+  if (btn) { b.textContent = btn; b.style.display = ''; b.onclick = fn; } else b.style.display = 'none';
+  cur = ''; show('sMsg');
+}
+function setRing(el, f) { el.style.strokeDashoffset = String(326.7 * (1 - clamp(f, 0, 1))); }
+function setDot(state, text) { const d = $('dot'); d.className = state; d.querySelector('span').textContent = text; }
+
+/* ====================== ตัวตรวจจับการแกว่งแขน ====================== */
+class SwingDetector {
+  constructor() { this.reset(); this.thr = 20; this.cal = 0; this.onStep = null; this.onHalf = null; }
+  reset() {
+    this.mean = [0, 0, 0]; this.lp = [0, 0, 0]; this.en = [1e-6, 1e-6, 1e-6];
+    this.axis = -1; this.sgn = 0; this.integ = 0; this.peak = 0; this.hcStart = 0; this.lastT = 0;
+    this.steps = 0; this.times = []; this.amps = []; this.lastStep = 0;
+    this.v = 0; this.cad = 0; this.src = ''; this.lastAmp = 0; this.rot = 0; this.upright = false;
+  }
+  feed(e, t) {
+    const dt = this.lastT ? clamp(t - this.lastT, 0.001, 0.1) : 0.016; this.lastT = t;
+    const rr = e.rotationRate;
+    let v, src;
+    if (rr && rr.alpha != null) { v = [rr.alpha || 0, rr.beta || 0, rr.gamma || 0]; src = 'gyro'; }
+    else {
+      const a = (e.acceleration && e.acceleration.x != null) ? e.acceleration : e.accelerationIncludingGravity;
+      if (!a || a.x == null) return;
+      v = [a.x || 0, a.y || 0, a.z || 0]; src = 'acc';
+    }
+    const g = e.accelerationIncludingGravity;
+    this.upright = !!(g && g.y != null && Math.abs(g.y) > 6.5);
+    if (this.src !== src) { this.src = src; this.mean = v.slice(); }
+    for (let i = 0; i < 3; i++) {
+      this.mean[i] += (v[i] - this.mean[i]) * Math.min(1, dt / 1.5);           // ตัดค่าเอียง/แรงโน้มถ่วง
+      const hp = v[i] - this.mean[i];
+      this.lp[i] += (hp - this.lp[i]) * Math.min(1, dt / 0.03);                  // กรองสัญญาณรบกวน
+      this.en[i] += (this.lp[i] * this.lp[i] - this.en[i]) * Math.min(1, dt / 0.8);
+    }
+    this.rot = Math.hypot(this.lp[0], this.lp[1], this.lp[2]);
+    let best = 0; for (let i = 1; i < 3; i++) if (this.en[i] > this.en[best]) best = i;
+    if (this.axis < 0 || (best !== this.axis && this.en[best] > 1.6 * this.en[this.axis])) {
+      this.axis = best; this.sgn = 0; this.integ = 0; this.peak = 0;
+    }
+    const x = this.lp[this.axis];
+    this.integ += x * dt; this.peak = Math.max(this.peak, Math.abs(x));
+    const h = src === 'gyro' ? 25 : 1.0;
+    if (this.sgn >= 0 && x < -h) this.flip(t, -1);
+    else if (this.sgn <= 0 && x > h) this.flip(t, 1);
+  }
+  flip(t, ns) {
+    if (this.sgn !== 0) {
+      const dur = t - this.hcStart;
+      const amp = this.src === 'gyro' ? Math.abs(this.integ) : this.peak;
+      this.lastAmp = amp;
+      if (this.onHalf) this.onHalf(amp, dur, t);
+      if (dur >= 0.09 && dur <= 1.5 && amp >= this.thr) {
+        this.steps++; this.times.push(t); if (this.times.length > 10) this.times.shift();
+        this.amps.push(amp); if (this.amps.length > 6) this.amps.shift();
+        this.lastStep = t;
+        if (this.onStep) this.onStep(t, amp);
+      }
+    }
+    this.sgn = ns; this.hcStart = t; this.integ = 0; this.peak = 0;
+  }
+  update(t, dt) {
+    const rec = this.times.filter(x => t - x < 1.6);
+    let cad = 0;
+    if (rec.length >= 2) cad = (rec.length - 1) / Math.max(0.05, rec[rec.length - 1] - rec[0]);
+    if (this.lastStep) cad = Math.min(cad, 1 / Math.max(0.001, t - this.lastStep));
+    cad = Math.min(cad, 5);
+    let base = 0;
+    for (let i = 1; i < SPEED_TABLE.length; i++) {
+      const [c0, v0] = SPEED_TABLE[i - 1], [c1, v1] = SPEED_TABLE[i];
+      if (cad <= c1) { base = v0 + (v1 - v0) * (cad - c0) / (c1 - c0); break; }
+      base = v1;
+    }
+    let gain = 1;
+    if (this.cal > 0 && this.amps.length) {
+      const am = this.amps.slice(-4).reduce((a, b) => a + b, 0) / Math.min(4, this.amps.length);
+      gain = 0.8 + 0.2 * clamp((am - this.thr) / Math.max(1, this.cal - this.thr), 0, 1);
+    }
+    this.v += (base * gain - this.v) * (1 - Math.exp(-dt / 0.3));
+    if (this.v < 0.02) this.v = 0;
+    this.cad = cad;
+  }
+  meter() { return this.cal ? clamp(this.lastAmp / this.cal, 0, 1) : 0; }
+}
+
+const D = new SwingDetector();
+let motionN = 0, lastMotionT = 0, stillSince = 0, stillF = 0;
+function onMotion(e) {
+  const t = performance.now() / 1000;
+  motionN++; lastMotionT = t;
+  D.feed(e, t);
+  const quiet = D.src === 'gyro' ? D.rot < 30 : D.rot < 0.7;
+  if (quiet && D.upright) { if (!stillSince) stillSince = t; } else stillSince = 0;
+  stillF = stillSince ? clamp((t - stillSince) / 1.0, 0, 1) : 0;
+}
+if (store.cal && store.cal.amp) applyCal(store.cal);
+function applyCal(c) {
+  D.cal = c.amp;
+  D.thr = Math.max(CAL_FLOOR[c.src] || 20, THR_RATIO * c.amp);
+}
+
+/* ====================== เซนเซอร์ ====================== */
+async function startSensors() {
+  if (typeof DeviceMotionEvent === 'undefined') throw new Error('เบราว์เซอร์นี้ไม่รองรับเซนเซอร์การเคลื่อนไหว');
+  let perm = 'granted';
+  if (typeof DeviceMotionEvent.requestPermission === 'function') {
+    try { perm = await DeviceMotionEvent.requestPermission(); } catch (_) { perm = 'error'; }
+  }
+  window.removeEventListener('devicemotion', onMotion);
+  window.addEventListener('devicemotion', onMotion);
+  const n0 = motionN;
+  await new Promise(ok => setTimeout(ok, 1500));
+  if (motionN === n0) {
+    if (perm !== 'granted') throw new Error('ยังไม่ได้อนุญาตเซนเซอร์ — กดเริ่มอีกครั้งแล้วเลือก "อนุญาต"');
+    throw new Error(location.protocol !== 'https:' && !/^(localhost|127\.)/.test(location.hostname)
+      ? 'เครื่องนี้ไม่ส่งข้อมูลเซนเซอร์ เพราะหน้าเว็บไม่ได้เปิดผ่าน https'
+      : 'ไม่พบข้อมูลเซนเซอร์จากมือถือเครื่องนี้');
+  }
+}
+let wakeLock = null;
+async function keepAwake() {
+  try { if ('wakeLock' in navigator && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); } catch (_) { }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && joined) keepAwake(); });
+function rotCheck() { $('rot').classList.toggle('need', joined); }
+
+/* ====================== เครือข่าย ====================== */
+let net = null, base = '', lanePath = '', inputPath = '';
+let joined = false, me = null, host = null, kicked = false;
+let fmSeq = -1, lastSend = 0, lastState = '', calibrating = false;
+
+async function join() {
+  $('jErr').textContent = '';
+  const name = ($('jName').value || '').trim().slice(0, 16) || ('ผู้เล่น ' + LANE_NO);
+  store.name = name; saveStore();
+  $('jGo').disabled = true; $('jGo').textContent = 'กำลังเปิดเซนเซอร์…';
+  try {
+    try { if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (_) { }
+    await startSensors();
+    keepAwake();
+    $('jGo').textContent = 'กำลังเชื่อมต่อ…';
+    if (!net) {
+      net = await RunNet.connect(LOCAL ? { mode: 'local' } : { config: { databaseURL: store.db } });
+      net.onConnection(c => setDot(c ? 'ok' : 'bad', c ? 'เชื่อมต่อแล้ว' : 'หลุดการเชื่อมต่อ'));
+      net.onError(e => setDot('bad', 'ส่งข้อมูลไม่ได้'));
+    }
+    base = RunNet.roomPath(ROOM); lanePath = base + '/players/' + LANE; inputPath = base + '/input/' + LANE;
+    let h = null;
+    for (let i = 0; i < 8 && !h; i++) { h = await net.get(base + '/host'); if (!h) await new Promise(ok => setTimeout(ok, 500)); }
+    if (!h || h.state === 'closed') throw new Error('ไม่พบห้อง ' + ROOM + ' — สแกน QR ใหม่จากจอเกม');
+    await claim(name);
+  } catch (e) {
+    $('jErr').textContent = e.message || String(e);
+    $('jGo').disabled = false; $('jGo').textContent = 'เริ่ม · เปิดเซนเซอร์';
+  }
+}
+
+async function claim(name) {
+  const now = net.now();
+  const res = await net.transaction(lanePath, c => {
+    if (c && c.token !== token && (c.online !== false || now - (c.seen || 0) < 60000)) return; // เลนนี้มีคนอยู่
+    return { name, token, online: true, seen: now, joined: (c && c.token === token && c.joined) || now,
+             ready: false, cal: !!D.cal, src: D.src || '', again: -1 };
+  });
+  if (!res.committed) {
+    msg('เลน P' + LANE_NO + ' มีคนใช้อยู่', 'ขอให้ผู้ดูแลกดนำผู้เล่นเดิมออกจากจอเกม หรือสแกน QR ของอีกเลน', 'ลองอีกครั้ง', () => { show('sJoin'); $('jGo').disabled = false; $('jGo').textContent = 'เริ่ม · เปิดเซนเซอร์'; });
+    return;
+  }
+  kicked = false; joined = true; rotCheck();
+  net.onDisconnect(lanePath + '/online').set(false);
+  if (!subs.length) subscribe();
+  render();
+}
+
+const subs = [];
+function subscribe() {
+  subs.push(net.on(lanePath, n => {
+    if (!joined) return;
+    if (!n || n.token !== token) { me = null; kicked = true; joined = false; render(); return; }
+    me = n; render();
+  }));
+  subs.push(net.on(base + '/host', h => {
+    host = h;
+    if (h && h.state !== lastState) {
+      if (h.state === 'race' && isPart()) { try { navigator.vibrate && navigator.vibrate(250); } catch (_) { } }
+      if (h.state === 'set' && isPart()) { try { navigator.vibrate && navigator.vibrate(60); } catch (_) { } }
+      lastState = h.state;
+    }
+    render();
+  }));
+  setInterval(() => { if (joined && net) net.update(lanePath, { seen: net.now(), online: true }); }, 2000);
+}
+const isPart = () => !!(host && host.lanes && host.lanes[LANE]);
+
+D.onStep = () => {
+  if (!joined || !host || !isPart()) return;
+  if ((host.state === 'set' || host.state === 'race') && fmSeq !== host.seq) {
+    fmSeq = host.seq;
+    net.update(inputPath, { fm: net.now(), fs: host.seq });
+  }
+};
+
+function sendLoop() {
+  if (!joined || !net || !D.cal) return;
+  const racing = host && RACE_STATES.includes(host.state) && isPart();
+  const now = performance.now();
+  if (now - lastSend < (racing ? 50 : 120)) return;
+  lastSend = now;
+  net.update(inputPath, { v: Math.round(D.v * 100) / 100, c: Math.round(D.cad * 100) / 100, n: D.steps, t: net.now() });
+}
+setInterval(sendLoop, 25);
+
+/* ====================== คาลิเบรต ====================== */
+async function runCalib() {
+  if (calibrating) return;
+  calibrating = true;
+  $('cGo').style.display = 'none';
+  net && net.update(lanePath, { stage: 'calib' });
+  for (let i = 3; i >= 1; i--) {
+    $('cTitle').textContent = 'เตรียมตัว…'; $('cNum').innerHTML = i + '<small>เริ่มใน</small>'; setRing($('cRing'), 0);
+    await new Promise(ok => setTimeout(ok, 800));
+  }
+  $('cTitle').textContent = 'แกว่งเร็วที่สุด!';
+  const amps = [], src0 = D.src;
+  const oldThr = D.thr;
+  D.thr = 1e9; // ระหว่างคาลิเบรตไม่นับก้าว
+  D.onHalf = (amp, dur) => { if (dur >= 0.09 && dur <= 1.5) amps.push(amp); };
+  const t0 = performance.now();
+  await new Promise(ok => {
+    const tick = () => {
+      const el = (performance.now() - t0) / 1000;
+      setRing($('cRing'), el / 5);
+      $('cNum').innerHTML = Math.max(0, Math.ceil(5 - el)) + '<small>วินาที</small>';
+      const top = amps.length ? Math.max(...amps) : 1;
+      $('cMeter').style.width = (clamp(D.lastAmp / Math.max(top, 1), 0, 1) * 100) + '%';
+      if (el >= 5) ok(); else requestAnimationFrame(tick);
+    };
+    tick();
+  });
+  D.onHalf = null;
+  calibrating = false;
+  const src = D.src || src0;
+  const sorted = amps.slice().sort((a, b) => b - a);
+  const top = sorted.slice(0, 6);
+  const amp = top.length ? top[Math.floor(top.length / 2)] : 0;
+  if (sorted.length < 6 || amp < (CAL_MIN[src] || 45)) {
+    D.thr = oldThr;
+    $('cTitle').textContent = 'แกว่งน้อยไปนิด';
+    $('cText').textContent = 'ลองแกว่งแขนให้กว้างและเร็วขึ้น ให้เหมือนวิ่งสุดแรง';
+    $('cNum').innerHTML = '↻'; $('cGo').textContent = 'ลองอีกครั้ง'; $('cGo').style.display = '';
+    net && net.update(lanePath, { stage: 'joined' });
+    return;
+  }
+  store.cal = { src, amp: Math.round(amp * 10) / 10 }; saveStore();
+  applyCal(store.cal);
+  $('cTitle').textContent = 'คาลิเบรตแรงแกว่ง'; $('cText').textContent = 'กำมือถือแนวตั้ง แล้วแกว่งแขนหน้า–หลังให้เร็วที่สุดเหมือนวิ่งสปรินต์ 5 วินาที';
+  $('cGo').textContent = 'เริ่มคาลิเบรต'; $('cGo').style.display = '';
+  net && net.update(lanePath, { cal: true, src, stage: 'cal-ok' });
+  render();
+}
+
+/* ====================== ตัดสินว่าโชว์หน้าไหน ====================== */
+function render() {
+  if (kicked) {
+    msg('ถูกนำออกจากเลน', 'ผู้ดูแลนำคุณออกจากเลน P' + LANE_NO + ' หรือมีผู้เล่นอื่นเข้ามาแทน', 'เข้าร่วมอีกครั้ง', () => { kicked = false; claim(store.name || ('ผู้เล่น ' + LANE_NO)); });
+    return;
+  }
+  if (!joined) return;
+  if (host && host.state === 'closed') { msg('ห้องนี้ปิดแล้ว', 'สแกน QR ใหม่จากจอเกม'); return; }
+  const part = isPart();
+  if (host && RACE_STATES.includes(host.state)) {
+    if (part) { show('sRace'); return; }
+    msg('กำลังแข่งรอบนี้อยู่', 'รอรอบถัดไป แล้วกดพร้อมอีกครั้ง'); return;
+  }
+  if (host && host.state === 'result' && part && host.result && host.result[LANE] && !(me && me.again === host.seq)) {
+    showResult(host.result[LANE]); return;
+  }
+  if (calibrating) { show('sCalib'); return; }
+  if (!D.cal) { show('sCalib'); return; }
+  if (me && me.ready) {
+    $('wTitle').textContent = 'พร้อมแล้ว';
+    $('wText').textContent = host && host.state === 'countdown' ? 'กำลังจะเริ่ม…' : 'รอผู้เล่นคนอื่น…';
+    show('sWait'); return;
+  }
+  show('sReady');
+}
+
+function showResult(r) {
+  show('sResult');
+  $('resPlace').textContent = r.dnf ? '–' : r.place;
+  $('resTitle').textContent = r.dnf ? 'ไม่จบการแข่ง' : (r.place === 1 ? (r.solo ? 'จบการวิ่ง!' : 'ชนะ!') : 'อันดับ ' + r.place);
+  $('resTime').textContent = r.time != null ? r.time.toFixed(2) : '–';
+  $('resTop').textContent = r.top != null ? Math.round(r.top) : '–';
+  $('resReact').textContent = r.react != null ? r.react.toFixed(2) : '–';
+  $('resSteps').textContent = r.steps != null ? String(r.steps) : '–';
+}
+
+function setReady(v) {
+  if (!joined) return;
+  net.update(lanePath, { ready: v, stage: v ? 'ready' : 'cal-ok', name: store.name });
+}
+
+/* ====================== วงรอบหน้าจอ ====================== */
+let lastFrame = performance.now() / 1000, readyLatch = false;
+function frame() {
+  const t = performance.now() / 1000, dt = clamp(t - lastFrame, 0, 0.1); lastFrame = t;
+  D.update(t, dt);
+  const m = (D.meter() * 100) + '%';
+  if (cur === 'sReady') {
+    $('rMeter').style.width = m;
+    setRing($('rRing'), stillF);
+    $('rLbl').textContent = stillF >= 1 ? '✔' : '✋';
+    if (stillF >= 1 && !readyLatch && joined && me && !me.ready) { readyLatch = true; setReady(true); try { navigator.vibrate && navigator.vibrate(40); } catch (_) { } }
+    if (stillF < 0.3) readyLatch = false;
+  } else if (cur === 'sWait') {
+    $('wMeter').style.width = m;
+  } else if (cur === 'sRace' && host) {
+    const s = host.state, kmh = D.v * 3.6;
+    const txt = $('raceTxt'), spd = $('raceSpd');
+    if (s === 'marks') { txt.textContent = 'เข้าที่'; spd.style.display = 'none'; }
+    else if (s === 'set') { txt.textContent = 'ระวัง…'; spd.style.display = 'none'; }
+    else if (s === 'foul') { txt.textContent = 'ฟาวล์! เริ่มใหม่'; spd.style.display = 'none'; }
+    else { txt.textContent = D.v > 0.3 ? '' : 'วิ่ง!'; spd.style.display = ''; spd.firstChild.textContent = Math.round(kmh); }
+    const f = s === 'race' ? clamp(D.v / 9, 0, 1) : 0;
+    $('sRace').style.background = 'color-mix(in srgb, var(--c) ' + Math.round(18 + 70 * f) + '%, #07080b)';
+  }
+  if (DEBUG) {
+    $('dbg').textContent = 'src ' + D.src + ' axis ' + D.axis + '\namp ' + D.lastAmp.toFixed(1) + ' thr ' + D.thr.toFixed(1) + ' cal ' + D.cal +
+      '\ncad ' + D.cad.toFixed(2) + ' v ' + D.v.toFixed(2) + ' steps ' + D.steps + '\nrot ' + D.rot.toFixed(1) + ' upright ' + D.upright + ' still ' + stillF.toFixed(2) +
+      '\nhost ' + (host ? host.state + ' #' + host.seq : '-') + ' motion ' + motionN;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ====================== ปุ่ม ====================== */
+$('jGo').onclick = join;
+$('jName').addEventListener('keydown', e => { if (e.key === 'Enter') join(); });
+$('cGo').onclick = runCalib;
+$('rBtn').onclick = () => setReady(true);
+$('rRecal').onclick = () => { store.cal = null; saveStore(); D.cal = 0; D.thr = 20; net && net.update(lanePath, { cal: false, ready: false, stage: 'joined' }); render(); };
+$('wCancel').onclick = () => setReady(false);
+$('resAgain').onclick = () => { if (host) net.update(lanePath, { again: host.seq, ready: false }); };
+
+/* ====================== เริ่มต้น ====================== */
+if (!ROOM || !LANE) {
+  msg('สแกน QR จากจอเกม', 'เปิดหน้านี้ด้วยการสแกน QR ของเลน P1 หรือ P2 ที่จอเกม');
+} else if (!LOCAL && !store.db) {
+  msg('ลิงก์ไม่ครบ', 'QR นี้ไม่มีค่าการเชื่อมต่อ — สแกน QR ใหม่จากจอเกม');
+} else {
+  show('sJoin');
+}
+window.__pad = { D, get host() { return host; }, get me() { return me; }, onMotion, store }; // สำหรับทดสอบ
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>วิ่งแข่ง · จอเกม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--p1:#ff4d4d;--p2:#3d8bff;--gold:#ffc940;--ink:#fff;--glass:rgba(12,16,26,.72);--line:rgba(255,255,255,.14)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--ink);font-family:Sarabun,system-ui,sans-serif}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;width:100%;height:100%}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hide{display:none!important}
+/* ---------- ล็อบบี้ ---------- */
+#lobby{position:fixed;inset:0;pointer-events:none}
+#lobby .lane{position:absolute;top:24px;width:min(300px,24vw);padding:16px;text-align:center;pointer-events:auto}
+#lane1{left:24px;border-top:6px solid var(--p1)}
+#lane2{right:24px;border-top:6px solid var(--p2)}
+.lane h3{margin:0 0 10px;font-size:24px;font-weight:800}
+.lav{display:flex;justify-content:center;margin:-4px 0 4px}.lav svg{width:70px;height:70px}
+.lane.p1 h3{color:#ff8a80}.lane.p2 h3{color:#90caf9}
+.qr{background:#fff;border-radius:12px;padding:8px;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.qr svg{width:100%;height:100%;display:block}
+.qr.dim{opacity:.35}
+.who{font-size:28px;font-weight:800;margin:10px 0 2px;min-height:0;word-break:break-word}
+.st{font-size:18px;color:#cfd6e4;line-height:1.4;min-height:26px}
+.st.ok{color:#5be08f;font-weight:800;font-size:22px}
+.st.warn{color:#ffd166}
+.sw{height:12px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:10px}
+.sw i{display:block;height:100%;width:0;border-radius:6px;transition:width .12s}
+.p1 .sw i{background:var(--p1)}.p2 .sw i{background:var(--p2)}
+.tablink{display:block;margin-top:8px;font-size:14px;color:#9fc3ff}
+.kick{position:absolute;top:10px;right:10px;border:0;background:rgba(255,255,255,.1);color:#ddd;border-radius:8px;font:inherit;font-size:13px;padding:4px 8px;cursor:pointer}
+.kick.arm{background:#c62828;color:#fff}
+#lmid{position:absolute;top:24px;left:50%;transform:translateX(-50%);width:min(560px,44vw);padding:12px 20px;text-align:center;pointer-events:auto}
+#lmid h1{margin:0;font-size:36px;font-weight:800;letter-spacing:.5px;line-height:1.2}
+#lmid .room{font-size:18px;color:#c8d0de;margin-top:2px}
+#lmid .room b{font-size:26px;color:var(--gold);letter-spacing:4px}
+#lmid ol{text-align:left;margin:6px auto 4px;padding-left:22px;font-size:16px;line-height:1.45;color:#dfe5ef;max-width:440px}
+.chips{display:flex;gap:8px;justify-content:center;margin:6px 0}
+.chips button{font:inherit;font-size:17px;font-weight:600;border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;border-radius:999px;padding:4px 16px;cursor:pointer}
+.chips button.on{background:var(--gold);color:#1b1400;border-color:var(--gold)}
+#lStatus{font-size:22px;font-weight:800;margin-top:6px;color:var(--gold);min-height:30px}
+#lb{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);padding:8px 18px;font-size:16px;color:#dfe5ef;pointer-events:none;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
+#lb b{color:var(--gold)}
+/* ---------- HUD แข่ง ---------- */
+#hud{position:fixed;inset:0;pointer-events:none}
+#timer{position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:50px;font-weight:800;padding:0 26px;font-variant-numeric:tabular-nums;letter-spacing:1px;border-radius:999px}
+.rk{display:flex;align-items:center;gap:12px;padding:6px 22px 6px 6px;border-radius:999px;background:rgba(28,44,18,.66);border:2px solid rgba(255,255,255,.22);min-width:280px}
+.rk .av{width:62px;height:62px;flex:none}
+.rk .pl{font-size:15px;font-weight:600;color:#eaf5d8;line-height:1.15}
+.rk .val{font-size:34px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
+.rk .sp{font-size:14px;color:#ffd166;min-height:16px;line-height:1.2}
+.rk.gh{opacity:.72}
+#ranks{position:absolute;top:18px;left:18px;display:flex;flex-direction:column;gap:10px}
+#prog{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);width:min(900px,80vw);height:46px;padding:0 18px}
+#prog .ln{position:absolute;left:18px;right:18px;top:22px;height:4px;background:rgba(255,255,255,.3);border-radius:2px}
+#prog .fin{position:absolute;right:12px;top:6px;font-size:13px;color:#ddd}
+#prog .st0{position:absolute;left:12px;top:6px;font-size:13px;color:#ddd}
+.mk{position:absolute;top:15px;width:18px;height:18px;margin-left:-9px;border-radius:50%;border:2px solid #fff;transition:left .05s linear}
+.mk.m1{background:var(--p1)}.mk.m2{background:var(--p2)}.mk.mg{background:rgba(200,215,235,.6);border-style:dashed}
+#roomTag{position:absolute;right:20px;bottom:18px;font-size:14px;color:rgba(255,255,255,.6)}
+/* ---------- ข้อความกลางจอ ---------- */
+#callout{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;transition:opacity .25s,transform .25s;opacity:0}
+#callout.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#callout .big{font-size:min(15vw,150px);font-weight:800;line-height:1;text-shadow:0 6px 30px rgba(0,0,0,.55),0 2px 0 rgba(0,0,0,.4)}
+#callout .sub{font-size:30px;font-weight:600;margin-top:10px;text-shadow:0 3px 14px rgba(0,0,0,.7)}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
+/* ---------- ผลการแข่ง ---------- */
+#result{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);width:min(880px,92vw);padding:16px 26px}
+#result h2{margin:0 0 4px;font-size:34px;text-align:center}
+#result .sub{text-align:center;color:#ffd166;font-size:22px;font-weight:800;min-height:30px}
+#result table{width:100%;border-collapse:collapse;margin:10px 0;font-size:22px}
+#result th{font-size:15px;color:#aab3c5;font-weight:600;text-align:right;padding:4px 8px}
+#result th:nth-child(2),#result td:nth-child(2){text-align:left}
+#result td{padding:10px 8px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+#result td.pl{font-size:30px;font-weight:800;text-align:center;width:60px}
+#result td .dot{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:8px;vertical-align:1px}
+#result .foot{text-align:center;color:#c8d0de;font-size:18px;margin-top:6px}
+#result .rlb{text-align:center;font-size:16px;color:#c8d0de;margin-top:8px}
+/* ---------- อื่น ๆ ---------- */
+#conn{position:fixed;right:14px;bottom:12px;display:flex;align-items:center;gap:6px;font-size:13px;color:#cfd6e4;padding:4px 10px;z-index:5}
+#conn i{width:10px;height:10px;border-radius:50%;background:#888}
+#conn.ok i{background:#43d17a;box-shadow:0 0 8px #43d17a}#conn.bad i{background:#ff5252}#conn.local i{background:#ffc940}
+#help{position:fixed;left:14px;bottom:12px;font-size:13px;color:rgba(255,255,255,.55);z-index:5}
+#sound{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);padding:8px 18px;font-size:17px;cursor:pointer;z-index:6}
+#banner{position:fixed;left:50%;top:0;transform:translateX(-50%);background:#5c3b00;color:#ffe2a8;padding:6px 16px;border-radius:0 0 12px 12px;font-size:15px;z-index:7;max-width:90vw;text-align:center}
+#toast{position:fixed;left:50%;top:84px;transform:translateX(-50%);padding:10px 18px;font-size:18px;z-index:9;opacity:0;transition:opacity .25s;pointer-events:none;max-width:80vw;text-align:center}
+#toast.on{opacity:1}#toast.err{border-color:#ff6b6b;color:#ffd1d1}
+#settings{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:20}
+#settings .box{width:min(640px,94vw);max-height:92vh;overflow:auto;padding:20px 24px}
+#settings h2{margin:0 0 8px}
+#settings label{display:block;font-size:15px;color:#c8d0de;margin:12px 0 4px}
+#settings textarea{width:100%;font:13px/1.4 ui-monospace,monospace;background:#0e121b;color:#e6ebf5;border:1px solid var(--line);border-radius:10px;padding:8px}
+#settings .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+#settings button{font:inherit;font-size:16px;font-weight:600;border:0;border-radius:10px;padding:8px 16px;background:var(--gold);color:#1b1400;cursor:pointer}
+#settings button.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid var(--line)}
+#settings .note{font-size:14px;color:#aab3c5;margin-top:8px;line-height:1.5}
+#settings code{background:#0e121b;padding:2px 6px;border-radius:6px;color:#ffd166}
+#settings input[type=range]{width:180px}
+.vol{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;align-items:center;font-size:15px}
+#cfgMsg{font-size:14px;margin-top:6px;color:#ffd166}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="run-net.js"></script>
+</head>
+<body>
+<div id="stage"></div>
+
+<div id="lobby">
+  <div class="lane p1 glass" id="lane1">
+    <button class="kick hide" id="kick1">นำออก</button>
+    <div class="lav" id="lav1"></div>
+    <h3>P1 · เลนแดง</h3>
+    <div class="qr" id="qr1"></div>
+    <div class="who" id="who1"></div>
+    <div class="st" id="st1">สแกนเพื่อเข้าเลน P1</div>
+    <div class="sw"><i id="sw1"></i></div>
+    <a class="tablink hide" id="lk1" target="_blank">เปิดจอย P1 ในแท็บใหม่ (ทดสอบ)</a>
+  </div>
+  <div class="glass" id="lmid">
+    <h1>วิ่งแข่ง <span id="lDist">100</span> ม.</h1>
+    <div class="room">ห้อง <b id="roomCode">----</b></div>
+    <ol>
+      <li>สแกน QR ของเลนตัวเอง (คนเดียวก็เล่นได้)</li>
+      <li>กดเริ่มบนมือถือ แล้วคาลิเบรตแรงแกว่ง 5 วินาที</li>
+      <li>ยกมือถือนิ่ง 1 วินาที = พร้อม · ครบแล้วเกมเริ่มเอง</li>
+    </ol>
+    <div class="chips" id="distChips"><button data-d="60">60 ม.</button><button data-d="100">100 ม.</button></div>
+    <div id="lStatus">รอผู้เล่นสแกน QR</div>
+  </div>
+  <div class="lane p2 glass" id="lane2">
+    <button class="kick hide" id="kick2">นำออก</button>
+    <div class="lav" id="lav2"></div>
+    <h3>P2 · เลนน้ำเงิน</h3>
+    <div class="qr" id="qr2"></div>
+    <div class="who" id="who2"></div>
+    <div class="st" id="st2">สแกนเพื่อเข้าเลน P2</div>
+    <div class="sw"><i id="sw2"></i></div>
+    <a class="tablink hide" id="lk2" target="_blank">เปิดจอย P2 ในแท็บใหม่ (ทดสอบ)</a>
+  </div>
+  <div class="glass" id="lb"></div>
+</div>
+
+<div id="hud" class="hide">
+  <div id="timer" class="glass">0.00</div>
+  <div id="ranks"></div>
+  <div id="prog" class="glass"><span class="st0">0</span><span class="fin" id="progFin">100 ม.</span><div class="ln"></div><div class="mk m1" id="mk1"></div><div class="mk m2" id="mk2"></div><div class="mk mg" id="mkg"></div></div>
+  <div id="roomTag"></div>
+</div>
+
+<div id="callout"><div class="big" id="coBig"></div><div class="sub" id="coSub"></div></div>
+<div id="flash"></div>
+
+<div id="result" class="glass hide">
+  <h2 id="resTitle">ผลการแข่งขัน</h2>
+  <div class="sub" id="resSub"></div>
+  <table><thead><tr><th style="text-align:center">อันดับ</th><th>ผู้เล่น</th><th>เวลา (วิ)</th><th>สูงสุด (กม./ชม.)</th><th>ออกตัว (วิ)</th><th>ก้าว</th></tr></thead><tbody id="resBody"></tbody></table>
+  <div class="rlb" id="resLb"></div>
+  <div class="foot">กด <b>อีกรอบ</b> บนมือถือ หรือกด Enter</div>
+</div>
+
+<div id="settings" class="hide">
+  <div class="box glass">
+    <h2>ตั้งค่า</h2>
+    <label>Firebase config (วางทั้งก้อนจาก Project settings หรือวางแค่ Database URL)</label>
+    <textarea id="cfgTxt" rows="4" placeholder="https://xxxx-default-rtdb.asia-southeast1.firebasedatabase.app"></textarea>
+    <div id="cfgMsg"></div>
+    <div class="row"><button id="cfgSave">บันทึก + เชื่อมต่อใหม่</button><button class="ghost" id="cfgLocal">ใช้โหมดทดสอบในเครื่องนี้</button></div>
+    <div class="note">ครั้งแรก: Firebase → Realtime Database → <b>Rules</b> เพิ่มบรรทัดนี้ในกฎเดิม (ไม่ต้องลบของเดิม)<br><code>"games": { ".read": true, ".write": true }</code></div>
+    <label>ระดับเสียง</label>
+    <div class="vol">
+      <span>บรรยากาศ</span><input type="range" min="0" max="1" step="0.05" id="vAmb">
+      <span>เอฟเฟกต์</span><input type="range" min="0" max="1" step="0.05" id="vSfx">
+      <span>ผู้ประกาศ</span><input type="range" min="0" max="1" step="0.05" id="vVoice">
+    </div>
+    <div class="note" id="voiceNote"></div>
+    <label>คุณภาพภาพ</label>
+    <div class="chips" id="qChips" style="justify-content:flex-start"><button data-q="high">สูง</button><button data-q="low">ต่ำ (เครื่องช้า)</button></div>
+    <label><input type="checkbox" id="kbdChk"> โหมดคีย์บอร์ด (ทดสอบโดยไม่ใช้มือถือ: P1 กด A/D สลับ · P2 กด ←/→ สลับ · Space = พร้อม)</label>
+    <div class="row"><button class="ghost" id="newRoom">สร้างห้องใหม่</button><button class="ghost" id="fsBtn">เต็มจอ</button><button id="closeSet">ปิด</button></div>
+    <div class="note">ปุ่มลัด: F เต็มจอ · S ตั้งค่า · K คีย์บอร์ด · R ห้องใหม่ · Enter เริ่มทันที / อีกรอบ · Esc ยกเลิกรอบ · 1 / 2 นำผู้เล่นออก</div>
+  </div>
+</div>
+
+<div id="sound" class="glass">🔇 คลิกที่จอเพื่อเปิดเสียง</div>
+<div id="banner" class="hide"></div>
+<div id="toast" class="glass"></div>
+<div id="conn" class="glass"><i></i><span>กำลังเชื่อมต่อ</span></div>
+<div id="help">F เต็มจอ · S ตั้งค่า · K คีย์บอร์ด</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* =====================================================================
+   ค่าพื้นฐาน
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const damp = (a, b, r, dt) => a + (b - a) * (1 - Math.exp(-r * dt));
+const TAU = Math.PI * 2;
+const LANES = ['p1', 'p2'];
+const LANE_W = 1.6, N_LANES = 4;
+const laneZ = i => N_LANES * LANE_W / 2 - (i - 0.5) * LANE_W;   // เลน 1 อยู่ซ้ายสุดของจอ
+const INFO = {
+  p1: { no: 1, hex: 0xff4d4d, css: '#ff4d4d', lane: 2, pan: -0.45, label: 'P1' },
+  p2: { no: 2, hex: 0x3d8bff, css: '#3d8bff', lane: 3, pan: 0.45, label: 'P2' }
+};
+const SPEED_TABLE = [[0, 0], [1, 2], [2.5, 6], [4, 9], [5, 10]];   // ต้องตรงกับ pad.html
+const PACE = { 60: 11.0, 100: 18.0 };                              // เวลานักวิ่งเงาเริ่มต้น (วินาที)
+const Q = new URLSearchParams(location.search);
+const FORCE_LOCAL = Q.get('local') === '1';
+const LS = {
+  get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) { } }
+};
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function speedFromCadence(cad) {
+  for (let i = 1; i < SPEED_TABLE.length; i++) {
+    const [c0, v0] = SPEED_TABLE[i - 1], [c1, v1] = SPEED_TABLE[i];
+    if (cad <= c1) return v0 + (v1 - v0) * (cad - c0) / (c1 - c0);
+  }
+  return SPEED_TABLE[SPEED_TABLE.length - 1][1];
+}
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* =====================================================================
+   สถานะเกม
+   ===================================================================== */
+const G = {
+  dist: [60, 100].includes(LS.get('run_dist', 100)) ? LS.get('run_dist', 100) : 100,
+  state: 'lobby', seq: 0, lanes: {}, gunAt: 0, gunPerf: 0, stateAt: performance.now(),
+  players: {}, input: {}, fouls: { p1: 0, p2: 0 }, penalty: { p1: 0, p2: 0 },
+  kbd: false, kbdReady: { p1: false, p2: false }, result: null, solo: false,
+  endPerf: 0, firstFinish: false, ex: 0.15, exBoost: 0, quality: LS.get('run_quality', 'high')
+};
+const vols = Object.assign({ amb: 0.8, sfx: 0.9, voice: 1 }, LS.get('run_vol', {}));
+
+/* =====================================================================
+   เสียง (สังเคราะห์ด้วย Web Audio — ใส่ไฟล์จริงแทนได้ที่ assets/run/sfx/manifest.json)
+   ===================================================================== */
+class AudioEngine {
+  constructor() { this.ctx = null; this.ex = 0.15; this.samples = {}; this.voiceTh = null; }
+  unlock() {
+    if (this.ctx) { if (this.ctx.state !== 'running') this.ctx.resume(); return; }
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const ctx = this.ctx = new C();
+    this.master = ctx.createGain(); this.master.gain.value = 0.9;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+    this.master.connect(comp).connect(ctx.destination);
+    this.amb = ctx.createGain(); this.amb.gain.value = vols.amb; this.amb.connect(this.master);
+    this.sfx = ctx.createGain(); this.sfx.gain.value = vols.sfx; this.sfx.connect(this.master);
+    this.rev = ctx.createConvolver(); this.rev.buffer = this.impulse(2.6, 2.4);
+    this.revOut = ctx.createGain(); this.revOut.gain.value = 0.55; this.rev.connect(this.revOut).connect(this.sfx);
+    this.white = this.noise('white', 2); this.pink = this.noise('pink', 4); this.brown = this.noise('brown', 4);
+    this.startAmbience(); this.loadSamples();
+  }
+  noise(kind, sec) {
+    const ctx = this.ctx, n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, last = 0;
+    for (let i = 0; i < n; i++) {
+      const w = Math.random() * 2 - 1;
+      if (kind === 'white') d[i] = w;
+      else if (kind === 'pink') {
+        b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759; b2 = 0.969 * b2 + w * 0.153852;
+        b3 = 0.8665 * b3 + w * 0.3104856; b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898;
+        d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11; b6 = w * 0.115926;
+      } else { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; }
+    }
+    return b;
+  }
+  impulse(sec, decay) {
+    const ctx = this.ctx, n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay); }
+    return b;
+  }
+  src(buf, loop) { const s = this.ctx.createBufferSource(); s.buffer = buf; s.loop = !!loop; return s; }
+  filt(type, f, q) { const x = this.ctx.createBiquadFilter(); x.type = type; x.frequency.value = f; if (q != null) x.Q.value = q; return x; }
+  pan(p) { const x = this.ctx.createStereoPanner(); x.pan.value = clamp(p, -1, 1); return x; }
+  env(g, t, a, peak, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
+  startAmbience() {
+    const ctx = this.ctx;
+    const bed = this.src(this.pink, true); this.bedG = ctx.createGain(); this.bedG.gain.value = 0.15;
+    bed.connect(this.filt('bandpass', 700, 0.6)).connect(this.bedG).connect(this.amb); bed.start(0, Math.random() * 3);
+    this.babble = [];
+    for (let i = 0; i < 8; i++) {
+      const s = this.src(this.pink, true), f = this.filt('bandpass', 350 + Math.random() * 1500, 3 + Math.random() * 3), g = ctx.createGain();
+      g.gain.value = 0; s.connect(f).connect(g).connect(this.pan(Math.random() * 1.6 - 0.8)).connect(this.amb); s.start(0, Math.random() * 3);
+      this.babble.push({ g, f, next: 0 });
+    }
+    const ch = this.src(this.white, true); this.cheerG = ctx.createGain(); this.cheerG.gain.value = 0;
+    ch.connect(this.filt('bandpass', 1500, 0.5)).connect(this.cheerG).connect(this.amb); ch.start();
+    const ro = this.src(this.pink, true); this.roarG = ctx.createGain(); this.roarG.gain.value = 0;
+    ro.connect(this.filt('lowpass', 900)).connect(this.roarG).connect(this.amb); ro.start(0, 1.3);
+    const wi = this.src(this.brown, true), wg = ctx.createGain(); wg.gain.value = 0.05;
+    wi.connect(this.filt('lowpass', 380)).connect(wg).connect(this.amb); wi.start();
+  }
+  tick(dt) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const t = this.ctx.currentTime, ex = this.ex;
+    for (const b of this.babble) {
+      if (t >= b.next) {
+        const dur = 0.12 + Math.random() * 0.25, lvl = (0.015 + 0.05 * Math.random()) * (0.5 + ex * 1.4);
+        b.g.gain.setTargetAtTime(lvl, t, 0.03); b.g.gain.setTargetAtTime(0.003, t + dur, 0.06);
+        b.next = t + dur + Math.random() * 0.25;
+        if (Math.random() < 0.2) b.f.frequency.setTargetAtTime(350 + Math.random() * 1500, t, 0.2);
+      }
+    }
+    const k = this.crowdSample ? 0.35 : 1;
+    this.bedG.gain.setTargetAtTime((0.06 + 0.22 * ex) * k, t, 0.4);
+    this.cheerG.gain.setTargetAtTime(Math.pow(ex, 1.6) * 0.3, t, 0.25);
+    this.roarG.gain.setTargetAtTime(Math.pow(ex, 1.3) * 0.32, t, 0.3);
+    if (this.crowdSample) this.crowdSample.gain.setTargetAtTime(0.25 + 0.6 * ex, t, 0.4);
+    let n = Math.max(0, ex - 0.25) * 55 * dt;
+    while (n > 0) { if (Math.random() < n) this.clap(); n -= 1; }
+    if (ex > 0.55 && Math.random() < dt * 0.6 * (ex - 0.5)) this.fanWhistle();
+  }
+  clap() {
+    const ctx = this.ctx, t = ctx.currentTime + Math.random() * 0.02, s = this.src(this.white), g = ctx.createGain();
+    s.connect(this.filt('bandpass', 1100 + Math.random() * 1400, 1.2)).connect(g).connect(this.pan(Math.random() * 1.8 - 0.9)).connect(this.amb);
+    this.env(g, t, 0.002, 0.04 + Math.random() * 0.08, 0.05); s.start(t, Math.random() * 1.5, 0.08);
+  }
+  fanWhistle() {
+    const ctx = this.ctx, t = ctx.currentTime, o = ctx.createOscillator(), l = ctx.createOscillator(), lg = ctx.createGain(), g = ctx.createGain();
+    o.frequency.value = 2200 + Math.random() * 900; l.frequency.value = 5 + Math.random() * 3; lg.gain.value = 50;
+    l.connect(lg).connect(o.frequency); o.connect(g).connect(this.pan(Math.random() * 1.6 - 0.8)).connect(this.amb);
+    this.env(g, t, 0.05, 0.025, 0.5); o.start(t); l.start(t); o.stop(t + 0.7); l.stop(t + 0.7);
+  }
+  playSample(key, pan, gain, rate) {
+    const list = this.samples[key]; if (!list || !this.ctx) return false;
+    const s = this.src(list[Math.floor(Math.random() * list.length)]), g = this.ctx.createGain();
+    g.gain.value = gain; s.playbackRate.value = rate || 1;
+    s.connect(g).connect(this.pan(pan || 0)).connect(this.sfx); s.start();
+    return true;
+  }
+  step(pan, intensity) {
+    if (!this.ctx) return;
+    const I = clamp(intensity, 0.15, 1);
+    if (this.playSample('step', pan, 0.25 + 0.6 * I, 0.92 + Math.random() * 0.16)) return;
+    const ctx = this.ctx, t = ctx.currentTime, p = this.pan(pan);
+    p.connect(this.sfx);
+    const s = this.src(this.white), g = ctx.createGain();
+    s.connect(this.filt('lowpass', 650 + Math.random() * 700, 0.8)).connect(this.filt('highpass', 110)).connect(g).connect(p);
+    this.env(g, t, 0.003, 0.32 * I, 0.07); s.start(t, Math.random() * 1.5, 0.12);
+    const o = ctx.createOscillator(), og = ctx.createGain();
+    o.frequency.setValueAtTime(95 + Math.random() * 20, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.08);
+    o.connect(og).connect(p); this.env(og, t, 0.004, 0.22 * I, 0.08); o.start(t); o.stop(t + 0.12);
+    const c = this.src(this.white), cg = ctx.createGain();
+    c.connect(this.filt('highpass', 2500)).connect(cg).connect(p); this.env(cg, t, 0.001, 0.05 * I, 0.015); c.start(t, Math.random(), 0.03);
+  }
+  breath(pan, intensity, exhale) {
+    if (!this.ctx) return;
+    if (this.playSample(exhale ? 'breathOut' : 'breathIn', pan, 0.15 + 0.35 * intensity)) return;
+    const ctx = this.ctx, t = ctx.currentTime, s = this.src(this.pink), g = ctx.createGain();
+    s.connect(this.filt('bandpass', exhale ? 900 : 1300, 1.4)).connect(g).connect(this.pan(pan)).connect(this.sfx);
+    this.env(g, t, exhale ? 0.03 : 0.08, (0.05 + 0.12 * intensity), exhale ? 0.2 : 0.26); s.start(t, Math.random() * 3, 0.4);
+  }
+  gun() {
+    if (!this.ctx) return;
+    if (this.playSample('gun', 0, 1)) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    const s = this.src(this.white), g = ctx.createGain(), f = this.filt('highpass', 160);
+    s.connect(f).connect(g); g.connect(this.sfx); g.connect(this.rev);
+    g.gain.setValueAtTime(1.3, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38); s.start(t, 0, 0.45);
+    const o = ctx.createOscillator(), og = ctx.createGain();
+    o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(32, t + 0.3);
+    o.connect(og); og.connect(this.sfx); og.connect(this.rev);
+    og.gain.setValueAtTime(0.9, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.32); o.start(t); o.stop(t + 0.35);
+  }
+  whistle() {
+    if (!this.ctx) return;
+    if (this.playSample('whistle', 0, 0.8)) return;
+    const ctx = this.ctx;
+    [0, 0.45].forEach(off => {
+      const t = ctx.currentTime + off, o = ctx.createOscillator(), o2 = ctx.createOscillator(), l = ctx.createOscillator(), lg = ctx.createGain(), g = ctx.createGain();
+      o.type = 'square'; o.frequency.value = 2900; o2.frequency.value = 3060; l.frequency.value = 28; lg.gain.value = 0.06;
+      l.connect(lg).connect(g.gain); o.connect(g); o2.connect(g);
+      const lp = this.filt('lowpass', 5000); g.connect(lp).connect(this.sfx);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.09, t + 0.02); g.gain.setValueAtTime(0.09, t + 0.3); g.gain.linearRampToValueAtTime(0.0001, t + 0.36);
+      [o, o2, l].forEach(x => { x.start(t); x.stop(t + 0.4); });
+    });
+  }
+  horn() {
+    if (!this.ctx) return;
+    if (this.playSample('horn', 0, 0.9)) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    [233.08, 293.66, 349.23].forEach(fq => {
+      const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = fq;
+      o.connect(this.filt('lowpass', 1700)).connect(g); g.connect(this.sfx); g.connect(this.rev);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.07, t + 0.04); g.gain.setValueAtTime(0.07, t + 1.0); g.gain.linearRampToValueAtTime(0.0001, t + 1.3);
+      o.start(t); o.stop(t + 1.35);
+    });
+  }
+  beep(freq, dur, vol) {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = freq; o.connect(g).connect(this.sfx); this.env(g, t, 0.01, vol || 0.18, dur || 0.18); o.start(t); o.stop(t + (dur || 0.18) + 0.05);
+  }
+  fanfare() {
+    if (!this.ctx) return;
+    if (this.playSample('fanfare', 0, 0.8)) return;
+    const ctx = this.ctx, t0 = ctx.currentTime + 0.05;
+    [[523.25, 0, 0.13], [659.25, 0.14, 0.13], [783.99, 0.28, 0.13], [1046.5, 0.42, 0.7]].forEach(([f, o, d]) => {
+      ['square', 'triangle'].forEach(type => {
+        const os = ctx.createOscillator(), g = ctx.createGain(); os.type = type; os.frequency.value = f;
+        os.connect(this.filt('lowpass', 2600)).connect(g); g.connect(this.sfx); g.connect(this.rev);
+        this.env(g, t0 + o, 0.015, type === 'square' ? 0.035 : 0.06, d); os.start(t0 + o); os.stop(t0 + o + d + 0.1);
+      });
+    });
+  }
+  pickVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const pick = () => { const vs = speechSynthesis.getVoices(); this.voiceTh = vs.find(v => /^th/i.test(v.lang)) || null; updateVoiceNote(); };
+    pick(); speechSynthesis.onvoiceschanged = pick;
+  }
+  say(text, key) {
+    return new Promise(ok => {
+      if (key && this.samples[key]) { this.playSample(key, 0, vols.voice); setTimeout(ok, Math.min(2500, this.samples[key][0].duration * 1000 + 100)); return; }
+      if (!this.voiceTh || !('speechSynthesis' in window)) { if (key) this.beep(key === 'set' ? 880 : 660, 0.2, 0.2 * vols.voice); setTimeout(ok, 650); return; }
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text); u.lang = 'th-TH'; u.voice = this.voiceTh; u.rate = 0.95; u.volume = vols.voice;
+        let done = false; const fin = () => { if (!done) { done = true; ok(); } };
+        u.onend = fin; u.onerror = fin; speechSynthesis.speak(u); setTimeout(fin, 2800);
+      } catch (_) { ok(); }
+    });
+  }
+  setVol(k, v) {
+    vols[k] = v; LS.set('run_vol', vols);
+    if (!this.ctx) return;
+    if (k === 'amb') this.amb.gain.value = v;
+    if (k === 'sfx') this.sfx.gain.value = v;
+  }
+  async loadSamples() {
+    // EXTENSION POINT: วางไฟล์เสียงจริงใน assets/run/sfx/ แล้วเขียน manifest.json เช่น
+    // {"crowd":"crowd.mp3","step":["s1.mp3","s2.mp3"],"gun":"gun.mp3","horn":"horn.mp3","marks":"marks.mp3","set":"set.mp3"}
+    try {
+      const r = await fetch('assets/run/sfx/manifest.json', { cache: 'no-cache' }); if (!r.ok) return;
+      const m = await r.json();
+      for (const [k, v] of Object.entries(m)) {
+        const bufs = [];
+        for (const f of (Array.isArray(v) ? v : [v])) {
+          try { bufs.push(await this.ctx.decodeAudioData(await (await fetch('assets/run/sfx/' + f)).arrayBuffer())); } catch (_) { }
+        }
+        if (bufs.length) this.samples[k] = bufs;
+      }
+      if (this.samples.crowd) {
+        const s = this.src(this.samples.crowd[0], true), g = this.ctx.createGain(); g.gain.value = 0.4;
+        s.connect(g).connect(this.amb); s.start(); this.crowdSample = g;
+      }
+    } catch (_) { }
+  }
+}
+const audio = new AudioEngine();
+audio.pickVoice();
+function updateVoiceNote() {
+  $('voiceNote').textContent = audio.voiceTh
+    ? 'เสียงผู้ประกาศ: ' + audio.voiceTh.name
+    : 'เบราว์เซอร์นี้ไม่มีเสียงพูดภาษาไทย จะใช้เสียงบี๊ปแทน — เปิดด้วย Microsoft Edge จะได้เสียงพูดไทย หรือใส่ไฟล์เสียงเองใน assets/run/sfx';
+}
+
+/* =====================================================================
+   ฉาก 3D — สไตล์การ์ตูนสดใส ลู่สีฟ้า กล้องอยู่หน้านักวิ่งมองย้อนลงลู่
+   ===================================================================== */
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+$('stage').appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.1, 1400);
+function applyQuality() {
+  const hi = G.quality === 'high';
+  renderer.setPixelRatio(hi ? Math.min(devicePixelRatio, 2) : 1);
+  renderer.shadowMap.enabled = hi;
+  sun.castShadow = hi;
+  document.querySelectorAll('#qChips button').forEach(b => b.classList.toggle('on', b.dataset.q === G.quality));
+  onResize();
+}
+function onResize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', onResize);
+
+function canvasTex(w, h, draw, repeat) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
+  t.userData.canvas = c;
+  return t;
+}
+function grain(g, w, h, base, amt) {
+  g.fillStyle = base; g.fillRect(0, 0, w, h);
+  const im = g.getImageData(0, 0, w, h), d = im.data;
+  for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * amt; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  g.putImageData(im, 0, 0);
+}
+// วัสดุแบบการ์ตูน (แรเงา 3 ระดับ)
+const toonGrad = new THREE.DataTexture(new Uint8Array([120, 200, 255]), 3, 1, THREE.RedFormat);
+toonGrad.minFilter = toonGrad.magFilter = THREE.NearestFilter; toonGrad.needsUpdate = true;
+const toon = (c, extra) => new THREE.MeshToonMaterial(Object.assign({ color: c, gradientMap: toonGrad }, extra || {}));
+const lam = (c, extra) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, extra || {}));
+
+// ท้องฟ้า + เมฆ
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: { top: { value: new THREE.Color('#3d9cff') }, hor: { value: new THREE.Color('#e4f6ff') }, bot: { value: new THREE.Color('#d6efc0') } },
+  vertexShader: 'varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+  fragmentShader: 'uniform vec3 top; uniform vec3 hor; uniform vec3 bot; varying vec3 vP; void main(){ float h=vP.y; vec3 c = h>0.0 ? mix(hor, top, pow(min(h*1.5,1.0),0.6)) : mix(hor, bot, min(-h*4.0,1.0)); gl_FragColor=vec4(c,1.0); }'
+});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), skyMat));
+scene.fog = new THREE.Fog(0xe4f6ff, 160, 700);
+const clouds = new THREE.Group(); scene.add(clouds);
+const cloudMat = lam(0xffffff, { emissive: 0xbfd8ee, fog: false });
+for (let i = 0; i < 16; i++) {
+  const c = new THREE.Group(), n = 4 + Math.floor(Math.random() * 4), s = 6 + Math.random() * 8;
+  for (let k = 0; k < n; k++) {
+    const b = new THREE.Mesh(new THREE.SphereGeometry(s * (0.55 + Math.random() * 0.5), 14, 10), cloudMat);
+    b.position.set((k - n / 2) * s * 0.75, Math.random() * s * 0.35, (Math.random() - 0.5) * s * 0.6); b.scale.y = 0.62; c.add(b);
+  }
+  c.position.set(-120 - Math.random() * 380, 45 + Math.random() * 70, (Math.random() - 0.5) * 520);
+  c.userData.v = 0.6 + Math.random() * 1.2;
+  clouds.add(c);
+}
+
+// แสง
+const hemi = new THREE.HemisphereLight(0xffffff, 0x88b84a, 1.9); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff4dc, 2.1);
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 12, bottom: -12, near: 1, far: 140 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+scene.add(sun, sun.target);
+
+// หญ้าสีเขียวอมเหลือง (ลายตัดหญ้า)
+const grassTex = canvasTex(512, 512, (g, w, h) => {
+  grain(g, w, h, '#a9d743', 14);
+  for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? 'rgba(255,255,160,.10)' : 'rgba(40,90,0,.06)'; g.fillRect(i * w / 8, 0, w / 8, h); }
+}, [70, 50]);
+const grass = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1000), lam(0xffffff, { map: grassTex }));
+grass.rotation.x = -Math.PI / 2; grass.position.set(0, -0.03, 0); grass.receiveShadow = true; scene.add(grass);
+
+// เส้นทางลู่: ทางตรง (x ลดลง) แล้วโค้งไปทาง -z ไกล ๆ
+const TRACK_W = N_LANES * LANE_W, ST_X1 = 140, ST_X0 = -26, CURVE_R = 30;
+const PATH = (() => {
+  const pts = [];
+  for (let x = ST_X1; x > ST_X0; x -= 4) pts.push({ x, z: 0, a: 0 });
+  for (let i = 0; i <= 48; i++) { const a = (i / 48) * Math.PI * 0.62; pts.push({ x: ST_X0 - CURVE_R * Math.sin(a), z: -CURVE_R + CURVE_R * Math.cos(a), a }); }
+  const last = pts[pts.length - 1], dx = -Math.cos(last.a), dz = -Math.sin(last.a);
+  for (let k = 1; k <= 8; k++) pts.push({ x: last.x + dx * k * 8, z: last.z + dz * k * 8, a: last.a });
+  return pts;
+})();
+const nrm = a => [-Math.sin(a), Math.cos(a)];   // แนวขวางลู่ (ด้าน +z ตอนเป็นทางตรง)
+function strip(off0, off1, y, mat, vScale) {
+  const pos = [], uv = [], idx = []; let s = 0;
+  PATH.forEach((p, i) => {
+    if (i) s += Math.hypot(p.x - PATH[i - 1].x, p.z - PATH[i - 1].z);
+    const [nx, nz] = nrm(p.a);
+    pos.push(p.x + nx * off0, y, p.z + nz * off0, p.x + nx * off1, y, p.z + nz * off1);
+    uv.push(0, s / (vScale || 4), 1, s / (vScale || 4));
+    if (i) { const a = (i - 1) * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.receiveShadow = true; scene.add(m); return m;
+}
+const trackTex = canvasTex(256, 256, (g, w, h) => grain(g, w, h, '#3f7fe3', 20), [1, 1]);
+const trackMat = lam(0xffffff, { map: trackTex, side: THREE.DoubleSide });
+strip(-TRACK_W / 2 - 0.2, TRACK_W / 2 + 0.2, 0, trackMat, 4);
+const lineMat = lam(0xffffff, { side: THREE.DoubleSide, emissive: 0x333333 });
+for (let k = 0; k <= N_LANES; k++) { const o = -TRACK_W / 2 + k * LANE_W; strip(o - 0.05, o + 0.05, 0.012, lineMat, 4); }
+// ขอบลู่ลายชมพู–ขาว
+(() => {
+  const spots = [];
+  const addSide = side => {
+    const off = side * (TRACK_W / 2 + 0.55);
+    for (let x = ST_X1; x > ST_X0; x -= 1.2) spots.push({ x, z: off, a: 0 });
+    const r = CURVE_R - off, steps = Math.floor((Math.PI * 0.62 * r) / 1.2);
+    for (let i = 0; i < steps; i++) {
+      const a = (i / steps) * Math.PI * 0.62, [nx, nz] = nrm(a);
+      spots.push({ x: ST_X0 - CURVE_R * Math.sin(a) + nx * off, z: -CURVE_R + CURVE_R * Math.cos(a) + nz * off, a });
+    }
+  };
+  addSide(1); addSide(-1);
+  const curb = new THREE.InstancedMesh(new THREE.BoxGeometry(1.18, 0.12, 0.7), lam(0xffffff), spots.length);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color(), e = new THREE.Euler();
+  spots.forEach((s, i) => {
+    m.compose(new THREE.Vector3(s.x, 0.04, s.z), q.setFromEuler(e.set(0, -s.a, 0)), new THREE.Vector3(1, 1, 1));
+    curb.setMatrixAt(i, m); curb.setColorAt(i, c.set(i % 2 ? '#ffffff' : '#f0709b'));
+  });
+  curb.receiveShadow = true; scene.add(curb);
+})();
+function flat(w, d, x, z, mat, y) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat || lineMat); m.rotation.x = -Math.PI / 2; m.position.set(x, y || 0.014, z); m.receiveShadow = true; scene.add(m); return m; }
+const checkerTex = canvasTex(64, 256, (g) => { for (let y = 0; y < 16; y++) for (let x = 0; x < 4; x++) { g.fillStyle = (x + y) % 2 ? '#1c1c28' : '#ffffff'; g.fillRect(x * 16, y * 16, 16, 16); } });
+const checkerMat = lam(0xffffff, { map: checkerTex });
+flat(0.12, TRACK_W, 0, 0);                                  // เส้นสตาร์ต
+const finishChecker = flat(0.7, TRACK_W, 100.35, 0, checkerMat, 0.016);
+// เลขเลนบนพื้น (อ่านได้จากกล้องด้านหน้า)
+for (let i = 1; i <= N_LANES; i++) {
+  const t = canvasTex(128, 128, (g) => { g.fillStyle = '#fff'; g.font = 'bold 100px Sarabun, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(i), 64, 70); });
+  const m = flat(1.0, 1.7, -2.6, laneZ(i), lam(0xffffff, { map: t, transparent: true }), 0.016);
+  m.rotation.z = Math.PI / 2;
+}
+// ป้ายระยะ + ซุ้มเส้นชัย + นาฬิกา
+const markers = new THREE.Group(); scene.add(markers);
+const postMat = toon(0xffcf3a), darkMat = toon(0x24304f);
+function textBoard(text, bg, fg, w, h) {
+  const t = canvasTex(256, Math.round(256 * h / w), (g, W, H) => {
+    g.fillStyle = bg; g.fillRect(0, 0, W, H); g.fillStyle = fg; g.font = 'bold ' + Math.round(H * 0.62) + 'px Sarabun, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, W / 2, H / 2 + 3);
+  });
+  const face = lam(0xffffff, { map: t });
+  const b = new THREE.Mesh(new THREE.BoxGeometry(0.08, h, w), [face, face, darkMat, darkMat, face, face]);
+  b.castShadow = true; return b;
+}
+function buildMarkers() {
+  markers.clear();
+  for (let d = 10; d <= 120; d += 10) {
+    const fin = d === G.dist;
+    const b = textBoard(fin ? 'เส้นชัย' : d + ' ม.', fin ? '#ffcf3a' : '#ffffff', fin ? '#2a1d00' : '#24304f', 1.1, 0.55);
+    b.position.set(d, 0.55, TRACK_W / 2 + 1.35);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 6), darkMat); leg.position.set(d, 0.15, TRACK_W / 2 + 1.35);
+    markers.add(b, leg);
+  }
+}
+const gantry = new THREE.Group(); scene.add(gantry);
+[TRACK_W / 2 + 0.95, -TRACK_W / 2 - 0.95].forEach(z => {
+  const p = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 4.4, 14), postMat); p.position.set(0, 2.2, z); p.castShadow = true; gantry.add(p);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 10), toon(0xff5d8f)); ball.position.set(0, 4.55, z); gantry.add(ball);
+});
+const bannerTex = canvasTex(1024, 160, (g, w, h) => {
+  for (let x = 0; x < w; x += 32) for (let y = 0; y < 32; y += 16) { g.fillStyle = ((x / 32 + y / 16) % 2) ? '#1c1c28' : '#fff'; g.fillRect(x, y, 32, 16); g.fillRect(x, h - 32 + y, 32, 16); }
+  g.fillStyle = '#ff4d6d'; g.fillRect(0, 32, w, h - 64);
+  g.fillStyle = '#fff'; g.font = 'bold 82px Sarabun, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('เส้นชัย  ·  FINISH', w / 2, h / 2 + 4);
+});
+const bannerMat = lam(0xffffff, { map: bannerTex });
+const finBanner = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.0, TRACK_W + 2.4), [bannerMat, bannerMat, darkMat, darkMat, darkMat, darkMat]);
+finBanner.position.set(0, 3.9, 0); finBanner.castShadow = true; gantry.add(finBanner);
+const clockTex = canvasTex(512, 192, (g, w, h) => { g.fillStyle = '#10142a'; g.fillRect(0, 0, w, h); });
+function drawClock(text) {
+  const c = clockTex.userData.canvas, g = c.getContext('2d');
+  g.fillStyle = '#10142a'; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#ffd23f'; g.font = 'bold 150px ui-monospace, Menlo, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, c.width / 2, c.height / 2 + 6); clockTex.needsUpdate = true;
+}
+drawClock('0.00');
+const clockMat = new THREE.MeshBasicMaterial({ map: clockTex, toneMapped: false });
+const clock = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.85, 2.2), [clockMat, clockMat, darkMat, darkMat, darkMat, darkMat]);
+clock.position.set(-1.5, 2.3, TRACK_W / 2 + 3.0);
+const clockPost = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.9, 8), darkMat); clockPost.position.set(-1.5, 0.95, TRACK_W / 2 + 3.0);
+gantry.add(clock, clockPost);
+
+// ของตกแต่ง: ต้นไม้ เนิน แผงกั้นลายฟ้า–ขาว กรวย
+const treeTop = toon(0x4cb944), treeTop2 = toon(0x7fd34e), trunk = toon(0x8a5a35);
+function tree(x, z, s) {
+  const g = new THREE.Group();
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.18 * s, 0.24 * s, 1.6 * s, 8), trunk); t.position.y = 0.8 * s;
+  const c = new THREE.Mesh(new THREE.SphereGeometry(1.1 * s, 14, 10), Math.random() < 0.5 ? treeTop : treeTop2); c.position.y = 2.1 * s;
+  t.castShadow = c.castShadow = true; g.add(t, c); g.position.set(x, 0, z); scene.add(g);
+}
+for (let i = 0; i < 70; i++) {
+  const side = i % 2 ? 1 : -1, x = -70 + Math.random() * 220, z = side * (17 + Math.random() * 28);
+  if (x < ST_X0 - 4 && side < 0 && z > -CURVE_R * 2 - 10) continue;
+  tree(x, z, 0.9 + Math.random() * 0.9);
+}
+const hillMat = toon(0x8fcf4f);
+for (let i = 0; i < 9; i++) {
+  const h = new THREE.Mesh(new THREE.SphereGeometry(40 + Math.random() * 40, 20, 12), hillMat);
+  h.position.set(-200 - Math.random() * 260, -18, (i - 4) * 90 + (Math.random() - 0.5) * 40); h.scale.y = 0.45; scene.add(h);
+}
+const stripeTex = canvasTex(256, 64, (g, w, h) => { for (let x = -h; x < w + h; x += 32) { g.fillStyle = (x / 32) % 2 ? '#ffffff' : '#2fa7e8'; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 16, 0); g.lineTo(x + 16 - h, h); g.lineTo(x - h, h); g.fill(); } });
+const stripeMat = lam(0xffffff, { map: stripeTex });
+function barrier(x, z, rot) {
+  const g = new THREE.Group();
+  [-1, 1].forEach(s => { const p = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.8, 0.06), stripeMat); p.position.set(0, 0.42, s * 0.22); p.rotation.x = s * 0.35; p.castShadow = true; g.add(p); });
+  g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
+}
+for (let i = 0; i < 18; i++) { const side = i % 2 ? 1 : -1; barrier(-15 + i * 8 + Math.random() * 3, side * (TRACK_W / 2 + 9.5 + Math.random() * 3), (Math.random() - 0.5) * 0.6); }
+const coneMat = toon(0xff7a1a), coneWhite = toon(0xffffff);
+function cone(x, z) {
+  const c = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 12), coneMat); c.position.set(x, 0.3, z);
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.08, 12), coneWhite); b.position.set(x, 0.36, z);
+  c.castShadow = true; scene.add(c, b);
+}
+for (let i = 0; i < 6; i++) cone(ST_X0 - 4, -TRACK_W / 2 + 0.6 + i * (TRACK_W - 1.2) / 5);
+for (let a = 0.15; a < Math.PI * 0.6; a += 0.12) { const r = CURVE_R - TRACK_W / 2 - 1.6; cone(ST_X0 - r * Math.sin(a), -CURVE_R + r * Math.cos(a)); }
+
+// ผู้ชมตัวการ์ตูนยืนเชียร์ข้างลู่ (instanced)
+const crowd = { body: null, head: null, base: [], n: 0 };
+function buildCrowd() {
+  const pos = [];
+  for (const side of [1, -1]) for (let x = -16; x < 128; x += 0.85) {
+    const near = Math.exp(-Math.pow((x - 0) / 22, 2)) + Math.exp(-Math.pow((x - 100) / 18, 2)) + Math.exp(-Math.pow((x - 60) / 18, 2));
+    const rows = 1 + Math.floor(Math.random() * (1 + 3 * near));
+    for (let r = 0; r < rows; r++) if (Math.random() < 0.45 + 0.4 * near)
+      pos.push([x + (Math.random() - 0.5) * 0.5, side * (TRACK_W / 2 + 2.6 + r * 1.1 + Math.random() * 0.5)]);
+  }
+  const n = crowd.n = pos.length;
+  crowd.body = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.2, 0.22, 4, 10), toon(0xffffff), n);
+  crowd.head = new THREE.InstancedMesh(new THREE.SphereGeometry(0.24, 14, 10), toon(0xffffff), n);
+  const pal = ['#ff5d5d', '#3d8bff', '#ffd23f', '#ffffff', '#5ccf62', '#ff9f43', '#b675ff', '#ff7eb6', '#4fd1e8'];
+  const skins = ['#f3c39d', '#e8b089', '#d9976d', '#f7d2b2', '#c98a62'];
+  const c = new THREE.Color(), m = new THREE.Matrix4();
+  pos.forEach((p, i) => {
+    crowd.base.push({ x: p[0], z: p[1], ph: Math.random() * TAU, f: 4 + Math.random() * 5, a: 0.5 + Math.random() * 0.8 });
+    m.makeTranslation(p[0], 0.45, p[1]); crowd.body.setMatrixAt(i, m);
+    m.makeTranslation(p[0], 0.98, p[1]); crowd.head.setMatrixAt(i, m);
+    crowd.body.setColorAt(i, c.set(pal[Math.floor(Math.random() * pal.length)]));
+    crowd.head.setColorAt(i, c.set(skins[Math.floor(Math.random() * skins.length)]));
+  });
+  crowd.body.castShadow = crowd.head.castShadow = true;
+  scene.add(crowd.body, crowd.head);
+}
+buildCrowd();
+const _m = new THREE.Matrix4();
+let crowdFrame = 0;
+function updateCrowd(t, ex) {
+  for (const c of clouds.children) { c.position.z += c.userData.v * 0.016; if (c.position.z > 280) c.position.z = -280; }
+  if (G.quality !== 'high' && (crowdFrame++ % 2)) return;
+  const amp = 0.02 + 0.35 * ex * ex;
+  for (let i = 0; i < crowd.n; i++) {
+    const b = crowd.base[i], y = Math.max(0, Math.sin(t * b.f * (0.45 + ex) + b.ph)) * amp * b.a;
+    _m.makeTranslation(b.x, 0.45 + y, b.z); crowd.body.setMatrixAt(i, _m);
+    _m.makeTranslation(b.x, 0.98 + y, b.z); crowd.head.setMatrixAt(i, _m);
+  }
+  crowd.body.instanceMatrix.needsUpdate = true; crowd.head.instanceMatrix.needsUpdate = true;
+}
+
+// กระดาษสีโปรยตอนเข้าเส้นชัย
+const CONF_N = 280;
+const confetti = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.14, 0.08), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), CONF_N);
+const confP = [];
+(() => {
+  const c = new THREE.Color(), pal = ['#ff4d6d', '#ffd23f', '#3d8bff', '#5ccf62', '#ffffff', '#ff9f43', '#b675ff'];
+  for (let i = 0; i < CONF_N; i++) { confetti.setColorAt(i, c.set(pal[i % pal.length])); confP.push({ p: new THREE.Vector3(0, -5, 0), v: new THREE.Vector3(), r: new THREE.Euler(), w: new THREE.Vector3(), live: false }); }
+  confetti.frustumCulled = false; scene.add(confetti); confetti.visible = false;
+})();
+let confT = 0;
+function confettiBurst(x) {
+  confetti.visible = true; confT = 7;
+  for (const q of confP) {
+    q.p.set(x + (Math.random() - 0.5) * 3, 3.5 + Math.random() * 2.5, (Math.random() - 0.5) * (TRACK_W + 2));
+    q.v.set((Math.random() - 0.5) * 4, 1 + Math.random() * 3, (Math.random() - 0.5) * 4);
+    q.r.set(Math.random() * TAU, Math.random() * TAU, Math.random() * TAU); q.w.set(Math.random() * 8, Math.random() * 8, Math.random() * 8); q.live = true;
+  }
+}
+const _q = new THREE.Quaternion(), _s = new THREE.Vector3(1, 1, 1);
+function updateConfetti(dt) {
+  if (!confetti.visible || confT <= 0) return;
+  confT -= dt;
+  confP.forEach((q, i) => {
+    if (q.live) {
+      q.v.y -= 2.6 * dt; q.v.multiplyScalar(1 - 1.2 * dt); q.v.y = Math.max(q.v.y, -1.6);
+      q.p.addScaledVector(q.v, dt);
+      q.r.x += q.w.x * dt; q.r.y += q.w.y * dt; q.r.z += q.w.z * dt;
+      if (q.p.y <= 0.02) { q.p.y = 0.02; q.live = false; q.r.set(-Math.PI / 2, 0, q.r.z); }
+    }
+    _m.compose(q.p, _q.setFromEuler(q.r), _s); confetti.setMatrixAt(i, _m);
+  });
+  confetti.instanceMatrix.needsUpdate = true;
+}
+function clearConfetti() { confetti.visible = false; confT = 0; }
+
+function placeFinish() {
+  finishChecker.position.x = G.dist + 0.35; gantry.position.x = G.dist;
+  buildMarkers();
+  $('lDist').textContent = G.dist; $('progFin').textContent = G.dist + ' ม.';
+  document.querySelectorAll('#distChips button').forEach(b => b.classList.toggle('on', +b.dataset.d === G.dist));
+  renderLB();
+}
+
+/* =====================================================================
+   ตัวละครการ์ตูน (ออกแบบเอง สร้างด้วยโค้ด) — หัวโต ตาโต แก้มแดง ขาสั้นวิ่งรัว
+   EXTENSION POINT: เพิ่มตัวละครใหม่ได้ที่ STYLES
+   ===================================================================== */
+const L1 = 0.2, L2 = 0.19, SOLE = 0.07;
+const outlineMat = new THREE.MeshBasicMaterial({ color: 0x1d1b2b, side: THREE.BackSide });
+const ghostMat = new THREE.MeshBasicMaterial({ color: 0xd6e6ff, transparent: true, opacity: 0.38, depthWrite: false });
+const STYLES = {
+  p1: { skin: 0xf3c39d, hair: 0x3a2214, hairStyle: 'spiky', band: 0xff3b3b, jersey: 0xff4d4d, shorts: 0x2c3150, shoe: 0xff3b3b, num: '1' },
+  p2: { skin: 0xe8b089, hair: 0x231a30, hairStyle: 'buns', band: 0x2f86ff, jersey: 0x3d8bff, shorts: 0x2c3150, shoe: 0x2f86ff, num: '2' },
+  ghost: { skin: 0xffffff, hair: 0xffffff, hairStyle: 'none', band: 0xffffff, jersey: 0xffffff, shorts: 0xffffff, shoe: 0xffffff, num: '' }
+};
+class Runner {
+  constructor(opt) {
+    this.styleKey = opt.style; this.S = STYLES[opt.style]; this.ghost = opt.style === 'ghost';
+    this.pan = opt.pan || 0; this.laneIdx = opt.lane;
+    this.x = -0.8; this.z = laneZ(opt.lane); this.v = 0; this.phi = Math.random() * TAU; this.mode = 'idle';
+    this.ang = { lean: 0, twist: 0, hipL: 0, hipR: 0, kneeL: 0.1, kneeR: 0.1, ankL: 0, ankR: 0, shL: 0.1, shR: 0.1, elL: 0.4, elR: 0.4, az: 0.25, head: 0, wob: 0, lift: 0 };
+    this.onStep = null; this.stepN = 0; this.name = ''; this.blinkT = 2 + Math.random() * 3; this.blinking = 0;
+    this.build();
+  }
+  m(c) { return this.ghost ? ghostMat : toon(c); }
+  part(geo, mat, parent, x, y, z, size) {
+    const mesh = new THREE.Mesh(geo, mat); mesh.position.set(x || 0, y || 0, z || 0); mesh.castShadow = !this.ghost; parent.add(mesh);
+    if (size && !this.ghost) { const o = new THREE.Mesh(geo, outlineMat); o.scale.setScalar(1 + 0.022 / size); mesh.add(o); }
+    return mesh;
+  }
+  build() {
+    const S = this.S;
+    const skin = this.m(S.skin), jersey = this.m(S.jersey), shorts = this.m(S.shorts), shoe = this.m(S.shoe), hair = this.m(S.hair), band = this.m(S.band);
+    const root = this.root = new THREE.Group(); root.rotation.y = Math.PI / 2;
+    const pelvis = this.pelvis = new THREE.Group(); root.add(pelvis);
+    this.part(new THREE.CapsuleGeometry(0.185, 0.06, 6, 14), shorts, pelvis, 0, 0.04, 0, 0.19).scale.set(1, 1, 0.9);
+    const torso = this.torso = new THREE.Group(); pelvis.add(torso);
+    this.part(new THREE.CapsuleGeometry(0.2, 0.14, 6, 16), jersey, torso, 0, 0.22, 0, 0.2).scale.set(1.05, 1, 0.9);
+    if (!this.ghost) {
+      const bibTex = canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#fff'; g.beginPath(); g.arc(64, 64, 62, 0, TAU); g.fill(); g.fillStyle = '#1d1b2b'; g.font = 'bold 84px Sarabun, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.num, 64, 70); });
+      const bib = new THREE.Mesh(new THREE.CircleGeometry(0.085, 24), new THREE.MeshBasicMaterial({ map: bibTex, transparent: true }));
+      bib.position.set(0, 0.23, 0.183); torso.add(bib);
+    }
+    // หัว
+    const head = this.head = new THREE.Group(); head.position.set(0, 0.7, 0); torso.add(head);
+    this.part(new THREE.SphereGeometry(0.3, 28, 22), skin, head, 0, 0, 0, 0.3);
+    [1, -1].forEach(s => this.part(new THREE.SphereGeometry(0.065, 12, 10), skin, head, s * 0.29, -0.01, 0, 0.065));
+    if (S.hairStyle === 'spiky') {
+      const cap = this.part(new THREE.SphereGeometry(0.312, 26, 16, 0, TAU, 0, Math.PI * 0.43), hair, head, 0, 0.01, -0.01, 0.31); cap.rotation.x = -0.32;
+      [[0, 0.32, -0.02, -0.2, 0], [0.12, 0.29, 0.02, -0.1, -0.45], [-0.12, 0.29, 0.02, -0.1, 0.45], [0.06, 0.27, -0.16, -0.75, -0.2], [-0.07, 0.27, -0.16, -0.75, 0.25], [0, 0.18, -0.27, -1.3, 0]].forEach(([x, y, z, rx, rz]) => {
+        const sp = this.part(new THREE.ConeGeometry(0.075, 0.2, 10), hair, head, x, y, z, 0.07); sp.rotation.set(rx, 0, rz);
+      });
+    } else if (S.hairStyle === 'buns') {
+      const cap = this.part(new THREE.SphereGeometry(0.314, 26, 16, 0, TAU, 0, Math.PI * 0.5), hair, head, 0, 0.0, -0.015, 0.31); cap.rotation.x = -0.38;
+      [1, -1].forEach(s => this.part(new THREE.SphereGeometry(0.12, 16, 12), hair, head, s * 0.2, 0.25, -0.05, 0.12));
+    }
+    if (S.hairStyle !== 'none') {
+      const hb = this.part(new THREE.TorusGeometry(0.304, 0.032, 8, 36), band, head, 0, 0.1, 0); hb.rotation.x = Math.PI / 2 - 0.3;
+      if (!this.ghost) hb.add(new THREE.Mesh(new THREE.TorusGeometry(0.304, 0.044, 8, 36), outlineMat));
+    }
+    // หน้า
+    const white = this.ghost ? ghostMat : toon(0xffffff), black = new THREE.MeshBasicMaterial({ color: 0x1d1b2b, transparent: this.ghost, opacity: this.ghost ? 0.5 : 1 });
+    this.eyes = []; this.brows = [];
+    [1, -1].forEach(s => {
+      const e = new THREE.Group(); e.position.set(s * 0.11, 0.02, 0.255); head.add(e);
+      const w = this.part(new THREE.SphereGeometry(0.068, 16, 12), white, e, 0, 0, 0, 0.068); w.scale.set(0.85, 1.15, 0.5);
+      const p = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 10), black); p.position.set(-s * 0.005, -0.008, 0.026); p.scale.set(0.9, 1.15, 0.5); e.add(p);
+      if (!this.ghost) { const sh = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff })); sh.position.set(-s * 0.012 + 0.008, 0.02, 0.045); e.add(sh); }
+      this.eyes.push(e);
+      const br = new THREE.Mesh(new THREE.CapsuleGeometry(0.014, 0.06, 3, 6), black); br.position.set(s * 0.11, 0.135, 0.272); br.rotation.z = Math.PI / 2; br.userData.s = s; head.add(br); this.brows.push(br);
+      if (!this.ghost) { const ch = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xff8fa3, transparent: true, opacity: 0.75 })); ch.position.set(s * 0.185, -0.075, 0.235); ch.scale.set(1, 0.6, 0.35); head.add(ch); }
+    });
+    this.smile = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.013, 6, 16, Math.PI), new THREE.MeshBasicMaterial({ color: 0x5a2230, transparent: this.ghost, opacity: this.ghost ? 0.5 : 1 }));
+    this.smile.rotation.z = Math.PI; this.smile.position.set(0, -0.075, 0.288); head.add(this.smile);
+    this.mouth = new THREE.Group(); this.mouth.position.set(0, -0.1, 0.275); head.add(this.mouth);
+    const mo = new THREE.Mesh(new THREE.SphereGeometry(0.058, 14, 10), new THREE.MeshBasicMaterial({ color: 0x6e1a2a })); mo.scale.set(1, 0.85, 0.35); this.mouth.add(mo);
+    const tg = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff6f8a })); tg.position.set(0, -0.025, 0.012); tg.scale.set(1, 0.6, 0.6); this.mouth.add(tg);
+    this.mouth.visible = false;
+    this.sweat = [];
+    if (!this.ghost) [1, -1].forEach(s => { const d = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), new THREE.MeshBasicMaterial({ color: 0x8fd3ff })); d.scale.set(0.75, 1.25, 0.75); d.position.set(s * 0.3, 0.16, 0.1); d.visible = false; d.userData.s = s; head.add(d); this.sweat.push(d); });
+    // แขน
+    const arm = s => {
+      const sh = new THREE.Group(); sh.position.set(0.245 * s, 0.37, 0); torso.add(sh);
+      this.part(new THREE.CapsuleGeometry(0.058, 0.07, 4, 10), jersey, sh, 0, -0.06, 0, 0.058);
+      const el = new THREE.Group(); el.position.set(0, -0.15, 0); sh.add(el);
+      this.part(new THREE.CapsuleGeometry(0.05, 0.05, 4, 10), skin, el, 0, -0.05, 0, 0.05);
+      this.part(new THREE.SphereGeometry(0.07, 12, 10), skin, el, 0, -0.13, 0.005, 0.07);
+      return [sh, el];
+    };
+    [this.shL, this.elL] = arm(1); [this.shR, this.elR] = arm(-1);
+    // ขา
+    const leg = s => {
+      const h = new THREE.Group(); h.position.set(0.095 * s, -0.01, 0); pelvis.add(h);
+      this.part(new THREE.CapsuleGeometry(0.07, 0.07, 4, 10), skin, h, 0, -0.1, 0, 0.07);
+      const k = new THREE.Group(); k.position.set(0, -L1, 0); h.add(k);
+      this.part(new THREE.CapsuleGeometry(0.062, 0.06, 4, 10), skin, k, 0, -0.09, 0, 0.062);
+      const a = new THREE.Group(); a.position.set(0, -L2, 0); k.add(a);
+      const sh = this.part(new THREE.CapsuleGeometry(0.078, 0.12, 4, 12), shoe, a, 0, -0.025, 0.05, 0.078); sh.rotation.x = Math.PI / 2; sh.scale.set(1.08, 1, 0.72);
+      if (!this.ghost) { const so = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.025, 0.27), toon(0xffffff)); so.position.set(0, -0.068, 0.05); a.add(so); }
+      return [h, k, a];
+    };
+    [this.hipL, this.kneeL, this.ankL] = leg(1); [this.hipR, this.kneeR, this.ankR] = leg(-1);
+    if (!this.ghost) {
+      this.tagTex = canvasTex(512, 128, () => { });
+      this.tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tagTex, depthTest: false, transparent: true }));
+      this.tag.scale.set(1.5, 0.375, 1); this.tag.renderOrder = 10; this.tag.position.set(0, 1.95, 0);
+      this.tagColor = '#' + new THREE.Color(S.jersey).getHexString();
+    }
+    this.group = new THREE.Group(); this.group.add(root); if (this.tag) this.group.add(this.tag);
+    scene.add(this.group);
+  }
+  setName(n) {
+    if (!this.tag || n === this.name) return; this.name = n;
+    const c = this.tagTex.userData.canvas, g = c.getContext('2d');
+    g.clearRect(0, 0, c.width, c.height);
+    g.font = 'bold 64px Sarabun, sans-serif'; const w = Math.min(500, g.measureText(n).width + 60);
+    g.fillStyle = this.tagColor; g.beginPath(); g.roundRect((512 - w) / 2, 14, w, 100, 50); g.fill();
+    g.lineWidth = 8; g.strokeStyle = '#ffffff'; g.stroke();
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n, 256, 68);
+    this.tagTex.needsUpdate = true;
+  }
+  set visible(v) { this.group.visible = v; }
+  get visible() { return this.group.visible; }
+  pose(t) {
+    const P = { lean: 0.02, twist: 0, hipL: 0, hipR: 0, kneeL: 0.08, kneeR: 0.08, ankL: 0, ankR: 0, shL: 0.1, shR: 0.1, elL: 0.4, elR: 0.4, az: 0.25, head: 0, wob: 0, lift: 0 };
+    const m = this.mode;
+    if (m === 'run' && this.v > 0.12) {
+      const v = this.v, k = clamp((v - 1.5) / 6.5, 0, 1), w = clamp(v / 1.5, 0.3, 1), f = this.phi, s = Math.sin(f);
+      const ha = (0.4 + 0.55 * k) * w; P.hipL = ha * s + 0.12 * k; P.hipR = -ha * s + 0.12 * k;
+      const kn = (0.5 + 1.4 * k) * w;
+      P.kneeL = 0.1 + kn * Math.pow(Math.max(0, Math.cos(f + 0.3)), 1.2);
+      P.kneeR = 0.1 + kn * Math.pow(Math.max(0, Math.cos(f + Math.PI + 0.3)), 1.2);
+      P.ankL = 0.3 * w * Math.sin(f - 0.6); P.ankR = 0.3 * w * Math.sin(f + Math.PI - 0.6);
+      const aa = (0.55 + 0.75 * k) * w; P.shL = -aa * s; P.shR = aa * s;
+      P.elL = 1.2 + 0.4 * k + 0.2 * w * s; P.elR = 1.2 + 0.4 * k - 0.2 * w * s;
+      P.lean = 0.06 + 0.22 * k; P.twist = 0.18 * k * s; P.head = -P.lean * 0.6; P.wob = 0.09 * k * s; P.lift = 0.06 * w * Math.abs(s); P.az = 0.3;
+    } else if (m === 'marks') {
+      Object.assign(P, { lean: 0.3, hipL: 0.5, kneeL: 0.8, hipR: -0.3, kneeR: 0.4, shL: -0.6, shR: 0.7, elL: 1.4, elR: 1.2, head: -0.2, ankL: -0.15, ankR: 0.25 });
+    } else if (m === 'set') {
+      Object.assign(P, { lean: 0.55, hipL: 0.78, kneeL: 1.1, hipR: -0.15, kneeR: 0.62, shL: -0.75, shR: 0.85, elL: 1.5, elR: 1.3, head: -0.4, ankL: -0.25, ankR: 0.35 });
+    } else if (m === 'victory') {
+      const b = Math.sin(t * 8);
+      Object.assign(P, { lean: -0.08, shL: 2.8 + 0.2 * b, shR: 2.8 - 0.2 * b, elL: 0.3, elR: 0.3, az: 0.55, head: 0.15, wob: 0.12 * b, lift: 0.16 * Math.max(0, Math.sin(t * 7)) });
+    } else if (m === 'tired') {
+      const b = Math.sin(t * 6);
+      Object.assign(P, { lean: 0.62 + 0.05 * b, hipL: 0.5, hipR: 0.5, kneeL: 0.6, kneeR: 0.6, shL: 0.95, shR: 0.95, elL: 0.2, elR: 0.2, head: -0.25, az: 0.3 });
+    } else {
+      const b = Math.sin(t * 2 + this.laneIdx);
+      P.shL = 0.1 + 0.05 * b; P.shR = 0.1 - 0.05 * b; P.wob = 0.04 * Math.sin(t * 1.3 + this.laneIdx); P.lift = 0.01 * (1 + b);
+    }
+    return P;
+  }
+  update(dt, t) {
+    if (this.mode === 'run' && this.v > 0.12) {
+      const stepLen = Math.max(0.28 + 0.07 * this.v, this.v / 7.5), cad = this.v / stepLen, prev = this.phi;
+      this.phi += Math.PI * cad * dt;
+      const a = prev % TAU, b = this.phi % TAU;
+      for (const [c, foot] of [[Math.PI / 2 + 0.25, 'L'], [Math.PI * 1.5 + 0.25, 'R']]) {
+        const hit = a <= b ? (a < c && c <= b) : (c > a || c <= b);
+        if (hit) { this.stepN++; if (this.onStep) this.onStep(foot, this); }
+      }
+      if (this.phi > 1e4) this.phi %= TAU;
+    }
+    const P = this.pose(t), A = this.ang, r = 1 - Math.exp(-dt * (this.mode === 'run' ? 24 : 8));
+    for (const k in P) A[k] += (P[k] - A[k]) * r;
+    const legH = (a, k) => L1 * Math.cos(a) + L2 * Math.cos(a - k);
+    this.pelvis.position.y = Math.max(legH(A.hipL, A.kneeL), legH(A.hipR, A.kneeR)) + SOLE + A.lift;
+    this.torso.rotation.set(A.lean, A.twist, 0);
+    this.head.rotation.set(A.head, 0, A.wob);
+    this.shL.rotation.set(-A.shL, 0, A.az); this.shR.rotation.set(-A.shR, 0, -A.az);
+    this.elL.rotation.x = -A.elL; this.elR.rotation.x = -A.elR;
+    this.hipL.rotation.x = -A.hipL; this.hipR.rotation.x = -A.hipR;
+    this.kneeL.rotation.x = A.kneeL; this.kneeR.rotation.x = A.kneeR;
+    this.ankL.rotation.x = A.ankL; this.ankR.rotation.x = A.ankR;
+    // หน้าตา: กะพริบตา คิ้ว ปาก เหงื่อ
+    this.blinkT -= dt;
+    if (this.blinkT < 0) { this.blinking = 0.13; this.blinkT = 2.2 + Math.random() * 3.5; }
+    if (this.blinking > 0) this.blinking -= dt;
+    const m = this.mode, fast = m === 'run' && this.v > 5, tired = m === 'tired';
+    const eyeY = this.blinking > 0 ? 0.12 : tired ? 0.35 : m === 'victory' ? 0.75 : 1;
+    for (const e of this.eyes) e.scale.y = damp(e.scale.y, eyeY, 30, dt);
+    const open = fast || m === 'victory' || tired;
+    this.mouth.visible = open; this.smile.visible = !open;
+    if (open) this.mouth.scale.y = tired ? 0.7 + 0.3 * Math.sin(t * 9) : 1;
+    for (const br of this.brows) {
+      const s = br.userData.s, det = fast || m === 'set' || m === 'marks';
+      br.rotation.z = Math.PI / 2 + (det ? s * 0.4 : tired ? -s * 0.35 : 0);
+      br.position.y = m === 'victory' ? 0.16 : det ? 0.125 : 0.135;
+    }
+    for (const d of this.sweat) {
+      d.visible = tired || (m === 'run' && this.v > 8.5);
+      if (d.visible) { const ph = (t * 1.6 + (d.userData.s > 0 ? 0 : 0.5)) % 1; d.position.y = 0.18 - ph * 0.22; d.material.opacity = 1; }
+    }
+    this.group.position.set(this.x, 0, this.z);
+  }
+}
+const R = {
+  p1: new Runner({ style: 'p1', lane: INFO.p1.lane, pan: INFO.p1.pan }),
+  p2: new Runner({ style: 'p2', lane: INFO.p2.lane, pan: INFO.p2.pan })
+};
+const ghost = new Runner({ style: 'ghost', lane: 1, pan: 0 });
+ghost.visible = false;
+for (const L of LANES) {
+  R[L].visible = false;
+  R[L].onStep = (foot, r) => {
+    audio.step(r.pan, r.v / 9);
+    if (r.v > 3.5 && r.stepN % 3 === 0) audio.breath(r.pan, clamp(r.v / 10, 0, 1), r.stepN % 6 === 0);
+  };
+}
+
+/* =====================================================================
+   กล้อง — อยู่หน้านักวิ่ง มองย้อนลงลู่ (นักวิ่งวิ่งเข้าหากล้อง)
+   ===================================================================== */
+const cam = { pos: new THREE.Vector3(6, 3, 0), look: new THREE.Vector3(-0.8, 1.3, 0), mode: '', fov: 40 };
+const _v = new THREE.Vector3(), _l = new THREE.Vector3();
+function racers() { return LANES.filter(L => G.lanes[L]).map(L => R[L]).concat(ghost.visible ? [ghost] : []); }
+function camRacers() {
+  const ps = LANES.filter(L => G.lanes[L]).map(L => R[L]);
+  if (!ps.length) return racers();
+  const c = ps.reduce((a, r) => a + r.x, 0) / ps.length;
+  return ghost.visible && Math.abs(ghost.x - c) < 7 ? ps.concat([ghost]) : ps;
+}
+function updateCamera(dt, t) {
+  let mode = 'lobby';
+  const rs = camRacers();
+  const lead = rs.length ? Math.max(...rs.map(r => r.x)) : 0, trail = rs.length ? Math.min(...rs.map(r => r.x)) : 0;
+  if (['marks', 'set', 'foul'].includes(G.state)) mode = 'start';
+  else if (G.state === 'race') mode = G.endPerf ? 'celebrate' : (lead > G.dist - 10 ? 'finish' : 'race');
+  else if (G.state === 'result') mode = 'result';
+  let fov = 40;
+  if (mode === 'lobby') {
+    _v.set(5.6 + 0.3 * Math.sin(t * 0.2), 2.5, 0.6 * Math.sin(t * 0.13)); _l.set(-0.8, 1.55, 0);
+  } else if (mode === 'start') {
+    _v.set(5.2, 2.3, 0); _l.set(-0.5, 0.95, 0); fov = 38;
+  } else if (mode === 'race') {
+    const gap = lead - trail, back = clamp(gap - 4, 0, 14);
+    _v.set(lead + 6.6 + back * 0.4, 3.3 + back * 0.32, 0); _l.set((lead + trail) / 2 - 3, 0.5, 0); fov = 40 + back * 0.6;
+  } else if (mode === 'finish') {
+    _v.set(G.dist + 8.5, 3.6, 0); _l.set(Math.min(lead, G.dist + 2) - 3, 0.5, 0); fov = 38;
+  } else {
+    const w = winnerRunner() || rs[0] || R.p1;
+    if (mode === 'celebrate') { const a = 0.35 * Math.sin((t - G.endPerf / 1000) * 0.4); _v.set(w.x + Math.cos(a) * 4.2, 1.8, w.z + Math.sin(a) * 4.2); _l.set(w.x, 1.0, w.z); fov = 38; }
+    else { _v.set(w.x + 5.5, 2.4, 0); _l.set(w.x, 0.15, 0); fov = 40; }
+  }
+  const cut = mode !== cam.mode;
+  cam.mode = mode;
+  if (cut) { cam.pos.copy(_v); cam.look.copy(_l); cam.fov = fov; }
+  else {
+    const k = mode === 'race' ? 5 : mode === 'finish' ? 3 : 2;
+    cam.pos.lerp(_v, 1 - Math.exp(-k * dt)); cam.look.lerp(_l, 1 - Math.exp(-(k + 2) * dt)); cam.fov = damp(cam.fov, fov, 2, dt);
+  }
+  camera.position.copy(cam.pos); camera.lookAt(cam.look);
+  if (Math.abs(camera.fov - cam.fov) > 0.01) { camera.fov = cam.fov; camera.updateProjectionMatrix(); }
+  for (const L of LANES) if (R[L].tag) R[L].tag.visible = mode === 'race' || mode === 'start' || mode === 'finish';
+  const cx = cam.look.x;
+  sun.position.set(cx + 18, 30, 16); sun.target.position.set(cx - 4, 0, 0); sun.target.updateMatrixWorld();
+}
+
+/* =====================================================================
+   เครือข่าย
+   ===================================================================== */
+let net = null, mode = 'local', room = '', base = '', dbURL = '';
+function setConn(cls, txt) { const c = $('conn'); c.className = 'glass ' + cls; c.querySelector('span').textContent = txt; }
+function banner(html) { const b = $('banner'); if (!html) { b.classList.add('hide'); return; } b.innerHTML = html; b.classList.remove('hide'); }
+let toastT = 0;
+function toast(t, err) { const e = $('toast'); e.textContent = t; e.className = 'glass on' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('on'), 4200); }
+
+async function initNet() {
+  const saved = FORCE_LOCAL ? null : RunNet.loadSavedConfig();
+  if (saved) {
+    try {
+      net = await RunNet.connect({ config: saved.config }); mode = 'firebase'; dbURL = saved.config.databaseURL;
+      if (saved.from === 'rta') toast('ใช้ค่า Firebase เดียวกับระบบ RTA');
+      $('cfgTxt').value = saved.config.apiKey ? JSON.stringify(saved.config, null, 1) : saved.config.databaseURL;
+    } catch (e) { toast(e.message || String(e), true); net = null; }
+  }
+  if (!net) {
+    net = await RunNet.connect({ mode: 'local' }); mode = 'local';
+    banner(FORCE_LOCAL ? 'โหมดทดสอบในเครื่อง — เปิดจอยได้จากลิงก์ใต้ QR (เบราว์เซอร์เดียวกัน) หรือใช้คีย์บอร์ด (K)'
+      : 'ยังไม่ได้ตั้งค่า Firebase — มือถือยังเชื่อมต่อไม่ได้ · กด <b>S</b> เพื่อวางค่า Firebase · ระหว่างนี้ทดสอบด้วยคีย์บอร์ดได้ (K)');
+  }
+  room = sessionStorage.getItem('run_room_' + mode) || RunNet.makeCode();
+  sessionStorage.setItem('run_room_' + mode, room);
+  base = RunNet.roomPath(room);
+  $('roomCode').textContent = room; $('roomTag').textContent = 'ห้อง ' + room;
+  net.onConnection(c => { if (mode === 'local') setConn('local', 'โหมดทดสอบในเครื่อง'); else setConn(c ? 'ok' : 'bad', c ? 'Firebase เชื่อมต่อแล้ว' : 'Firebase หลุด — กำลังต่อใหม่'); });
+  net.onError(e => {
+    const s = String((e && (e.code || e.message)) || e);
+    if (/permission/i.test(s)) banner('Firebase ไม่อนุญาตให้เขียนข้อมูลเกม — เพิ่มกฎ <code>"games": { ".read": true, ".write": true }</code> ใน Realtime Database → Rules (กด S ดูวิธี)');
+    else toast('Firebase: ' + s, true);
+  });
+  await publishHost(true);
+  net.onDisconnect(base + '/host/state').set('closed');
+  net.on(base + '/players', v => { G.players = v || {}; });
+  net.on(base + '/input', v => { G.input = v || {}; });
+  setInterval(() => net.update(base + '/host', { updated: net.now() }), 30000);
+  if (mode === 'firebase') cleanupOld();
+  renderQRs();
+}
+function publishHost(full) {
+  const h = { state: G.state, seq: G.seq, dist: G.dist, lanes: G.lanes, gunAt: G.gunAt || 0, result: G.result || null, solo: !!G.solo, updated: net.now() };
+  if (full) h.created = net.now();
+  return net.update(base + '/host', h);
+}
+async function cleanupOld() {
+  try {
+    const all = await net.get(RunNet.ROOT); if (!all) return;
+    const now = net.now();
+    for (const [code, r] of Object.entries(all)) {
+      if (code === room) continue;
+      const up = r && r.host && (r.host.updated || r.host.created);
+      if (!up || now - up > 6 * 3600e3) net.remove(RunNet.ROOT + '/' + code);
+    }
+  } catch (_) { }
+}
+function padURL(L) {
+  const u = new URL('pad.html', location.href);
+  u.search = ''; u.hash = '';
+  u.searchParams.set('r', room); u.searchParams.set('p', L === 'p2' ? '2' : '1');
+  if (mode === 'local') u.searchParams.set('local', '1');
+  else u.hash = 'db=' + encodeURIComponent(dbURL);
+  return u.toString();
+}
+function renderQRs() {
+  for (const L of LANES) {
+    const url = padURL(L), n = INFO[L].no;
+    let svg = '';
+    try { const q = qrcode(0, 'M'); q.addData(url); q.make(); svg = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); }
+    catch (e) { svg = '<div style="color:#000;padding:10px">สร้าง QR ไม่ได้</div>'; }
+    $('qr' + n).innerHTML = svg;
+    const lk = $('lk' + n); lk.href = url; lk.classList.toggle('hide', mode !== 'local');
+  }
+}
+
+/* =====================================================================
+   ผู้เล่นแต่ละเลน
+   ===================================================================== */
+function laneState(L) {
+  const n = G.players[L], now = net ? net.now() : Date.now();
+  if (n && n.token) {
+    const age = now - (n.seen || 0), online = n.online !== false && age < 7000;
+    return { kind: 'phone', node: n, online, stale: !online && age < 60000, left: Math.max(0, Math.ceil((60000 - age) / 1000)), name: n.name || INFO[L].label, cal: !!n.cal, ready: online && !!n.ready && !!n.cal, stage: n.stage };
+  }
+  if (G.kbd) return { kind: 'kbd', online: true, name: 'คีย์บอร์ด ' + INFO[L].no, cal: true, ready: G.kbdReady[L] };
+  return { kind: 'none', online: false };
+}
+const KBD = { p1: mkKbd(), p2: mkKbd() };
+function mkKbd() { return { last: '', times: [], steps: 0, v: 0, fm: 0, fs: -1, lastStep: 0 }; }
+function kbdStep(L, key) {
+  const k = KBD[L]; if (key === k.last) return;
+  const t = performance.now() / 1000; k.last = key; k.times.push(t); if (k.times.length > 10) k.times.shift(); k.steps++; k.lastStep = t;
+  if ((G.state === 'set' || G.state === 'race') && k.fs !== G.seq && G.lanes[L]) { k.fs = G.seq; k.fm = net.now(); }
+}
+function updateKbd(dt, t) {
+  for (const L of LANES) {
+    const k = KBD[L], rec = k.times.filter(x => t - x < 1.6);
+    let cad = rec.length >= 2 ? (rec.length - 1) / Math.max(0.05, rec[rec.length - 1] - rec[0]) : 0;
+    if (k.lastStep) cad = Math.min(cad, 1 / Math.max(0.001, t - k.lastStep));
+    k.v = damp(k.v, speedFromCadence(Math.min(cad, 5)), 1 / 0.3, dt);
+    if (k.v < 0.02) k.v = 0;
+  }
+}
+function laneInput(L) {
+  const s = laneState(L);
+  if (s.kind === 'kbd') { const k = KBD[L]; return { v: k.v, ok: true, n: k.steps, fm: k.fm, fs: k.fs }; }
+  const inp = G.input[L]; if (!inp) return { v: 0, ok: false, n: 0 };
+  const age = net.now() - (inp.t || 0);
+  return { v: age < 1200 ? (inp.v || 0) : 0, ok: age < 1500, n: inp.n || 0, fm: inp.fm, fs: inp.fs };
+}
+const nameOf = L => { const s = laneState(L); return s.name || INFO[L].label; };
+function kick(L) {
+  if (!net) return;
+  if (G.kbd && !G.players[L]) return;
+  net.remove(base + '/players/' + L); net.remove(base + '/input/' + L);
+  toast('นำ ' + INFO[L].label + ' ออกจากเลนแล้ว');
+}
+
+/* =====================================================================
+   ตรรกะการแข่ง
+   ===================================================================== */
+let seqTok = 0;
+function setState(s) { G.state = s; G.stateAt = performance.now(); if (net) publishHost(); syncOverlays(); }
+function onlineLanes() { return LANES.filter(L => laneState(L).online); }
+
+let lastCountBeep = -1;
+function lobbyLogic() {
+  const on = onlineLanes();
+  const allReady = on.length > 0 && on.every(L => laneState(L).ready);
+  if (G.state === 'lobby' && allReady) { setState('countdown'); lastCountBeep = -1; }
+  if (G.state === 'countdown') {
+    if (!allReady) { setState('lobby'); callout('', '', 0); return; }
+    const el = (performance.now() - G.stateAt) / 1000, left = 3 - Math.floor(el);
+    if (left !== lastCountBeep && left > 0) { lastCountBeep = left; audio.beep(520, 0.12, 0.12); callout(String(left), on.length === 1 ? 'วิ่งคนเดียว · แข่งกับเงา' : 'เตรียมตัว', 900); }
+    if (el >= 3) startRace(on);
+  }
+}
+function startRace(lanes) {
+  G.lanes = {}; lanes.forEach(L => { G.lanes[L] = true; });
+  G.fouls = { p1: 0, p2: 0 }; G.penalty = { p1: 0, p2: 0 };
+  G.solo = lanes.length === 1;
+  setupGhost();
+  runSequence();
+}
+function resetForStart() {
+  for (const L of LANES) {
+    const r = R[L];
+    Object.assign(r, { x: -0.35, v: 0, done: false, dnf: false, time: null, top: 0, disc: 0, trace: [], trNext: 0, n0: 0, react: null, steps: null, celebrate: false });
+    r.mode = G.lanes[L] ? 'marks' : 'idle';
+    r.visible = !!G.lanes[L];
+  }
+  Object.assign(ghost, { x: -0.35, v: 0 }); ghost.mode = 'marks';
+  G.gunAt = 0; G.endPerf = 0; G.firstFinish = false; G.result = null; clearConfetti();
+}
+async function runSequence() {
+  const my = ++seqTok;
+  G.seq++; resetForStart();
+  setState('marks'); callout('เข้าที่', '', 2600);
+  await audio.say('เข้าที่', 'marks'); if (my !== seqTok) return;
+  await wait(1700); if (my !== seqTok) return;
+  setState('set'); callout('ระวัง', '', 1800);
+  for (const L of LANES) if (G.lanes[L]) R[L].mode = 'set';
+  ghost.mode = 'set';
+  await audio.say('ระวัง', 'set'); if (my !== seqTok) return;
+  await wait(1200 + Math.random() * 800); if (my !== seqTok) return;
+  G.gunAt = net.now(); G.gunPerf = performance.now(); G.lastEl = 0;
+  for (const L of LANES) if (G.lanes[L]) { R[L].n0 = laneInput(L).n || 0; R[L].mode = 'run'; }
+  ghost.mode = 'run';
+  setState('race'); audio.gun(); callout('', '', 0);
+  const f = $('flash'); f.style.transition = 'none'; f.style.opacity = '0.55'; requestAnimationFrame(() => { f.style.transition = 'opacity .35s'; f.style.opacity = '0'; });
+}
+function foul(L) {
+  seqTok++;
+  G.fouls[L]++;
+  audio.whistle();
+  const nm = nameOf(L);
+  if (G.fouls[L] >= 2) { G.penalty[L] = 1; callout('ฟาวล์ครั้งที่ 2!', nm + ' ออกตัวช้ากว่าคนอื่น 1 วินาที', 3300); }
+  else callout('ฟาวล์!', nm + ' ออกตัวก่อนเสียงปืน · เตือนครั้งแรก เริ่มใหม่', 3300);
+  setState('foul');
+  for (const r of [R.p1, R.p2, ghost]) { r.mode = 'idle'; r.v = 0; r.x = -0.35; }
+  const my = seqTok;
+  setTimeout(() => { if (G.state === 'foul' && my === seqTok) runSequence(); }, 3400);
+}
+function toLobby() {
+  seqTok++;
+  G.lanes = {}; G.result = null; G.endPerf = 0; G.gunAt = 0; G.solo = false;
+  for (const L of LANES) { const r = R[L]; r.x = -0.8; r.v = 0; r.mode = 'idle'; if (G.players[L]) net.update(base + '/players/' + L, { ready: false }); }
+  ghost.visible = false; clearConfetti();
+  G.kbdReady = { p1: false, p2: false };
+  setState('lobby'); callout('', '', 0);
+}
+
+// ---------- นักวิ่งเงา (โหมดคนเดียว) ----------
+let ghostData = null;
+function setupGhost() {
+  if (!G.solo) { ghost.visible = false; ghostData = null; return; }
+  const L = G.lanes.p1 ? 'p1' : 'p2';
+  const free = L === 'p1' ? INFO.p2.lane : INFO.p1.lane;
+  ghost.z = laneZ(free); ghost.laneIdx = free;
+  const best = LS.get('run_best_' + G.dist, null);
+  if (best && best.tr && best.tr.length > 5) ghostData = { time: best.t, tr: best.tr, label: 'สถิติ ' + best.n + ' ' + best.t.toFixed(2) };
+  else {
+    const T = PACE[G.dist] || 18, tau = 1.3, vmax = G.dist / (T - tau * (1 - Math.exp(-T / tau))), tr = [];
+    for (let i = 0; i * 0.1 <= T + 0.05; i++) { const t = i * 0.1; tr.push(+(vmax * (t - tau * (1 - Math.exp(-t / tau)))).toFixed(2)); }
+    ghostData = { time: T, tr, label: 'เงา ' + T.toFixed(2) + ' วิ' };
+  }
+  ghost.visible = true;
+}
+function ghostX(el) {
+  const tr = ghostData.tr, i = el / 0.1;
+  if (i < tr.length - 1) { const a = Math.floor(i), f = i - a; return tr[a] + (tr[a + 1] - tr[a]) * f; }
+  const vEnd = Math.max(0.5, (tr[tr.length - 1] - tr[tr.length - 4]) / 0.3), extra = el - (tr.length - 1) * 0.1;
+  return tr[tr.length - 1] + (vEnd / 2.2) * (1 - Math.exp(-2.2 * extra));
+}
+
+function raceLogic(frameDt) {
+  const el = (performance.now() - G.gunPerf) / 1000;
+  // ใช้เวลาจริงจากเสียงปืนเสมอ (ไม่ขึ้นกับเฟรมเรตของเครื่อง)
+  const dt = G.state === 'race' ? clamp(el - (G.lastEl || 0), 0, 0.25) : frameDt;
+  if (G.state === 'race') G.lastEl = el;
+  const parts = LANES.filter(L => G.lanes[L]);
+  // ฟาวล์ (ออกตัวก่อนปืน) — ใช้เวลากลางที่มือถือประทับไว้
+  if (G.state === 'set' || (G.state === 'race' && el < 2)) {
+    for (const L of parts) {
+      const inp = laneInput(L);
+      if (inp.fs === G.seq && inp.fm && (G.state === 'set' || (G.gunAt && inp.fm < G.gunAt))) { foul(L); return; }
+    }
+  }
+  if (G.state !== 'race') return;
+  for (const L of parts) {
+    const r = R[L], inp = laneInput(L);
+    let target = clamp(inp.v || 0, 0, 10.5);
+    if (el < G.penalty[L]) target = 0;
+    r.disc = inp.ok ? 0 : r.disc + dt;
+    if (r.react == null && inp.fs === G.seq && inp.fm > G.gunAt) r.react = (inp.fm - G.gunAt) / 1000;
+    if (!r.done && !r.dnf) {
+      r.v = damp(r.v, target, 6, dt);
+      const x0 = r.x; r.x += r.v * dt; r.top = Math.max(r.top, r.v);
+      while (r.trNext <= el) { r.trace.push(+r.x.toFixed(2)); r.trNext += 0.1; }
+      if (r.x >= G.dist) {
+        r.done = true; r.time = el - dt + dt * (G.dist - x0) / Math.max(1e-6, r.x - x0);
+        r.steps = Math.max(0, (inp.n || 0) - r.n0);
+        if (!G.firstFinish) { G.firstFinish = true; audio.horn(); G.exBoost = 1; confettiBurst(G.dist); }
+      } else if (el > 90 || r.disc > 10) { r.dnf = true; }
+    } else {
+      r.v = damp(r.v, 0, 2.2, dt);
+      if (r.v < 0.3) { r.v = 0; r.mode = 'idle'; }
+      r.x += r.v * dt;
+    }
+  }
+  if (ghost.visible && ghostData) {
+    const nx = ghostX(el); ghost.v = Math.max(0, (nx - ghost.x) / Math.max(dt, 1e-3)); ghost.x = nx;
+    if (ghost.x > G.dist && ghost.v < 0.3) { ghost.v = 0; ghost.mode = 'idle'; }
+  }
+  const allDone = parts.every(L => R[L].done || R[L].dnf);
+  if (allDone && !G.endPerf) {
+    G.endPerf = performance.now();
+    const w = winnerRunner();
+    setTimeout(() => { if (G.state === 'race' && G.endPerf) showResults(); }, 3200);
+    if (w) w.celebrate = true;
+  }
+}
+// หลังเข้าเส้นชัย: ชะลอจนหยุด แล้วผู้ชนะกระโดดดีใจ คนอื่นหอบเหนื่อย (ทำงานต่อในหน้าผล)
+function afterFinish(dt) {
+  for (const L of LANES) {
+    const r = R[L];
+    if (!G.lanes[L] || !(r.done || r.dnf)) continue;
+    if (G.state === 'result' && r.v > 0) { r.v = damp(r.v, 0, 2.2, dt); if (r.v < 0.3) { r.v = 0; r.mode = 'idle'; } r.x += r.v * dt; }
+    if (r.v === 0 && r.done) r.mode = (r.celebrate || G.solo) ? 'victory' : 'tired';
+  }
+}
+function winnerRunner() {
+  const ps = LANES.filter(L => G.lanes[L] && R[L].done).sort((a, b) => R[a].time - R[b].time);
+  return ps.length ? R[ps[0]] : null;
+}
+function showResults() {
+  const parts = LANES.filter(L => G.lanes[L]);
+  const order = parts.slice().sort((a, b) => (R[a].dnf ? 1e9 : R[a].time) - (R[b].dnf ? 1e9 : R[b].time));
+  const res = {};
+  order.forEach((L, i) => {
+    const r = R[L];
+    res[L] = { place: r.dnf ? 0 : i + 1, time: r.dnf ? null : +r.time.toFixed(2), top: +(r.top * 3.6).toFixed(1), react: r.react != null ? +r.react.toFixed(2) : null, steps: r.steps != null ? r.steps : null, dnf: !!r.dnf, solo: G.solo, name: nameOf(L) };
+  });
+  G.result = res;
+  // บันทึกสถิติ
+  const lb = LS.get('run_lb_' + G.dist, []), best = LS.get('run_best_' + G.dist, null);
+  let sub = '', newBest = false;
+  for (const L of order) {
+    const r = R[L]; if (r.dnf) continue;
+    lb.push({ n: nameOf(L), t: +r.time.toFixed(2), d: new Date().toISOString().slice(0, 10) });
+    if (!best || r.time < best.t) { if (!newBest) { LS.set('run_best_' + G.dist, { n: nameOf(L), t: +r.time.toFixed(2), tr: r.trace }); newBest = true; } }
+  }
+  lb.sort((a, b) => a.t - b.t); LS.set('run_lb_' + G.dist, lb.slice(0, 5));
+  if (G.solo && ghostData && res[order[0]] && !res[order[0]].dnf) {
+    const diff = res[order[0]].time - ghostData.time;
+    sub = (diff < 0 ? 'เร็วกว่า' : 'ช้ากว่า') + (ghostData.label.startsWith('สถิติ') ? 'สถิติเดิม ' : 'เงา ') + Math.abs(diff).toFixed(2) + ' วิ';
+  }
+  if (newBest) sub = (sub ? sub + ' · ' : '') + (best ? 'สถิติใหม่!' : 'บันทึกเป็นสถิติแรกของระยะนี้');
+  $('resSub').textContent = sub;
+  $('resTitle').textContent = 'ผลการแข่งขัน ' + G.dist + ' ม.';
+  $('resBody').innerHTML = order.map(L => {
+    const x = res[L];
+    return '<tr><td class="pl">' + (x.dnf ? '–' : x.place) + '</td><td><span class="dot" style="background:' + INFO[L].css + '"></span>' + esc(x.name) + '</td><td>' + (x.time != null ? x.time.toFixed(2) : 'ไม่จบ') + '</td><td>' + Math.round(x.top) + '</td><td>' + (x.react != null ? x.react.toFixed(2) : '–') + '</td><td>' + (x.steps != null ? x.steps : '–') + '</td></tr>';
+  }).join('');
+  renderLB();
+  setState('result');
+  audio.fanfare();
+  const w = order[0];
+  if (w && !res[w].dnf) setTimeout(() => audio.say((G.solo ? '' : 'ผู้ชนะ ') + res[w].name + ' เวลา ' + res[w].time.toFixed(2) + ' วินาที'), 900);
+}
+function renderLB() {
+  const lb = LS.get('run_lb_' + G.dist, []);
+  const html = lb.length ? '🏆 สถิติ ' + G.dist + ' ม.: ' + lb.map((x, i) => (i + 1) + '. ' + esc(x.n) + ' <b>' + x.t.toFixed(2) + '</b>').join(' · ') : '🏆 ยังไม่มีสถิติ ' + G.dist + ' ม. — มาเป็นคนแรก!';
+  $('lb').innerHTML = html; $('resLb').innerHTML = html;
+}
+
+/* =====================================================================
+   หน้าจอซ้อน (ล็อบบี้ / HUD / ผล)
+   ===================================================================== */
+let coT = 0;
+function callout(big, sub, ms) {
+  const c = $('callout'); $('coBig').textContent = big || ''; $('coSub').textContent = sub || '';
+  clearTimeout(coT);
+  if (!big && !sub) { c.classList.remove('on'); return; }
+  c.classList.add('on'); if (ms) coT = setTimeout(() => c.classList.remove('on'), ms);
+}
+function syncOverlays() {
+  const s = G.state;
+  $('lobby').classList.toggle('hide', !['lobby', 'countdown'].includes(s));
+  $('hud').classList.toggle('hide', !['marks', 'set', 'race', 'foul'].includes(s));
+  $('result').classList.toggle('hide', s !== 'result');
+}
+const kickArm = { p1: 0, p2: 0 };
+function lobbyUI() {
+  if (!['lobby', 'countdown'].includes(G.state)) return;
+  const on = onlineLanes();
+  for (const L of LANES) {
+    const n = INFO[L].no, s = laneState(L), st = $('st' + n), qr = $('qr' + n), who = $('who' + n), kb = $('kick' + n);
+    let txt = '', cls = '';
+    if (s.kind === 'none') { txt = 'สแกนเพื่อเข้าเลน ' + INFO[L].label; qr.classList.remove('hide', 'dim'); who.textContent = ''; }
+    else if (s.kind === 'kbd') { qr.classList.add('hide'); who.textContent = s.name; txt = s.ready ? '✔ พร้อม' : (L === 'p1' ? 'กด A / D สลับ · Space = พร้อม' : 'กด ← / → สลับ · Space = พร้อม'); cls = s.ready ? 'ok' : ''; }
+    else if (!s.online) { qr.classList.remove('hide'); qr.classList.add('dim'); who.textContent = s.name; txt = 'หลุดการเชื่อมต่อ — สแกน QR เดิมเพื่อกลับ (' + s.left + ' วิ)'; cls = 'warn'; }
+    else {
+      qr.classList.add('hide'); who.textContent = s.name;
+      if (!s.cal) { txt = s.stage === 'calib' ? 'กำลังคาลิเบรต…' : 'เชื่อมต่อแล้ว · รอคาลิเบรต'; }
+      else if (!s.ready) txt = 'ยกมือถือนิ่ง 1 วิ เพื่อพร้อม';
+      else { txt = '✔ พร้อม'; cls = 'ok'; }
+    }
+    st.textContent = txt; st.className = 'st ' + cls;
+    kb.classList.toggle('hide', s.kind !== 'phone');
+    kb.classList.toggle('arm', kickArm[L] > performance.now());
+    kb.textContent = kickArm[L] > performance.now() ? 'กดอีกครั้งเพื่อนำออก' : 'นำออก';
+    $('sw' + n).style.width = (clamp(laneInput(L).v / 10, 0, 1) * 100) + '%';
+    // ลบเลนที่หลุดเกิน 60 วินาที
+    if (s.kind === 'phone' && !s.online && !s.stale && G.state === 'lobby') kick(L);
+  }
+  let status = 'รอผู้เล่นสแกน QR';
+  if (on.length) {
+    const notCal = on.filter(L => !laneState(L).cal), notReady = on.filter(L => laneState(L).cal && !laneState(L).ready);
+    if (G.state === 'countdown') status = 'กำลังจะเริ่ม…';
+    else if (notCal.length) status = 'รอ ' + notCal.map(L => INFO[L].label).join(', ') + ' คาลิเบรต';
+    else if (notReady.length) status = 'รอ ' + notReady.map(L => INFO[L].label).join(', ') + ' กดพร้อม';
+    else status = 'พร้อมแล้ว!';
+    if (on.length === 1 && G.state === 'lobby') status += ' · คนเดียวจะแข่งกับเงา';
+  }
+  $('lStatus').textContent = status;
+}
+const AV = {
+  p1: { ring: '#ff4d4d', skin: '#f3c39d', hair: '#3a2214', band: '#ff3b3b', kind: 'spiky' },
+  p2: { ring: '#3d8bff', skin: '#e8b089', hair: '#231a30', band: '#2f86ff', kind: 'buns' },
+  ghost: { ring: '#9fb3cc', skin: '#eef4ff', hair: '#eef4ff', band: '#cfdcf0', kind: 'none' }
+};
+function avatarSVG(key) {
+  const s = AV[key];
+  const hair = s.kind === 'spiky' ? '<path d="M13 33 L16 15 L23 24 L29 8 L35 21 L43 10 L45 24 L52 20 L51 33 Z" fill="' + s.hair + '" stroke="#1d1b2b" stroke-width="1.5" stroke-linejoin="round"/>'
+    : s.kind === 'buns' ? '<circle cx="16" cy="17" r="7.5" fill="' + s.hair + '" stroke="#1d1b2b" stroke-width="1.5"/><circle cx="48" cy="17" r="7.5" fill="' + s.hair + '" stroke="#1d1b2b" stroke-width="1.5"/><path d="M12 33 Q13 13 32 13 Q51 13 52 33 Z" fill="' + s.hair + '" stroke="#1d1b2b" stroke-width="1.5"/>' : '';
+  return '<svg class="av" viewBox="0 0 64 64"><circle cx="32" cy="32" r="31" fill="' + s.ring + '" stroke="#fff" stroke-width="2"/><circle cx="32" cy="37" r="20" fill="' + s.skin + '" stroke="#1d1b2b" stroke-width="2"/>' + hair +
+    (s.kind !== 'none' ? '<rect x="12" y="26" width="40" height="5" rx="2.5" fill="' + s.band + '" stroke="#1d1b2b" stroke-width="1.2"/>' : '') +
+    '<ellipse cx="25" cy="38" rx="3" ry="4" fill="#1d1b2b"/><ellipse cx="39" cy="38" rx="3" ry="4" fill="#1d1b2b"/><circle cx="24" cy="36.5" r="1.1" fill="#fff"/><circle cx="38" cy="36.5" r="1.1" fill="#fff"/>' +
+    '<ellipse cx="19.5" cy="45" rx="3.5" ry="2" fill="#ff8fa3"/><ellipse cx="44.5" cy="45" rx="3.5" ry="2" fill="#ff8fa3"/><path d="M27 46 Q32 51 37 46" stroke="#5a2230" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
+}
+const AV_SVG = { p1: avatarSVG('p1'), p2: avatarSVG('p2'), ghost: avatarSVG('ghost') };
+$('lav1').innerHTML = AV_SVG.p1; $('lav2').innerHTML = AV_SVG.p2;
+let hudT = 0;
+function hudUI(t) {
+  if (!['marks', 'set', 'race', 'foul'].includes(G.state)) return;
+  if (t - hudT < 0.05) return;
+  hudT = t;
+  const el = G.state === 'race' ? (performance.now() - G.gunPerf) / 1000 : 0;
+  const parts = LANES.filter(L => G.lanes[L]);
+  const fin = parts.filter(L => R[L].done).map(L => R[L].time);
+  const tt = (fin.length ? Math.min(...fin) : el).toFixed(2);
+  $('timer').textContent = tt; drawClock(tt);
+  const rows = parts.map(L => {
+    const r = R[L], tags = [];
+    if (r.disc > 0.5) tags.push('หลุดการเชื่อมต่อ');
+    if (G.fouls[L]) tags.push('ฟาวล์ ' + G.fouls[L]);
+    if (G.penalty[L] && el < G.penalty[L] && G.state === 'race') tags.push('รอ 1 วิ (โทษฟาวล์)');
+    if (r.dnf) tags.push('ไม่จบการแข่ง');
+    return { key: L, name: nameOf(L), x: r.x, done: r.done, time: r.time, dnf: r.dnf, v: r.v, tags };
+  });
+  if (ghost.visible && ghostData) rows.push({ key: 'ghost', name: ghostData.label, x: ghost.x, done: el >= ghostData.time && G.state === 'race', time: ghostData.time, v: ghost.v, tags: [], gh: true });
+  rows.sort((a, b) => (a.done && b.done) ? a.time - b.time : a.done ? -1 : b.done ? 1 : b.x - a.x);
+  $('ranks').innerHTML = rows.map((r, i) =>
+    '<div class="rk' + (r.gh ? ' gh' : '') + '">' + AV_SVG[r.key] + '<div><div class="pl">อันดับ ' + (i + 1) + ' · ' + esc(r.name) + '</div>' +
+    '<div class="val">' + (r.done ? r.time.toFixed(2) : r.dnf ? '--.--' : Math.min(G.dist, Math.max(0, r.x)).toFixed(1) + '<small style="font-size:18px"> ม.</small>') + '</div>' +
+    '<div class="sp">' + (r.tags.length ? r.tags.join(' · ') : (r.done ? 'เข้าเส้นชัย' : Math.round(r.v * 3.6) + ' กม./ชม.')) + '</div></div></div>').join('');
+  for (const L of LANES) {
+    const n = INFO[L].no, on = !!G.lanes[L];
+    $('mk' + n).classList.toggle('hide', !on);
+    if (on) $('mk' + n).style.left = (18 + clamp(R[L].x / G.dist, 0, 1) * ($('prog').clientWidth - 36)) + 'px';
+  }
+  $('mkg').classList.toggle('hide', !ghost.visible);
+  if (ghost.visible) $('mkg').style.left = (18 + clamp(ghost.x / G.dist, 0, 1) * ($('prog').clientWidth - 36)) + 'px';
+}
+
+/* =====================================================================
+   วงรอบหลัก
+   ===================================================================== */
+let lastT = performance.now(), lobbyT = 0;
+function excitement(dt) {
+  let target = 0.16;
+  const s = G.state;
+  if (s === 'countdown') target = 0.3;
+  else if (s === 'marks' || s === 'set') target = 0.04;
+  else if (s === 'foul') target = 0.35;
+  else if (s === 'race') {
+    const rs = racers(), lead = rs.length ? Math.max(...rs.map(r => r.x)) : 0, trail = rs.length ? Math.min(...rs.map(r => r.x)) : 0;
+    target = 0.35 + 0.45 * clamp(lead / G.dist, 0, 1) + (rs.length > 1 && lead - trail < 1.2 && lead > 10 ? 0.22 : 0);
+  } else if (s === 'result') target = 0.4;
+  G.exBoost = Math.max(0, G.exBoost - dt * 0.18);
+  G.ex = damp(G.ex, Math.min(1, target + G.exBoost * 0.6), 1.5, dt);
+  return G.ex;
+}
+function loop() {
+  const now = performance.now(), dt = Math.min(0.25, (now - lastT) / 1000), t = now / 1000; lastT = now;
+  if (net) {
+    updateKbd(dt, t);
+    if (G.state === 'lobby' || G.state === 'countdown') lobbyLogic();
+    if (['set', 'race'].includes(G.state)) raceLogic(dt);
+    if (G.state === 'race' || G.state === 'result') afterFinish(dt);
+    if (G.state === 'result') {
+      for (const L of LANES) if (G.lanes[L] && G.players[L] && G.players[L].again === G.seq) { toLobby(); break; }
+    }
+    // ตัวละครในล็อบบี้: วิ่งอยู่กับที่ตามแรงแกว่งจริง
+    if (G.state === 'lobby' || G.state === 'countdown') {
+      for (const L of LANES) {
+        const s = laneState(L), r = R[L];
+        r.visible = s.online || (s.kind === 'phone' && s.stale);
+        if (s.online) r.setName(s.name);
+        r.x = -0.8; r.v = damp(r.v, s.online ? laneInput(L).v : 0, 6, dt);
+        r.mode = r.v > 0.15 ? 'run' : 'idle';
+      }
+    } else for (const L of LANES) if (G.lanes[L]) R[L].setName(nameOf(L));
+    if (now - lobbyT > 200) { lobbyT = now; lobbyUI(); }
+    hudUI(t);
+  }
+  for (const r of [R.p1, R.p2, ghost]) if (r.visible) r.update(dt, t);
+  const ex = excitement(dt); audio.ex = ex; audio.tick(dt);
+  updateCrowd(t, ex);
+  updateConfetti(dt);
+  updateCamera(dt, t);
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+/* =====================================================================
+   ปุ่มและการตั้งค่า
+   ===================================================================== */
+function unlockAudio() { audio.unlock(); $('sound').classList.add('hide'); }
+addEventListener('pointerdown', unlockAudio);
+function toggleFS() { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => { }); }
+function openSettings(v) { $('settings').classList.toggle('hide', !v); }
+function setKbd(v) {
+  G.kbd = v; $('kbdChk').checked = v; G.kbdReady = { p1: false, p2: false };
+  toast(v ? 'โหมดคีย์บอร์ด: P1 กด A/D สลับ · P2 กด ←/→ สลับ · Space = พร้อม' : 'ปิดโหมดคีย์บอร์ด');
+}
+let rArm = 0;
+addEventListener('keydown', e => {
+  unlockAudio();
+  if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') && e.target.type !== 'checkbox' && e.target.type !== 'range') return;
+  const k = e.key;
+  if (G.kbd) {
+    if (k === 'a' || k === 'A' || k === 'd' || k === 'D') { kbdStep('p1', k.toLowerCase()); return; }
+    if (k === 'ArrowLeft' || k === 'ArrowRight') { e.preventDefault(); kbdStep('p2', k); return; }
+    if (k === ' ') { e.preventDefault(); if (G.state === 'lobby' || G.state === 'countdown') { const v = !(G.kbdReady.p1 && G.kbdReady.p2); for (const L of LANES) if (laneState(L).kind === 'kbd') G.kbdReady[L] = v; } return; }
+  }
+  if (k === 'f' || k === 'F') toggleFS();
+  else if (k === 's' || k === 'S') openSettings($('settings').classList.contains('hide'));
+  else if (k === 'k' || k === 'K') setKbd(!G.kbd);
+  else if (k === 'Escape') { if (!$('settings').classList.contains('hide')) openSettings(false); else if (G.state !== 'lobby') { toLobby(); toast('ยกเลิกรอบนี้แล้ว'); } }
+  else if (k === 'Enter') {
+    if (G.state === 'result') toLobby();
+    else if (G.state === 'lobby' || G.state === 'countdown') { const on = onlineLanes().filter(L => laneState(L).cal); if (on.length) startRace(on); else toast('ยังไม่มีผู้เล่นที่คาลิเบรตแล้ว'); }
+  }
+  else if (k === 'r' || k === 'R') {
+    if (performance.now() < rArm) newRoom(); else { rArm = performance.now() + 2500; toast('กด R อีกครั้งเพื่อสร้างห้องใหม่ (ผู้เล่นต้องสแกน QR ใหม่)'); }
+  }
+  else if (k === '1' || k === '2') { const L = k === '1' ? 'p1' : 'p2'; if (kickArm[L] > performance.now()) { kick(L); kickArm[L] = 0; } else { kickArm[L] = performance.now() + 3000; toast('กด ' + k + ' อีกครั้งเพื่อนำ ' + INFO[L].label + ' ออก'); } }
+});
+for (const L of LANES) $('kick' + INFO[L].no).onclick = () => { if (kickArm[L] > performance.now()) { kick(L); kickArm[L] = 0; } else kickArm[L] = performance.now() + 3000; lobbyUI(); };
+document.querySelectorAll('#distChips button').forEach(b => b.onclick = () => {
+  if (G.state !== 'lobby') return;
+  G.dist = +b.dataset.d; LS.set('run_dist', G.dist); placeFinish(); if (net) publishHost();
+});
+document.querySelectorAll('#qChips button').forEach(b => b.onclick = () => { G.quality = b.dataset.q; LS.set('run_quality', G.quality); applyQuality(); });
+$('kbdChk').onchange = e => setKbd(e.target.checked);
+$('closeSet').onclick = () => openSettings(false);
+$('fsBtn').onclick = toggleFS;
+$('newRoom').onclick = newRoom;
+function newRoom() { sessionStorage.removeItem('run_room_' + mode); if (net) net.update(base + '/host', { state: 'closed' }); setTimeout(() => location.reload(), 300); }
+$('cfgSave').onclick = () => {
+  const cfg = RunNet.parseConfig($('cfgTxt').value);
+  if (!cfg) { $('cfgMsg').textContent = '⚠ ต้องมี databaseURL (ลงท้าย .firebasedatabase.app หรือ .firebaseio.com)'; return; }
+  RunNet.saveConfig(cfg); $('cfgMsg').textContent = '✔ บันทึกแล้ว กำลังเชื่อมต่อใหม่…';
+  const u = new URL(location.href); u.searchParams.delete('local'); setTimeout(() => location.href = u.toString(), 400);
+};
+$('cfgLocal').onclick = () => { const u = new URL(location.href); u.searchParams.set('local', '1'); location.href = u.toString(); };
+[['vAmb', 'amb'], ['vSfx', 'sfx'], ['vVoice', 'voice']].forEach(([id, k]) => { $(id).value = vols[k]; $(id).oninput = e => audio.setVol(k, +e.target.value); });
+updateVoiceNote();
+
+/* =====================================================================
+   เริ่มต้น
+   ===================================================================== */
+applyQuality();
+placeFinish();
+syncOverlays();
+requestAnimationFrame(loop);
+initNet().catch(e => { console.error(e); toast('เชื่อมต่อไม่ได้: ' + (e.message || e), true); });
+window.__game = { G, R, ghost, KBD, get net() { return net; }, laneState, laneInput, toLobby, startRace }; // สำหรับทดสอบ
+</script>
+</body>
+</html>
