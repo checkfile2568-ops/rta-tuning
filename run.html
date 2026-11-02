@@ -172,6 +172,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
     <textarea id="cfgTxt" rows="4" placeholder="https://xxxx-default-rtdb.asia-southeast1.firebasedatabase.app"></textarea>
     <div id="cfgMsg"></div>
     <div class="row"><button id="cfgSave">บันทึก + เชื่อมต่อใหม่</button><button class="ghost" id="cfgLocal">ใช้โหมดทดสอบในเครื่องนี้</button></div>
+    <label>ใช้กับคอมเครื่องอื่น</label>
+    <div class="row"><button class="ghost" id="cfgLink">🔗 คัดลอกลิงก์ตั้งค่า</button><span class="note" style="margin:0">เปิดลิงก์นี้บนคอมเครื่องใหม่ครั้งเดียว เครื่องนั้นจะจำค่าไว้เอง · เก็บลิงก์ไว้ส่วนตัว อย่าโพสต์ที่สาธารณะ</span></div>
+    <input id="cfgLinkTxt" readonly class="hide" style="width:100%;margin-top:6px;font:13px ui-monospace,monospace;background:#0e121b;color:#e6ebf5;border:1px solid var(--line);border-radius:8px;padding:6px">
     <div class="note">ครั้งแรก: Firebase → Realtime Database → <b>Rules</b> เพิ่มบรรทัดนี้ในกฎเดิม (ไม่ต้องลบของเดิม)<br><code>"games": { ".read": true, ".write": true }</code></div>
     <label>ระดับเสียง</label>
     <div class="vol">
@@ -1043,11 +1046,19 @@ let toastT = 0;
 function toast(t, err) { const e = $('toast'); e.textContent = t; e.className = 'glass on' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('on'), 4200); }
 
 async function initNet() {
+  // ลิงก์ตั้งค่าครั้งเดียว: run.html#cfg=<Database URL> → จำไว้ในเครื่องนี้ แล้วลบออกจากแถบที่อยู่
+  const hm = location.hash.match(/(?:^#|&)cfg=([^&]+)/);
+  if (hm) {
+    const c = RunNet.parseConfig(decodeURIComponent(hm[1]));
+    history.replaceState(null, '', location.pathname + location.search);
+    if (c) { RunNet.saveConfig({ databaseURL: c.databaseURL }); toast('✔ จำค่า Firebase ไว้ในเครื่องนี้แล้ว ครั้งต่อไปเปิดได้เลย'); }
+    else toast('ลิงก์ตั้งค่าไม่ถูกต้อง', true);
+  }
   const saved = FORCE_LOCAL ? null : RunNet.loadSavedConfig();
   if (saved) {
     try {
       net = await RunNet.connect({ config: saved.config }); mode = 'firebase'; dbURL = saved.config.databaseURL;
-      if (saved.from === 'rta') toast('ใช้ค่า Firebase เดียวกับระบบ RTA');
+      if (saved.from === 'rta') { RunNet.saveConfig({ databaseURL: saved.config.databaseURL }); toast('ใช้ค่า Firebase เดียวกับระบบ RTA (จำไว้ในเกมแล้ว)'); }
       $('cfgTxt').value = saved.config.apiKey ? JSON.stringify(saved.config, null, 1) : saved.config.databaseURL;
     } catch (e) { toast(e.message || String(e), true); net = null; }
   }
@@ -1550,6 +1561,13 @@ $('cfgSave').onclick = () => {
   if (!cfg) { $('cfgMsg').textContent = '⚠ ต้องมี databaseURL (ลงท้าย .firebasedatabase.app หรือ .firebaseio.com)'; return; }
   RunNet.saveConfig(cfg); $('cfgMsg').textContent = '✔ บันทึกแล้ว กำลังเชื่อมต่อใหม่…';
   const u = new URL(location.href); u.searchParams.delete('local'); setTimeout(() => location.href = u.toString(), 400);
+};
+$('cfgLink').onclick = async () => {
+  if (mode !== 'firebase' || !dbURL) { $('cfgMsg').textContent = '⚠ เครื่องนี้ยังไม่ได้เชื่อม Firebase — วางค่าแล้วกดบันทึกก่อน'; return; }
+  const link = location.origin + location.pathname + '#cfg=' + encodeURIComponent(dbURL);
+  const box = $('cfgLinkTxt'); box.value = link; box.classList.remove('hide'); box.select();
+  try { await navigator.clipboard.writeText(link); $('cfgMsg').textContent = '✔ คัดลอกลิงก์ตั้งค่าแล้ว'; }
+  catch (_) { $('cfgMsg').textContent = 'คัดลอกอัตโนมัติไม่ได้ — กด Ctrl+C เพื่อคัดลอกลิงก์ด้านล่าง'; }
 };
 $('cfgLocal').onclick = () => { const u = new URL(location.href); u.searchParams.set('local', '1'); location.href = u.toString(); };
 [['vAmb', 'amb'], ['vSfx', 'sfx'], ['vVoice', 'voice']].forEach(([id, k]) => { $(id).value = vols[k]; $(id).oninput = e => audio.setVol(k, +e.target.value); });
