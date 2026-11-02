@@ -218,9 +218,13 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
 <div id="toast" class="glass"></div>
 <div id="conn" class="glass"><i></i><span>กำลังเชื่อมต่อ</span></div>
 <div id="help">F เต็มจอ · S ตั้งค่า · K คีย์บอร์ด</div>
-<div id="bootFail" class="hide"><div class="box glass"><h2>เปิดเกมไม่สำเร็จ</h2><p>ตรวจการรองรับภาพ 3D ของเบราว์เซอร์ แล้วลองโหลดหน้าใหม่ หากยังไม่ขึ้นให้ใช้ Chrome หรือ Edge รุ่นล่าสุด</p><button onclick="location.reload()">ลองใหม่</button></div></div>
+<div id="bootFail" class="hide"><div class="box glass"><h2>กำลังเปิดโหมดภาพเบา</h2><p>เครื่องนี้เปิดฉาก 3D ไม่สำเร็จ เกมจะเปลี่ยนเป็นโหมด 2D ที่ใช้จอยและ QR เดียวกัน</p><button onclick="location.href='run-lite.html'+location.search+location.hash">เปิดโหมด 2D ทันที</button></div></div>
 <script>
-setTimeout(() => { if (!window.__game) document.getElementById('bootFail').classList.remove('hide'); }, 12000);
+setTimeout(() => {
+  if (window.__game) return;
+  document.getElementById('bootFail').classList.remove('hide');
+  setTimeout(() => { if (!window.__game) location.replace('run-lite.html' + location.search + location.hash); }, 2500);
+}, 12000);
 </script>
 
 <script type="module">
