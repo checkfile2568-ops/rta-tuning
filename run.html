@@ -38,6 +38,18 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
 .kick.arm{background:#c62828;color:#fff}
 #lmid{position:absolute;top:24px;left:50%;transform:translateX(-50%);width:min(560px,44vw);padding:12px 20px;text-align:center;pointer-events:auto}
 #lmid h1{margin:0;font-size:36px;font-weight:800;letter-spacing:.5px;line-height:1.2}
+#modePick{position:absolute;top:24px;left:50%;transform:translateX(-50%);width:min(620px,90vw);padding:26px;text-align:center;pointer-events:auto}
+#modePick h1{margin:0 0 8px;font-size:38px}
+#modePick p{margin:0 0 20px;color:#dfe5ef;font-size:19px}
+#modePick .choices{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+#modePick button,#startGame{font:inherit;font-size:23px;font-weight:800;border:0;border-radius:14px;padding:14px 24px;background:var(--gold);color:#1b1400;cursor:pointer}
+#modePick button{min-width:210px}
+#startGame{margin-top:12px;min-width:220px}
+#startGame:disabled{opacity:.45;cursor:not-allowed}
+#changeMode{margin-top:10px;background:none;border:0;color:#9fc3ff;font:inherit;font-size:15px;text-decoration:underline;cursor:pointer}
+#lobby.choosing .lane,#lobby.choosing #lmid{display:none}
+#lobby:not(.choosing) #modePick{display:none}
+#lobby.solo #lane2{display:none}
 #lmid .room{font-size:18px;color:#c8d0de;margin-top:2px}
 #lmid .room b{font-size:26px;color:var(--gold);letter-spacing:4px}
 #lmid ol{text-align:left;margin:6px auto 4px;padding-left:22px;font-size:16px;line-height:1.45;color:#dfe5ef;max-width:440px}
@@ -104,15 +116,23 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
 #settings input[type=range]{width:180px}
 .vol{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;align-items:center;font-size:15px}
 #cfgMsg{font-size:14px;margin-top:6px;color:#ffd166}
+#bootFail{position:fixed;inset:0;background:#0b0e15;z-index:30;display:grid;place-items:center;text-align:center;padding:24px}
+#bootFail .box{max-width:560px;padding:28px}
+#bootFail button{font:inherit;font-size:18px;font-weight:800;border:0;border-radius:10px;padding:10px 22px;background:var(--gold);cursor:pointer}
 </style>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script type="importmap">{"imports":{"three":"./assets/run/three.module.js"}}</script>
+<script src="assets/run/qrcode.js"></script>
 <script src="run-net.js"></script>
 </head>
 <body>
 <div id="stage"></div>
 
-<div id="lobby">
+<div id="lobby" class="choosing">
+  <div class="glass" id="modePick">
+    <h1>วิ่งแข่ง</h1>
+    <p>เลือกจำนวนผู้เล่น แล้วสแกน QR เพื่อเชื่อมมือถือ</p>
+    <div class="choices"><button data-mode="1">เล่นคนเดียว</button><button data-mode="2">เล่น 2 คน</button></div>
+  </div>
   <div class="lane p1 glass" id="lane1">
     <button class="kick hide" id="kick1">นำออก</button>
     <div class="lav" id="lav1"></div>
@@ -125,14 +145,16 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
   </div>
   <div class="glass" id="lmid">
     <h1>วิ่งแข่ง <span id="lDist">100</span> ม.</h1>
-    <div class="room">ห้อง <b id="roomCode">----</b></div>
+    <div class="room hide">ห้อง <b id="roomCode">----</b></div>
     <ol>
-      <li>สแกน QR ของเลนตัวเอง (คนเดียวก็เล่นได้)</li>
-      <li>กดเริ่มบนมือถือ แล้วคาลิเบรตแรงแกว่ง 5 วินาที</li>
-      <li>ยกมือถือนิ่ง 1 วินาที = พร้อม · ครบแล้วเกมเริ่มเอง</li>
+      <li>สแกน QR ตามเลนที่แสดง</li>
+      <li>กดเริ่มบนมือถือและคาลิเบรตแรงแกว่ง 5 วินาที (ครั้งแรก)</li>
+      <li>เมื่อเชื่อมครบ กดเริ่มเล่นบนจอเกม</li>
     </ol>
     <div class="chips" id="distChips"><button data-d="60">60 ม.</button><button data-d="100">100 ม.</button></div>
     <div id="lStatus">รอผู้เล่นสแกน QR</div>
+    <button id="startGame" disabled>เริ่มเล่น</button><br>
+    <button id="changeMode">เปลี่ยนจำนวนผู้เล่น</button>
   </div>
   <div class="lane p2 glass" id="lane2">
     <button class="kick hide" id="kick2">นำออก</button>
@@ -151,7 +173,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
   <div id="timer" class="glass">0.00</div>
   <div id="ranks"></div>
   <div id="prog" class="glass"><span class="st0">0</span><span class="fin" id="progFin">100 ม.</span><div class="ln"></div><div class="mk m1" id="mk1"></div><div class="mk m2" id="mk2"></div><div class="mk mg" id="mkg"></div></div>
-  <div id="roomTag"></div>
+  <div id="roomTag" class="hide"></div>
 </div>
 
 <div id="callout"><div class="big" id="coBig"></div><div class="sub" id="coSub"></div></div>
@@ -196,6 +218,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
 <div id="toast" class="glass"></div>
 <div id="conn" class="glass"><i></i><span>กำลังเชื่อมต่อ</span></div>
 <div id="help">F เต็มจอ · S ตั้งค่า · K คีย์บอร์ด</div>
+<div id="bootFail" class="hide"><div class="box glass"><h2>เปิดเกมไม่สำเร็จ</h2><p>ตรวจการรองรับภาพ 3D ของเบราว์เซอร์ แล้วลองโหลดหน้าใหม่ หากยังไม่ขึ้นให้ใช้ Chrome หรือ Edge รุ่นล่าสุด</p><button onclick="location.reload()">ลองใหม่</button></div></div>
+<script>
+setTimeout(() => { if (!window.__game) document.getElementById('bootFail').classList.remove('hide'); }, 12000);
+</script>
 
 <script type="module">
 import * as THREE from 'three';
@@ -239,7 +265,7 @@ const G = {
   dist: [60, 100].includes(LS.get('run_dist', 100)) ? LS.get('run_dist', 100) : 100,
   state: 'lobby', seq: 0, lanes: {}, gunAt: 0, gunPerf: 0, stateAt: performance.now(),
   players: {}, input: {}, fouls: { p1: 0, p2: 0 }, penalty: { p1: 0, p2: 0 },
-  kbd: false, kbdReady: { p1: false, p2: false }, result: null, solo: false,
+  kbd: false, kbdReady: { p1: false, p2: false }, playMode: ['1', '2'].includes(sessionStorage.getItem('run_play_mode')) ? Number(sessionStorage.getItem('run_play_mode')) : 0, result: null, solo: false,
   endPerf: 0, firstFinish: false, ex: 0.15, exBoost: 0, quality: LS.get('run_quality', 'high')
 };
 const vols = Object.assign({ amb: 0.8, sfx: 0.9, voice: 1 }, LS.get('run_vol', {}));
@@ -1071,13 +1097,20 @@ async function initNet() {
   sessionStorage.setItem('run_room_' + mode, room);
   base = RunNet.roomPath(room);
   $('roomCode').textContent = room; $('roomTag').textContent = 'ห้อง ' + room;
-  net.onConnection(c => { if (mode === 'local') setConn('local', 'โหมดทดสอบในเครื่อง'); else setConn(c ? 'ok' : 'bad', c ? 'Firebase เชื่อมต่อแล้ว' : 'Firebase หลุด — กำลังต่อใหม่'); });
+  net.onConnection(c => { if (mode === 'local') setConn('local', 'โหมดทดสอบในเครื่อง'); else setConn(c ? 'ok' : 'bad', c ? 'Firebase เชื่อมต่อแล้ว' : 'Firebase หลุด — กำลังต่อใหม่'); lobbyUI(); });
   net.onError(e => {
     const s = String((e && (e.code || e.message)) || e);
     if (/permission/i.test(s)) banner('Firebase ไม่อนุญาตให้เขียนข้อมูลเกม — เพิ่มกฎ <code>"games": { ".read": true, ".write": true }</code> ใน Realtime Database → Rules (กด S ดูวิธี)');
     else toast('Firebase: ' + s, true);
   });
-  await publishHost(true);
+  await Promise.race([
+    (async () => {
+      await publishHost(true);
+      const check = await net.get(base + '/host');
+      if (!check || check.state !== 'lobby') throw new Error('สร้างเกมใน Firebase ไม่สำเร็จ — ตรวจสิทธิ์ games ใน Rules');
+    })(),
+    wait(12000).then(() => { throw new Error('รอ Firebase เกิน 12 วินาที — ตรวจอินเทอร์เน็ตแล้วโหลดใหม่'); })
+  ]);
   net.onDisconnect(base + '/host/state').set('closed');
   net.on(base + '/players', v => { G.players = v || {}; });
   net.on(base + '/input', v => { G.input = v || {}; });
@@ -1086,7 +1119,7 @@ async function initNet() {
   renderQRs();
 }
 function publishHost(full) {
-  const h = { state: G.state, seq: G.seq, dist: G.dist, lanes: G.lanes, gunAt: G.gunAt || 0, result: G.result || null, solo: !!G.solo, updated: net.now() };
+  const h = { state: G.state, seq: G.seq, dist: G.dist, playMode: G.playMode, lanes: G.lanes, gunAt: G.gunAt || 0, result: G.result || null, solo: !!G.solo, updated: net.now() };
   if (full) h.created = net.now();
   return net.update(base + '/host', h);
 }
@@ -1168,18 +1201,20 @@ function kick(L) {
    ===================================================================== */
 let seqTok = 0;
 function setState(s) { G.state = s; G.stateAt = performance.now(); if (net) publishHost(); syncOverlays(); }
-function onlineLanes() { return LANES.filter(L => laneState(L).online); }
+function requiredLanes() { return G.playMode === 2 ? LANES : G.playMode === 1 ? ['p1'] : []; }
+function canStart() {
+  if (!net || !net.isConnected()) return false;
+  const lanes = requiredLanes();
+  return lanes.length > 0 && lanes.every(L => { const s = laneState(L); return s.online && s.cal && s.ready; });
+}
 
 let lastCountBeep = -1;
 function lobbyLogic() {
-  const on = onlineLanes();
-  const allReady = on.length > 0 && on.every(L => laneState(L).ready);
-  if (G.state === 'lobby' && allReady) { setState('countdown'); lastCountBeep = -1; }
   if (G.state === 'countdown') {
-    if (!allReady) { setState('lobby'); callout('', '', 0); return; }
+    if (!canStart()) { setState('lobby'); callout('', '', 0); toast('ผู้เล่นหลุดการเชื่อมต่อ · รอเชื่อมใหม่', true); return; }
     const el = (performance.now() - G.stateAt) / 1000, left = 3 - Math.floor(el);
-    if (left !== lastCountBeep && left > 0) { lastCountBeep = left; audio.beep(520, 0.12, 0.12); callout(String(left), on.length === 1 ? 'วิ่งคนเดียว · แข่งกับเงา' : 'เตรียมตัว', 900); }
-    if (el >= 3) startRace(on);
+    if (left !== lastCountBeep && left > 0) { lastCountBeep = left; audio.beep(520, 0.12, 0.12); callout(String(left), G.playMode === 1 ? 'วิ่งคนเดียว · แข่งกับเงา' : 'เตรียมตัว', 900); }
+    if (el >= 3) startRace(requiredLanes());
   }
 }
 function startRace(lanes) {
@@ -1231,7 +1266,7 @@ function foul(L) {
 function toLobby() {
   seqTok++;
   G.lanes = {}; G.result = null; G.endPerf = 0; G.gunAt = 0; G.solo = false;
-  for (const L of LANES) { const r = R[L]; r.x = -0.8; r.v = 0; r.mode = 'idle'; if (G.players[L]) net.update(base + '/players/' + L, { ready: false }); }
+  for (const L of LANES) { const r = R[L]; r.x = -0.8; r.v = 0; r.mode = 'idle'; if (G.players[L]) net.update(base + '/players/' + L, { ready: !!G.players[L].cal }); }
   ghost.visible = false; clearConfetti();
   G.kbdReady = { p1: false, p2: false };
   setState('lobby'); callout('', '', 0);
@@ -1380,8 +1415,11 @@ function syncOverlays() {
 const kickArm = { p1: 0, p2: 0 };
 function lobbyUI() {
   if (!['lobby', 'countdown'].includes(G.state)) return;
-  const on = onlineLanes();
+  $('lobby').classList.toggle('choosing', !G.playMode);
+  $('lobby').classList.toggle('solo', G.playMode === 1);
+  const required = requiredLanes();
   for (const L of LANES) {
+    if (!required.includes(L)) continue;
     const n = INFO[L].no, s = laneState(L), st = $('st' + n), qr = $('qr' + n), who = $('who' + n), kb = $('kick' + n);
     let txt = '', cls = '';
     if (s.kind === 'none') { txt = 'สแกนเพื่อเข้าเลน ' + INFO[L].label; qr.classList.remove('hide', 'dim'); who.textContent = ''; }
@@ -1390,7 +1428,7 @@ function lobbyUI() {
     else {
       qr.classList.add('hide'); who.textContent = s.name;
       if (!s.cal) { txt = s.stage === 'calib' ? 'กำลังคาลิเบรต…' : 'เชื่อมต่อแล้ว · รอคาลิเบรต'; }
-      else if (!s.ready) txt = 'ยกมือถือนิ่ง 1 วิ เพื่อพร้อม';
+      else if (!s.ready) txt = 'เชื่อมต่อแล้ว · รอพร้อม';
       else { txt = '✔ พร้อม'; cls = 'ok'; }
     }
     st.textContent = txt; st.className = 'st ' + cls;
@@ -1401,16 +1439,17 @@ function lobbyUI() {
     // ลบเลนที่หลุดเกิน 60 วินาที
     if (s.kind === 'phone' && !s.online && !s.stale && G.state === 'lobby') kick(L);
   }
-  let status = 'รอผู้เล่นสแกน QR';
-  if (on.length) {
-    const notCal = on.filter(L => !laneState(L).cal), notReady = on.filter(L => laneState(L).cal && !laneState(L).ready);
-    if (G.state === 'countdown') status = 'กำลังจะเริ่ม…';
-    else if (notCal.length) status = 'รอ ' + notCal.map(L => INFO[L].label).join(', ') + ' คาลิเบรต';
-    else if (notReady.length) status = 'รอ ' + notReady.map(L => INFO[L].label).join(', ') + ' กดพร้อม';
-    else status = 'พร้อมแล้ว!';
-    if (on.length === 1 && G.state === 'lobby') status += ' · คนเดียวจะแข่งกับเงา';
-  }
+  const missing = required.filter(L => !laneState(L).online);
+  const notCal = required.filter(L => laneState(L).online && !laneState(L).cal);
+  let status = !G.playMode ? 'เลือกจำนวนผู้เล่น' : 'รอผู้เล่นสแกน QR';
+  if (mode === 'firebase' && net && !net.isConnected()) status = 'กำลังเชื่อม Firebase — ยังเริ่มไม่ได้';
+  else if (G.state === 'countdown') status = 'กำลังจะเริ่ม…';
+  else if (missing.length) status = 'รอ ' + missing.map(L => INFO[L].label).join(', ') + ' สแกน QR';
+  else if (notCal.length) status = 'รอ ' + notCal.map(L => INFO[L].label).join(', ') + ' คาลิเบรต';
+  else if (canStart()) status = 'เชื่อมครบแล้ว · กดเริ่มเล่น' + (G.playMode === 1 ? ' (แข่งกับเงา)' : '');
+  else if (G.playMode) status = 'รอผู้เล่นพร้อม';
   $('lStatus').textContent = status;
+  $('startGame').disabled = G.state !== 'lobby' || !canStart();
 }
 const AV = {
   p1: { ring: '#ff4d4d', skin: '#f3c39d', hair: '#3a2214', band: '#ff3b3b', kind: 'spiky' },
@@ -1538,7 +1577,7 @@ addEventListener('keydown', e => {
   else if (k === 'Escape') { if (!$('settings').classList.contains('hide')) openSettings(false); else if (G.state !== 'lobby') { toLobby(); toast('ยกเลิกรอบนี้แล้ว'); } }
   else if (k === 'Enter') {
     if (G.state === 'result') toLobby();
-    else if (G.state === 'lobby' || G.state === 'countdown') { const on = onlineLanes().filter(L => laneState(L).cal); if (on.length) startRace(on); else toast('ยังไม่มีผู้เล่นที่คาลิเบรตแล้ว'); }
+    else if (G.state === 'lobby') beginFromLobby();
   }
   else if (k === 'r' || k === 'R') {
     if (performance.now() < rArm) newRoom(); else { rArm = performance.now() + 2500; toast('กด R อีกครั้งเพื่อสร้างห้องใหม่ (ผู้เล่นต้องสแกน QR ใหม่)'); }
@@ -1555,7 +1594,21 @@ $('kbdChk').onchange = e => setKbd(e.target.checked);
 $('closeSet').onclick = () => openSettings(false);
 $('fsBtn').onclick = toggleFS;
 $('newRoom').onclick = newRoom;
-function newRoom() { sessionStorage.removeItem('run_room_' + mode); if (net) net.update(base + '/host', { state: 'closed' }); setTimeout(() => location.reload(), 300); }
+function newRoom() { sessionStorage.removeItem('run_room_' + mode); sessionStorage.removeItem('run_play_mode'); if (net) net.update(base + '/host', { state: 'closed' }); setTimeout(() => location.reload(), 300); }
+$('changeMode').onclick = newRoom;
+document.querySelectorAll('#modePick button').forEach(b => b.onclick = () => {
+  G.playMode = Number(b.dataset.mode);
+  sessionStorage.setItem('run_play_mode', String(G.playMode));
+  if (net) publishHost();
+  lobbyUI();
+});
+function beginFromLobby() {
+  if (!canStart()) { toast('รอให้ผู้เล่นเชื่อมต่อและคาลิเบรตครบก่อน', true); return; }
+  lastCountBeep = -1;
+  setState('countdown');
+  lobbyUI();
+}
+$('startGame').onclick = beginFromLobby;
 $('cfgSave').onclick = () => {
   const cfg = RunNet.parseConfig($('cfgTxt').value);
   if (!cfg) { $('cfgMsg').textContent = '⚠ ต้องมี databaseURL (ลงท้าย .firebasedatabase.app หรือ .firebaseio.com)'; return; }
@@ -1580,8 +1633,9 @@ applyQuality();
 placeFinish();
 syncOverlays();
 requestAnimationFrame(loop);
-initNet().catch(e => { console.error(e); toast('เชื่อมต่อไม่ได้: ' + (e.message || e), true); });
+initNet().catch(e => { console.error(e); banner('เชื่อมต่อไม่ได้: ' + esc(e.message || e) + ' · กด S เพื่อตรวจค่า Firebase'); });
 window.__game = { G, R, ghost, KBD, get net() { return net; }, laneState, laneInput, toLobby, startRace }; // สำหรับทดสอบ
+document.getElementById('bootFail').classList.add('hide');
 </script>
 </body>
 </html>

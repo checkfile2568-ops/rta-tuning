@@ -11,10 +11,11 @@
 (function () {
   'use strict';
 
-  const FB_VER = '10.12.2';                 // รุ่นเดียวกับระบบ RTA
+  // Firebase compat 10.12.2 อยู่ใน assets/run/ เพื่อให้เกมไม่พึ่ง CDN ระหว่างแข่ง
   const ROOT = 'games/run';
   const CFG_KEY = 'run_fb_cfg';             // ค่า Firebase ของเกม (localStorage)
   const RTA_KEY = 'rta_fb_cfg';             // ค่าเดิมของระบบ RTA (โดเมนเดียวกัน ใช้ซ้ำได้)
+  const DEFAULT_DB = 'https://court-media-controller-default-rtdb.asia-southeast1.firebasedatabase.app';
   const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // ตัด 0/O และ 1/I/L ออก
 
   /* ---------------- เครื่องมือทั่วไป ---------------- */
@@ -54,7 +55,7 @@
       const c = sy && parseConfig(sy.config);
       if (c) return { config: c, from: 'rta' };
     } catch (_) { }
-    return null;
+    return { config: { databaseURL: DEFAULT_DB }, from: 'default' };
   }
   function saveConfig(cfg) { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (_) { } }
   function clearConfig() { try { localStorage.removeItem(CFG_KEY); } catch (_) { } }
@@ -74,8 +75,8 @@
   /* ---------------- ช่องทาง Firebase ---------------- */
   async function firebaseTransport(cfg) {
     if (!window.firebase || !window.firebase.database) {
-      await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-app-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-database-compat.js');
+      await loadScript('assets/run/firebase-app-compat.js');
+      await loadScript('assets/run/firebase-database-compat.js');
     }
     const fb = window.firebase;
     let app = (fb.apps || []).find(a => a.name === 'run');
