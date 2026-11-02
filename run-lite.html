@@ -31,7 +31,7 @@ footer{text-align:center;color:#a7bfdc;margin:30px 0;font-size:14px}
 @media(max-width:500px){#lobby{grid-template-columns:1fr}.lane{grid-row:auto}#center{grid-row:auto}.track{height:85px}}
 </style>
 <script src="assets/run/qrcode.js"></script>
-<script src="run-net.js"></script>
+<script src="run-net.js?v=run2"></script>
 </head>
 <body>
 <header><h1>🏃 วิ่งแข่ง <small style="font-size:15px;color:#c8a45a">โหมดภาพเบา</small></h1><span id="conn">กำลังเชื่อมต่อ…</span></header>
@@ -54,6 +54,7 @@ footer{text-align:center;color:#a7bfdc;margin:30px 0;font-size:14px}
   const safe = v => String(v || '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const query = new URLSearchParams(location.search);
   const local = query.get('local') === '1';
+  const config = () => RunNet.loadSavedConfig()?.config || {databaseURL:'https://court-media-controller-default-rtdb.asia-southeast1.firebasedatabase.app'};
   const cfgHash = location.hash.match(/(?:^#|&)cfg=([^&]+)/);
   if(cfgHash){const cfg=RunNet.parseConfig(decodeURIComponent(cfgHash[1]));if(cfg)RunNet.saveConfig(cfg);history.replaceState(null,'',location.pathname+location.search);}
   const modeKey = 'run_play_mode', roomKey = 'run_room_' + (local ? 'local' : 'firebase');
@@ -99,12 +100,12 @@ footer{text-align:center;color:#a7bfdc;margin:30px 0;font-size:14px}
     }
   }
   function qr() {
-    for(const L of lanes){const n=L==='p1'?1:2,u=new URL('pad.html',location.href);u.search='';u.hash='';u.searchParams.set('r',room);u.searchParams.set('p',String(n));if(local)u.searchParams.set('local','1');else u.hash='db='+encodeURIComponent(RunNet.loadSavedConfig().config.databaseURL);
+    for(const L of lanes){const n=L==='p1'?1:2,u=new URL('pad.html',location.href);u.search='';u.hash='';u.searchParams.set('r',room);u.searchParams.set('p',String(n));if(local)u.searchParams.set('local','1');else u.hash='db='+encodeURIComponent(config().databaseURL);
       try{const q=qrcode(0,'M');q.addData(u.toString());q.make();$('qr'+n).innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true});}catch(e){$('qr'+n).textContent='สร้าง QR ไม่สำเร็จ';}
     }
   }
   async function init(){
-    net=await RunNet.connect(local?{mode:'local'}:{config:RunNet.loadSavedConfig().config});
+    net=await RunNet.connect(local?{mode:'local'}:{config:config()});
     net.onConnection(c=>{$('conn').textContent=c?'● เชื่อมต่อแล้ว':'● กำลังเชื่อมต่อ';render();});
     net.onError(e=>{notice('Firebase: '+(e?.message||e));render();});
     await Promise.race([(async()=>{await publish();const h=await net.get(base+'/host');if(!h||h.state!=='lobby')throw Error('สร้างเกมไม่ได้ · ตรวจสิทธิ์ Firebase');})(),new Promise((_,bad)=>setTimeout(()=>bad(Error('เชื่อม Firebase ไม่สำเร็จภายใน 12 วินาที')),12000))]);
