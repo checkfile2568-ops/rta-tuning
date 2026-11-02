@@ -92,35 +92,24 @@ body.racing #lane,body.racing #dot{color:rgba(255,255,255,.85)}
   <button id="cGo">เริ่มคาลิเบรต</button>
 </section>
 
-<!-- 3. กดพร้อม -->
-<section class="scr" id="sReady">
-  <h1>ยกมือถือนิ่ง 1 วินาที</h1>
-  <p>ถือมือถือตั้งตรงระดับอกแล้วนิ่งไว้ เพื่อบอกว่าพร้อม</p>
-  <div class="ring"><svg viewBox="0 0 120 120"><circle class="bgc" cx="60" cy="60" r="52"/><circle class="fg" id="rRing" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg><div class="lbl" id="rLbl">✋</div></div>
-  <div class="meter"><i id="rMeter"></i></div>
-  <div class="meterlbl">ลองแกว่งแขนดู · ตัวละครบนจอจะวิ่งตาม</div>
-  <button id="rBtn">พร้อม</button>
-  <button class="ghost" id="rRecal">คาลิเบรตใหม่</button>
-</section>
-
-<!-- 4. รอเริ่ม -->
+<!-- 3. เชื่อมต่อแล้ว รอจอเกมเริ่ม -->
 <section class="scr" id="sWait">
   <div class="av" id="wAv"></div>
   <div class="badge" id="wBadge">P1</div>
   <h1 id="wTitle">พร้อมแล้ว</h1>
-  <p id="wText">รอผู้เล่นคนอื่น…</p>
+  <p id="wText">รอจอเกมกดเริ่มเล่น</p>
   <div class="meter"><i id="wMeter"></i></div>
   <div class="meterlbl">แกว่งแขนวอร์มอัปได้</div>
-  <button class="ghost" id="wCancel">ยกเลิกพร้อม</button>
+  <button class="ghost" id="rRecal">คาลิเบรตใหม่</button>
 </section>
 
-<!-- 5. แข่ง -->
+<!-- 4. แข่ง -->
 <section class="scr" id="sRace">
   <div class="big" id="raceTxt">เข้าที่</div>
   <div class="spd" id="raceSpd" style="display:none">0<small> กม./ชม.</small></div>
 </section>
 
-<!-- 6. ผล -->
+<!-- 5. ผล -->
 <section class="scr" id="sResult">
   <div class="place" id="resPlace">1</div>
   <h1 id="resTitle">อันดับ 1</h1>
@@ -354,7 +343,7 @@ async function claim(name) {
   const res = await net.transaction(lanePath, c => {
     if (c && c.token !== token && (c.online !== false || now - (c.seen || 0) < 60000)) return; // เลนนี้มีคนอยู่
     return { name, token, online: true, seen: now, joined: (c && c.token === token && c.joined) || now,
-             ready: false, cal: !!D.cal, src: D.src || '', again: -1 };
+    ready: !!D.cal, cal: !!D.cal, src: D.src || '', again: -1 };
   });
   if (!res.committed) {
     msg('เลน P' + LANE_NO + ' มีคนใช้อยู่', 'ขอให้ผู้ดูแลกดนำผู้เล่นเดิมออกจากจอเกม หรือสแกน QR ของอีกเลน', 'ลองอีกครั้ง', () => { show('sJoin'); $('jGo').disabled = false; $('jGo').textContent = 'เริ่ม · เปิดเซนเซอร์'; });
@@ -449,7 +438,7 @@ async function runCalib() {
   applyCal(store.cal);
   $('cTitle').textContent = 'คาลิเบรตแรงแกว่ง'; $('cText').textContent = 'กำมือถือแนวตั้ง แล้วแกว่งแขนหน้า–หลังให้เร็วที่สุดเหมือนวิ่งสปรินต์ 5 วินาที';
   $('cGo').textContent = 'เริ่มคาลิเบรต'; $('cGo').style.display = '';
-  net && net.update(lanePath, { cal: true, src, stage: 'cal-ok' });
+  net && net.update(lanePath, { cal: true, ready: true, src, stage: 'ready' });
   render();
 }
 
@@ -464,19 +453,16 @@ function render() {
   const part = isPart();
   if (host && RACE_STATES.includes(host.state)) {
     if (part) { show('sRace'); return; }
-    msg('กำลังแข่งรอบนี้อยู่', 'รอรอบถัดไป แล้วกดพร้อมอีกครั้ง'); return;
+    msg('กำลังแข่งรอบนี้อยู่', 'รอรอบถัดไป แล้วสแกน QR ใหม่'); return;
   }
   if (host && host.state === 'result' && part && host.result && host.result[LANE] && !(me && me.again === host.seq)) {
     showResult(host.result[LANE]); return;
   }
   if (calibrating) { show('sCalib'); return; }
   if (!D.cal) { show('sCalib'); return; }
-  if (me && me.ready) {
-    $('wTitle').textContent = 'พร้อมแล้ว';
-    $('wText').textContent = host && host.state === 'countdown' ? 'กำลังจะเริ่ม…' : 'รอผู้เล่นคนอื่น…';
-    show('sWait'); return;
-  }
-  show('sReady');
+  $('wTitle').textContent = 'เชื่อมต่อแล้ว';
+  $('wText').textContent = host && host.state === 'countdown' ? 'กำลังจะเริ่ม…' : 'รอจอเกมกดเริ่มเล่น';
+  show('sWait');
 }
 
 function showResult(r) {
@@ -489,24 +475,13 @@ function showResult(r) {
   $('resSteps').textContent = r.steps != null ? String(r.steps) : '–';
 }
 
-function setReady(v) {
-  if (!joined) return;
-  net.update(lanePath, { ready: v, stage: v ? 'ready' : 'cal-ok', name: store.name });
-}
-
 /* ====================== วงรอบหน้าจอ ====================== */
-let lastFrame = performance.now() / 1000, readyLatch = false;
+let lastFrame = performance.now() / 1000;
 function frame() {
   const t = performance.now() / 1000, dt = clamp(t - lastFrame, 0, 0.1); lastFrame = t;
   D.update(t, dt);
   const m = (D.meter() * 100) + '%';
-  if (cur === 'sReady') {
-    $('rMeter').style.width = m;
-    setRing($('rRing'), stillF);
-    $('rLbl').textContent = stillF >= 1 ? '✔' : '✋';
-    if (stillF >= 1 && !readyLatch && joined && me && !me.ready) { readyLatch = true; setReady(true); try { navigator.vibrate && navigator.vibrate(40); } catch (_) { } }
-    if (stillF < 0.3) readyLatch = false;
-  } else if (cur === 'sWait') {
+  if (cur === 'sWait') {
     $('wMeter').style.width = m;
   } else if (cur === 'sRace' && host) {
     const s = host.state, kmh = D.v * 3.6;
@@ -531,10 +506,8 @@ requestAnimationFrame(frame);
 $('jGo').onclick = join;
 $('jName').addEventListener('keydown', e => { if (e.key === 'Enter') join(); });
 $('cGo').onclick = runCalib;
-$('rBtn').onclick = () => setReady(true);
 $('rRecal').onclick = () => { store.cal = null; saveStore(); D.cal = 0; D.thr = 20; net && net.update(lanePath, { cal: false, ready: false, stage: 'joined' }); render(); };
-$('wCancel').onclick = () => setReady(false);
-$('resAgain').onclick = () => { if (host) net.update(lanePath, { again: host.seq, ready: false }); };
+$('resAgain').onclick = () => { if (host) net.update(lanePath, { again: host.seq, ready: !!D.cal }); };
 
 /* ====================== เริ่มต้น ====================== */
 if (!ROOM || !LANE) {
