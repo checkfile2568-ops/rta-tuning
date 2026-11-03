@@ -237,7 +237,7 @@ class SwingDetector {
         this.steps++; this.times.push(t); if (this.times.length > 10) this.times.shift();
         this.amps.push(amp); if (this.amps.length > 6) this.amps.shift();
         this.lastStep = t;
-        if (this.onStep) this.onStep(t, amp);
+        if (this.onStep) this.onStep(t, amp, this.hcStart);   // hcStart = จังหวะที่เริ่มขยับจริง
       }
     }
     this.sgn = ns; this.hcStart = t; this.integ = 0; this.peak = 0;
@@ -310,7 +310,7 @@ function rotCheck() { $('rot').classList.toggle('need', joined); }
 /* ====================== เครือข่าย ====================== */
 let net = null, base = '', lanePath = '', inputPath = '';
 let joined = false, me = null, host = null, kicked = false;
-let fmSeq = -1, lastSend = 0, lastState = '', calibrating = false;
+let fmSeq = -1, lastSend = 0, lastSig = '', lastState = '', calibrating = false;
 
 async function join() {
   $('jErr').textContent = '';
@@ -324,7 +324,13 @@ async function join() {
     $('jGo').textContent = 'กำลังเชื่อมต่อ…';
     if (!net) {
       net = await RunNet.connect(LOCAL ? { mode: 'local' } : { config: { databaseURL: store.db } });
-      net.onConnection(c => setDot(c ? 'ok' : 'bad', c ? 'เชื่อมต่อแล้ว' : 'หลุดการเชื่อมต่อ'));
+      let wasConn = null;
+      net.onConnection(c => {
+        setDot(c ? 'ok' : 'bad', c ? 'เชื่อมต่อแล้ว' : 'หลุดการเชื่อมต่อ');
+        // ต่อใหม่หลังหลุด: ลงทะเบียน onDisconnect ใหม่ (ของเดิมทำงานไปแล้วตอนหลุด) แล้วบอกจอเกมว่ากลับมาแล้ว
+        if (c && wasConn === false && joined) { net.onDisconnect(lanePath + '/online').set(false); net.update(lanePath, { seen: net.now(), online: true }); }
+        wasConn = c;
+      });
       net.onError(e => setDot('bad', 'ส่งข้อมูลไม่ได้'));
     }
     base = RunNet.roomPath(ROOM); lanePath = base + '/players/' + LANE; inputPath = base + '/input/' + LANE;
@@ -375,11 +381,13 @@ function subscribe() {
 }
 const isPart = () => !!(host && host.lanes && host.lanes[LANE]);
 
-D.onStep = () => {
+D.onStep = (t, amp, t0) => {
   if (!joined || !host || !isPart()) return;
   if ((host.state === 'set' || host.state === 'race') && fmSeq !== host.seq) {
     fmSeq = host.seq;
-    net.update(inputPath, { fm: net.now(), fs: host.seq });
+    // ประทับเวลาตอน "เริ่มขยับ" (ต้นครึ่งรอบแรก) ไม่ใช่ตอนนับก้าวได้ → เวลาออกตัวแม่นขึ้น
+    const lag = t0 ? clamp(performance.now() / 1000 - t0, 0, 1.5) : 0;
+    net.update(inputPath, { fm: Math.round(net.now() - lag * 1000), fs: host.seq });
   }
 };
 
@@ -388,8 +396,10 @@ function sendLoop() {
   const racing = host && RACE_STATES.includes(host.state) && isPart();
   const now = performance.now();
   if (now - lastSend < (racing ? 50 : 120)) return;
-  lastSend = now;
-  net.update(inputPath, { v: Math.round(D.v * 100) / 100, c: Math.round(D.cad * 100) / 100, n: D.steps, t: net.now() });
+  const v = Math.round(D.v * 100) / 100, sig = v + '|' + D.steps;
+  if (!racing && sig === lastSig && now - lastSend < 1000) return;   // นอกการแข่ง: ส่งเมื่อค่าเปลี่ยน หรือทุก 1 วิ (ประหยัดโควตา)
+  lastSend = now; lastSig = sig;
+  net.update(inputPath, { v, c: Math.round(D.cad * 100) / 100, n: D.steps, t: net.now() });
 }
 setInterval(sendLoop, 25);
 

@@ -119,8 +119,40 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
 #bootFail{position:fixed;inset:0;background:#0b0e15;z-index:30;display:grid;place-items:center;text-align:center;padding:24px}
 #bootFail .box{max-width:560px;padding:28px}
 #bootFail button{font:inherit;font-size:18px;font-weight:800;border:0;border-radius:10px;padding:10px 22px;background:var(--gold);cursor:pointer}
+/* ---------- VS ก่อนเริ่ม ---------- */
+#vs{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;padding-top:6vh}
+#vs .row{display:flex;align-items:center;gap:3.5vw}
+.vsc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 28px 12px;border-radius:26px;min-width:240px;background:var(--glass);border:4px solid rgba(255,255,255,.25)}
+.vsc.p1{border-color:var(--p1)}.vsc.p2{border-color:var(--p2)}.vsc.ghost{border-color:#9fb3cc;border-style:dashed;opacity:.92}
+.vsc .av{width:104px;height:104px}
+.vsc .nm{font-size:32px;font-weight:800;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vsc .tg{font-size:17px;color:#cfd6e4}
+#vsA{animation:vsL .6s cubic-bezier(.2,1.4,.4,1) both}#vsB{animation:vsR .6s .08s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes vsL{from{transform:translateX(-60vw) rotate(-10deg)}to{transform:none}}
+@keyframes vsR{from{transform:translateX(60vw) rotate(10deg)}to{transform:none}}
+.vsx{font-size:92px;font-weight:800;font-style:italic;color:#ffd23f;text-shadow:5px 5px 0 #c2410c,0 10px 30px rgba(0,0,0,.5);animation:vsX .5s .3s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes vsX{from{transform:scale(3) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+#vsN{margin-top:3vh;font-size:min(22vw,220px);font-weight:800;line-height:1;text-shadow:0 8px 34px rgba(0,0,0,.55),0 4px 0 rgba(0,0,0,.35);opacity:0}
+#vsN.pop{animation:nPop .95s ease-out both}
+@keyframes nPop{0%{transform:scale(1.9);opacity:0}14%{transform:scale(1);opacity:1}78%{opacity:1}100%{transform:scale(.8);opacity:0}}
+#vsS{font-size:28px;font-weight:600;text-shadow:0 3px 14px rgba(0,0,0,.75)}
+#callout.go .big{color:#ffd23f;font-size:min(22vw,230px);text-shadow:6px 6px 0 #c2410c,0 10px 40px rgba(0,0,0,.45);animation:goPop .55s cubic-bezier(.2,1.7,.4,1) both}
+@keyframes goPop{from{transform:scale(.25) rotate(-8deg)}to{transform:none}}
+/* ---------- รีเพลย์ ---------- */
+#replay{position:fixed;inset:0;pointer-events:none;z-index:4}
+#replay .bar{position:absolute;left:0;right:0;height:11vh;background:#05070c;animation:barIn .35s ease-out both}
+#replay .bar.t{top:0;transform-origin:top}#replay .bar.b{bottom:0;transform-origin:bottom}
+@keyframes barIn{from{transform:scaleY(0)}to{transform:none}}
+#replay .tg{position:absolute;top:3.2vh;left:3vw;font-size:32px;font-weight:800;letter-spacing:4px}
+#replay .tg i{display:inline-block;width:18px;height:18px;border-radius:50%;background:#ff3b30;margin-right:12px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+#replay .sk{position:absolute;bottom:3.6vh;right:3vw;font-size:17px;color:#aab3c5}
+#replay .rn{position:absolute;bottom:3.2vh;left:3vw;font-size:22px;font-weight:600;color:#dfe5ef}
+#photoTag{position:absolute;top:2.2vh;left:50%;transform:translateX(-50%);font-size:min(5.4vh,60px);font-weight:800;letter-spacing:6px;color:#ffd23f;text-shadow:0 4px 24px rgba(0,0,0,.6);animation:goPop .4s both}
+body.photo #stage canvas{filter:grayscale(.85) contrast(1.15) brightness(1.06)}
+@media (max-height:820px){#result{padding:8px 20px;bottom:12px}#result h2{font-size:24px}#result .sub{font-size:17px;min-height:22px}#result table{font-size:17px;margin:4px 0}#result td{padding:5px 8px}#result td.pl{font-size:22px}#result th{font-size:13px}#result .rlb,#result .foot{font-size:14px;margin-top:2px}}
 </style>
-<script type="importmap">{"imports":{"three":"./assets/run/three.module.js"}}</script>
+<script type="importmap">{"imports":{"three":"./assets/run/three.module.js","three/addons/":"./assets/run/addons/"}}</script>
 <script src="assets/run/qrcode.js"></script>
 <script src="run-net.js?v=run2"></script>
 </head>
@@ -176,6 +208,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
   <div id="roomTag" class="hide"></div>
 </div>
 
+<div id="vs" class="hide">
+  <div class="row"><div class="vsc" id="vsA"></div><div class="vsx">VS</div><div class="vsc" id="vsB"></div></div>
+  <div id="vsN"></div><div id="vsS"></div>
+</div>
+<div id="replay" class="hide"><div class="bar t"></div><div class="bar b"></div><div class="tg"><i></i>REPLAY</div><div id="photoTag" class="hide">PHOTO FINISH</div><div class="rn" id="replayNote"></div><div class="sk">Enter = ข้าม</div></div>
 <div id="callout"><div class="big" id="coBig"></div><div class="sub" id="coSub"></div></div>
 <div id="flash"></div>
 
@@ -206,7 +243,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e15;color:var(--in
     </div>
     <div class="note" id="voiceNote"></div>
     <label>คุณภาพภาพ</label>
-    <div class="chips" id="qChips" style="justify-content:flex-start"><button data-q="high">สูง</button><button data-q="low">ต่ำ (เครื่องช้า)</button></div>
+    <div class="chips" id="qChips" style="justify-content:flex-start"><button data-q="auto">อัตโนมัติ</button><button data-q="high">สูง</button><button data-q="low">ต่ำ (เครื่องช้า)</button></div>
+    <div class="note" id="qNote"></div>
     <label><input type="checkbox" id="kbdChk"> โหมดคีย์บอร์ด (ทดสอบโดยไม่ใช้มือถือ: P1 กด A/D สลับ · P2 กด ←/→ สลับ · Space = พร้อม)</label>
     <div class="row"><button class="ghost" id="newRoom">สร้างห้องใหม่</button><button class="ghost" id="fsBtn">เต็มจอ</button><button id="closeSet">ปิด</button></div>
     <div class="note">ปุ่มลัด: F เต็มจอ · S ตั้งค่า · K คีย์บอร์ด · R ห้องใหม่ · Enter เริ่มทันที / อีกรอบ · Esc ยกเลิกรอบ · 1 / 2 นำผู้เล่นออก</div>
@@ -270,8 +308,11 @@ const G = {
   state: 'lobby', seq: 0, lanes: {}, gunAt: 0, gunPerf: 0, stateAt: performance.now(),
   players: {}, input: {}, fouls: { p1: 0, p2: 0 }, penalty: { p1: 0, p2: 0 },
   kbd: false, kbdReady: { p1: false, p2: false }, playMode: ['1', '2'].includes(sessionStorage.getItem('run_play_mode')) ? Number(sessionStorage.getItem('run_play_mode')) : 0, result: null, solo: false,
-  endPerf: 0, firstFinish: false, ex: 0.15, exBoost: 0, quality: LS.get('run_quality', 'high')
+  endPerf: 0, firstFinish: false, ex: 0.15, exBoost: 0, replay: null, kick: 0,
+  quality: ['auto', 'high', 'low'].includes(Q.get('q')) ? Q.get('q') : (['auto', 'high', 'low'].includes(LS.get('run_quality', 'auto')) ? LS.get('run_quality', 'auto') : 'auto'),
+  qEff: 'high'
 };
+G.qEff = G.quality === 'low' ? 'low' : 'high';
 const vols = Object.assign({ amb: 0.8, sfx: 0.9, voice: 1 }, LS.get('run_vol', {}));
 
 /* =====================================================================
@@ -446,6 +487,27 @@ class AudioEngine {
       });
     });
   }
+  pop() {   // พลุ: ตูม + เปรี๊ยะ
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = ctx.currentTime + 0.04, p = this.pan(Math.random() * 1.2 - 0.6); p.connect(this.sfx);
+    const s = this.src(this.brown), g = ctx.createGain(); s.connect(this.filt('lowpass', 420)).connect(g).connect(p); g.connect(this.rev);
+    this.env(g, t, 0.006, 0.55, 0.7); s.start(t, Math.random() * 2, 0.9);
+    for (let i = 0; i < 16; i++) {
+      const c = this.src(this.white), cg = ctx.createGain(), tt = t + 0.25 + Math.random() * 0.8;
+      c.connect(this.filt('highpass', 2600)).connect(cg).connect(p); this.env(cg, tt, 0.001, 0.035 + Math.random() * 0.05, 0.03); c.start(tt, Math.random(), 0.05);
+    }
+  }
+  shutter() {   // ชัตเตอร์กล้อง (ภาพเส้นชัย)
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    [0, 0.07].forEach(o => { const t = ctx.currentTime + o, s = this.src(this.white), g = ctx.createGain(); s.connect(this.filt('bandpass', 3200, 0.8)).connect(g).connect(this.sfx); this.env(g, t, 0.001, 0.22, 0.04); s.start(t, Math.random(), 0.06); });
+  }
+  whoosh() {   // เปิดรีเพลย์
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = ctx.currentTime, s = this.src(this.pink), f = this.filt('bandpass', 300, 1.6), g = ctx.createGain();
+    f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2600, t + 0.5);
+    s.connect(f).connect(g).connect(this.sfx); this.env(g, t, 0.25, 0.35, 0.35); s.start(t, Math.random() * 2, 0.7);
+  }
   pickVoice() {
     if (!('speechSynthesis' in window)) return;
     const pick = () => { const vs = speechSynthesis.getVoices(); this.voiceTh = vs.find(v => /^th/i.test(v.lang)) || null; updateVoiceNote(); };
@@ -509,16 +571,40 @@ $('stage').appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.1, 1400);
 function applyQuality() {
-  const hi = G.quality === 'high';
+  const hi = G.qEff === 'high';
   renderer.setPixelRatio(hi ? Math.min(devicePixelRatio, 2) : 1);
   renderer.shadowMap.enabled = hi;
   sun.castShadow = hi;
+  if (composer) composer.setPixelRatio(renderer.getPixelRatio());
+  screenMat.map = hi ? SCREEN_RT.texture : screenIdle; screenMat.needsUpdate = true;
   document.querySelectorAll('#qChips button').forEach(b => b.classList.toggle('on', b.dataset.q === G.quality));
+  const qn = $('qNote'); if (qn) qn.textContent = G.quality === 'auto' ? 'ตอนนี้ใช้ภาพแบบ' + (hi ? 'สวย (เงา + แสงฟุ้ง + จอยักษ์สด)' : 'เบา (เครื่องนี้ช้า)') : '';
   onResize();
 }
 function onResize() {
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+  if (composer) composer.setSize(w, h);
+}
+// แสงฟุ้ง + เกรดสี + ขอบมืด (เฉพาะภาพแบบสวย) — โหลดแยก ถ้าโหลดไม่ได้เกมยังเล่นได้ปกติ
+let composer = null;
+async function initPost() {
+  try {
+    const base = 'three/addons/postprocessing/';
+    const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { ShaderPass }, { OutputPass }] = await Promise.all(
+      ['EffectComposer', 'RenderPass', 'UnrealBloomPass', 'ShaderPass', 'OutputPass'].map(n => import(base + n + '.js')));
+    const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: 4 });
+    const c = new EffectComposer(renderer, rt);
+    c.addPass(new RenderPass(scene, camera));
+    c.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.32, 0.5, 0.93));
+    c.addPass(new ShaderPass({
+      uniforms: { tDiffuse: { value: null }, sat: { value: 1.1 }, vig: { value: 0.3 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: 'uniform sampler2D tDiffuse; uniform float sat; uniform float vig; varying vec2 vUv; void main(){ vec4 c=texture2D(tDiffuse,vUv); float l=dot(c.rgb,vec3(0.2126,0.7152,0.0722)); c.rgb=max(mix(vec3(l),c.rgb,sat),0.0); float d=distance(vUv,vec2(0.5)); c.rgb*=mix(1.0,smoothstep(0.9,0.3,d),vig); gl_FragColor=c; }'
+    }));
+    c.addPass(new OutputPass());
+    composer = c; applyQuality();
+  } catch (e) { console.warn('ไม่มีเอฟเฟกต์แสงฟุ้ง', e); }
 }
 addEventListener('resize', onResize);
 
@@ -591,6 +677,7 @@ const PATH = (() => {
   return pts;
 })();
 const nrm = a => [-Math.sin(a), Math.cos(a)];   // แนวขวางลู่ (ด้าน +z ตอนเป็นทางตรง)
+const STAND = { z0: TRACK_W / 2 + 7.4, rows: 6, rowD: 1.0, rowH: 0.45, x0: 6, x1: 96 };   // อัฒจันทร์ฝั่งซ้ายจอ
 function strip(off0, off1, y, mat, vScale) {
   const pos = [], uv = [], idx = []; let s = 0;
   PATH.forEach((p, i) => {
@@ -656,6 +743,10 @@ function textBoard(text, bg, fg, w, h) {
   b.castShadow = true; return b;
 }
 function buildMarkers() {
+  markers.traverse(o => {
+    if (o.geometry) o.geometry.dispose();
+    for (const m of [].concat(o.material || [])) if (m !== darkMat) { if (m.map) m.map.dispose(); m.dispose(); }
+  });
   markers.clear();
   for (let d = 10; d <= 120; d += 10) {
     const fin = d === G.dist;
@@ -666,18 +757,6 @@ function buildMarkers() {
   }
 }
 const gantry = new THREE.Group(); scene.add(gantry);
-[TRACK_W / 2 + 0.95, -TRACK_W / 2 - 0.95].forEach(z => {
-  const p = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 4.4, 14), postMat); p.position.set(0, 2.2, z); p.castShadow = true; gantry.add(p);
-  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 10), toon(0xff5d8f)); ball.position.set(0, 4.55, z); gantry.add(ball);
-});
-const bannerTex = canvasTex(1024, 160, (g, w, h) => {
-  for (let x = 0; x < w; x += 32) for (let y = 0; y < 32; y += 16) { g.fillStyle = ((x / 32 + y / 16) % 2) ? '#1c1c28' : '#fff'; g.fillRect(x, y, 32, 16); g.fillRect(x, h - 32 + y, 32, 16); }
-  g.fillStyle = '#ff4d6d'; g.fillRect(0, 32, w, h - 64);
-  g.fillStyle = '#fff'; g.font = 'bold 82px Sarabun, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('เส้นชัย  ·  FINISH', w / 2, h / 2 + 4);
-});
-const bannerMat = lam(0xffffff, { map: bannerTex });
-const finBanner = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.0, TRACK_W + 2.4), [bannerMat, bannerMat, darkMat, darkMat, darkMat, darkMat]);
-finBanner.position.set(0, 3.9, 0); finBanner.castShadow = true; gantry.add(finBanner);
 const clockTex = canvasTex(512, 192, (g, w, h) => { g.fillStyle = '#10142a'; g.fillRect(0, 0, w, h); });
 function drawClock(text) {
   const c = clockTex.userData.canvas, g = c.getContext('2d');
@@ -703,6 +782,8 @@ function tree(x, z, s) {
 for (let i = 0; i < 70; i++) {
   const side = i % 2 ? 1 : -1, x = -70 + Math.random() * 220, z = side * (17 + Math.random() * 28);
   if (x < ST_X0 - 4 && side < 0 && z > -CURVE_R * 2 - 10) continue;
+  if (side > 0 && x > STAND.x0 - 4 && x < STAND.x1 + 4 && z < 21) continue;
+  if (side < 0 && (Math.abs(x + 24) < 8 || Math.abs(x - 60) < 8) && z > -25) continue;
   tree(x, z, 0.9 + Math.random() * 0.9);
 }
 const hillMat = toon(0x8fcf4f);
@@ -717,7 +798,12 @@ function barrier(x, z, rot) {
   [-1, 1].forEach(s => { const p = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.8, 0.06), stripeMat); p.position.set(0, 0.42, s * 0.22); p.rotation.x = s * 0.35; p.castShadow = true; g.add(p); });
   g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
 }
-for (let i = 0; i < 18; i++) { const side = i % 2 ? 1 : -1; barrier(-15 + i * 8 + Math.random() * 3, side * (TRACK_W / 2 + 9.5 + Math.random() * 3), (Math.random() - 0.5) * 0.6); }
+for (let i = 0; i < 18; i++) {
+  const side = i % 2 ? 1 : -1, x = -15 + i * 8 + Math.random() * 3;
+  if (side > 0 && x > STAND.x0 - 3 && x < STAND.x1 + 3) continue;
+  if (side < 0 && (Math.abs(x + 24) < 7 || Math.abs(x - 60) < 7)) continue;
+  barrier(x, side * (TRACK_W / 2 + 9.5 + Math.random() * 3), (Math.random() - 0.5) * 0.6);
+}
 const coneMat = toon(0xff7a1a), coneWhite = toon(0xffffff);
 function cone(x, z) {
   const c = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 12), coneMat); c.position.set(x, 0.3, z);
@@ -735,18 +821,20 @@ function buildCrowd() {
     const near = Math.exp(-Math.pow((x - 0) / 22, 2)) + Math.exp(-Math.pow((x - 100) / 18, 2)) + Math.exp(-Math.pow((x - 60) / 18, 2));
     const rows = 1 + Math.floor(Math.random() * (1 + 3 * near));
     for (let r = 0; r < rows; r++) if (Math.random() < 0.45 + 0.4 * near)
-      pos.push([x + (Math.random() - 0.5) * 0.5, side * (TRACK_W / 2 + 2.6 + r * 1.1 + Math.random() * 0.5)]);
+      pos.push([x + (Math.random() - 0.5) * 0.5, side * (TRACK_W / 2 + 2.6 + r * 1.1 + Math.random() * 0.5), 0]);
   }
+  for (let r = 0; r < STAND.rows; r++) for (let x = STAND.x0 + 0.5; x < STAND.x1 - 0.5; x += 0.78)
+    if (Math.random() < 0.74) pos.push([x + (Math.random() - 0.5) * 0.25, STAND.z0 + r * STAND.rowD + 0.05, 0.5 + r * STAND.rowH]);
   const n = crowd.n = pos.length;
-  crowd.body = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.2, 0.22, 4, 10), toon(0xffffff), n);
-  crowd.head = new THREE.InstancedMesh(new THREE.SphereGeometry(0.24, 14, 10), toon(0xffffff), n);
+  crowd.body = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.2, 0.22, 3, 8), toon(0xffffff), n);
+  crowd.head = new THREE.InstancedMesh(new THREE.SphereGeometry(0.24, 10, 7), toon(0xffffff), n);
   const pal = ['#ff5d5d', '#3d8bff', '#ffd23f', '#ffffff', '#5ccf62', '#ff9f43', '#b675ff', '#ff7eb6', '#4fd1e8'];
   const skins = ['#f3c39d', '#e8b089', '#d9976d', '#f7d2b2', '#c98a62'];
   const c = new THREE.Color(), m = new THREE.Matrix4();
   pos.forEach((p, i) => {
-    crowd.base.push({ x: p[0], z: p[1], ph: Math.random() * TAU, f: 4 + Math.random() * 5, a: 0.5 + Math.random() * 0.8 });
-    m.makeTranslation(p[0], 0.45, p[1]); crowd.body.setMatrixAt(i, m);
-    m.makeTranslation(p[0], 0.98, p[1]); crowd.head.setMatrixAt(i, m);
+    crowd.base.push({ x: p[0], z: p[1], y: p[2], ph: Math.random() * TAU, f: 4 + Math.random() * 5, a: 0.5 + Math.random() * 0.8 });
+    m.makeTranslation(p[0], p[2] + 0.45, p[1]); crowd.body.setMatrixAt(i, m);
+    m.makeTranslation(p[0], p[2] + 0.98, p[1]); crowd.head.setMatrixAt(i, m);
     crowd.body.setColorAt(i, c.set(pal[Math.floor(Math.random() * pal.length)]));
     crowd.head.setColorAt(i, c.set(skins[Math.floor(Math.random() * skins.length)]));
   });
@@ -758,10 +846,10 @@ const _m = new THREE.Matrix4();
 let crowdFrame = 0;
 function updateCrowd(t, ex) {
   for (const c of clouds.children) { c.position.z += c.userData.v * 0.016; if (c.position.z > 280) c.position.z = -280; }
-  if (G.quality !== 'high' && (crowdFrame++ % 2)) return;
+  if (G.qEff !== 'high' && (crowdFrame++ % 2)) return;
   const amp = 0.02 + 0.35 * ex * ex;
   for (let i = 0; i < crowd.n; i++) {
-    const b = crowd.base[i], y = Math.max(0, Math.sin(t * b.f * (0.45 + ex) + b.ph)) * amp * b.a;
+    const b = crowd.base[i], y = b.y + Math.max(0, Math.sin(t * b.f * (0.45 + ex) + b.ph)) * amp * b.a;
     _m.makeTranslation(b.x, 0.45 + y, b.z); crowd.body.setMatrixAt(i, _m);
     _m.makeTranslation(b.x, 0.98 + y, b.z); crowd.head.setMatrixAt(i, _m);
   }
@@ -802,9 +890,252 @@ function updateConfetti(dt) {
   confetti.instanceMatrix.needsUpdate = true;
 }
 function clearConfetti() { confetti.visible = false; confT = 0; }
+/* =====================================================================
+   ของตกแต่งเพิ่ม: ซุ้มเป่าลม ธงราว ลูกโป่ง อัฒจันทร์ ดอกไม้ จอยักษ์สด แท่นรับรางวัล เทปเส้นชัย ฝุ่น พลุ
+   ===================================================================== */
+function stripes(a, b, n, w, h) { return canvasTex(w || 256, h || 32, (g, W, H) => { for (let i = 0; i < n; i++) { g.fillStyle = i % 2 ? b : a; g.fillRect(i * W / n, 0, W / n + 1, H); } }); }
+function inflatableArch(x, a, b, text, textBg, parent) {
+  const g = new THREE.Group(), R0 = TRACK_W / 2 + 1.05;
+  const tube = new THREE.Mesh(new THREE.TorusGeometry(R0, 0.42, 16, 56, Math.PI), toon(0xffffff, { map: stripes(a, b, 14, 512, 16) }));
+  tube.rotation.y = Math.PI / 2; tube.castShadow = true; g.add(tube);
+  [R0, -R0].forEach(z => { const f = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.66, 0.36, 20), toon(new THREE.Color(b).getHex())); f.position.set(0, 0.18, z); f.castShadow = true; g.add(f); });
+  const bt = canvasTex(1024, 192, (c, W, H) => {
+    c.fillStyle = textBg; c.beginPath(); c.roundRect(8, 8, W - 16, H - 16, 70); c.fill(); c.lineWidth = 12; c.strokeStyle = '#fff'; c.stroke();
+    c.fillStyle = '#fff'; c.font = 'bold 104px Sarabun, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, W / 2, H / 2 + 6);
+  });
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 0.82), lam(0xffffff, { map: bt, transparent: true, side: THREE.DoubleSide }));
+  sign.rotation.y = Math.PI / 2; sign.position.set(0.46, R0 + 0.15, 0); g.add(sign);
+  g.position.x = x; (parent || scene).add(g); return g;
+}
+inflatableArch(0.55, '#ff4d6d', '#ffffff', 'START · ออกตัว', '#ff4d6d');
+inflatableArch(0, '#2f86ff', '#ffd23f', 'FINISH · เส้นชัย', '#1d4ed8', gantry);
+
+// ธงราวพาดข้ามลู่ (หันหน้าเข้ากล้อง)
+const bunting = (() => {
+  const flags = [], H0 = 6.4, SAG = 0.7, ZS = TRACK_W / 2 + 2.3;
+  const tri = new THREE.BufferGeometry();
+  tri.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, -0.18, 0, 0, 0.18, 0, -0.44, 0], 3)); tri.computeVertexNormals();
+  const strMat = new THREE.LineBasicMaterial({ color: 0x3a4660 }), poleMat = toon(0xffffff);
+  for (let x = -6; x < 126; x += 14) {
+    [ZS, -ZS].forEach(z => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, H0 + 0.2, 8), poleMat); p.position.set(x, (H0 + 0.2) / 2, z); p.castShadow = true; scene.add(p); });
+    const pts = [];
+    for (let i = 0; i <= 24; i++) { const u = i / 24; pts.push(new THREE.Vector3(x, H0 - SAG * 4 * u * (1 - u), -ZS + u * 2 * ZS)); }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), strMat));
+    for (let z = -ZS + 0.5; z < ZS - 0.3; z += 0.62) { const u = (z + ZS) / (2 * ZS); flags.push({ x, y: H0 - SAG * 4 * u * (1 - u), z, ph: Math.random() * TAU }); }
+  }
+  const mesh = new THREE.InstancedMesh(tri, new THREE.MeshLambertMaterial({ side: THREE.DoubleSide }), flags.length);
+  const c = new THREE.Color(), pal = ['#ff4d6d', '#ffd23f', '#3d8bff', '#5ccf62', '#ff9f43', '#b675ff', '#ffffff'];
+  flags.forEach((f, i) => mesh.setColorAt(i, c.set(pal[i % pal.length])));
+  scene.add(mesh);
+  return { mesh, flags };
+})();
+const _e = new THREE.Euler(), _qq = new THREE.Quaternion(), _pp = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1);
+let buntF = 0;
+function updateBunting(t) {
+  if (G.qEff !== 'high' && (buntF++ % 3)) return;
+  const { mesh, flags } = bunting;
+  for (let i = 0; i < flags.length; i++) {
+    const f = flags[i];
+    _e.set(0, 0, 0.32 * Math.sin(t * 3.2 + f.ph) * (0.6 + 0.4 * Math.sin(t * 0.7 + f.x)));
+    mesh.setMatrixAt(i, _m.compose(_pp.set(f.x, f.y, f.z), _qq.setFromEuler(_e), _one));
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+}
+
+// ลูกโป่งที่ตีนซุ้ม + บอลลูนลอยฟ้า
+const balloons = [];
+function balloonCluster(x, z, parent) {
+  const cols = [0xff4d6d, 0xffd23f, 0x3d8bff, 0x5ccf62, 0xff9f43, 0xb675ff];
+  const strMat = new THREE.LineBasicMaterial({ color: 0x6b7280 });
+  for (let i = 0; i < 5; i++) {
+    const b = new THREE.Group(), mat = toon(cols[(i * 2 + Math.round(Math.abs(x + z))) % cols.length]);
+    const s = new THREE.Mesh(new THREE.SphereGeometry(0.34, 18, 14), mat); s.scale.set(1, 1.18, 1); s.castShadow = true;
+    const knot = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.09, 8), mat); knot.position.y = -0.42; knot.rotation.x = Math.PI;
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.45, 0), new THREE.Vector3(0, -2.0, 0)]), strMat);
+    b.add(s, knot, line);
+    const bx = x + (Math.random() - 0.5) * 0.7, bz = z + (Math.random() - 0.5) * 0.7, by = 2.25 + i * 0.22 + Math.random() * 0.3;
+    b.position.set(bx, by, bz); (parent || scene).add(b);
+    balloons.push({ g: b, x: bx, y: by, z: bz, ph: Math.random() * TAU });
+  }
+}
+[TRACK_W / 2 + 1.75, -TRACK_W / 2 - 1.75].forEach(z => { balloonCluster(0.55, z); balloonCluster(0, z, gantry); });
+const hotAir = [];
+(() => {
+  const cfg = [[-95, 30, 36, '#ff4d6d', '#ffd23f'], [-170, 46, -70, '#3d8bff', '#ffffff'], [-60, 24, -42, '#5ccf62', '#ffd23f'], [-230, 55, 95, '#b675ff', '#ffffff']];
+  for (const [x, y, z, a, b] of cfg) {
+    const g = new THREE.Group();
+    const env = new THREE.Mesh(new THREE.SphereGeometry(4.2, 24, 18), toon(0xffffff, { map: stripes(a, b, 12, 512, 16) }));
+    env.scale.set(1, 1.15, 1); g.add(env);
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 0.9, 1.6, 16), toon(new THREE.Color(a).getHex())); skirt.position.y = -4.9; g.add(skirt);
+    const basket = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.9, 1.2), toon(0x8a5a35)); basket.position.y = -7.3; g.add(basket);
+    const rl = new THREE.LineBasicMaterial({ color: 0x5b4636 });
+    [[0.5, 0.5], [-0.5, 0.5], [0.5, -0.5], [-0.5, -0.5]].forEach(([dx, dz]) => g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(dx * 1.6, -5.6, dz * 1.6), new THREE.Vector3(dx, -6.9, dz)]), rl)));
+    g.position.set(x, y, z); scene.add(g); hotAir.push({ g, y, ph: Math.random() * TAU });
+  }
+})();
+function updateBalloons(t) {
+  for (const b of balloons) b.g.position.set(b.x + 0.08 * Math.sin(t * 0.9 + b.ph), b.y + 0.12 * Math.sin(t * 1.3 + b.ph), b.z + 0.08 * Math.cos(t * 0.7 + b.ph));
+  for (const h of hotAir) { h.g.position.y = h.y + 1.6 * Math.sin(t * 0.15 + h.ph); h.g.rotation.y = t * 0.05 + h.ph; }
+}
+
+// อัฒจันทร์สีสด (ฝั่งซ้ายของจอ) + หลังคาผ้าลายทาง
+(() => {
+  const S = STAND, cols = ['#ff6b6b', '#ffd23f', '#5ccf62', '#3d8bff', '#b675ff', '#ff9f43'];
+  for (let r = 0; r < S.rows; r++) {
+    const h = 0.5 + r * S.rowH;
+    for (let s = S.x0, k = 0; s < S.x1; s += 15, k++) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(14.8, h, S.rowD), toon(new THREE.Color(cols[(k + r) % cols.length]).getHex()));
+      b.position.set(s + 7.5, h / 2, S.z0 + r * S.rowD); b.receiveShadow = true; scene.add(b);
+    }
+  }
+  const roofMat = toon(0xffffff, { map: stripes('#ffffff', '#ff4d6d', 60, 1024, 16) });
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0 + 2, 0.16, S.rows * S.rowD + 2.4), roofMat);
+  roof.position.set((S.x0 + S.x1) / 2, 0.5 + S.rows * S.rowH + 2.7, S.z0 + S.rows * S.rowD / 2 - 0.4); roof.rotation.x = -0.1; roof.castShadow = true; scene.add(roof);
+  const pm = toon(0xffffff);
+  for (let x = S.x0; x <= S.x1; x += 15) [S.z0 - 1.0, S.z0 + S.rows * S.rowD + 0.4].forEach((z, i) => {
+    const h = 0.5 + S.rows * S.rowH + 2.7 + (i ? 0.4 : -0.2);
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, h, 8), pm); p.position.set(x, h / 2, z); scene.add(p);
+  });
+})();
+
+// ดอกไม้ริมลู่
+(() => {
+  const spots = [];
+  for (const side of [1, -1]) for (let x = -22; x < 128; x += 0.55) if (Math.random() < 0.7) spots.push([x + Math.random() * 0.4, side * (TRACK_W / 2 + 1.15 + Math.random() * 1.1)]);
+  const fl = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.075, 0), toon(0xffffff), spots.length);
+  const c = new THREE.Color(), pal = ['#ff6b9a', '#ffd23f', '#ffffff', '#b675ff', '#ff9f43'];
+  spots.forEach(([x, z], i) => { fl.setMatrixAt(i, _m.makeTranslation(x, 0.07, z)); fl.setColorAt(i, c.set(pal[i % pal.length])); });
+  scene.add(fl);
+})();
+
+// จอยักษ์ถ่ายทอดสด (ภาพจากกล้องตัวที่ 2)
+const SCREEN_RT = new THREE.WebGLRenderTarget(640, 360, { samples: 4 });
+SCREEN_RT.texture.colorSpace = THREE.SRGBColorSpace;
+const screenCam = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 900);
+const screenIdle = canvasTex(640, 360, (g, w, h) => {
+  const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#1d4ed8'); gr.addColorStop(1, '#7c3aed'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#fff'; g.font = 'bold 96px Sarabun, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('วิ่งแข่ง!', w / 2, h / 2 - 24);
+  g.fillStyle = '#ffd23f'; g.font = 'bold 42px Sarabun, sans-serif'; g.fillText('SPRINT PARTY', w / 2, h / 2 + 58);
+});
+const screenMat = new THREE.MeshBasicMaterial({ map: SCREEN_RT.texture, toneMapped: false });
+const screens = [];
+function jumbotron(x, z, rotY) {
+  const g = new THREE.Group(), fm = toon(0x24304f);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.0, 10.2), fm); frame.position.y = 5.3; frame.castShadow = true; g.add(frame);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(9.4, 5.3), screenMat); scr.rotation.y = Math.PI / 2; scr.position.set(0.26, 5.3, 0); g.add(scr);
+  const liveT = canvasTex(256, 96, (c, W, H) => { c.fillStyle = '#ff3b30'; c.beginPath(); c.roundRect(4, 4, W - 8, H - 8, 40); c.fill(); c.fillStyle = '#fff'; c.font = 'bold 54px Sarabun, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('● LIVE', W / 2, H / 2 + 3); });
+  const live = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.56), new THREE.MeshBasicMaterial({ map: liveT, transparent: true })); live.rotation.y = Math.PI / 2; live.position.set(0.27, 7.7, 3.9); g.add(live);
+  [-3.6, 3.6].forEach(zz => { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.4, 0.35), fm); leg.position.set(0, 1.2, zz); leg.castShadow = true; g.add(leg); });
+  g.position.set(x, 0, z); g.rotation.y = rotY; scene.add(g); screens.push({ g, scr }); return g;
+}
+const scr1 = jumbotron(-24, -(TRACK_W / 2 + 9), -0.5);
+const scr2 = jumbotron(60, -(TRACK_W / 2 + 12), -0.5);
+let scrN = 0;
+function renderScreens(t) {
+  if (G.qEff !== 'high' || (scrN++ % 2)) return;
+  const rs = camRacers(), lead = rs.length ? Math.max(...rs.map(r => r.x)) : 0, trail = rs.length ? Math.min(...rs.map(r => r.x)) : 0, mid = (lead + trail) / 2;
+  if (G.state === 'result') { const px = G.dist + 9; screenCam.position.set(px + 4.2, 2.0, 1.4); screenCam.lookAt(px, 1.45, 0.6); }
+  else if (G.replay) { screenCam.position.set(G.dist + 3, 1.0, -(TRACK_W / 2 + 1.6)); screenCam.lookAt(mid, 0.8, 0); }
+  else if (G.state === 'race') { screenCam.position.set(mid + 0.8, 1.45, TRACK_W / 2 + 1.8); screenCam.lookAt(mid + 0.8, 0.85, 0); }
+  else if (['marks', 'set', 'foul'].includes(G.state)) { screenCam.position.set(-0.4, 1.0, TRACK_W / 2 + 1.8); screenCam.lookAt(-0.4, 0.8, 0); }
+  else { const a = t * 0.25; screenCam.position.set(-0.8 + Math.cos(a) * 3.6, 1.5, Math.sin(a) * 3.6); screenCam.lookAt(-0.8, 0.95, 0); }
+  for (const s of screens) s.scr.visible = false;
+  const tagVis = LANES.map(L => R[L].tag ? R[L].tag.visible : false);
+  LANES.forEach(L => { if (R[L].tag) R[L].tag.visible = false; });
+  renderer.shadowMap.autoUpdate = false;
+  renderer.setRenderTarget(SCREEN_RT); renderer.render(scene, screenCam); renderer.setRenderTarget(null);
+  renderer.shadowMap.autoUpdate = true;
+  for (const s of screens) s.scr.visible = true;
+  LANES.forEach((L, i) => { if (R[L].tag) R[L].tag.visible = tagVis[i]; });
+}
+
+// แท่นรับรางวัล (เลยเส้นชัยไป 9 ม.)
+const podium = new THREE.Group(); podium.visible = false; scene.add(podium);
+const POD = { h1: 0.95, h2: 0.6, z2: 1.8 };
+(() => {
+  const mk = (h, col, num, z) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.5, h, 1.55), toon(col)); b.position.set(0, h / 2, z); b.castShadow = b.receiveShadow = true; podium.add(b);
+    const t = canvasTex(128, 128, (g) => { g.fillStyle = '#fff'; g.font = 'bold 104px Sarabun, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(num, 64, 72); });
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.75), new THREE.MeshBasicMaterial({ map: t, transparent: true })); p.rotation.y = Math.PI / 2; p.position.set(0.76, h / 2, z); podium.add(p);
+  };
+  mk(POD.h1, 0xffc928, '1', 0); mk(POD.h2, 0xc9d3e0, '2', POD.z2);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.2, 5.2), toon(0xffffff, { map: stripes('#2f86ff', '#ffffff', 10, 256, 16) })); back.position.set(-1.4, 2.0, 0.6); podium.add(back);
+})();
+
+// เทปเส้นชัย (ขาดเมื่อคนแรกวิ่งเข้า)
+const tape = { L: new THREE.Group(), R: new THREE.Group(), broken: false, t: 0 };
+(() => {
+  const len = TRACK_W / 2 + 0.35, mat = toon(0xffffff, { map: stripes('#ff3b3b', '#ffffff', 18, 256, 16), side: THREE.DoubleSide });
+  [['L', 1], ['R', -1]].forEach(([k, s]) => {
+    const g = tape[k]; g.rotation.order = 'YXZ'; g.position.set(0, 0.86, s * (TRACK_W / 2 + 0.35));
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.09, len), mat); m.position.z = -s * len / 2; g.add(m); gantry.add(g);
+  });
+})();
+function resetTape() { tape.broken = false; tape.t = 0; tape.L.rotation.set(0, 0, 0); tape.R.rotation.set(0, 0, 0); }
+function breakTape() { if (!tape.broken) { tape.broken = true; tape.t = 0; } }
+function updateTape(dt, t) {
+  if (!tape.broken) { const w = 0.04 * Math.sin(t * 2.2); tape.L.rotation.x = w; tape.R.rotation.x = -w; return; }
+  tape.t += dt;
+  const k = 1 - Math.exp(-tape.t * 6), d = clamp((tape.t - 0.2) * 1.6, 0, 1), fl = 0.15 * Math.sin(tape.t * 11) * Math.exp(-tape.t * 1.2);
+  tape.L.rotation.set(-1.15 * d + fl, -1.3 * k, 0);
+  tape.R.rotation.set(1.15 * d - fl, 1.3 * k, 0);
+}
+
+// ฝุ่นจากเท้า
+const puffTex = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 2, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
+const puffs = [];
+for (let i = 0; i < 70; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, color: 0xe6eeff, transparent: true, depthWrite: false, opacity: 0 })); s.visible = false; scene.add(s); puffs.push({ s, life: 0, k: 1, vx: 0, vy: 0 }); }
+let puffI = 0;
+function puff(x, z, k) {
+  const p = puffs[puffI++ % puffs.length];
+  p.life = 0.55; p.k = k; p.vx = -0.7 - Math.random() * 0.5; p.vy = 0.45 + Math.random() * 0.3;
+  p.s.position.set(x, 0.12, z); p.s.scale.setScalar(0.2); p.s.visible = true;
+}
+function updatePuffs(dt) {
+  for (const p of puffs) {
+    if (p.life <= 0) continue;
+    p.life -= dt; const a = Math.max(0, p.life / 0.55);
+    p.s.position.x += p.vx * dt; p.s.position.y += p.vy * dt;
+    p.s.scale.setScalar(0.2 + (1 - a) * 0.6 * p.k); p.s.material.opacity = 0.6 * a;
+    if (p.life <= 0) p.s.visible = false;
+  }
+}
+
+// พลุตอนประกาศผล
+const FW = [];
+function firework(x, y, z, color) {
+  const n = 140, pos = new Float32Array(n * 3), vel = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
+    const u = Math.random() * 2 - 1, th = Math.random() * TAU, r = Math.sqrt(1 - u * u), sp = 7 + Math.random() * 4;
+    vel[i * 3] = r * Math.cos(th) * sp; vel[i * 3 + 1] = u * sp; vel[i * 3 + 2] = r * Math.sin(th) * sp;
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ color, size: 1.0, map: puffTex, transparent: true, depthWrite: false }));
+  p.frustumCulled = false; scene.add(p); FW.push({ p, vel, life: 2.3 });
+  audio.pop();
+}
+function updateFireworks(dt) {
+  for (let i = FW.length - 1; i >= 0; i--) {
+    const f = FW[i], a = f.p.geometry.attributes.position, v = f.vel, drag = 1 - 1.3 * dt;
+    f.life -= dt;
+    for (let k = 0; k < a.count * 3; k += 3) {
+      v[k + 1] -= 5 * dt; v[k] *= drag; v[k + 1] *= drag; v[k + 2] *= drag;
+      a.array[k] += v[k] * dt; a.array[k + 1] += v[k + 1] * dt; a.array[k + 2] += v[k + 2] * dt;
+    }
+    a.needsUpdate = true; f.p.material.opacity = clamp(f.life / 1.2, 0, 1);
+    if (f.life <= 0) { scene.remove(f.p); f.p.geometry.dispose(); f.p.material.dispose(); FW.splice(i, 1); }
+  }
+}
+function fireworkShow(cx) {
+  const cols = [0xff4d6d, 0xffd23f, 0x3d8bff, 0x5ccf62, 0xff9f43, 0xb675ff, 0xffffff];
+  for (let i = 0; i < 8; i++) setTimeout(() => { if (G.state === 'result') firework(cx - 16 - Math.random() * 16, 4.5 + Math.random() * 4, (Math.random() - 0.5) * 22, cols[i % cols.length]); }, 300 + i * 480);
+}
+function clearFireworks() { for (const f of FW) { scene.remove(f.p); f.p.geometry.dispose(); f.p.material.dispose(); } FW.length = 0; }
+
 
 function placeFinish() {
-  finishChecker.position.x = G.dist + 0.35; gantry.position.x = G.dist;
+  finishChecker.position.x = G.dist + 0.35; gantry.position.x = G.dist; podium.position.x = G.dist + 9;
   buildMarkers();
   $('lDist').textContent = G.dist; $('progFin').textContent = G.dist + ' ม.';
   document.querySelectorAll('#distChips button').forEach(b => b.classList.toggle('on', +b.dataset.d === G.dist));
@@ -816,6 +1147,7 @@ function placeFinish() {
    EXTENSION POINT: เพิ่มตัวละครใหม่ได้ที่ STYLES
    ===================================================================== */
 const L1 = 0.2, L2 = 0.19, SOLE = 0.07;
+const blobTex = canvasTex(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(20,30,60,0.9)'); gr.addColorStop(0.55, 'rgba(20,30,60,0.45)'); gr.addColorStop(1, 'rgba(20,30,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); });
 const outlineMat = new THREE.MeshBasicMaterial({ color: 0x1d1b2b, side: THREE.BackSide });
 const ghostMat = new THREE.MeshBasicMaterial({ color: 0xd6e6ff, transparent: true, opacity: 0.38, depthWrite: false });
 const STYLES = {
@@ -830,6 +1162,7 @@ class Runner {
     this.x = -0.8; this.z = laneZ(opt.lane); this.v = 0; this.phi = Math.random() * TAU; this.mode = 'idle';
     this.ang = { lean: 0, twist: 0, hipL: 0, hipR: 0, kneeL: 0.1, kneeR: 0.1, ankL: 0, ankR: 0, shL: 0.1, shR: 0.1, elL: 0.4, elR: 0.4, az: 0.25, head: 0, wob: 0, lift: 0 };
     this.onStep = null; this.stepN = 0; this.name = ''; this.blinkT = 2 + Math.random() * 3; this.blinking = 0;
+    this.y = 0; this.ext = false; this.podium = 0; this.tails = [];
     this.build();
   }
   m(c) { return this.ghost ? ghostMat : toon(c); }
@@ -867,6 +1200,13 @@ class Runner {
     if (S.hairStyle !== 'none') {
       const hb = this.part(new THREE.TorusGeometry(0.304, 0.032, 8, 36), band, head, 0, 0.1, 0); hb.rotation.x = Math.PI / 2 - 0.3;
       if (!this.ghost) hb.add(new THREE.Mesh(new THREE.TorusGeometry(0.304, 0.044, 8, 36), outlineMat));
+      // ปลายผ้าคาดหัว 2 เส้น ปลิวตามความเร็ว
+      const tg = new THREE.Group(); tg.position.set(0, 0.13, -0.29); head.add(tg);
+      [0.28, -0.22].forEach((rz, i) => {
+        const geo = new THREE.BoxGeometry(0.06, 0.24, 0.018); geo.translate(0, -0.12, 0);
+        const piv = new THREE.Group(); piv.rotation.z = rz; piv.position.x = i ? -0.03 : 0.03; tg.add(piv);
+        const tail = this.part(geo, band, piv, 0, 0, 0, 0.09); this.tails.push({ m: tail, ph: i * 1.7 });
+      });
     }
     // หน้า
     const white = this.ghost ? ghostMat : toon(0xffffff), black = new THREE.MeshBasicMaterial({ color: 0x1d1b2b, transparent: this.ghost, opacity: this.ghost ? 0.5 : 1 });
@@ -917,6 +1257,8 @@ class Runner {
       this.tagColor = '#' + new THREE.Color(S.jersey).getHexString();
     }
     this.group = new THREE.Group(); this.group.add(root); if (this.tag) this.group.add(this.tag);
+    const blob = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.85), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity: this.ghost ? 0.18 : 0.42 }));
+    blob.rotation.x = -Math.PI / 2; blob.position.y = 0.012; blob.renderOrder = 1; this.group.add(blob); this.blob = blob;
     scene.add(this.group);
   }
   setName(n) {
@@ -951,6 +1293,9 @@ class Runner {
     } else if (m === 'victory') {
       const b = Math.sin(t * 8);
       Object.assign(P, { lean: -0.08, shL: 2.8 + 0.2 * b, shR: 2.8 - 0.2 * b, elL: 0.3, elR: 0.3, az: 0.55, head: 0.15, wob: 0.12 * b, lift: 0.16 * Math.max(0, Math.sin(t * 7)) });
+    } else if (m === 'clap') {
+      const b = Math.sin(t * 11);
+      Object.assign(P, { lean: 0.02, shL: 1.25, shR: 1.25, elL: 0.75, elR: 0.75, az: -0.32 - 0.3 * b, head: 0.1, wob: 0.05 * Math.sin(t * 3), lift: 0.03 * Math.max(0, Math.sin(t * 5.5)) });
     } else if (m === 'tired') {
       const b = Math.sin(t * 6);
       Object.assign(P, { lean: 0.62 + 0.05 * b, hipL: 0.5, hipR: 0.5, kneeL: 0.6, kneeR: 0.6, shL: 0.95, shR: 0.95, elL: 0.2, elR: 0.2, head: -0.25, az: 0.3 });
@@ -961,7 +1306,7 @@ class Runner {
     return P;
   }
   update(dt, t) {
-    if (this.mode === 'run' && this.v > 0.12) {
+    if (this.mode === 'run' && this.v > 0.12 && !this.ext) {
       const stepLen = Math.max(0.28 + 0.07 * this.v, this.v / 7.5), cad = this.v / stepLen, prev = this.phi;
       this.phi += Math.PI * cad * dt;
       const a = prev % TAU, b = this.phi % TAU;
@@ -987,21 +1332,25 @@ class Runner {
     if (this.blinkT < 0) { this.blinking = 0.13; this.blinkT = 2.2 + Math.random() * 3.5; }
     if (this.blinking > 0) this.blinking -= dt;
     const m = this.mode, fast = m === 'run' && this.v > 5, tired = m === 'tired';
-    const eyeY = this.blinking > 0 ? 0.12 : tired ? 0.35 : m === 'victory' ? 0.75 : 1;
+    const happy = m === 'victory' || m === 'clap';
+    const eyeY = this.blinking > 0 ? 0.12 : tired ? 0.35 : happy ? 0.75 : 1;
     for (const e of this.eyes) e.scale.y = damp(e.scale.y, eyeY, 30, dt);
-    const open = fast || m === 'victory' || tired;
+    const open = fast || happy || tired;
     this.mouth.visible = open; this.smile.visible = !open;
     if (open) this.mouth.scale.y = tired ? 0.7 + 0.3 * Math.sin(t * 9) : 1;
     for (const br of this.brows) {
       const s = br.userData.s, det = fast || m === 'set' || m === 'marks';
       br.rotation.z = Math.PI / 2 + (det ? s * 0.4 : tired ? -s * 0.35 : 0);
-      br.position.y = m === 'victory' ? 0.16 : det ? 0.125 : 0.135;
+      br.position.y = happy ? 0.16 : det ? 0.125 : 0.135;
     }
+    const k = m === 'run' ? clamp(this.v / 8, 0, 1) : 0;
+    for (const tl of this.tails) tl.m.rotation.x = 0.25 + 1.05 * k + (0.08 + 0.22 * k) * Math.sin(t * (4 + 14 * k) + tl.ph);
+    this.blob.scale.setScalar(1 - clamp((this.pelvis.position.y - 0.5) * 1.6, 0, 0.4));
     for (const d of this.sweat) {
       d.visible = tired || (m === 'run' && this.v > 8.5);
       if (d.visible) { const ph = (t * 1.6 + (d.userData.s > 0 ? 0 : 0.5)) % 1; d.position.y = 0.18 - ph * 0.22; d.material.opacity = 1; }
     }
-    this.group.position.set(this.x, 0, this.z);
+    this.group.position.set(this.x, this.y, this.z);
   }
 }
 const R = {
@@ -1014,6 +1363,7 @@ for (const L of LANES) {
   R[L].visible = false;
   R[L].onStep = (foot, r) => {
     audio.step(r.pan, r.v / 9);
+    if (r.v > 2.5 && G.state === 'race') puff(r.x - 0.12, r.z + (foot === 'L' ? 0.09 : -0.09), clamp(r.v / 9, 0.45, 1));
     if (r.v > 3.5 && r.stepN % 3 === 0) audio.breath(r.pan, clamp(r.v / 10, 0, 1), r.stepN % 6 === 0);
   };
 }
@@ -1030,38 +1380,57 @@ function camRacers() {
   const c = ps.reduce((a, r) => a + r.x, 0) / ps.length;
   return ghost.visible && Math.abs(ghost.x - c) < 7 ? ps.concat([ghost]) : ps;
 }
+const SMOOTH = { 'lobby>countdown': 1.4, 'countdown>lobby': 2, 'countdown>start': 1.8 };
+const _sh = new THREE.Vector3();
 function updateCamera(dt, t) {
   let mode = 'lobby';
   const rs = camRacers();
   const lead = rs.length ? Math.max(...rs.map(r => r.x)) : 0, trail = rs.length ? Math.min(...rs.map(r => r.x)) : 0;
-  if (['marks', 'set', 'foul'].includes(G.state)) mode = 'start';
+  if (G.state === 'countdown') mode = 'countdown';
+  else if (['marks', 'set', 'foul'].includes(G.state)) mode = 'start';
+  else if (G.replay) mode = 'replay';
   else if (G.state === 'race') mode = G.endPerf ? 'celebrate' : (lead > G.dist - 10 ? 'finish' : 'race');
   else if (G.state === 'result') mode = 'result';
-  let fov = 40;
+  let fov = 40, spd = 0;
   if (mode === 'lobby') {
     _v.set(5.6 + 0.3 * Math.sin(t * 0.2), 2.5, 0.6 * Math.sin(t * 0.13)); _l.set(-0.8, 1.55, 0);
+  } else if (mode === 'countdown') {
+    _v.set(3.5, 1.4, 1.1 * Math.sin(t * 0.35)); _l.set(-0.8, 1.05, 0); fov = 36;
+  } else if (mode === 'replay') {
+    const all = racers(), mid = all.reduce((a, r) => a + r.x, 0) / Math.max(1, all.length);
+    _v.set(mid + 4.6, 1.35, 3.0); _l.set(mid - 0.2, 0.8, 0); fov = 34;
+  } else if (mode === 'result') {
+    const px = G.dist + 9;
+    _v.set(px + 8.6, 1.5, POD.z2 / 2 + 0.5 * Math.sin(t * 0.25)); _l.set(px, 0.56, POD.z2 / 2); fov = 36;
   } else if (mode === 'start') {
     _v.set(5.2, 2.3, 0); _l.set(-0.5, 0.95, 0); fov = 38;
   } else if (mode === 'race') {
     const gap = lead - trail, back = clamp(gap - 4, 0, 14);
-    _v.set(lead + 6.6 + back * 0.4, 3.3 + back * 0.32, 0); _l.set((lead + trail) / 2 - 3, 0.5, 0); fov = 40 + back * 0.6;
+    spd = rs.length ? Math.max(...rs.map(r => r.v)) : 0;
+    _v.set(lead + 6.6 + back * 0.4, 3.3 + back * 0.32, 0); _l.set((lead + trail) / 2 - 3, 0.5, 0); fov = 40 + back * 0.6 + clamp(spd / 10, 0, 1) * 4;
   } else if (mode === 'finish') {
+    spd = rs.length ? Math.max(...rs.map(r => r.v)) : 0;
     _v.set(G.dist + 8.5, 3.6, 0); _l.set(Math.min(lead, G.dist + 2) - 3, 0.5, 0); fov = 38;
   } else {
     const w = winnerRunner() || rs[0] || R.p1;
-    if (mode === 'celebrate') { const a = 0.35 * Math.sin((t - G.endPerf / 1000) * 0.4); _v.set(w.x + Math.cos(a) * 4.2, 1.8, w.z + Math.sin(a) * 4.2); _l.set(w.x, 1.0, w.z); fov = 38; }
-    else { _v.set(w.x + 5.5, 2.4, 0); _l.set(w.x, 0.15, 0); fov = 40; }
+    const a = 0.35 * Math.sin((t - G.endPerf / 1000) * 0.4); _v.set(w.x + Math.cos(a) * 4.2, 1.8, w.z + Math.sin(a) * 4.2); _l.set(w.x, 1.0, w.z); fov = 38;
   }
-  const cut = mode !== cam.mode;
+  const tr = cam.mode + '>' + mode, smooth = SMOOTH[tr], cut = mode !== cam.mode && !smooth;
+  if (mode !== cam.mode) cam.blend = smooth || 0;
   cam.mode = mode;
   if (cut) { cam.pos.copy(_v); cam.look.copy(_l); cam.fov = fov; }
   else {
-    const k = mode === 'race' ? 5 : mode === 'finish' ? 3 : 2;
+    const k = cam.blend || (mode === 'race' ? 5 : mode === 'finish' ? 3 : mode === 'replay' ? 7 : 2);
+    if (cam.blend) cam.blend = Math.min(5, cam.blend + dt * 0.8);   // ค่อย ๆ เร่งให้ทันตำแหน่งปลายทาง
     cam.pos.lerp(_v, 1 - Math.exp(-k * dt)); cam.look.lerp(_l, 1 - Math.exp(-(k + 2) * dt)); cam.fov = damp(cam.fov, fov, 2, dt);
   }
-  camera.position.copy(cam.pos); camera.lookAt(cam.look);
+  // สั่นกล้องเล็กน้อยตามความเร็ว + แรงกระแทกตอนเสียงปืน
+  G.kick = Math.max(0, G.kick - dt * 2.5);
+  const sa = 0.018 * clamp(spd / 10, 0, 1) + 0.06 * G.kick * G.kick;
+  _sh.set(Math.sin(t * 23.1) * sa, Math.sin(t * 31.7 + 1) * sa * 0.7, Math.sin(t * 19.3 + 2) * sa * 0.5);
+  camera.position.copy(cam.pos).add(_sh); camera.lookAt(cam.look);
   if (Math.abs(camera.fov - cam.fov) > 0.01) { camera.fov = cam.fov; camera.updateProjectionMatrix(); }
-  for (const L of LANES) if (R[L].tag) R[L].tag.visible = mode === 'race' || mode === 'start' || mode === 'finish';
+  for (const L of LANES) if (R[L].tag) R[L].tag.visible = ['race', 'start', 'finish', 'replay', 'result'].includes(mode) && !!G.lanes[L];
   const cx = cam.look.x;
   sun.position.set(cx + 18, 30, 16); sun.target.position.set(cx - 4, 0, 0); sun.target.updateMatrixWorld();
 }
@@ -1069,7 +1438,7 @@ function updateCamera(dt, t) {
 /* =====================================================================
    เครือข่าย
    ===================================================================== */
-let net = null, mode = 'local', room = '', base = '', dbURL = '';
+let net = null, mode = 'local', room = '', base = '', dbURL = '', hostUp = false;
 function setConn(cls, txt) { const c = $('conn'); c.className = 'glass ' + cls; c.querySelector('span').textContent = txt; }
 function banner(html) { const b = $('banner'); if (!html) { b.classList.add('hide'); return; } b.innerHTML = html; b.classList.remove('hide'); }
 let toastT = 0;
@@ -1101,7 +1470,15 @@ async function initNet() {
   sessionStorage.setItem('run_room_' + mode, room);
   base = RunNet.roomPath(room);
   $('roomCode').textContent = room; $('roomTag').textContent = 'ห้อง ' + room;
-  net.onConnection(c => { if (mode === 'local') setConn('local', 'โหมดทดสอบในเครื่อง'); else setConn(c ? 'ok' : 'bad', c ? 'Firebase เชื่อมต่อแล้ว' : 'Firebase หลุด — กำลังต่อใหม่'); lobbyUI(); });
+  let wasConn = null;
+  net.onConnection(c => {
+    if (mode === 'local') { setConn('local', 'โหมดทดสอบในเครื่อง'); lobbyUI(); return; }
+    setConn(c ? 'ok' : 'bad', c ? 'Firebase เชื่อมต่อแล้ว' : 'Firebase หลุด — กำลังต่อใหม่');
+    // หลุดแล้วต่อใหม่: Firebase ได้ตั้งห้องเป็น "closed" ไปแล้วตอนหลุด → ลงทะเบียนใหม่และประกาศสถานะจริงอีกครั้ง
+    if (c && wasConn === false && hostUp) { net.onDisconnect(base + '/host/state').set('closed'); publishHost(); toast('Firebase กลับมาเชื่อมต่อแล้ว'); }
+    wasConn = c;
+    lobbyUI();
+  });
   net.onError(e => {
     const s = String((e && (e.code || e.message)) || e);
     if (/permission/i.test(s)) banner('Firebase ไม่อนุญาตให้เขียนข้อมูลเกม — เพิ่มกฎ <code>"games": { ".read": true, ".write": true }</code> ใน Realtime Database → Rules (กด S ดูวิธี)');
@@ -1116,6 +1493,7 @@ async function initNet() {
     wait(12000).then(() => { throw new Error('รอ Firebase เกิน 12 วินาที — ตรวจอินเทอร์เน็ตแล้วโหลดใหม่'); })
   ]);
   net.onDisconnect(base + '/host/state').set('closed');
+  hostUp = true;
   net.on(base + '/players', v => { G.players = v || {}; });
   net.on(base + '/input', v => { G.input = v || {}; });
   setInterval(() => net.update(base + '/host', { updated: net.now() }), 30000);
@@ -1193,18 +1571,21 @@ function laneInput(L) {
   return { v: age < 1200 ? (inp.v || 0) : 0, ok: age < 1500, n: inp.n || 0, fm: inp.fm, fs: inp.fs };
 }
 const nameOf = L => { const s = laneState(L); return s.name || INFO[L].label; };
-function kick(L) {
+const kickAt = { p1: 0, p2: 0 };
+function kick(L, silent) {
   if (!net) return;
   if (G.kbd && !G.players[L]) return;
+  if (silent && performance.now() - kickAt[L] < 5000) return;
+  kickAt[L] = performance.now();
   net.remove(base + '/players/' + L); net.remove(base + '/input/' + L);
-  toast('นำ ' + INFO[L].label + ' ออกจากเลนแล้ว');
+  if (!silent) toast('นำ ' + INFO[L].label + ' ออกจากเลนแล้ว');
 }
 
 /* =====================================================================
    ตรรกะการแข่ง
    ===================================================================== */
 let seqTok = 0;
-function setState(s) { G.state = s; G.stateAt = performance.now(); if (net) publishHost(); syncOverlays(); }
+function setState(s) { G.state = s; G.stateAt = performance.now(); podium.visible = s === 'result'; if (net) publishHost(); syncOverlays(); }
 function requiredLanes() { return G.playMode === 2 ? LANES : G.playMode === 1 ? ['p1'] : []; }
 function canStart() {
   if (!net || !net.isConnected()) return false;
@@ -1217,7 +1598,7 @@ function lobbyLogic() {
   if (G.state === 'countdown') {
     if (!canStart()) { setState('lobby'); callout('', '', 0); toast('ผู้เล่นหลุดการเชื่อมต่อ · รอเชื่อมใหม่', true); return; }
     const el = (performance.now() - G.stateAt) / 1000, left = 3 - Math.floor(el);
-    if (left !== lastCountBeep && left > 0) { lastCountBeep = left; audio.beep(520, 0.12, 0.12); callout(String(left), G.playMode === 1 ? 'วิ่งคนเดียว · แข่งกับเงา' : 'เตรียมตัว', 900); }
+    if (left !== lastCountBeep && left > 0) { lastCountBeep = left; audio.beep(520, 0.12, 0.12); vsNum(left); }
     if (el >= 3) startRace(requiredLanes());
   }
 }
@@ -1237,6 +1618,14 @@ function resetForStart() {
   }
   Object.assign(ghost, { x: -0.35, v: 0 }); ghost.mode = 'marks';
   G.gunAt = 0; G.endPerf = 0; G.firstFinish = false; G.result = null; clearConfetti();
+  resetStage();
+}
+// คืนค่าฉากหลังจบรอบ: แท่นรับรางวัล เทปเส้นชัย พลุ รีเพลย์
+function resetStage() {
+  cancelReplay();
+  for (const L of LANES) Object.assign(R[L], { y: 0, z: laneZ(INFO[L].lane), podium: 0, ext: false });
+  Object.assign(ghost, { y: 0, podium: 0, ext: false });
+  resetTape(); clearFireworks(); REC.length = 0;
 }
 async function runSequence() {
   const my = ++seqTok;
@@ -1252,7 +1641,7 @@ async function runSequence() {
   G.gunAt = net.now(); G.gunPerf = performance.now(); G.lastEl = 0;
   for (const L of LANES) if (G.lanes[L]) { R[L].n0 = laneInput(L).n || 0; R[L].mode = 'run'; }
   ghost.mode = 'run';
-  setState('race'); audio.gun(); callout('', '', 0);
+  setState('race'); audio.gun(); callout('ไป!', '', 750, 'go'); G.kick = 1;
   const f = $('flash'); f.style.transition = 'none'; f.style.opacity = '0.55'; requestAnimationFrame(() => { f.style.transition = 'opacity .35s'; f.style.opacity = '0'; });
 }
 function foul(L) {
@@ -1271,7 +1660,7 @@ function toLobby() {
   seqTok++;
   G.lanes = {}; G.result = null; G.endPerf = 0; G.gunAt = 0; G.solo = false;
   for (const L of LANES) { const r = R[L]; r.x = -0.8; r.v = 0; r.mode = 'idle'; if (G.players[L]) net.update(base + '/players/' + L, { ready: !!G.players[L].cal }); }
-  ghost.visible = false; clearConfetti();
+  ghost.visible = false; clearConfetti(); resetStage();
   G.kbdReady = { p1: false, p2: false };
   setState('lobby'); callout('', '', 0);
 }
@@ -1309,7 +1698,8 @@ function raceLogic(frameDt) {
   if (G.state === 'set' || (G.state === 'race' && el < 2)) {
     for (const L of parts) {
       const inp = laneInput(L);
-      if (inp.fs === G.seq && inp.fm && (G.state === 'set' || (G.gunAt && inp.fm < G.gunAt))) { foul(L); return; }
+      // เผื่อเวลานาฬิกาคลาดเคลื่อนระหว่างมือถือกับจอ 60 มิลลิวินาที
+      if (inp.fs === G.seq && inp.fm && (G.state === 'set' || (G.gunAt && inp.fm < G.gunAt - 60))) { foul(L); return; }
     }
   }
   if (G.state !== 'race') return;
@@ -1318,7 +1708,7 @@ function raceLogic(frameDt) {
     let target = clamp(inp.v || 0, 0, 10.5);
     if (el < G.penalty[L]) target = 0;
     r.disc = inp.ok ? 0 : r.disc + dt;
-    if (r.react == null && inp.fs === G.seq && inp.fm > G.gunAt) r.react = (inp.fm - G.gunAt) / 1000;
+    if (r.react == null && inp.fs === G.seq && inp.fm >= G.gunAt - 60) r.react = Math.max(0, inp.fm - G.gunAt) / 1000;
     if (!r.done && !r.dnf) {
       r.v = damp(r.v, target, 6, dt);
       const x0 = r.x; r.x += r.v * dt; r.top = Math.max(r.top, r.v);
@@ -1326,7 +1716,7 @@ function raceLogic(frameDt) {
       if (r.x >= G.dist) {
         r.done = true; r.time = el - dt + dt * (G.dist - x0) / Math.max(1e-6, r.x - x0);
         r.steps = Math.max(0, (inp.n || 0) - r.n0);
-        if (!G.firstFinish) { G.firstFinish = true; audio.horn(); G.exBoost = 1; confettiBurst(G.dist); }
+        if (!G.firstFinish) { G.firstFinish = true; audio.horn(); G.exBoost = 1; confettiBurst(G.dist); breakTape(); }
       } else if (el > 90 || r.disc > 10) { r.dnf = true; }
     } else {
       r.v = damp(r.v, 0, 2.2, dt);
@@ -1338,19 +1728,72 @@ function raceLogic(frameDt) {
     const nx = ghostX(el); ghost.v = Math.max(0, (nx - ghost.x) / Math.max(dt, 1e-3)); ghost.x = nx;
     if (ghost.x > G.dist && ghost.v < 0.3) { ghost.v = 0; ghost.mode = 'idle'; }
   }
+  if (REC.length < 9000) REC.push({ el, s: [R.p1.x, R.p1.v, R.p1.phi, R.p2.x, R.p2.v, R.p2.phi, ghost.x, ghost.v, ghost.phi], m: [R.p1.mode, R.p2.mode, ghost.mode] });
   const allDone = parts.every(L => R[L].done || R[L].dnf);
   if (allDone && !G.endPerf) {
     G.endPerf = performance.now();
     const w = winnerRunner();
-    setTimeout(() => { if (G.state === 'race' && G.endPerf) showResults(); }, 3200);
+    const my = seqTok;
+    setTimeout(() => { if (G.state === 'race' && G.endPerf && my === seqTok && !G.replay) startReplay(); }, 2300);
     if (w) w.celebrate = true;
   }
 }
+
+// ---------- รีเพลย์สโลว์โมชันช่วงเข้าเส้นชัย ----------
+const REC = [], RP_RUN = () => [R.p1, R.p2, ghost];
+function startReplay() {
+  const fins = LANES.filter(L => G.lanes[L] && R[L].done).map(L => R[L].time).sort((a, b) => a - b);
+  if (!fins.length || REC.length < 10) { showResults(); return; }
+  const tw = fins[0];
+  let margin = fins.length > 1 ? fins[1] - fins[0] : Infinity;
+  if (G.solo && ghostData) margin = Math.min(margin, Math.abs(ghostData.time - tw));
+  G.replay = {
+    t: Math.max(REC[0].el, tw - 1.3), t1: tw + 0.6, tw, photo: margin < 0.15, hold: 0, held: false, i: 0,
+    snap: RP_RUN().map(r => ({ x: r.x, v: r.v, phi: r.phi, mode: r.mode }))
+  };
+  for (const r of RP_RUN()) r.ext = true;
+  resetTape(); clearConfetti();
+  $('replayNote').textContent = G.replay.photo ? 'ห่างกันแค่ ' + margin.toFixed(2) + ' วินาที!' : 'ช่วงเข้าเส้นชัย · ช้าลง 2.5 เท่า';
+  $('replay').classList.remove('hide'); syncOverlays(); audio.whoosh(); callout('', '', 0);
+}
+function updateReplay(dt) {
+  const P = G.replay;
+  if (P.hold > 0) { P.hold -= dt; if (P.hold <= 0) { document.body.classList.remove('photo'); $('photoTag').classList.add('hide'); } }
+  else P.t += dt * 0.4;
+  if (P.photo && !P.held && P.t >= P.tw) {
+    P.held = true; P.t = P.tw; P.hold = 1.7; audio.shutter();
+    document.body.classList.add('photo'); $('photoTag').classList.remove('hide');
+    const f = $('flash'); f.style.transition = 'none'; f.style.opacity = '0.7'; requestAnimationFrame(() => { f.style.transition = 'opacity .5s'; f.style.opacity = '0'; });
+  }
+  if (!tape.broken && P.t >= P.tw) { breakTape(); confettiBurst(G.dist); }
+  while (P.i < REC.length - 2 && REC[P.i + 1].el <= P.t) P.i++;
+  const a = REC[P.i], b = REC[Math.min(P.i + 1, REC.length - 1)], f = b.el > a.el ? clamp((P.t - a.el) / (b.el - a.el), 0, 1) : 0;
+  RP_RUN().forEach((r, k) => {
+    const j = k * 3;
+    r.x = a.s[j] + (b.s[j] - a.s[j]) * f; r.v = a.s[j + 1] + (b.s[j + 1] - a.s[j + 1]) * f;
+    const dp = b.s[j + 2] - a.s[j + 2]; r.phi = Math.abs(dp) < 3 ? a.s[j + 2] + dp * f : a.s[j + 2];
+    r.mode = a.m[k];
+  });
+  drawClock(Math.min(P.t, P.tw).toFixed(2));
+  if (P.t >= P.t1) endReplay(true);
+}
+function endReplay(show) {
+  const P = G.replay; if (!P) return;
+  G.replay = null;
+  RP_RUN().forEach((r, k) => { Object.assign(r, { x: P.snap[k].x, v: P.snap[k].v, phi: P.snap[k].phi, ext: false }); r.mode = P.snap[k].mode; });
+  if (!tape.broken) confettiBurst(G.dist);
+  breakTape(); tape.t = 5;
+  $('replay').classList.add('hide'); $('photoTag').classList.add('hide'); document.body.classList.remove('photo');
+  syncOverlays();
+  if (show && G.state === 'race') showResults();
+}
+function cancelReplay() { if (G.replay) endReplay(false); }
 // หลังเข้าเส้นชัย: ชะลอจนหยุด แล้วผู้ชนะกระโดดดีใจ คนอื่นหอบเหนื่อย (ทำงานต่อในหน้าผล)
 function afterFinish(dt) {
   for (const L of LANES) {
     const r = R[L];
     if (!G.lanes[L] || !(r.done || r.dnf)) continue;
+    if (r.podium) { r.mode = r.podium === 1 ? 'victory' : 'clap'; continue; }
     if (G.state === 'result' && r.v > 0) { r.v = damp(r.v, 0, 2.2, dt); if (r.v < 0.3) { r.v = 0; r.mode = 'idle'; } r.x += r.v * dt; }
     if (r.v === 0 && r.done) r.mode = (r.celebrate || G.solo) ? 'victory' : 'tired';
   }
@@ -1389,10 +1832,21 @@ function showResults() {
     return '<tr><td class="pl">' + (x.dnf ? '–' : x.place) + '</td><td><span class="dot" style="background:' + INFO[L].css + '"></span>' + esc(x.name) + '</td><td>' + (x.time != null ? x.time.toFixed(2) : 'ไม่จบ') + '</td><td>' + Math.round(x.top) + '</td><td>' + (x.react != null ? x.react.toFixed(2) : '–') + '</td><td>' + (x.steps != null ? x.steps : '–') + '</td></tr>';
   }).join('');
   renderLB();
+  placePodium();
   setState('result');
-  audio.fanfare();
+  audio.fanfare(); fireworkShow(G.dist + 9);
   const w = order[0];
   if (w && !res[w].dnf) setTimeout(() => audio.say((G.solo ? '' : 'ผู้ชนะ ') + res[w].name + ' เวลา ' + res[w].time.toFixed(2) + ' วินาที'), 900);
+}
+// ขึ้นแท่นรับรางวัล (อันดับ 1 ตรงกลาง อันดับ 2 ข้าง ๆ) — วิ่งคนเดียวจะขึ้นคู่กับนักวิ่งเงา
+function placePodium() {
+  const ents = LANES.filter(L => G.lanes[L] && R[L].done).map(L => ({ r: R[L], t: R[L].time }));
+  if (G.solo && ghostData && ghost.visible) ents.push({ r: ghost, t: ghostData.time });
+  ents.sort((a, b) => a.t - b.t);
+  ents.slice(0, 2).forEach((e, i) => {
+    Object.assign(e.r, { x: G.dist + 9, z: i ? POD.z2 : 0, y: i ? POD.h2 : POD.h1, v: 0, podium: i + 1 });
+    e.r.mode = i ? 'clap' : 'victory';
+  });
 }
 function renderLB() {
   const lb = LS.get('run_lb_' + G.dist, []);
@@ -1404,16 +1858,18 @@ function renderLB() {
    หน้าจอซ้อน (ล็อบบี้ / HUD / ผล)
    ===================================================================== */
 let coT = 0;
-function callout(big, sub, ms) {
+function callout(big, sub, ms, cls) {
   const c = $('callout'); $('coBig').textContent = big || ''; $('coSub').textContent = sub || '';
+  c.classList.toggle('go', cls === 'go');
   clearTimeout(coT);
   if (!big && !sub) { c.classList.remove('on'); return; }
   c.classList.add('on'); if (ms) coT = setTimeout(() => c.classList.remove('on'), ms);
 }
 function syncOverlays() {
   const s = G.state;
-  $('lobby').classList.toggle('hide', !['lobby', 'countdown'].includes(s));
-  $('hud').classList.toggle('hide', !['marks', 'set', 'race', 'foul'].includes(s));
+  $('lobby').classList.toggle('hide', s !== 'lobby');
+  $('vs').classList.toggle('hide', s !== 'countdown');
+  $('hud').classList.toggle('hide', !['marks', 'set', 'race', 'foul'].includes(s) || !!G.replay);
   $('result').classList.toggle('hide', s !== 'result');
 }
 const kickArm = { p1: 0, p2: 0 };
@@ -1441,7 +1897,7 @@ function lobbyUI() {
     kb.textContent = kickArm[L] > performance.now() ? 'กดอีกครั้งเพื่อนำออก' : 'นำออก';
     $('sw' + n).style.width = (clamp(laneInput(L).v / 10, 0, 1) * 100) + '%';
     // ลบเลนที่หลุดเกิน 60 วินาที
-    if (s.kind === 'phone' && !s.online && !s.stale && G.state === 'lobby') kick(L);
+    if (s.kind === 'phone' && !s.online && !s.stale && G.state === 'lobby') kick(L, true);
   }
   const missing = required.filter(L => !laneState(L).online);
   const notCal = required.filter(L => laneState(L).online && !laneState(L).cal);
@@ -1470,10 +1926,24 @@ function avatarSVG(key) {
     '<ellipse cx="19.5" cy="45" rx="3.5" ry="2" fill="#ff8fa3"/><ellipse cx="44.5" cy="45" rx="3.5" ry="2" fill="#ff8fa3"/><path d="M27 46 Q32 51 37 46" stroke="#5a2230" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
 }
 const AV_SVG = { p1: avatarSVG('p1'), p2: avatarSVG('p2'), ghost: avatarSVG('ghost') };
+// การ์ด VS ตอนนับถอยหลัง
+function showVS(on) {
+  const card = (el, key, name, tag) => { el.className = 'vsc ' + key; el.innerHTML = AV_SVG[key] + '<div class="nm">' + esc(name) + '</div><div class="tg">' + esc(tag) + '</div>'; };
+  const a = on[0];
+  card($('vsA'), a, laneState(a).name, INFO[a].label + ' · เลน ' + INFO[a].lane);
+  if (on[1]) card($('vsB'), on[1], laneState(on[1]).name, INFO[on[1]].label + ' · เลน ' + INFO[on[1]].lane);
+  else {
+    const best = LS.get('run_best_' + G.dist, null);
+    card($('vsB'), 'ghost', best && best.tr && best.tr.length > 5 ? 'สถิติของ ' + best.n : 'นักวิ่งเงา', best && best.tr && best.tr.length > 5 ? best.t.toFixed(2) + ' วินาที' : (PACE[G.dist] || 18).toFixed(2) + ' วินาที');
+  }
+  $('vsS').textContent = 'วิ่ง ' + G.dist + ' เมตร' + (on.length === 1 ? ' · แข่งกับเงา' : '');
+  $('vsN').textContent = ''; $('vsN').classList.remove('pop');
+}
+function vsNum(n) { const e = $('vsN'); e.textContent = n; e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); }
 $('lav1').innerHTML = AV_SVG.p1; $('lav2').innerHTML = AV_SVG.p2;
 let hudT = 0;
 function hudUI(t) {
-  if (!['marks', 'set', 'race', 'foul'].includes(G.state)) return;
+  if (!['marks', 'set', 'race', 'foul'].includes(G.state) || G.replay) return;
   if (t - hudT < 0.05) return;
   hudT = t;
   const el = G.state === 'race' ? (performance.now() - G.gunPerf) / 1000 : 0;
@@ -1527,8 +1997,11 @@ function loop() {
   if (net) {
     updateKbd(dt, t);
     if (G.state === 'lobby' || G.state === 'countdown') lobbyLogic();
-    if (['set', 'race'].includes(G.state)) raceLogic(dt);
-    if (G.state === 'race' || G.state === 'result') afterFinish(dt);
+    if (G.replay) updateReplay(dt);
+    else {
+      if (['set', 'race'].includes(G.state)) raceLogic(dt);
+      if (G.state === 'race' || G.state === 'result') afterFinish(dt);
+    }
     if (G.state === 'result') {
       for (const L of LANES) if (G.lanes[L] && G.players[L] && G.players[L].again === G.seq) { toLobby(); break; }
     }
@@ -1549,9 +2022,23 @@ function loop() {
   const ex = excitement(dt); audio.ex = ex; audio.tick(dt);
   updateCrowd(t, ex);
   updateConfetti(dt);
+  updateBunting(t); updateBalloons(t); updateTape(dt, t); updatePuffs(dt); updateFireworks(dt);
   updateCamera(dt, t);
-  renderer.render(scene, camera);
+  renderScreens(t);
+  if (composer && G.qEff === 'high') composer.render(dt); else renderer.render(scene, camera);
+  autoQuality(dt, now);
   requestAnimationFrame(loop);
+}
+// คุณภาพอัตโนมัติ: ถ้าเฟรมเรตต่ำกว่า ~32 ติดกัน 2 ช่วง (ช่วงละ 3 วิ) ลดเป็นภาพแบบเบา
+const FPSM = { n: 0, t: 0, bad: 0, since: performance.now() + 6000 };
+function autoQuality(dt, now) {
+  if (G.quality !== 'auto' || G.qEff !== 'high') return;
+  if (document.visibilityState !== 'visible' || dt > 0.5 || now < FPSM.since) { FPSM.n = 0; FPSM.t = 0; return; }
+  FPSM.n++; FPSM.t += dt;
+  if (FPSM.t < 3) return;
+  const fps = FPSM.n / FPSM.t; FPSM.n = 0; FPSM.t = 0;
+  if (fps >= 32) { FPSM.bad = 0; return; }
+  if (++FPSM.bad >= 2) { G.qEff = 'low'; applyQuality(); toast('เครื่องนี้ภาพกระตุก — ปรับเป็นภาพแบบเบาให้อัตโนมัติ (เปลี่ยนได้ที่ S)'); }
 }
 
 /* =====================================================================
@@ -1580,7 +2067,8 @@ addEventListener('keydown', e => {
   else if (k === 'k' || k === 'K') setKbd(!G.kbd);
   else if (k === 'Escape') { if (!$('settings').classList.contains('hide')) openSettings(false); else if (G.state !== 'lobby') { toLobby(); toast('ยกเลิกรอบนี้แล้ว'); } }
   else if (k === 'Enter') {
-    if (G.state === 'result') toLobby();
+    if (G.replay) endReplay(true);
+    else if (G.state === 'result') toLobby();
     else if (G.state === 'lobby') beginFromLobby();
   }
   else if (k === 'r' || k === 'R') {
@@ -1593,7 +2081,11 @@ document.querySelectorAll('#distChips button').forEach(b => b.onclick = () => {
   if (G.state !== 'lobby') return;
   G.dist = +b.dataset.d; LS.set('run_dist', G.dist); placeFinish(); if (net) publishHost();
 });
-document.querySelectorAll('#qChips button').forEach(b => b.onclick = () => { G.quality = b.dataset.q; LS.set('run_quality', G.quality); applyQuality(); });
+document.querySelectorAll('#qChips button').forEach(b => b.onclick = () => {
+  G.quality = b.dataset.q; LS.set('run_quality', G.quality);
+  G.qEff = G.quality === 'low' ? 'low' : 'high'; FPSM.bad = 0; FPSM.since = performance.now() + 4000;
+  applyQuality();
+});
 $('kbdChk').onchange = e => setKbd(e.target.checked);
 $('closeSet').onclick = () => openSettings(false);
 $('fsBtn').onclick = toggleFS;
@@ -1609,6 +2101,7 @@ document.querySelectorAll('#modePick button').forEach(b => b.onclick = () => {
 function beginFromLobby() {
   if (!canStart()) { toast('รอให้ผู้เล่นเชื่อมต่อและคาลิเบรตครบก่อน', true); return; }
   lastCountBeep = -1;
+  showVS(requiredLanes());
   setState('countdown');
   lobbyUI();
 }
@@ -1637,8 +2130,9 @@ applyQuality();
 placeFinish();
 syncOverlays();
 requestAnimationFrame(loop);
+initPost();
 initNet().catch(e => { console.error(e); banner('เชื่อมต่อไม่ได้: ' + esc(e.message || e) + ' · กด S เพื่อตรวจค่า Firebase'); });
-window.__game = { G, R, ghost, KBD, get net() { return net; }, laneState, laneInput, toLobby, startRace }; // สำหรับทดสอบ
+window.__game = { G, R, ghost, KBD, get net() { return net; }, laneState, laneInput, toLobby, startRace, get composer() { return composer; }, REC, tape, podium, renderer }; // สำหรับทดสอบ
 document.getElementById('bootFail').classList.add('hide');
 </script>
 </body>
