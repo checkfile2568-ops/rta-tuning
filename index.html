@@ -1507,7 +1507,7 @@
 
   // ---------- tuning profiles (ชุดจูน) ----------
   const PF_KEY='rta_profiles', PF_ACT='rta_prof_active';
-  const FT=['OFF','LR12','LR24','LR48','BW12','BW18','BW24','Bessel12','Bessel24'];
+  const FT=['OFF','LR12','LR24','LR48','BW6','BW12','BW18','BW24','BW30','BW36','BW48','Bessel12','Bessel24'];
   const HOLDS=['SLOW','NORMAL','FAST'];
   const CHN={sub:'ซับ 10″',mid:'กลาง 4″',twe:'แหลม 2″'};
   let profiles=[], cur=null, curCh='sub';
@@ -1668,7 +1668,8 @@
   function sec2(s,Q,hp){ const den=cadd(cadd(cmul(s,s),C(s.re/Q,s.im/Q)),C(1,0)); return cdiv(hp?cmul(s,s):C(1,0),den); }
   function sec1(s,hp){ return cdiv(hp?s:C(1,0),cadd(s,C(1,0))); }
   const FTQ={LR12:[['2',.5]],LR24:[['2',.7071],['2',.7071]],LR48:[['2',.5412],['2',1.3066],['2',.5412],['2',1.3066]],
-    BW12:[['2',.7071]],BW18:[['1'],['2',1]],BW24:[['2',.5412],['2',1.3066]],Bessel12:[['2',.5774]],Bessel24:[['2',.5219],['2',.8055]]};
+    BW6:[['1']],BW12:[['2',.7071]],BW18:[['1'],['2',1]],BW24:[['2',.5412],['2',1.3066]],BW30:[['1'],['2',.618],['2',1.618]],
+    BW36:[['2',.5176],['2',.7071],['2',1.9319]],BW48:[['2',.5098],['2',.6013],['2',.9],['2',2.5629]],Bessel12:[['2',.5774]],Bessel24:[['2',.5219],['2',.8055]]};
   function filt(f,fc,type,hp){ if(!fc||!type||type==='OFF')return C(1,0); const s=C(0,hp?f/fc:f/fc); let h=C(1,0);
     for(const sec of (FTQ[type]||[])) h=cmul(h, sec[0]==='1'?sec1(s,hp):sec2(s,sec[1],hp)); return h; }
   function peq(f,b){ if(!b||!b.f||!b.g)return C(1,0); const A=Math.pow(10,b.g/40), Q=b.q||1, s=C(0,f/b.f);
