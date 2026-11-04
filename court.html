@@ -26,11 +26,18 @@
   <div class="su">ศาลจังหวัดลพบุรี</div>
   <div class="sp"></div>
 </div>
-<iframe id="app" src="https://script.google.com/macros/s/AKfycbyeAHSW2vjTf1KSV6xy-xBpeW0CGPxVJtuC2F7jQU77G7DkWdUYIDGl9-BJp2gEMUH67Q/exec"
+<iframe id="app" data-src="https://script.google.com/macros/s/AKfycbyeAHSW2vjTf1KSV6xy-xBpeW0CGPxVJtuC2F7jQU77G7DkWdUYIDGl9-BJp2gEMUH67Q/exec"
         onload="var l=document.getElementById('load');if(l)l.style.opacity=0,setTimeout(function(){l.style.display='none'},300)"
         allow="clipboard-write; fullscreen; geolocation; camera"
         allowfullscreen></iframe>
 <script>
+  // ส่งรหัส QR (?k=) ต่อให้ Apps Script ตรวจ — server เป็นผู้ตัดสินว่ารหัสยังใช้ได้หรือไม่
+  (function(){
+    var f = document.getElementById('app'), u = new URL(f.dataset.src);
+    var k = new URL(location.href).searchParams.get('k') || '';
+    if (/^[a-f0-9]{12}$/.test(k)) u.searchParams.set('k', k);
+    f.src = u.href;
+  })();
   // เผื่อ onload ไม่ยิง (บางเบราว์เซอร์) — ซ่อน loader หลัง 6 วิ
   setTimeout(function(){var l=document.getElementById('load');if(l)l.style.display='none';}, 6000);
 </script>
