@@ -1,0 +1,106 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ทดสอบการเชื่อมต่อ — ระบบเบิกวัสดุ</title><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><style>:root{--navy:#102d4e;--navy2:#071a33;--gold:#bb974b;--gold-light:#f7f1e4;--paper:#f6f8fc;--ink:#142438;--muted:#617184;--line:#dce3eb;--green:#186640;--red:#a12525;font-family:Tahoma,'Noto Sans Thai',sans-serif;color:var(--ink);font-size:16px;line-height:1.6;background:var(--paper)}*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button,a,input,select,textarea{touch-action:manipulation}button{cursor:pointer;border:1px solid transparent;border-radius:10px;padding:11px 20px;min-height:46px;background:var(--navy);color:#fff;font-weight:700}button:hover{filter:brightness(1.08)}button:disabled{cursor:not-allowed;opacity:.5}a{color:var(--navy)}input,select,textarea{border:1px solid #b9c6d4;border-radius:9px;padding:11px 12px;min-height:46px;max-width:100%;background:white;color:var(--ink)}input:focus,textarea:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid #d7b568;outline-offset:3px}h1{font-size:clamp(26px,3vw,36px);line-height:1.3;letter-spacing:-.6px;margin:0 0 10px}h2{font-size:22px;line-height:1.4;margin:0 0 12px}h3{font-size:18px;margin:0}p{margin:0 0 18px}small{font-size:14px;color:var(--muted)}label{display:grid;gap:6px}.muted,.subtitle{color:var(--muted)}.test-banner{font-size:14px;background:#fff4d8;color:#62480d;padding:7px 20px;text-align:center;border-bottom:1px solid #e8d8ad}.app{display:grid;grid-template-columns:236px 1fr;min-height:calc(100dvh - 38px)}.sidebar{background:var(--navy);color:#fff;padding:32px 18px;display:flex;flex-direction:column;gap:32px}.brand{display:flex;align-items:center;gap:12px}.brand strong{font-size:23px;display:block;line-height:1.4}.brand span:not(.brand-mark){font-size:15px;color:#d9e4f0}.brand-mark{border:1px solid var(--gold);color:#e5c984;width:36px;min-width:36px;height:42px;display:grid;place-items:center;border-radius:6px;font-weight:700;font-size:23px}.sidebar nav{display:grid;gap:8px}.nav-button{text-align:left;width:100%;font-weight:400;background:transparent;color:#e9eef5;padding:14px 16px;border-radius:10px}.nav-button[aria-current=page]{background:var(--gold);color:#172536;font-weight:700}.nav-icon{display:inline-block;width:30px;font-size:22px}.side-foot{margin-top:auto;padding:20px 10px;border-top:1px solid #ffffff26;font-size:14px;color:#e1e8f0}.side-foot small{color:#afc1d4}.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#8dc6a1;margin-right:6px}.workspace{min-width:0}.topbar{min-height:85px;border-bottom:1px solid var(--line);padding:16px 32px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:14px}.profile{display:flex;align-items:center;gap:12px;color:var(--muted)}.profile select{max-width:230px;font-size:14px;background:var(--paper)}main#content{padding:32px;min-height:calc(100dvh - 200px)}.page-head{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:28px}.eyebrow{color:#8a691e;font-size:13px;letter-spacing:1.4px;font-weight:700;margin-bottom:10px}.badge{font-size:14px;border-radius:7px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px;background:#e9f5ed;color:var(--green);white-space:nowrap}.badge.warn{background:#fff0c6;color:#755309}.badge.neutral{background:#edf1f6;color:#44576d}.badge.danger{background:#fbe8e8;color:var(--red)}.badge.ready{background:#e8efff;color:#244b8c}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px}.welcome{background:var(--navy);color:white;border-radius:14px;padding:30px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px}.welcome p{color:#cfdae8;max-width:500px;margin:8px 0 0}.welcome button{background:#e3c480;color:var(--navy2)}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}.stat{padding:20px 24px;background:white;border:1px solid var(--line);border-radius:12px}.stat strong{font-size:32px;display:block;line-height:1.5}.home-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:24px}.section-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.text-button{background:transparent;color:var(--navy);padding:8px;min-height:44px;font-size:14px}.secondary{background:white;color:var(--navy);border-color:#bcc9d7}.danger-button{background:white;color:var(--red);border-color:#dfc2c2}.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.empty{padding:40px 20px;text-align:center;color:var(--muted)}.empty strong{color:var(--ink);display:block;font-size:19px;margin-bottom:8px}.catalog-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}.searchbar{display:grid;grid-template-columns:1fr 180px;gap:12px;margin-bottom:18px}.searchbar input{width:100%}.tabs{display:flex;gap:10px;overflow:auto;margin-bottom:12px}.tab{white-space:nowrap;background:#fff;color:var(--navy);border:1px solid var(--line);font-size:14px;padding:8px 18px}.tab.active{background:var(--gold-light);border-color:#d9bf86}.materials{background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden}.material{padding:22px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:18px;border-bottom:1px solid var(--line)}.material:last-child{border-bottom:0}.material p{margin:4px 0 9px;font-size:14px;color:var(--muted)}.quantity{display:flex;align-items:center;gap:0}.quantity button{min-width:44px;padding:7px 12px;border-radius:8px}.quantity input{width:57px;padding:8px 3px;text-align:center;border:0;border-radius:0;background:transparent;font-size:18px;font-weight:700;appearance:textfield}.quantity input::-webkit-inner-spin-button{appearance:none}.qty-wrap{display:grid;justify-items:center;gap:7px}.cart-panel{position:sticky;top:20px}.cart-panel h2{padding-bottom:16px;border-bottom:1px solid var(--line)}.cart-item{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:14px 0;font-size:15px}.cart-item small{display:block}.cart-panel>button{width:100%;margin-top:20px}.saved{font-size:13px;color:var(--muted);margin-top:12px}.cart-items{margin:20px 0}.cart-detail{display:grid;grid-template-columns:1fr auto;gap:16px;padding:18px 0;border-bottom:1px solid var(--line);align-items:center}.review{max-width:800px}.review textarea{width:100%;min-height:90px;margin-bottom:20px}.notice{background:var(--gold-light);color:#6b521d;padding:12px 16px;border-radius:9px;font-size:14px;margin:16px 0}.request{background:white;border:1px solid var(--line);border-radius:13px;padding:22px;margin-bottom:16px}.request-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}.request-line{display:grid;grid-template-columns:1fr auto;gap:12px;padding:12px 0;border-top:1px solid var(--line)}.request-meta{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin:15px 0}.request .actions{margin-top:18px}.request-line label{display:flex;align-items:center;font-size:14px}.request-line input{width:80px;margin-left:10px}.receiver{margin-top:16px;max-width:400px}.receiver input{width:100%}.workspace-foot{padding:16px 32px;border-top:1px solid var(--line);display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:12px;color:var(--muted)}#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 20px;background:#102d4e;color:white;border-radius:10px;box-shadow:0 8px 30px #102d4e33;z-index:20;max-width:90vw;display:none}dialog{border:1px solid var(--line);border-radius:16px;padding:28px;max-width:520px;width:calc(100% - 32px);color:var(--ink)}dialog::backdrop{background:#071a3370}.probe-wrap{max-width:1000px;margin:auto;padding:40px 24px}.probe form{display:grid;gap:16px;background:white;padding:24px;border:1px solid var(--line);border-radius:12px;margin-bottom:20px}.table-scroll{overflow:auto;background:white;border:1px solid var(--line);border-radius:12px;margin:20px 0}table{border-collapse:collapse;width:100%;text-align:left}th,td{padding:14px 18px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--gold-light)}
+@media(max-width:1150px){.app{grid-template-columns:210px 1fr}.catalog-layout{grid-template-columns:1fr}.cart-panel{position:static}.cart-panel .cart-item{display:none}.cart-panel{padding:16px}.cart-panel h2{display:none}.cart-panel>button{margin:0}.home-grid{grid-template-columns:1fr}.brand strong{font-size:21px}.topbar,main#content{padding:24px}}
+@media(max-width:760px),(max-height:500px){.app{display:block}.sidebar{padding:16px 20px;display:block}.brand{margin-bottom:0}.brand strong{font-size:22px}.brand span:not(.brand-mark){font-size:13px}.sidebar nav{position:sticky;display:flex;gap:4px;margin-top:16px;overflow:auto}.nav-button{padding:9px 12px;text-align:center;white-space:nowrap;font-size:14px}.nav-icon{display:none}.side-foot{display:none}.topbar{min-height:64px;padding:12px 20px}.topbar>#date{display:none}.profile{width:100%;justify-content:space-between}.profile select{width:215px}main#content{padding:24px 18px;min-height:50dvh}.page-head{margin-bottom:20px}.page-head>.badge{display:none}.catalog-layout{gap:14px}.material{padding:18px 16px;gap:10px}.material h3{font-size:17px}.material p{max-width:220px}.searchbar{grid-template-columns:1fr}.searchbar select{width:100%}.stats{gap:10px}.stat{padding:14px 12px;font-size:13px}.stat strong{font-size:28px}.welcome{padding:24px;display:block}.welcome button{margin-top:20px;width:100%}.panel{padding:20px}.request{padding:18px}.workspace-foot{padding:16px 20px;gap:10px}.workspace-foot span{width:100%}.cart-panel{position:sticky;bottom:8px;background:var(--paper);padding:10px;box-shadow:0 0 0 1px var(--line)}.cart-detail{grid-template-columns:1fr}.request-line{align-items:center}.request-line>span{font-size:14px}.probe-wrap{padding:24px 16px}}
+@media(max-width:380px){.material{grid-template-columns:1fr}.qty-wrap{justify-items:start;display:flex;gap:12px}.request-line{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.stat strong{display:inline;margin-left:10px}.request-head{flex-wrap:wrap}}
+@media(max-height:500px){.sidebar{padding:10px 16px}.brand{display:none}.sidebar nav{margin-top:0}.topbar{min-height:50px;padding:6px 18px}.profile{justify-content:flex-end}.cart-panel{position:static}main#content{padding:18px}.welcome{display:flex;gap:16px}.welcome button{width:auto;margin:0}.material{padding:12px 16px}.searchbar{grid-template-columns:1fr 180px}.page-head{margin-bottom:14px}.stats{grid-template-columns:repeat(3,1fr)}}
+</style></head><body class="probe"><main class="probe-wrap"><p class="eyebrow">PHASE 0 · ข้อมูลสังเคราะห์เท่านั้น</p><h1>ตรวจการเชื่อมต่อจากเบราว์เซอร์</h1><p>ต้องเปิดหน้านี้จาก GitHub Pages จริงเพื่อรับรอง CORS ห้ามใช้ URL preview แทนผลทดสอบจริง และห้ามกรอก PIN หรือข้อมูลบัญชีจริง</p><p><button type="button" id="denials">ตรวจการปฏิเสธคำขอ (ไม่ต้องใส่รหัส)</button></p><form id="probe-form"><label>GAS API URL<input id="api-url" type="url" required placeholder="https://script.google.com/macros/s/…/exec"></label><label>กุญแจทดสอบ PROBE_KEY<input id="probe-key" type="password" required autocomplete="off"></label><div class="actions"><button type="submit">เริ่มชุดทดสอบ</button><button type="button" id="retry">ตรวจ UUID เดิมหลัง 6 ชั่วโมง</button><button type="button" class="secondary" id="export">ส่งออกหลักฐาน JSON</button></div></form><p id="probe-status" role="status" aria-live="polite">ยังไม่ได้รันทดสอบ</p><div class="table-scroll"><table><thead><tr><th>รายการทดสอบ</th><th>ผลจริง</th><th>เวลา ms</th><th>Redirect</th></tr></thead><tbody id="probe-results"></tbody></table></div><p>บันทึก Browser/OS จาก user agent ไว้ในหลักฐาน ผลทดสอบไม่รวมกุญแจหรือ token ต้องทดสอบ Chrome, Edge และ Safari บน iPhone แยกกัน</p><details><summary>หลักฐานที่ไม่มีกุญแจหรือ token</summary><pre id="evidence" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></details></main><script type="module">// Public configuration only. No PIN, HMAC secret or production tokens.
+const config = Object.freeze({apiUrl:'https://script.google.com/macros/s/AKfycbwez7RgGWIxk3AFR2JN3al5OWPk_l0rFDr3zAN2q99ZUdufhpTUIvvTdHRPMXLoLbm4_Q/exec', build:'inventory-phase0-2026-11-05', productionEnabled:false});
+
+/** A failed/aborted fetch is UNKNOWN, never proof that a write did not happen. */
+async function postJson(url, body, timeoutMs=30000) {
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)) throw new Error('ใช้ URL deployment ที่ลงท้าย /exec');
+  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),timeoutMs);
+  const started=performance.now();
+  try {
+    const response=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body:JSON.stringify(body),redirect:'follow',credentials:'omit',mode:'cors',signal:controller.signal});
+    if(!response.ok) throw new Error('HTTP_'+response.status);
+    const result=await response.json();
+    if(typeof result.ok!=='boolean'||!('data' in result)||!('error' in result)||!result.catalogVersion) throw new Error('INVALID_ENVELOPE');
+    return {result,ms:Math.round(performance.now()-started),redirected:response.redirected,
+      finalOrigin:new URL(response.url).origin};
+  } catch(e) {
+    throw new Error(e.name==='AbortError'?'TIMEOUT_UNKNOWN_RESULT':e.message);
+  } finally { clearTimeout(timer); }
+}
+
+const $=id=>document.getElementById(id), records=[];
+$('api-url').value=config.apiUrl;
+let token='', running=false;
+const evidence={build:config.build,synthetic:true,startedAt:null,pageOrigin:location.origin,
+  userAgent:navigator.userAgent,githubPagesOrigin:location.hostname.endsWith('.github.io'),
+  viewport:{width:innerWidth,height:innerHeight},results:records};
+async function check(name,body,verify) {
+  let entry={name,at:new Date().toISOString(),status:'FAIL'};
+  try {
+    const {result,ms,redirected,finalOrigin}=await postJson($('api-url').value.trim(),body);
+    entry={...entry,ms,redirected,finalOrigin,ok:result.ok,errorCode:result.error?.code||null};
+    if(!verify(result)) throw new Error('UNEXPECTED_RESPONSE');
+    entry.status='PASS'; return result;
+  } catch(e) { entry.message=e.message; throw e; }
+  finally {
+    records.push(entry); const tr=document.createElement('tr');
+    for(const text of [name,entry.status+(entry.message?' · '+entry.message:''),entry.ms??'—',entry.redirected??'—']) {
+      const td=document.createElement('td'); td.textContent=String(text);tr.append(td);
+    }
+    $('probe-results').append(tr);
+  }
+}
+async function denialChecks() {
+  await check('ปฏิเสธคำขอไม่มี token',{action:'catalog'},r=>!r.ok&&r.error.code==='SESSION_EXPIRED');
+  await check('ปฏิเสธกุญแจไม่ถูกต้อง',{action:'login',data:{key:'INVALID_SYNTHETIC_PROBE_KEY'}},r=>!r.ok&&r.error.code==='BAD_LOGIN');
+  await check('ปฏิเสธ token ปลอม',{action:'catalog',token:'0'.repeat(64)},r=>!r.ok&&r.error.code==='SESSION_EXPIRED');
+}
+async function runDenials() {
+  if(running)return; running=true;
+  document.querySelectorAll('button').forEach(b=>b.disabled=true);
+  evidence.startedAt=new Date().toISOString();
+  $('probe-status').textContent='กำลังตรวจการปฏิเสธคำขอโดยไม่ใช้รหัสจริง';
+  try {
+    await denialChecks();
+    $('probe-status').textContent='ผ่าน 3 กรณีปฏิเสธคำขอจาก origin นี้ — ยังต้องทดสอบกุญแจถูกต้องและการบันทึก';
+  } catch(e) { $('probe-status').textContent='ยังไม่ผ่าน / ผลไม่ทราบ: '+e.message; }
+  finally { running=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);$('evidence').textContent=JSON.stringify(evidence,null,2); }
+}
+async function run(retry=false) {
+  if(running)return; running=true;token='';
+  $('probe-status').textContent='กำลังทดสอบ กรุณารอผลจากเซิร์ฟเวอร์';
+  document.querySelectorAll('button').forEach(b=>b.disabled=true);
+  evidence.startedAt=new Date().toISOString();
+  try {
+    await denialChecks();
+    const auth=await check('ล็อกอินทดสอบ',{action:'login',data:{key:$('probe-key').value}},r=>r.ok&&r.data.synthetic&&typeof r.data.token==='string');
+    token=auth.data.token; $('probe-key').value='';
+    await check('อ่านรายการสังเคราะห์',{action:'catalog',token},r=>r.ok&&r.data.items[0].id==='TEST-PEN');
+    let uuid,previous;
+    if(retry) {
+      previous=JSON.parse(localStorage.getItem('inventory-probe-last')||'null');
+      if(!previous)throw new Error('ไม่มี UUID เดิม ให้รันชุดทดสอบก่อน');
+      uuid=previous.uuid;
+      if(Date.now()-previous.at<6*3600000) throw new Error('ยังไม่ครบ 6 ชั่วโมง — ห้ามนับว่าผ่านการทดสอบระยะยาว');
+    } else {
+      uuid=crypto.randomUUID();
+      localStorage.setItem('inventory-probe-last',JSON.stringify({uuid,at:Date.now()}));
+    }
+    evidence.operationUuid=uuid;
+    const body={action:'write',token,client_uuid:uuid,data:{marker:'SYNTHETIC_CORS_TEST',qty:2}};
+    await check(retry?'ส่งซ้ำหลัง 6 ชั่วโมง':'POST บันทึกสังเคราะห์',body,r=>r.ok&&r.data.uuid===uuid&&r.data.qty===2);
+    await check('ส่ง UUID เดิมซ้ำ',body,r=>r.ok&&r.data.uuid===uuid&&r.data.qty===2);
+    await check('อ่านกลับและนับแถว',{action:'readback',token,data:{uuid}},r=>r.ok&&r.data.rowCount===1&&r.data.result.qty===2);
+    await check('UUID เดิม ข้อมูลต่างกัน',{...body,data:{marker:'SYNTHETIC_CORS_TEST',qty:3}},r=>!r.ok&&r.error.code==='UUID_CONFLICT');
+    await check('อ่าน JSON กรณีผิดพลาด',{action:'expectedError',token},r=>!r.ok&&r.error.code==='EXPECTED_TEST_ERROR');
+    await check('ออกจากระบบทดสอบ',{action:'logout',token},r=>r.ok&&r.data.loggedOut);
+    await check('ปฏิเสธ token ถูกเพิกถอน',{action:'catalog',token},r=>!r.ok&&r.error.code==='SESSION_EXPIRED');
+    $('probe-status').textContent=evidence.githubPagesOrigin?'ชุดทดสอบรอบนี้ผ่าน ต้องรวมผลอุปกรณ์อื่นและการรับรองก่อนใช้จริง':'รอบนี้ผ่านจาก origin นี้ แต่ยังไม่ใช่หลักฐาน GitHub Pages ↔ GAS';
+  } catch(e) { $('probe-status').textContent='ยังไม่ผ่าน / ผลไม่ทราบ: '+e.message+' หากส่งบันทึกแล้วห้ามเปลี่ยน UUID เพื่อส่งใหม่'; }
+  finally { token='';$('probe-key').value='';running=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);$('evidence').textContent=JSON.stringify(evidence,null,2); }
+}
+$('probe-form').addEventListener('submit',e=>{e.preventDefault();run();});
+$('retry').onclick=()=>{if($('probe-form').reportValidity())run(true);};
+$('export').onclick=()=>{
+  const blob=new Blob([JSON.stringify({...evidence,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='phase0-browser-evidence.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+
+$('denials').onclick=runDenials;
+</script></body></html>
