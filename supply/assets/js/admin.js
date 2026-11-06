@@ -28,7 +28,7 @@ App.view('users', {
   title: 'ผู้ใช้และสิทธิ์', roles: ['ADMIN'],
   render: async function (el) {
     const F = App.S.forms.users = App.S.forms.users || { q: '' };
-    el.innerHTML = '<div class="page-h"><h1>ผู้ใช้และสิทธิ์</h1><p>บัญชี (ชื่อ-สกุล PIN เปิด/ปิด) สร้างที่ระบบบัญชีกลาง — หน้านี้กำหนดสิทธิ์ ส่วนงาน และตำแหน่งสำหรับระบบเบิกวัสดุ · บัญชีใหม่เป็น "ผู้ขอเบิก" อัตโนมัติ</p></div>' +
+    el.innerHTML = '<div class="page-h"><h1>ผู้ใช้และสิทธิ์</h1><p>บัญชี (ชื่อ-สกุล PIN เปิด/ปิด) สร้างและแก้ที่ PrintHub — ระบบนี้อ่านอย่างเดียว · หน้านี้กำหนดสิทธิ์ ส่วนงาน และตำแหน่งสำหรับระบบเบิกวัสดุ · บัญชีใหม่เป็น "ผู้ขอเบิก" อัตโนมัติ</p></div>' +
       '<div class="search">' + ICON('search') + '<input id="q" type="search" placeholder="ค้นหาชื่อหรือส่วนงาน" value="' + U.esc(F.q) + '"></div><div id="t"><div class="skel"></div></div>';
     const [acc, ms] = await Promise.all([API.call('accounts'), API.call('masters')]);
     const roles = [['USER', 'ผู้ขอเบิก'], ['HEAD', 'หัวหน้าส่วน'], ['OFFICER', 'เจ้าหน้าที่พัสดุ'], ['ADMIN', 'ผู้ดูแลระบบ'], ['NONE', 'ไม่ให้เข้า']];
@@ -38,14 +38,16 @@ App.view('users', {
       U.$('#t').innerHTML = '<div class="tablewrap"><table class="t access-table"><thead><tr><th>ชื่อ-สกุล</th><th>สิทธิ์ระบบเบิกวัสดุ</th><th>ส่วนงาน</th><th>ตำแหน่ง</th><th>เข้าใช้ล่าสุด</th><th></th></tr></thead><tbody>' +
         rows.map(function (a) {
           return '<tr data-c="' + U.esc(a.code) + '"><td><b>' + U.esc(a.name) + '</b><br><small class="muted">' + U.esc(a.code) + (a.account_dept ? ' · บัญชีระบุ: ' + U.esc(a.account_dept) : '') + '</small>' +
-            (!a.active ? '<br><span class="badge gray">ปิดบัญชี</span>' : '') + (a.locked ? '<br><span class="badge out">ถูกล็อก</span>' : '') + (!a.has_pin ? '<br><span class="badge low">ยังไม่ตั้ง PIN</span>' : '') +
+            (!a.active ? '<br><span class="badge gray">ปิดบัญชี</span>' : '') + (a.locked ? '<br><span class="badge out">' + (a.lock_source === 'PRINTHUB' ? 'ถูกล็อกที่ PrintHub' : 'ล็อก (PIN ผิด)') + '</span>' : '') +
+            (!a.has_pin ? '<br><span class="badge low">ยังไม่ตั้ง PIN</span>' : '') + (a.must_change ? '<br><span class="badge low">ต้องตั้ง PIN ใหม่ที่ PrintHub</span>' : '') +
             (a.head_of ? '<br><span class="badge gold nodot">หัวหน้า ' + U.esc(a.head_of) + '</span>' : '') + '</td>' +
             '<td><select class="input" name="role">' + roles.map(function (r) { return '<option value="' + r[0] + '"' + (r[0] === a.role ? ' selected' : '') + '>' + r[1] + '</option>'; }).join('') + '</select>' + (a.role_set ? '' : '<small class="muted">ค่าเริ่มต้น</small>') + '</td>' +
             '<td><select class="input" name="dept"><option value="">— ยังไม่ระบุ —</option>' + depts.map(function (d) { return '<option value="' + U.esc(d.dept_id) + '"' + (d.dept_id === a.dept_id ? ' selected' : '') + '>' + U.esc(d.name) + '</option>'; }).join('') + '</select></td>' +
             '<td><input class="input" name="pos" list="pl" value="' + U.esc(a.position) + '"></td><td class="small">' + (a.last_login ? U.thDateTime(a.last_login) : '—') + '</td>' +
-            '<td><div class="row" style="flex-wrap:nowrap"><button class="btn sm primary" data-a="save">บันทึก</button><button class="btn sm" data-a="out" title="ให้ออกจากระบบทันที">ออกจากระบบ</button></div></td></tr>';
+            '<td><div class="row" style="flex-wrap:nowrap"><button class="btn sm primary" data-a="save">บันทึก</button><button class="btn sm" data-a="out" title="ให้ออกจากระบบทันที">ออกจากระบบ</button>' +
+            (a.locked && a.lock_source === 'SUPPLY' ? '<button class="btn sm" data-a="unlock" title="ปลดล็อกการใส่ PIN ผิดในระบบนี้">ปลดล็อก</button>' : '') + '</div></td></tr>';
         }).join('') + '</tbody></table></div><datalist id="pl">' + (ms.positions || []).map(function (p) { return '<option value="' + U.esc(p) + '">'; }).join('') + '</datalist>' +
-        '<p class="small muted">สิทธิ์ที่เปลี่ยนมีผลภายในไม่กี่นาที · "ออกจากระบบ" มีผลทันที (ใช้เมื่อถอนสิทธิ์เร่งด่วน)</p>';
+        '<p class="small muted">สิทธิ์ที่เปลี่ยนมีผลภายในไม่กี่นาที · "ออกจากระบบ" มีผลทันที (ใช้เมื่อถอนสิทธิ์เร่งด่วน) · ใส่ PIN ผิดในระบบนี้ล็อกเฉพาะระบบนี้ ไม่กระทบ PrintHub · ลืม PIN / ปิดบัญชี ทำที่ PrintHub</p>';
     };
     draw();
     U.$('#q').oninput = function () { F.q = this.value; draw(); };
@@ -58,6 +60,10 @@ App.view('users', {
           const role = tr.querySelector('[name=role]').value;
           const r = await API.write('saveAccess', { user_code: a.code, role: role, dept_id: tr.querySelector('[name=dept]').value, position: tr.querySelector('[name=pos]').value });
           U.toast('บันทึกสิทธิ์ ' + a.name + ' เป็น ' + r.role_th + (r.replaced_head ? ' (แทนหัวหน้าเดิม: ' + r.replaced_head + ')' : ''), 'ok', 5000);
+          App.render();
+        } else if (b.dataset.a === 'unlock') {
+          await API.call('unlockAccount', { user_code: a.code });
+          U.toast('ปลดล็อก ' + a.name + ' แล้ว', 'ok');
           App.render();
         } else {
           if (!(await U.confirm('ให้ออกจากระบบ', U.esc(a.name) + ' จะต้องเข้าสู่ระบบใหม่ทุกอุปกรณ์', 'ยืนยัน', true))) return;

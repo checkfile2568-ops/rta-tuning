@@ -47,6 +47,16 @@ const Store = (function () {
       set: function (t) { try { sessionStorage.setItem('sp:token', t); } catch (e) { /**/ } },
       del: function () { try { sessionStorage.removeItem('sp:token'); } catch (e) { /**/ } }
     },
+    /** ลบแคชรายการวัสดุของบัญชีอื่นทั้งหมด (keep = คีย์ที่เก็บไว้ หรือว่างเพื่อลบทั้งหมด)
+     *  แคชของเจ้าหน้าที่พัสดุมีมูลค่าวัสดุ — ไม่ให้ค้างในเครื่องหลังปิดแท็บหรือสลับบัญชี */
+    clearCatalogs: function (keep) {
+      return tx('readwrite', function (s) {
+        if (!s) { Object.keys(mem).forEach(function (k) { if (k.indexOf('catalog:') === 0 && k !== keep) delete mem[k]; }); return null; }
+        const r = s.getAllKeys ? s.getAllKeys() : null;
+        if (r) r.onsuccess = function () { (r.result || []).forEach(function (k) { if (String(k).indexOf('catalog:') === 0 && k !== keep) s.delete(k); }); };
+        return null;
+      });
+    },
     /** ล้างข้อมูลเฉพาะผู้ใช้ (ตะกร้า คิวส่ง แคชรายการ) */
     clearUser: function (code) {
       ls.del('cart:' + code); ls.del('outbox:' + code); ls.del('purpose:' + code);

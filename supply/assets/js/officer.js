@@ -527,7 +527,8 @@ App.view('opening', {
       (S.cfg.cost_method ? '<div class="notice info"><div>วิธีคิดมูลค่า: <b>' + (S.cfg.cost_method === 'FIFO' ? 'เข้าก่อนออกก่อน (FIFO)' : 'ถัวเฉลี่ยถ่วงน้ำหนัก (AVG)') + '</b> — ล็อกหลังมีรายการแรก</div></div>'
         : '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b>ผู้ดูแลระบบต้องเลือกที่ "ตั้งค่าระบบ" ก่อนนำเข้า</div></div>') +
       '<div class="card"><h3>1. เตรียมไฟล์</h3><p class="small muted">คอลัมน์: ' + OPEN_COLS.join(' · ') + ' (แถวแรกเป็นหัวคอลัมน์) · หน่วยนับต้องตรงกับหน่วยมาตรฐานหรือคำเรียกอื่น</p>' +
-      '<p>รองรับไฟล์ <b>.xlsx, .xls และ .csv</b> อ่านชีตแรก โดยแถวแรกต้องเป็นชื่อคอลัมน์ตามแม่แบบ หรือวางข้อความที่คัดลอกจาก Excel (คั่นคอลัมน์ด้วย Tab)</p>' +
+      '<p>รองรับไฟล์ <b>.xlsx, .xls และ .csv</b> (อ่านชีตแรก แถวแรกเป็นชื่อคอลัมน์ตามแม่แบบ) หรือวางข้อความที่คัดลอกจาก Excel — ไฟล์ .csv ภาษาไทยใช้ได้ทั้งแบบ UTF-8 และแบบที่ Excel ภาษาไทยบันทึก</p>' +
+      '<p class="small muted">วัสดุเดียวกันมียอดหลายราคา (เช่น FIFO เหลือหลายล็อต) ให้กรอกหลายแถวด้วยรหัสหรือชื่อเดียวกัน ระบบบันทึกเป็นหลายล็อต · วัสดุที่มีในทะเบียนแล้วแต่ยังไม่เคยรับ-จ่าย ใส่รหัสเดิม (เช่น MAT-001) ระบบจะปรับชื่อ หน่วย และรายละเอียดตามแถวที่นำเข้า</p>' +
       '<div class="tablewrap"><table class="t"><thead><tr><th>คอลัมน์</th><th>ข้อมูลที่กรอก</th></tr></thead><tbody>' +
       '<tr><td>รหัส</td><td>รหัสเดิมของวัสดุ ถ้ามีให้ใช้รหัสเดิม เช่น MAT-001; ว่างได้สำหรับวัสดุใหม่</td></tr>' +
       '<tr><td>ชื่อวัสดุ</td><td>ชื่อวัสดุ (ต้องกรอก)</td></tr>' +
@@ -537,11 +538,11 @@ App.view('opening', {
       '<tr><td>ต้นทุนต่อหน่วย</td><td>ต้นทุนเดิมต่อหน่วย บาท ตั้งแต่ 0; ว่าง = 0</td></tr>' +
       '<tr><td>จุดสั่งซื้อ</td><td>จุดแจ้งเตือนสั่งซื้อ จำนวนเต็มตั้งแต่ 0; ว่าง = 0</td></tr>' +
       '<tr><td>จำนวนสั่งซื้อ</td><td>จำนวนแนะนำสั่งซื้อ จำนวนเต็มตั้งแต่ 0; ว่าง = 0</td></tr>' +
-      '<tr><td>จำกัดต่อครั้ง</td><td>จำนวนเบิกสูงสุดต่อครั้ง ตั้งแต่ 0; ว่าง = 0 ตามกติกาเดิม</td></tr>' +
+      '<tr><td>จำกัดต่อครั้ง</td><td>จำนวนเบิกสูงสุดต่อครั้ง จำนวนเต็ม; ว่างหรือ 0 = ไม่จำกัด</td></tr>' +
       '<tr><td>รายละเอียด</td><td>รายละเอียดเพิ่มเติม ว่างได้</td></tr>' +
       '</tbody></table></div>' +
       '<button class="btn" id="tpl">' + ICON('download') + 'ดาวน์โหลดแม่แบบ</button></div>' +
-      '<div class="card"><h3>2. เลือกไฟล์และตรวจ</h3><input type="file" id="file" accept=".xlsx,.xls,.csv" class="input"><div id="pv" style="margin-top:12px"></div></div>' +
+      '<div class="card"><h3>2. เลือกไฟล์และตรวจ</h3><p class="small muted">เลือกไฟล์ วางข้อความ หรือเพิ่มทีละรายการ — ทุกทางรวมเข้ารายการตรวจเดียวกัน</p><input type="file" id="file" accept=".xlsx,.xls,.csv" class="input"><div id="pv" style="margin-top:12px"></div></div>' +
       '<div class="card"><h3>หรือวางข้อความ</h3><p class="small muted">วางข้อมูลพร้อมหัวคอลัมน์ตามแม่แบบ คั่นแต่ละช่องด้วย Tab และขึ้นบรรทัดใหม่แต่ละรายการ ตรวจตัวอย่างก่อนนำเข้า ข้อมูลจะรวมกับรายการที่เตรียมไว้</p><textarea class="input" id="opening-text" rows="5" aria-label="ข้อความยอดยกมา"></textarea><button class="btn" id="opening-text-add">ตรวจและเพิ่มข้อความ</button></div>' +
       '<div class="card"><h3>หรือเพิ่มทีละรายการ</h3><form id="opening-single"><div class="grid2">' + OPEN_COLS.map(function (c, i) { return '<label class="field"><span>' + c + (i === 1 || i === 3 ? ' *' : '') + '</span><input class="input" name="' + OPEN_KEYS[i] + '"' + (i >= 4 && i <= 8 ? ' type="number" min="0" step="' + (i === 5 ? 'any' : '1') + '"' : '') + (i === 1 || i === 3 ? ' required' : '') + '></label>'; }).join('') + '</div><button class="btn primary">เพิ่มเข้ารายการตรวจ</button></form></div>' +
       '<div class="card"><h3>3. ยืนยันนำเข้า</h3><label class="field"><span>แหล่งข้อมูลและผู้รับรองยอด *</span><input class="input" id="src" value="' + U.esc(F.source) + '" placeholder="เช่น บัญชีวัสดุ ณ 30 ก.ย. 2569 รับรองโดย ..."></label>' +
@@ -549,11 +550,25 @@ App.view('opening', {
     const unitOk = function (t) { return !!Officer.unitFromText(t); };
     const draw = function () {
       if (!F.rows.length) { U.$('#pv').innerHTML = ''; return; }
-      const bad = F.rows.filter(function (r) { return r._err; }).length;
-      U.$('#pv').innerHTML = '<p>' + F.rows.length + ' แถว · ' + (bad ? '<b style="color:var(--out)">มีปัญหา ' + bad + ' แถว</b>' : 'ตรวจเบื้องต้นผ่าน') + ' · นำเข้าแล้ว ' + Object.keys(F.done).length + ' แถว</p>' +
-        '<div class="tablewrap" style="max-height:420px"><table class="t"><thead><tr><th>แถว</th>' + OPEN_COLS.slice(0, 6).map(function (c) { return '<th>' + c + '</th>'; }).join('') + '<th>ตรวจ</th></tr></thead><tbody>' +
+      recheck();
+      const bad = F.rows.filter(function (r) { return r._err && !F.done[r.line]; }).length;
+      const mats = new Set(F.rows.map(function (r) { return r._g || ('x' + r.line); })).size;
+      U.$('#pv').innerHTML = '<p>' + F.rows.length + ' แถว (' + mats + ' รายการวัสดุ) · ' + (bad ? '<b style="color:var(--out)">มีปัญหา ' + bad + ' แถว</b>' : 'ตรวจเบื้องต้นผ่าน') + ' · นำเข้าแล้ว ' + Object.keys(F.done).length + ' แถว' +
+        ' <button class="btn sm ghost" id="opening-clear">ล้างรายการตรวจ</button></p>' +
+        '<div class="tablewrap" style="max-height:420px"><table class="t"><thead><tr><th>แถว</th>' + OPEN_COLS.slice(0, 6).map(function (c) { return '<th>' + c + '</th>'; }).join('') + '<th>ตรวจ</th><th></th></tr></thead><tbody>' +
         F.rows.map(function (r) { return '<tr><td>' + r.line + '</td><td>' + U.esc(r.code) + '</td><td>' + U.esc(r.name) + '</td><td>' + U.esc(r.category) + '</td><td>' + U.esc(r.unit) + '</td><td class="num">' + U.esc(r.qty) + '</td><td class="num">' + U.esc(r.unit_cost) + '</td>' +
-          '<td>' + (F.done[r.line] ? '<span class="badge ok">นำเข้าแล้ว</span>' : r._err ? '<span style="color:var(--out)">' + U.esc(r._err) + '</span>' : '<span class="badge gray nodot">พร้อม</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+          '<td>' + (F.done[r.line] ? '<span class="badge ok">นำเข้าแล้ว</span>' : r._err ? '<span style="color:var(--out)">' + U.esc(r._err) + '</span>' : '<span class="badge gray nodot">พร้อม</span>' + (r._note ? ' <span class="small muted">' + U.esc(r._note) + '</span>' : '')) + '</td>' +
+          '<td>' + (F.done[r.line] ? '' : '<button class="btn sm ghost" data-del="' + r.line + '" aria-label="ลบแถว ' + r.line + '">ลบ</button>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      U.$('#pv tbody').onclick = function (e) {
+        const b = e.target.closest('[data-del]'); if (!b) return;
+        const line = Number(b.dataset.del);
+        F.rows = F.rows.filter(function (r) { return r.line !== line; });
+        draw();
+      };
+      U.$('#opening-clear').onclick = async function () {
+        if (!(await U.confirm('ล้างรายการตรวจ', 'ลบรายการที่เตรียมไว้ทั้งหมด ' + F.rows.length + ' แถว (ยอดที่นำเข้าแล้วไม่ถูกลบ)', 'ล้างรายการ', true))) return;
+        F.rows = []; F.done = {}; U.$('#file').value = ''; draw();
+      };
     };
     draw();
     U.$('#src').oninput = function () { F.source = this.value; };
@@ -562,17 +577,59 @@ App.view('opening', {
     };
     function validateOpening(o) {
         if (!o.name) return null;
+        o._err = '';
         if (!unitOk(o.unit)) o._err = 'ไม่รู้จักหน่วย "' + o.unit + '"';
         else if (o.qty !== '' && !(Number(o.qty) >= 0 && Math.floor(Number(o.qty)) === Number(o.qty))) o._err = 'จำนวนไม่ถูกต้อง';
         else if (o.unit_cost !== '' && !(Number.isFinite(Number(o.unit_cost)) && Number(o.unit_cost) >= 0)) o._err = 'ต้นทุนไม่ถูกต้อง';
         else if (S.catalog.materials.some(function (m) { return (o.code ? m.code === o.code : m.name === o.name) && (m.balance || 0) > 0; })) o._err = 'มียอดในระบบแล้ว';
       return o;
     }
+    /** แถวรหัสเดียวกัน หรือชื่อเดียวกัน (ไม่ระบุรหัส) = วัสดุเดียวกัน หลายล็อต — ตรงกับการตรวจฝั่งเซิร์ฟเวอร์ */
+    function recheck() {
+      const byCode = {}, byName = {};
+      const nk = function (x) { return String(x).replace(/\s+/g, ' ').trim(); };
+      F.rows.forEach(function (r) {
+        r._note = ''; r._g = '';
+        if (F.done[r.line]) return;
+        validateOpening(r);
+        if (!r._err && r._srv) r._err = r._srv;
+        if (r._err) return;
+        const n = nk(r.name);
+        let g = r.code ? byCode[r.code] : byName[n];
+        if (!g && r.code && byName[n] && byName[n].code !== r.code) { r._err = 'ชื่อซ้ำกับแถว ' + byName[n].line + ' ที่ใช้รหัสอื่น'; return; }
+        if (g) {
+          if (r.code && nk(g.name) !== n) { r._err = 'รหัสซ้ำกับแถว ' + g.line + ' แต่ชื่อต่างกัน'; return; }
+          if (Officer.unitFromText(g.unit) !== Officer.unitFromText(r.unit)) { r._err = 'หน่วยนับไม่ตรงกับแถว ' + g.line; return; }
+          g.n++; r._g = g.key; r._note = 'ล็อตที่ ' + g.n + ' ของวัสดุในแถว ' + g.line;
+          return;
+        }
+        g = { key: 'g' + r.line, line: r.line, code: r.code, name: r.name, unit: r.unit, n: 1 };
+        if (r.code) byCode[r.code] = g;
+        byName[n] = g;
+        r._g = g.key;
+      });
+    }
+    function nextLine() { return F.rows.reduce(function (mx, r) { return Math.max(mx, r.line); }, 1); }
+    /** อ่านไฟล์ — .csv ถอดรหัสเอง (UTF-8 มี/ไม่มี BOM, UTF-16, Windows-874 ของ Excel ภาษาไทย) */
+    async function readBook(file) {
+      const buf = await file.arrayBuffer();
+      if (!/\.csv$/i.test(file.name) && file.type !== 'text/csv') return XLSX.read(buf);
+      const u8 = new Uint8Array(buf);
+      let text;
+      if (u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) text = new TextDecoder('utf-8').decode(u8.subarray(3));
+      else if (u8[0] === 0xFF && u8[1] === 0xFE) text = new TextDecoder('utf-16le').decode(u8.subarray(2));
+      else if (u8[0] === 0xFE && u8[1] === 0xFF) text = new TextDecoder('utf-16be').decode(u8.subarray(2));
+      else {
+        try { text = new TextDecoder('utf-8', { fatal: true }).decode(u8); }
+        catch (e) { text = new TextDecoder('windows-874').decode(u8); }
+      }
+      return XLSX.read(text, { type: 'string', raw: true });
+    }
     function parseOpeningRows(aoa, append) {
       const head = (aoa[0] || []).map(function (h) { return String(h).trim(); });
       const idx = OPEN_COLS.map(function (c) { return head.indexOf(c); });
       if (idx[1] < 0 || idx[3] < 0) throw new Error('ต้องมีหัวคอลัมน์ชื่อวัสดุและหน่วยนับ');
-      let next = append ? Math.max(1, ...F.rows.map(function(r) { return r.line; })) : 1;
+      let next = append ? nextLine() : 1;
       return aoa.slice(1).map(function(r) {
         const o = { line: ++next };
         OPEN_KEYS.forEach(function(k,j) { o[k] = idx[j] >= 0 ? String(r[idx[j]] === undefined ? '' : r[idx[j]]).trim() : ''; });
@@ -585,50 +642,72 @@ App.view('opening', {
         if (!value) throw new Error('กรุณาวางข้อความก่อน');
         const rows = parseOpeningRows(value.split(/\r?\n/).map(function(line) { return line.split('\t'); }), true);
         if (!rows.length) throw new Error('ไม่พบรายการวัสดุ');
-        const seen = new Set(F.rows.map(function(r) { return r.code ? 'code:' + r.code : 'name:' + r.name; }));
-        rows.forEach(function(r) { const key = r.code ? 'code:' + r.code : 'name:' + r.name; if (seen.has(key)) r._err = 'รายการซ้ำในชุดที่เตรียมนำเข้า'; seen.add(key); });
         F.rows = F.rows.concat(rows); draw(); U.$('#opening-text').value = '';
+        U.toast('เพิ่ม ' + rows.length + ' แถวในรายการตรวจแล้ว', 'ok');
       } catch (e) { U.toast(e.message, 'err', 6000); }
     };
     U.$('#opening-single').onsubmit = function(e) {
       e.preventDefault();
-      const o = { line: Math.max(1, ...F.rows.map(function(r) { return r.line; })) + 1 };
+      const o = { line: nextLine() + 1 };
       const data = new FormData(this);
       OPEN_KEYS.forEach(function(k) { o[k] = String(data.get(k) || '').trim(); });
       const row = validateOpening(o);
       if (!row || row._err) { U.toast(row && row._err || 'กรุณากรอกชื่อวัสดุ', 'err', 6000); return; }
-      if (F.rows.some(function(r) { return row.code ? r.code === row.code : r.name === row.name; })) { U.toast('รายการซ้ำในชุดที่เตรียมนำเข้า', 'err', 6000); return; }
-      F.rows.push(row); draw(); this.reset(); U.toast('เพิ่มในรายการตรวจแล้ว ยังไม่ได้บันทึกยอดยกมา', 'ok');
+      F.rows.push(row); draw();
+      if (row._err) { U.toast(row._err, 'err', 6000); F.rows.pop(); draw(); return; }
+      this.reset(); U.toast('เพิ่มในรายการตรวจแล้ว ยังไม่ได้บันทึกยอดยกมา' + (row._note ? ' (' + row._note + ')' : ''), 'ok');
     };
     U.$('#file').onchange = async function () {
       const file = this.files[0]; if (!file) return;
-      await U.loadScript('assets/vendor/xlsx.full.min.js');
-      const wb = XLSX.read(await file.arrayBuffer());
-      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
-      const head = (aoa[0] || []).map(function (h) { return String(h).trim(); });
-      const idx = OPEN_COLS.map(function (c) { return head.indexOf(c); });
-      if (idx[1] < 0 || idx[3] < 0) { U.toast('ไม่พบคอลัมน์ "ชื่อวัสดุ" หรือ "หน่วยนับ" ในแถวแรก', 'err', 6000); return; }
-      F.done = {};
-      F.rows = parseOpeningRows(aoa, false);
-      draw();
+      try {
+        await U.loadScript('assets/vendor/xlsx.full.min.js');
+        const wb = await readBook(file);
+        const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
+        const head = (aoa[0] || []).map(function (h) { return String(h).replace(/^\uFEFF/, '').trim(); });
+        aoa[0] = head;
+        const idx = OPEN_COLS.map(function (c) { return head.indexOf(c); });
+        if (idx[1] < 0 || idx[3] < 0) { U.toast('ไม่พบคอลัมน์ "ชื่อวัสดุ" หรือ "หน่วยนับ" ในแถวแรก — ใช้แม่แบบ หรือบันทึกเป็น .xlsx แล้วลองใหม่', 'err', 7000); return; }
+        const rows = parseOpeningRows(aoa, F.rows.length > 0);
+        if (!rows.length) { U.toast('ไม่พบรายการวัสดุในไฟล์', 'err'); return; }
+        F.rows = F.rows.concat(rows);
+        draw();
+        U.toast('เพิ่มจากไฟล์ ' + rows.length + ' แถว' + (F.rows.length > rows.length ? ' (รวมกับรายการเดิม)' : ''), 'ok');
+      } catch (er) { U.toast('อ่านไฟล์ไม่ได้: ' + er.message, 'err', 7000); }
+      finally { this.value = ''; }
     };
     U.$('#go').onclick = async function () {
+      recheck();
       const todo = F.rows.filter(function (r) { return !r._err && !F.done[r.line]; });
       if (!todo.length) { U.toast('ไม่มีแถวที่พร้อมนำเข้า', 'warn'); return; }
+      const nBad = F.rows.filter(function (r) { return r._err && !F.done[r.line]; }).length;
+      if (nBad && !(await U.confirm('มีแถวที่มีปัญหา', 'มี ' + nBad + ' แถวที่มีปัญหา จะนำเข้าเฉพาะ ' + todo.length + ' แถวที่พร้อม — แถวที่มีปัญหาแก้แล้วนำเข้าภายหลังได้', 'นำเข้าเฉพาะแถวที่พร้อม'))) return;
+      /* แบ่งชุดละไม่เกิน 80 แถว โดยไม่แยกล็อตของวัสดุเดียวกันออกจากกัน */
+      const groups = [];
+      const gi = {};
+      todo.forEach(function (r) { const k = r._g || ('x' + r.line); if (!(k in gi)) { gi[k] = groups.length; groups.push([]); } groups[gi[k]].push(r); });
+      const batches = [];
+      groups.forEach(function (g) {
+        const cur = batches[batches.length - 1];
+        if (cur && cur.length + g.length <= 80) cur.push.apply(cur, g); else batches.push(g.slice());
+      });
       if (!F.source.trim()) { U.toast('กรุณาระบุแหล่งข้อมูลและผู้รับรองยอด', 'err'); return; }
       if (!(await U.confirm('ยืนยันนำเข้ายอดยกมา', 'นำเข้า ' + todo.length + ' แถว — บันทึกเป็นยอดยกมา (OPEN) ลงบัญชีวัสดุ', 'นำเข้า'))) return;
       const btn = this; btn.classList.add('busy');
       const out = [];
-      for (let i = 0; i < todo.length; i += 80) {
-        const batch = todo.slice(i, i + 80);
-        U.$('#res').innerHTML = '<p>กำลังนำเข้า ' + Math.min(i + 80, todo.length) + '/' + todo.length + ' …</p>';
+      let sent = 0;
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        sent += batch.length;
+        U.$('#res').innerHTML = '<p>กำลังนำเข้า ' + sent + '/' + todo.length + ' …</p>';
         try {
-          const r = await API.write('importOpenings', { source: F.source, rows: batch.map(function (x) { const o = Object.assign({}, x); delete o._err; return o; }) });
+          const r = await API.write('importOpenings', { source: F.source, rows: batch.map(function (x) { const o = Object.assign({}, x); delete o._err; delete o._note; delete o._g; return o; }) });
           batch.forEach(function (x) { F.done[x.line] = r.batch_no; });
-          out.push(r.batch_no + ': สร้างวัสดุใหม่ ' + r.created + ' · ลงยอดยกมา ' + r.opened);
+          out.push(r.batch_no + ': สร้างวัสดุใหม่ ' + r.created + (r.updated ? ' · ปรับรายการเดิม ' + r.updated : '') + ' · ลงยอดยกมา ' + r.opened + ' ล็อต');
         } catch (er) {
-          if (er.details && er.details.items) er.details.items.forEach(function (x) { const row = F.rows.find(function (y) { return y.line === x.line; }); if (row) row._err = x.message; });
-          out.push('หยุดที่ชุด ' + (i / 80 + 1) + ': ' + er.message);
+          if (er.details && er.details.items) {
+            er.details.items.forEach(function (x) { const row = F.rows.find(function (y) { return y.line === x.line; }); if (row) row._srv = x.message; });
+            out.push('หยุดที่ชุด ' + (i + 1) + ': ' + er.message + ' — ' + er.details.items.slice(0, 5).map(function (x) { return 'แถว ' + x.line + ' ' + x.message; }).join(' · '));
+          } else out.push('หยุดที่ชุด ' + (i + 1) + ': ' + er.message);
           break;
         }
       }

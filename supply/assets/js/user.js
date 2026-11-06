@@ -373,19 +373,12 @@ App.view('profile', {
       '<div><span class="muted small">สิทธิ์</span><br><b>' + U.esc(App.ROLE_TH[u.role]) + '</b></div></div>' +
       '<form id="pf" style="margin-top:14px"><label class="field"><span>ตำแหน่ง (พิมพ์บนใบเบิก)</span><input class="input" name="position" list="pl" value="' + U.esc(u.position || '') + '"><datalist id="pl">' +
       positions.map(function (p) { return '<option value="' + U.esc(p) + '">'; }).join('') + '</datalist></label><button class="btn primary">บันทึกตำแหน่ง</button></form></div>' +
-      '<div class="card"><h3>เปลี่ยน PIN</h3><form id="cp" class="grid3"><label class="field"><span>PIN เดิม</span><input class="input" name="o" inputmode="numeric" maxlength="4" required autocomplete="current-password"></label>' +
-      '<label class="field"><span>PIN ใหม่</span><input class="input" name="a" inputmode="numeric" maxlength="4" required autocomplete="new-password"></label>' +
-      '<label class="field"><span>ยืนยัน PIN ใหม่</span><input class="input" name="b" inputmode="numeric" maxlength="4" required autocomplete="new-password"></label>' +
-      '<div><button class="btn">เปลี่ยน PIN</button></div></form><p class="small muted">PIN นี้ใช้ร่วมกับบัญชีเดิมของศาล</p></div>' +
+      '<div class="card"><h3>PIN</h3><p>ระบบนี้ใช้บัญชีและ PIN เดียวกับบัญชีกลางของศาล — เปลี่ยน PIN ให้ทำที่หน้าตั้ง PIN แล้วใช้ PIN ใหม่เข้าระบบนี้ได้ทันที · ลืม PIN ติดต่อผู้ดูแลระบบ</p>' +
+      (window.APP_CONFIG && APP_CONFIG.PIN_URL ? '<a class="btn" href="' + U.esc(APP_CONFIG.PIN_URL) + '" target="_blank" rel="noopener">เปิดหน้าตั้ง PIN</a>' : '') + '</div>' +
       '<button class="btn danger" id="lo">' + ICON('logout') + 'ออกจากระบบ</button>';
     U.$('#pf').onsubmit = async function (e) {
       e.preventDefault();
       try { const r = await API.write('saveProfile', { position: this.position.value }); App.S.user = r.user; U.toast('บันทึกแล้ว', 'ok'); } catch (er) { U.toast(er.message, 'err'); }
-    };
-    U.$('#cp').onsubmit = async function (e) {
-      e.preventDefault();
-      if (this.a.value !== this.b.value) { U.toast('PIN ใหม่ทั้งสองช่องไม่ตรงกัน', 'err'); return; }
-      try { await API.call('changePin', { oldPin: this.o.value, newPin: this.a.value }); U.toast('เปลี่ยน PIN แล้ว', 'ok'); this.reset(); } catch (er) { U.toast(er.message, 'err'); }
     };
     U.$('#lo').onclick = function () { App.logout(); };
   }

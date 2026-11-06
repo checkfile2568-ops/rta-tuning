@@ -221,7 +221,7 @@ const App = (function () {
 
   /* ---------------------------------------------------------- เริ่มระบบ */
   async function boot() {
-    if (!API.token()) return Login.show();
+    if (!API.token()) { Store.clearCatalogs(''); return Login.show(); }
     try {
       const me = await API.call('me');
       await afterLogin(me);
@@ -232,9 +232,11 @@ const App = (function () {
   }
   async function afterLogin(me, initialCatalog) {
     S.me = me; S.user = me.user; S.cfg = me.cfg; S.depts = me.departments;
+    Store.clearCatalogs('catalog:' + S.user.code);
     loadCart();
     Outbox.load(S.user.code);
     if (me.needDept) return Login.pickDept(me);
+    if (me.needPosition && !Login.positionSkipped(S.user.code)) return Login.pickDept(me, true);
     if (initialCatalog) {
       index(initialCatalog); S.catAt = new Date().toISOString();
       API.setCatalogVersion(initialCatalog.version);
@@ -277,7 +279,7 @@ const App = (function () {
     if (a === 'usermenu' || a === 'more') { e.preventDefault(); userMenu(); }
     else if (a === 'gocart') { e.preventDefault(); location.hash = '#/cart'; }
   });
-  window.addEventListener('hashchange', function () { if (S.user && !S.me.needDept) render(); });
+  window.addEventListener('hashchange', function () { if (S.user && S.me && !S.me.needDept && $('#view')) render(); });
 
   return {
     S: S, ROLE_TH: ROLE_TH, view: function (k, v) { views[k] = v; }, render: render, boot: boot, afterLogin: afterLogin,
@@ -372,11 +374,9 @@ const Login = (function () {
       const r = await API.call('login', { code: acct.code, pin: p });
       API.setToken(r.token);
       Store.ls.set('last_acct', { code: acct.code, name: r.user.name, dept: r.user.dept_name || acct.dept });
-      if (r.mustChangePin) { busy = false; return newPin(p, r.pinChangeAllowed); }
+      if (r.mustChangePin) { busy = false; return newPin(); }
       busy = false;
       if (overlayFor) return finishOverlay(r.user);
-      const results = await Promise.all([API.call('me'), API.call('catalog').catch(function () { return null; })]);
-      await App.afterLogin(results[0], results[1]);
     } catch (e) {
       busy = false;
       pin = '';
@@ -384,44 +384,63 @@ const Login = (function () {
       dots();
       const d = $('#dots'); if (d) { d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); }
       const er = $('#err'); if (er) er.textContent = e.message;
+      if (e && e.code === 'PIN_CHANGE_AT_PRINTHUB' && er && window.APP_CONFIG && APP_CONFIG.PIN_URL) {
+        er.insertAdjacentHTML('beforeend', ' <a href="' + U.esc(APP_CONFIG.PIN_URL) + '" target="_blank" rel="noopener">เปิดหน้าตั้ง PIN</a>');
+      }
+      return;
+    }
+    /* PIN ถูกต้องแล้ว — ถ้าโหลดหน้าแรกไม่สำเร็จ แสดงเป็นปัญหาการโหลด ไม่ใช่ PIN ผิด */
+    try {
+      const results = await Promise.all([API.call('me'), API.call('catalog').catch(function () { return null; })]);
+      await App.afterLogin(results[0], results[1]);
+    } catch (e) {
+      if (e && /^SESSION_|PIN_CHANGE/.test(e.code)) { show(); return; }
+      ROOT().innerHTML = frame('<h2>เข้าสู่ระบบแล้ว แต่โหลดข้อมูลไม่สำเร็จ</h2>' + App.errorBox(e) +
+        '<button class="btn primary block lg" id="retry">ลองโหลดอีกครั้ง</button>');
+      $('#retry').onclick = function () { location.reload(); };
     }
   }
-  function newPin(oldPin, allowed) {
+  /** บัญชีที่ต้องเปลี่ยน PIN — ระบบนี้อ่านบัญชีกลาง (PrintHub) อย่างเดียว จึงให้ไปตั้งที่หน้าตั้ง PIN (ไม่แสดงชื่อระบบอื่น) */
+  function newPin() {
+    API.setToken('');
+    const link = window.APP_CONFIG && APP_CONFIG.PIN_URL ? '<a class="btn primary block lg" href="' + U.esc(APP_CONFIG.PIN_URL) + '" target="_blank" rel="noopener">เปิดหน้าตั้ง PIN</a>' : '';
+    const html = '<h2>ต้องตั้ง PIN ใหม่</h2><div class="notice warn"><div>บัญชีนี้ต้องตั้ง PIN ใหม่ที่หน้าตั้ง PIN ของบัญชีกลางก่อน แล้วจึงใช้ PIN ใหม่เข้าระบบนี้</div></div>' + link +
+      '<button class="btn block" style="margin-top:8px" onclick="location.reload()">กลับ</button>';
     const target = overlayFor ? $('#reauth .box') : null;
-    const html = allowed === false
-      ? '<h2>ต้องตั้ง PIN ใหม่</h2><div class="notice warn"><div>บัญชีนี้ต้องตั้ง PIN ใหม่ก่อนใช้งาน กรุณาติดต่อผู้ดูแลระบบ</div></div><button class="btn block" onclick="location.reload()">กลับ</button>'
-      : '<h2>ตั้ง PIN ใหม่</h2><p class="muted">บัญชีของคุณต้องตั้ง PIN ใหม่ก่อนใช้งาน (ใช้ PIN นี้กับบัญชีเดิมทุกระบบ)</p>' +
-        '<form id="np"><label class="field"><span>PIN ใหม่ 4 หลัก</span><input class="input" name="a" inputmode="numeric" maxlength="4" pattern="\\d{4}" required autocomplete="new-password"></label>' +
-        '<label class="field"><span>ยืนยัน PIN ใหม่</span><input class="input" name="b" inputmode="numeric" maxlength="4" pattern="\\d{4}" required autocomplete="new-password"></label>' +
-        '<p class="err" id="err"></p><button class="btn primary block lg">บันทึก PIN ใหม่</button></form>';
     if (target) target.innerHTML = html; else ROOT().innerHTML = frame(html);
-    const f = $('#np');
-    if (!f) return;
-    f.querySelector('input').focus();
-    f.onsubmit = async function (e) {
-      e.preventDefault();
-      const a = f.a.value, b = f.b.value;
-      if (!/^\d{4}$/.test(a)) { $('#err').textContent = 'PIN ต้องเป็นตัวเลข 4 หลัก'; return; }
-      if (a !== b) { $('#err').textContent = 'PIN ทั้งสองช่องไม่ตรงกัน'; return; }
-      try {
-        await API.call('changePin', { oldPin: oldPin, newPin: a });
-        U.toast('ตั้ง PIN ใหม่เรียบร้อย', 'ok');
-        const me = await API.call('me');
-        if (overlayFor) return finishOverlay(me.user);
-        App.afterLogin(me);
-      } catch (er) { $('#err').textContent = er.message; }
-    };
   }
-  /** ผู้ใช้ใหม่ที่ยังจับคู่ส่วนงานไม่ได้: เลือกครั้งเดียว */
-  async function pickDept(me) {
+  /** ผู้ใช้ใหม่: เลือกส่วนงาน (ครั้งเดียว) และตำแหน่งที่พิมพ์บนใบเบิก
+   *  positionOnly = ส่วนงานตั้งไว้แล้ว (จับคู่อัตโนมัติ/ผู้ดูแลตั้งให้) แต่ยังไม่มีตำแหน่ง → ถามตำแหน่งอย่างเดียว ข้ามได้ */
+  const SKIP_POS = 'sp:skippos:';
+  function positionSkipped(code) { try { return sessionStorage.getItem(SKIP_POS + code) === '1'; } catch (e) { return false; } }
+  async function pickDept(me, positionOnly) {
     let positions = [];
     try { positions = (await API.call('masters')).positions || []; } catch (e) { /**/ }
+    const posField = '<label class="field"><span>ตำแหน่ง (พิมพ์บนใบเบิก)</span><input class="input" name="pos" list="poslist" value="' + U.esc(me.user.position || '') + '"' + (positionOnly ? ' required' : '') + '><datalist id="poslist">' +
+      positions.map(function (p) { return '<option value="' + U.esc(p) + '">'; }).join('') + '</datalist></label>';
+    if (positionOnly) {
+      ROOT().innerHTML = frame('<h2>ตำแหน่งของคุณ</h2><p class="muted">ใช้พิมพ์ใต้ชื่อผู้ขอเบิกบนใบเบิก แก้ภายหลังได้ที่หน้า "โปรไฟล์และ PIN"</p>' +
+        '<div class="who"><div><b>' + U.esc(me.user.name) + '</b><span class="muted small">' + U.esc(me.user.dept_name || '') + '</span></div></div>' +
+        '<form id="dp">' + posField + '<p class="err" id="err"></p><button class="btn primary block lg">บันทึกและเริ่มใช้งาน</button>' +
+        '<button type="button" class="btn ghost block" id="skip" style="margin-top:8px">ข้ามไปก่อน</button></form>');
+      $('#skip').onclick = function () {
+        try { sessionStorage.setItem(SKIP_POS + me.user.code, '1'); } catch (e) { /**/ }
+        App.afterLogin(me);
+      };
+      $('#dp').onsubmit = async function (e) {
+        e.preventDefault();
+        if (!this.pos.value.trim()) { $('#err').textContent = 'กรุณากรอกตำแหน่ง หรือกด "ข้ามไปก่อน"'; return; }
+        try {
+          await API.write('saveProfile', { position: this.pos.value });
+          App.afterLogin(await API.call('me'));
+        } catch (er) { $('#err').textContent = er.message; }
+      };
+      return;
+    }
     ROOT().innerHTML = frame('<h2>เลือกส่วนงานของคุณ</h2><p class="muted">ทำครั้งเดียว ใช้สำหรับใบเบิกและสถิติของส่วนงาน (เปลี่ยนภายหลังผ่านผู้ดูแลระบบ)</p>' +
       '<form id="dp"><label class="field"><span>ส่วนงาน</span><select class="input" name="dept" required><option value="">— เลือก —</option>' +
       me.departments.map(function (d) { return '<option value="' + U.esc(d.dept_id) + '">' + U.esc(d.name) + '</option>'; }).join('') + '</select></label>' +
-      '<label class="field"><span>ตำแหน่ง (พิมพ์บนใบเบิก)</span><input class="input" name="pos" list="poslist" value="' + U.esc(me.user.position || '') + '"><datalist id="poslist">' +
-      positions.map(function (p) { return '<option value="' + U.esc(p) + '">'; }).join('') + '</datalist></label>' +
-      '<p class="err" id="err"></p><button class="btn primary block lg">เริ่มใช้งาน</button></form>' +
+      posField + '<p class="err" id="err"></p><button class="btn primary block lg">เริ่มใช้งาน</button></form>' +
       (me.departments.length ? '' : '<div class="notice warn"><div>ยังไม่มีรายชื่อส่วนงานในระบบ กรุณาติดต่อผู้ดูแลระบบ</div></div>'));
     $('#dp').onsubmit = async function (e) {
       e.preventDefault();
@@ -453,5 +472,5 @@ const Login = (function () {
     U.toast('เข้าสู่ระบบแล้ว ทำรายการต่อได้', 'ok');
     if (overlayResolve) overlayResolve();
   }
-  return { show: show, pickDept: pickDept, overlay: overlay };
+  return { show: show, pickDept: pickDept, positionSkipped: positionSkipped, overlay: overlay };
 })();
