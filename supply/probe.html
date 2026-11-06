@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ทดสอบการเชื่อมต่อ (Phase 0) · ระบบเบิกวัสดุ</title>
+<link rel="stylesheet" href="assets/css/app.css?v=1.1.0">
+<style>.ok{color:var(--ok);font-weight:700}.bad{color:var(--out);font-weight:700}pre{white-space:pre-wrap;background:#F2F5FA;padding:12px;border-radius:10px;font-size:.85rem}</style>
+</head>
+<body>
+<main class="content" style="max-width:980px;margin:0 auto">
+  <h1>ทดสอบการเชื่อมต่อหน้าเว็บ ↔ API (Phase 0)</h1>
+  <p class="muted">ทดสอบบน Chrome, Edge และ Safari บน iPhone ให้ครบทุกข้อ แล้วกด "คัดลอกผล" ส่งให้ผู้พัฒนา — หน้านี้ไม่บันทึกข้อมูลจริง ยกเว้นข้อ 6 ที่บันทึกตำแหน่งเดิมซ้ำ (ไม่เปลี่ยนค่า)</p>
+  <div class="card">
+    <label class="field"><span>API URL</span><input class="input" id="url"></label>
+    <div class="grid3"><label class="field"><span>รหัสบัญชีทดสอบ (ข้อ 5–6)</span><input class="input" id="code" placeholder="เช่น D001"></label>
+      <label class="field"><span>PIN</span><input class="input" id="pin" inputmode="numeric" maxlength="4" type="password"></label>
+      <div class="field"><span>&nbsp;</span><button class="btn primary" id="run">เริ่มทดสอบทั้งหมด</button></div></div>
+  </div>
+  <div class="tablewrap"><table class="t"><thead><tr><th>#</th><th>รายการ</th><th>ผล</th><th class="num">เวลา (ms)</th><th>รายละเอียด</th></tr></thead><tbody id="tb"></tbody></table></div>
+  <p class="row" style="margin-top:12px"><button class="btn" id="copy">คัดลอกผล</button><span class="muted small" id="ua"></span></p>
+  <pre id="raw"></pre>
+</main>
+<script src="config.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  $('#url').value = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || '';
+  $('#ua').textContent = navigator.userAgent;
+  var results = [];
+  function row(n, name, ok, ms, detail) {
+    results.push({ n: n, name: name, ok: ok, ms: ms, detail: detail });
+    $('#tb').insertAdjacentHTML('beforeend', '<tr><td>' + n + '</td><td>' + name + '</td><td class="' + (ok ? 'ok">ผ่าน' : 'bad">ไม่ผ่าน') + '</td><td class="num">' + ms + '</td><td class="small">' +
+      String(detail).replace(/[<>&]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]; }).slice(0, 300) + '</td></tr>');
+  }
+  async function post(body) {
+    var t = performance.now();
+    var r = await fetch($('#url').value, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), redirect: 'follow', credentials: 'omit' });
+    var txt = await r.text();
+    return { ms: Math.round(performance.now() - t), status: r.status, redirected: r.redirected, url: r.url, json: JSON.parse(txt), size: txt.length };
+  }
+  async function step(n, name, fn) {
+    var t = performance.now();
+    try { var d = await fn(); row(n, name, d.ok, d.ms || Math.round(performance.now() - t), d.detail); return d; }
+    catch (e) { row(n, name, false, Math.round(performance.now() - t), e.message); return { ok: false }; }
+  }
+  $('#run').onclick = async function () {
+    results = []; $('#tb').innerHTML = '';
+    await step(1, 'GET ?action=ping (เปลี่ยนเส้นทาง + อ่าน JSON)', async function () {
+      var t = performance.now(); var r = await fetch($('#url').value + '?action=ping', { redirect: 'follow' }); var j = JSON.parse(await r.text());
+      return { ok: j.ok && j.data.pong, ms: Math.round(performance.now() - t), detail: 'redirected=' + r.redirected + ' version=' + j.data.version };
+    });
+    await step(2, 'POST ping (text/plain ไม่มี preflight)', async function () { var r = await post({ action: 'ping' }); return { ok: r.json.ok, ms: r.ms, detail: 'status ' + r.status + ' redirected=' + r.redirected }; });
+    await step(3, 'POST ผิดพลาด → ต้องอ่าน JSON error ได้', async function () { var r = await post({ action: 'notExist' }); return { ok: !r.json.ok && r.json.error.code === 'UNKNOWN_ACTION', ms: r.ms, detail: r.json.error && r.json.error.message }; });
+    await step(4, 'POST ข้อมูลใหญ่ 200 KB (เหมือนรายการวัสดุ)', async function () { var r = await post({ action: 'probeEcho', data: { size: 200000, text: 'ทดสอบภาษาไทย' } }); return { ok: r.json.ok && r.json.data.blob.length === 200000 && r.json.data.echo === 'ทดสอบภาษาไทย', ms: r.ms, detail: 'ขนาด ' + r.size + ' ไบต์' }; });
+    var code = $('#code').value.trim(), pin = $('#pin').value.trim();
+    if (!code || !pin) { row(5, 'ล็อกอิน', false, 0, 'ข้าม — ไม่ได้กรอกบัญชีทดสอบ'); return; }
+    var lg = await step(5, 'ล็อกอิน + อ่านข้อมูลผู้ใช้ (me)', async function () {
+      var r = await post({ action: 'login', data: { code: code, pin: pin } });
+      if (!r.json.ok) return { ok: false, ms: r.ms, detail: r.json.error.message };
+      var m = await post({ action: 'me', token: r.json.data.token });
+      return { ok: m.json.ok, ms: r.ms + m.ms, detail: 'login ' + r.ms + ' ms · me ' + m.ms + ' ms · ' + (m.json.ok ? m.json.data.user.name : m.json.error.message), token: r.json.data.token, user: m.json.data && m.json.data.user };
+    });
+    if (!lg.token) return;
+    await step(6, 'POST บันทึก (saveProfile ค่าเดิม) + ส่งซ้ำ uuid เดิม', async function () {
+      var uuid = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-probe-0000-0000');
+      var b = { action: 'saveProfile', token: lg.token, client_uuid: uuid, data: { position: lg.user.position || '' } };
+      var a = await post(b); var c = await post(b);
+      return { ok: a.json.ok && c.json.ok && c.json.data._replayed === true, ms: a.ms, detail: 'บันทึก ' + a.ms + ' ms · ส่งซ้ำ ' + c.ms + ' ms (replayed=' + (c.json.data && c.json.data._replayed) + ')' };
+    });
+    await post({ action: 'logout', token: lg.token }).catch(function () {});
+  };
+  $('#copy').onclick = function () {
+    var txt = 'Phase 0 · ' + new Date().toISOString() + '\n' + navigator.userAgent + '\n' + results.map(function (r) { return r.n + '. ' + r.name + ' : ' + (r.ok ? 'ผ่าน' : 'ไม่ผ่าน') + ' (' + r.ms + ' ms) ' + r.detail; }).join('\n');
+    $('#raw').textContent = txt;
+    if (navigator.clipboard) navigator.clipboard.writeText(txt);
+  };
+})();
+</script>
+</body>
+</html>
