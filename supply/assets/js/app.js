@@ -230,12 +230,16 @@ const App = (function () {
       ROOT().innerHTML = '<div class="content">' + errorBox(e) + '</div>';
     }
   }
-  async function afterLogin(me) {
+  async function afterLogin(me, initialCatalog) {
     S.me = me; S.user = me.user; S.cfg = me.cfg; S.depts = me.departments;
     loadCart();
     Outbox.load(S.user.code);
     if (me.needDept) return Login.pickDept(me);
-    await loadCatalog().catch(function () { return null; });
+    if (initialCatalog) {
+      index(initialCatalog); S.catAt = new Date().toISOString();
+      API.setCatalogVersion(initialCatalog.version);
+      Store.set('catalog:' + S.user.code, { data: initialCatalog, at: S.catAt, role: S.user.role });
+    } else await loadCatalog().catch(function () { return null; });
     render();
     if (S.user.role === 'OFFICER' && window.Officer) Officer.watch();
     Outbox.resumeAll().then(function (r) {
@@ -292,7 +296,7 @@ const Login = (function () {
   function frame(inner) {
     const c = App.S.cfg || {};
     return '<div class="login"><section class="art"><b>' + U.esc(c.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(c.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i>' +
-      '<p>เบิกวัสดุสิ้นเปลือง ติดตามคำขอ และดูประวัติการเบิกของส่วนงานได้จากโทรศัพท์หรือคอมพิวเตอร์</p></section>' +
+      '<p>เบิกวัสดุสิ้นเปลือง ติดตามคำขอ ประวัติการเบิก และสรุปสถิติ</p></section>' +
       '<section class="panel"><div class="box">' + inner + '</div></section></div>';
   }
   function show() {
@@ -371,8 +375,8 @@ const Login = (function () {
       if (r.mustChangePin) { busy = false; return newPin(p, r.pinChangeAllowed); }
       busy = false;
       if (overlayFor) return finishOverlay(r.user);
-      const me = await API.call('me');
-      App.afterLogin(me);
+      const results = await Promise.all([API.call('me'), API.call('catalog').catch(function () { return null; })]);
+      await App.afterLogin(results[0], results[1]);
     } catch (e) {
       busy = false;
       pin = '';

@@ -1,9 +1,9 @@
 /* ระบบเบิกวัสดุ · sw.js — แคชเฉพาะไฟล์หน้าเว็บ (ไม่แคชผล API ข้อมูลส่วนบุคคล หรือมูลค่า) */
-const CACHE = 'supply-shell-1.1.0';
+const CACHE = 'supply-shell-1.1.1';
 const SHELL = ['./', 'index.html', 'config.js?v=1.1.0', 'manifest.json',
-  'assets/css/app.css?v=1.1.0', 'assets/css/print.css?v=1.1.0',
-  'assets/js/util.js?v=1.1.0', 'assets/js/store.js?v=1.1.0', 'assets/js/api.js?v=1.1.0', 'assets/js/app.js?v=1.1.0',
-  'assets/js/user.js?v=1.1.0', 'assets/js/officer.js?v=1.1.0', 'assets/js/admin.js?v=1.1.0', 'assets/js/dash.js?v=1.1.0',
+  'assets/css/app.css?v=1.1.1', 'assets/css/print.css?v=1.1.0',
+  'assets/js/util.js?v=1.1.0', 'assets/js/store.js?v=1.1.0', 'assets/js/api.js?v=1.1.0', 'assets/js/app.js?v=1.1.1',
+  'assets/js/user.js?v=1.1.0', 'assets/js/officer.js?v=1.1.1', 'assets/js/admin.js?v=1.1.1', 'assets/js/dash.js?v=1.1.0',
   'assets/js/print.js?v=1.1.0', 'assets/img/icon.svg',
   'assets/fonts/noto-sans-thai-thai-400-normal.woff2', 'assets/fonts/noto-sans-thai-thai-600-normal.woff2',
   'assets/fonts/noto-sans-thai-thai-700-normal.woff2', 'assets/fonts/noto-sans-thai-latin-400-normal.woff2'];

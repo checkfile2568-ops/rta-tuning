@@ -35,7 +35,7 @@ App.view('users', {
     const depts = ms.departments.filter(function (d) { return d.active; });
     const draw = function () {
       const rows = acc.filter(function (a) { return !F.q || U.match(a.name + ' ' + a.account_dept + ' ' + a.dept_name + ' ' + a.role_th, F.q); });
-      U.$('#t').innerHTML = '<div class="tablewrap"><table class="t"><thead><tr><th>ชื่อ-สกุล</th><th>สิทธิ์ระบบเบิกวัสดุ</th><th>ส่วนงาน</th><th>ตำแหน่ง</th><th>เข้าใช้ล่าสุด</th><th></th></tr></thead><tbody>' +
+      U.$('#t').innerHTML = '<div class="tablewrap"><table class="t access-table"><thead><tr><th>ชื่อ-สกุล</th><th>สิทธิ์ระบบเบิกวัสดุ</th><th>ส่วนงาน</th><th>ตำแหน่ง</th><th>เข้าใช้ล่าสุด</th><th></th></tr></thead><tbody>' +
         rows.map(function (a) {
           return '<tr data-c="' + U.esc(a.code) + '"><td><b>' + U.esc(a.name) + '</b><br><small class="muted">' + U.esc(a.code) + (a.account_dept ? ' · บัญชีระบุ: ' + U.esc(a.account_dept) : '') + '</small>' +
             (!a.active ? '<br><span class="badge gray">ปิดบัญชี</span>' : '') + (a.locked ? '<br><span class="badge out">ถูกล็อก</span>' : '') + (!a.has_pin ? '<br><span class="badge low">ยังไม่ตั้ง PIN</span>' : '') +

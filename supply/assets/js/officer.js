@@ -527,8 +527,23 @@ App.view('opening', {
       (S.cfg.cost_method ? '<div class="notice info"><div>วิธีคิดมูลค่า: <b>' + (S.cfg.cost_method === 'FIFO' ? 'เข้าก่อนออกก่อน (FIFO)' : 'ถัวเฉลี่ยถ่วงน้ำหนัก (AVG)') + '</b> — ล็อกหลังมีรายการแรก</div></div>'
         : '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b>ผู้ดูแลระบบต้องเลือกที่ "ตั้งค่าระบบ" ก่อนนำเข้า</div></div>') +
       '<div class="card"><h3>1. เตรียมไฟล์</h3><p class="small muted">คอลัมน์: ' + OPEN_COLS.join(' · ') + ' (แถวแรกเป็นหัวคอลัมน์) · หน่วยนับต้องตรงกับหน่วยมาตรฐานหรือคำเรียกอื่น</p>' +
+      '<p>รองรับไฟล์ <b>.xlsx, .xls และ .csv</b> อ่านชีตแรก โดยแถวแรกต้องเป็นชื่อคอลัมน์ตามแม่แบบ หรือวางข้อความที่คัดลอกจาก Excel (คั่นคอลัมน์ด้วย Tab)</p>' +
+      '<div class="tablewrap"><table class="t"><thead><tr><th>คอลัมน์</th><th>ข้อมูลที่กรอก</th></tr></thead><tbody>' +
+      '<tr><td>รหัส</td><td>รหัสเดิมของวัสดุ ถ้ามีให้ใช้รหัสเดิม เช่น MAT-001; ว่างได้สำหรับวัสดุใหม่</td></tr>' +
+      '<tr><td>ชื่อวัสดุ</td><td>ชื่อวัสดุ (ต้องกรอก)</td></tr>' +
+      '<tr><td>หมวด</td><td>ชื่อหมวด เช่น วัสดุสำนักงาน; ว่างได้</td></tr>' +
+      '<tr><td>หน่วยนับ</td><td>หน่วยมาตรฐาน เช่น รีม แผ่น อัน ด้าม (ต้องกรอก)</td></tr>' +
+      '<tr><td>จำนวน</td><td>ยอดคงเหลือเดิม จำนวนเต็มตั้งแต่ 0; ว่าง = 0</td></tr>' +
+      '<tr><td>ต้นทุนต่อหน่วย</td><td>ต้นทุนเดิมต่อหน่วย บาท ตั้งแต่ 0; ว่าง = 0</td></tr>' +
+      '<tr><td>จุดสั่งซื้อ</td><td>จุดแจ้งเตือนสั่งซื้อ จำนวนเต็มตั้งแต่ 0; ว่าง = 0</td></tr>' +
+      '<tr><td>จำนวนสั่งซื้อ</td><td>จำนวนแนะนำสั่งซื้อ จำนวนเต็มตั้งแต่ 0; ว่าง = 0</td></tr>' +
+      '<tr><td>จำกัดต่อครั้ง</td><td>จำนวนเบิกสูงสุดต่อครั้ง ตั้งแต่ 0; ว่าง = 0 ตามกติกาเดิม</td></tr>' +
+      '<tr><td>รายละเอียด</td><td>รายละเอียดเพิ่มเติม ว่างได้</td></tr>' +
+      '</tbody></table></div>' +
       '<button class="btn" id="tpl">' + ICON('download') + 'ดาวน์โหลดแม่แบบ</button></div>' +
       '<div class="card"><h3>2. เลือกไฟล์และตรวจ</h3><input type="file" id="file" accept=".xlsx,.xls,.csv" class="input"><div id="pv" style="margin-top:12px"></div></div>' +
+      '<div class="card"><h3>หรือวางข้อความ</h3><p class="small muted">วางข้อมูลพร้อมหัวคอลัมน์ตามแม่แบบ คั่นแต่ละช่องด้วย Tab และขึ้นบรรทัดใหม่แต่ละรายการ ตรวจตัวอย่างก่อนนำเข้า ข้อมูลจะรวมกับรายการที่เตรียมไว้</p><textarea class="input" id="opening-text" rows="5" aria-label="ข้อความยอดยกมา"></textarea><button class="btn" id="opening-text-add">ตรวจและเพิ่มข้อความ</button></div>' +
+      '<div class="card"><h3>หรือเพิ่มทีละรายการ</h3><form id="opening-single"><div class="grid2">' + OPEN_COLS.map(function (c, i) { return '<label class="field"><span>' + c + (i === 1 || i === 3 ? ' *' : '') + '</span><input class="input" name="' + OPEN_KEYS[i] + '"' + (i >= 4 && i <= 8 ? ' type="number" min="0" step="' + (i === 5 ? 'any' : '1') + '"' : '') + (i === 1 || i === 3 ? ' required' : '') + '></label>'; }).join('') + '</div><button class="btn primary">เพิ่มเข้ารายการตรวจ</button></form></div>' +
       '<div class="card"><h3>3. ยืนยันนำเข้า</h3><label class="field"><span>แหล่งข้อมูลและผู้รับรองยอด *</span><input class="input" id="src" value="' + U.esc(F.source) + '" placeholder="เช่น บัญชีวัสดุ ณ 30 ก.ย. 2569 รับรองโดย ..."></label>' +
       '<button class="btn primary lg" id="go"' + (S.cfg.cost_method ? '' : ' disabled') + '>' + ICON('upload') + 'นำเข้ายอดยกมา</button><div id="res" style="margin-top:12px"></div></div>';
     const unitOk = function (t) { return !!Officer.unitFromText(t); };
@@ -545,6 +560,46 @@ App.view('opening', {
     U.$('#tpl').onclick = function () {
       U.exportXlsx('แม่แบบยอดยกมา', [{ name: 'ยอดยกมา', head: OPEN_COLS, rows: [['', 'ตัวอย่าง: กระดาษ A4 80 แกรม', 'วัสดุสำนักงาน', 'รีม', 10, 110, 5, 20, 5, 'ข้อมูลสมมติ — ลบแถวนี้ก่อนนำเข้า']] }]);
     };
+    function validateOpening(o) {
+        if (!o.name) return null;
+        if (!unitOk(o.unit)) o._err = 'ไม่รู้จักหน่วย "' + o.unit + '"';
+        else if (o.qty !== '' && !(Number(o.qty) >= 0 && Math.floor(Number(o.qty)) === Number(o.qty))) o._err = 'จำนวนไม่ถูกต้อง';
+        else if (o.unit_cost !== '' && !(Number.isFinite(Number(o.unit_cost)) && Number(o.unit_cost) >= 0)) o._err = 'ต้นทุนไม่ถูกต้อง';
+        else if (S.catalog.materials.some(function (m) { return (o.code ? m.code === o.code : m.name === o.name) && (m.balance || 0) > 0; })) o._err = 'มียอดในระบบแล้ว';
+      return o;
+    }
+    function parseOpeningRows(aoa, append) {
+      const head = (aoa[0] || []).map(function (h) { return String(h).trim(); });
+      const idx = OPEN_COLS.map(function (c) { return head.indexOf(c); });
+      if (idx[1] < 0 || idx[3] < 0) throw new Error('ต้องมีหัวคอลัมน์ชื่อวัสดุและหน่วยนับ');
+      let next = append ? Math.max(1, ...F.rows.map(function(r) { return r.line; })) : 1;
+      return aoa.slice(1).map(function(r) {
+        const o = { line: ++next };
+        OPEN_KEYS.forEach(function(k,j) { o[k] = idx[j] >= 0 ? String(r[idx[j]] === undefined ? '' : r[idx[j]]).trim() : ''; });
+        return validateOpening(o);
+      }).filter(Boolean);
+    }
+    U.$('#opening-text-add').onclick = function() {
+      try {
+        const value = U.$('#opening-text').value.trim();
+        if (!value) throw new Error('กรุณาวางข้อความก่อน');
+        const rows = parseOpeningRows(value.split(/\r?\n/).map(function(line) { return line.split('\t'); }), true);
+        if (!rows.length) throw new Error('ไม่พบรายการวัสดุ');
+        const seen = new Set(F.rows.map(function(r) { return r.code ? 'code:' + r.code : 'name:' + r.name; }));
+        rows.forEach(function(r) { const key = r.code ? 'code:' + r.code : 'name:' + r.name; if (seen.has(key)) r._err = 'รายการซ้ำในชุดที่เตรียมนำเข้า'; seen.add(key); });
+        F.rows = F.rows.concat(rows); draw(); U.$('#opening-text').value = '';
+      } catch (e) { U.toast(e.message, 'err', 6000); }
+    };
+    U.$('#opening-single').onsubmit = function(e) {
+      e.preventDefault();
+      const o = { line: Math.max(1, ...F.rows.map(function(r) { return r.line; })) + 1 };
+      const data = new FormData(this);
+      OPEN_KEYS.forEach(function(k) { o[k] = String(data.get(k) || '').trim(); });
+      const row = validateOpening(o);
+      if (!row || row._err) { U.toast(row && row._err || 'กรุณากรอกชื่อวัสดุ', 'err', 6000); return; }
+      if (F.rows.some(function(r) { return row.code ? r.code === row.code : r.name === row.name; })) { U.toast('รายการซ้ำในชุดที่เตรียมนำเข้า', 'err', 6000); return; }
+      F.rows.push(row); draw(); this.reset(); U.toast('เพิ่มในรายการตรวจแล้ว ยังไม่ได้บันทึกยอดยกมา', 'ok');
+    };
     U.$('#file').onchange = async function () {
       const file = this.files[0]; if (!file) return;
       await U.loadScript('assets/vendor/xlsx.full.min.js');
@@ -554,16 +609,7 @@ App.view('opening', {
       const idx = OPEN_COLS.map(function (c) { return head.indexOf(c); });
       if (idx[1] < 0 || idx[3] < 0) { U.toast('ไม่พบคอลัมน์ "ชื่อวัสดุ" หรือ "หน่วยนับ" ในแถวแรก', 'err', 6000); return; }
       F.done = {};
-      F.rows = aoa.slice(1).map(function (r, i) {
-        const o = { line: i + 2 };
-        OPEN_KEYS.forEach(function (k, j) { o[k] = idx[j] >= 0 ? String(r[idx[j]] === undefined ? '' : r[idx[j]]).trim() : ''; });
-        if (!o.name) return null;
-        if (!unitOk(o.unit)) o._err = 'ไม่รู้จักหน่วย "' + o.unit + '"';
-        else if (o.qty !== '' && !(Number(o.qty) >= 0 && Math.floor(Number(o.qty)) === Number(o.qty))) o._err = 'จำนวนไม่ถูกต้อง';
-        else if (o.unit_cost !== '' && !(Number(o.unit_cost) >= 0)) o._err = 'ต้นทุนไม่ถูกต้อง';
-        else if (S.catalog.materials.some(function (m) { return (o.code ? m.code === o.code : m.name === o.name) && (m.balance || 0) > 0; })) o._err = 'มียอดในระบบแล้ว';
-        return o;
-      }).filter(Boolean);
+      F.rows = parseOpeningRows(aoa, false);
       draw();
     };
     U.$('#go').onclick = async function () {

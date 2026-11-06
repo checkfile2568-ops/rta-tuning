@@ -365,3 +365,17 @@ table.t td .input.num { width: 96px; text-align: right; }
 .print-preview { background: #E9EDF3; padding: 22px; border-radius: 14px; overflow-x: auto; }
 .print-preview .sheet { margin: 0 auto; box-shadow: 0 6px 24px rgba(0, 0, 0, .12); }
 #print-root { display: none; }
+
+/* Compact controls only in user access management. */
+table.access-table td:nth-child(2) .input,
+table.access-table td:nth-child(3) .input,
+table.access-table td:nth-child(4) .input { font-size: .8rem; padding: 7px 24px 7px 7px; min-height: 38px; }
+table.access-table td:nth-child(2) { min-width: 132px; }
+table.access-table td:nth-child(3) { min-width: 175px; }
+table.access-table td:nth-child(4) { min-width: 142px; }
+table.access-table td:nth-child(4) input { padding-right: 7px; }
+table.access-table select option { font-size: .8rem; }
+@media(max-width: 700px) {
+ table.access-table th, table.access-table td { padding: 9px 7px; }
+ table.access-table td:nth-child(2) .input, table.access-table td:nth-child(3) .input, table.access-table td:nth-child(4) .input { font-size: 12px; }
+}
