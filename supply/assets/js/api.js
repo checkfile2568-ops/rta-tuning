@@ -14,13 +14,16 @@ const API = (function () {
   let training = Store.training.get();
   Store.setScope(training);
   let lastCatVer = null;
-  const listeners = { session: [], catalog: [] };
+  let realEpoch = '', workspaceChanged = false;
+  const listeners = { session: [], catalog: [], workspace: [] };
 
   async function call(action, data, opt) {
     opt = opt || {};
+    if (opt.write && !training && workspaceChanged) throw new ApiError('REAL_WORKSPACE_CHANGED', 'รอบข้อมูลเปลี่ยนแล้ว กรุณารีเฟรชก่อนบันทึก');
     if (!cfg.API_URL || /ใส่ URL/.test(cfg.API_URL)) throw new ApiError('NO_API', 'ยังไม่ได้ตั้งค่า API_URL ใน config.js');
     const body = { action: action, token: token, data: data || {} };
-    if (training && !/^training\./.test(action) && !/^(login|logout|searchAccounts|changePin)$/.test(action)) body.training = training;
+    if (realEpoch) body.real_epoch = realEpoch;
+    if (training && !/^(training|realTrial)\./.test(action) && !/^(login|logout|searchAccounts|changePin)$/.test(action)) body.training = training;
     if (opt.write) body.client_uuid = opt.uuid || U.uuid();
     const ctrl = window.AbortController ? new AbortController() : null;
     const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, opt.timeout || 45000) : null;
@@ -34,6 +37,13 @@ const API = (function () {
     } finally { if (timer) clearTimeout(timer); }
     let j;
     try { j = JSON.parse(text); } catch (e) { throw new ApiError('BAD_RESPONSE', 'เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง กรุณาลองใหม่', { status: res && res.status }); }
+    if (j.realEpoch) {
+      if (!realEpoch) { realEpoch = j.realEpoch; Store.setEpoch(realEpoch); }
+      else if (!training && realEpoch !== j.realEpoch && !workspaceChanged) {
+        workspaceChanged = true;
+        if (!opt.workspaceSwitch) listeners.workspace.forEach(function (f) { f(); });
+      }
+    }
     if (j.catalogVersion !== undefined && lastCatVer !== null && j.catalogVersion !== lastCatVer) {
       listeners.catalog.forEach(function (f) { f(j.catalogVersion); });
     }
@@ -52,6 +62,7 @@ const API = (function () {
   return {
     call: call,
     scope: function () { return training; },
+    epoch: function () { return realEpoch; },
     setTraining: function (g) {
       if (g && !/^[a-f0-9-]{36}$/i.test(g)) throw new Error('ชุดฝึกไม่ถูกต้อง');
       Store.training.set(g || ''); training = g || ''; Store.setScope(training); lastCatVer = null;
@@ -71,6 +82,7 @@ const Outbox = (function () {
   const subs = [];
   function save() { if (code) Store.ls.set('outbox:' + code, items); subs.forEach(function (f) { f(items); }); }
   async function send(it) {
+    if (!API.scope() && it.real_epoch !== API.epoch()) throw new ApiError('REAL_WORKSPACE_CHANGED', 'คำขอค้างนี้เป็นของรอบเก่าและจะไม่ส่งเข้ารอบใหม่');
     if ((it.scope || '') !== API.scope()) throw new ApiError('SCOPE_CHANGED', 'คำขอนี้เป็นของคนละพื้นที่ กรุณาเปิดพื้นที่เดิมก่อนส่ง');
     it.status = 'sending'; it.error = null; save();
     try {
@@ -91,7 +103,7 @@ const Outbox = (function () {
     list: function () { return items.slice(); },
     pending: function () { return items.filter(function (x) { return x.status !== 'done'; }); },
     add: function (data) {
-      const it = { uuid: U.uuid(), scope: API.scope(), data: data, created: new Date().toISOString(), status: 'queued' };
+      const it = { uuid: U.uuid(), scope: API.scope(), real_epoch: API.epoch(), data: data, created: new Date().toISOString(), status: 'queued' };
       items.push(it); save();
       return it;
     },
@@ -107,4 +119,5 @@ const Outbox = (function () {
     subscribe: function (f) { subs.push(f); }
   };
 })();
+
 

@@ -6,9 +6,11 @@
 'use strict';
 const Store = (function () {
   let dataScope = '';
+  let realEpoch = '';
   function scoped(k) {
     return dataScope && /^(catalog|cart|purpose|outbox):/.test(k)
-      ? k.replace(':', ':training:' + dataScope + ':') : k;
+      ? k.replace(':', ':training:' + dataScope + ':')
+      : realEpoch && /^(catalog|cart|purpose|outbox):/.test(k) ? k.replace(':', ':real:' + realEpoch + ':') : k;
   }
   let dbp = null;
   const mem = {};
@@ -43,6 +45,7 @@ const Store = (function () {
     del: function (k) { try { localStorage.removeItem('sp:' + scoped(k)); } catch (e) { /**/ } }
   };
   return {
+    setEpoch: function (epoch) { realEpoch = epoch || ''; },
     setScope: function (generation) { dataScope = generation || ''; },
     training: {
       get: function () { try { return sessionStorage.getItem('sp:training') || ''; } catch (e) { return ''; } },
@@ -76,4 +79,5 @@ const Store = (function () {
     }
   };
 })();
+
 

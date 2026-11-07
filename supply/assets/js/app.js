@@ -61,12 +61,12 @@ const App = (function () {
         .concat(appr ? [['approve', 'อนุมัติคำขอ', 'check', c.approvals]] : [])
         .concat([['-', 'งานของฉัน']]).concat(mine)
         .concat([['-', 'ข้อมูล'], ['suppliers', 'ผู้จำหน่าย', 'store'], ['opening', 'ยอดยกมา', 'upload'],
-          ['reconcile', 'กระทบยอด', 'scale'], ['audit', 'ประวัติการใช้งาน', 'log'], ['training', 'ทดลองใช้งาน', 'clip']]);
+          ['reconcile', 'กระทบยอด', 'scale'], ['audit', 'ประวัติการใช้งาน', 'log'], ['training', 'ทดลองใช้งาน', 'clip'], ['real-trial', 'รอบทดสอบฐานจริง', 'db']]);
     }
     if (u.role === 'ADMIN') {
       return [['home', 'ภาพรวม', 'home'], ['dash', 'สถิติ/ประวัติ', 'chart'], ['users', 'ผู้ใช้และสิทธิ์', 'users'],
         ['depts', 'ส่วนงาน', 'building'], ['master', 'หมวด/หน่วย/วันหยุด', 'tag'], ['settings', 'ตั้งค่าระบบ', 'gear'],
-        ['training', 'ทดลองใช้งาน', 'clip'], ['backup', 'สำรองข้อมูล', 'db'], ['reconcile', 'กระทบยอด/ตรวจซ่อม', 'wrench', c.repairs], ['audit', 'Audit log', 'log'],
+        ['training', 'ทดลองใช้งาน', 'clip'], ['real-trial', 'ทดสอบฐานจริง / ล้างยอด', 'db'], ['backup', 'สำรองข้อมูล', 'db'], ['reconcile', 'กระทบยอด/ตรวจซ่อม', 'wrench', c.repairs], ['audit', 'Audit log', 'log'],
         ['-', 'คลัง'], ['stock', 'คลังวัสดุ (ดู)', 'box'], ['opening', 'ยอดยกมา', 'upload'],
         ['-', 'งานของฉัน']].concat(mine);
     }
@@ -97,7 +97,7 @@ const App = (function () {
     const today = U.thDate(new Date()) + '<span class="sepv"></span>ปีงบประมาณ ' + U.fy();
     const cartCls = v.cart ? ' show-cartbar' : '';
     ROOT().innerHTML =
-      (API.scope() ? Training.banner() : '') +
+      (API.scope() ? Training.banner() : RealTrial.banner(S.me && S.me.realTrial)) +
       '<div class="shell' + cartCls + '">' +
       '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><b>' + U.esc(S.cfg.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
       '<nav class="nav" id="nav">' + navHtml(navFor(u), route) + '</nav>' +
@@ -271,6 +271,12 @@ const App = (function () {
       refreshMe();
       if ($('#view .notice.err')) render();          // หน้าที่โหลดไม่สำเร็จเพราะหมดเวลา → โหลดใหม่ (ฟอร์มอื่นคงไว้)
     });
+  });
+  API.on('workspace', function () {
+    if (document.getElementById('workspace-required')) return;
+    const wrap = document.createElement('div'); wrap.id = 'workspace-required'; wrap.className = 'modal-wrap'; wrap.style.zIndex = '9999';
+    wrap.innerHTML = '<div class="modal" role="alertdialog" aria-label="รอบข้อมูลเปลี่ยนแล้ว"><h2>รอบข้อมูลเปลี่ยนแล้ว</h2><p>แอดมินเริ่มหรือล้างรอบข้อมูล กรุณาเปิดหน้าล่าสุด ร่างและคำขอค้างจากรอบเก่าจะไม่ถูกส่งเข้ารอบใหม่</p><button class="btn primary" id="workspace-reload">เปิดหน้าล่าสุด</button></div>';
+    document.body.appendChild(wrap); wrap.querySelector('button').onclick = function () { location.reload(); };
   });
   API.on('catalog', function () { if (S.user) refreshCatalog().catch(function () {}); });
 
@@ -525,6 +531,7 @@ const Login = (function () {
   }
   return { show: show, pickDept: pickDept, positionSkipped: positionSkipped, overlay: overlay };
 })();
+
 
 
 
