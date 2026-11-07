@@ -3,8 +3,9 @@
 window.APP_CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzKuKWudcPH5osJu_edKyASJh-8JuGxv1izvNHOC2_W3QU5UhOldsMyGj9vu0hgHwn7Ug/exec',
   PIN_URL: 'https://checkfile2568-ops.github.io/printhub/',   // หน้าตั้ง/เปลี่ยน PIN ของบัญชีกลาง (ระบบนี้อ่านบัญชีอย่างเดียว) — ว่างได้
-  VERSION: '1.3.0'
+  VERSION: '1.3.1'
 };
+
 
 
 

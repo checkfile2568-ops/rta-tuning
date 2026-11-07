@@ -148,7 +148,7 @@ const App = (function () {
       '<a href="#" data-act="logout">' + ICON('logout') + '<span>ออกจากระบบ</span></a></nav></div>';
     const wrap = document.createElement('div');
     wrap.className = 'modal-wrap';
-    wrap.innerHTML = '<div class="modal" role="dialog" aria-label="เมนูผู้ใช้">' + html + '<div class="modal-actions"><button class="btn" data-x>ปิด</button></div></div>';
+    wrap.innerHTML = '<div class="modal user-menu-modal" role="dialog" aria-label="เมนูผู้ใช้">' + html + '<div class="modal-actions"><button class="btn" data-x>ปิด</button></div></div>';
     document.body.appendChild(wrap);
     wrap.addEventListener('click', function (e) {
       const a = e.target.closest('a,[data-x]');
@@ -304,10 +304,10 @@ const Login = (function () {
   const $ = U.$;
   let acct = null, pin = '', busy = false, overlayResolve = null, overlayFor = null;
 
-  function frame(inner) {
+  function frame(inner, nameEntry) {
     const c = App.S.cfg || {};
-    return '<div class="login login-glass"><section class="art"><b>' + U.esc(c.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(c.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i>' +
-      '<p>เบิกวัสดุสิ้นเปลือง ติดตามคำขอ ประวัติการเบิก และสรุปสถิติ</p></section>' +
+    return '<div class="login login-glass' + (nameEntry ? ' login-name' : '') + '"><section class="art">' + (nameEntry ? '<img class="login-illustration" src="assets/img/login-inventory.webp?v=1.3.1" alt="" width="1122" height="1402" fetchpriority="high"><div class="login-brand-copy">' : '') + '<b>' + U.esc(c.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(c.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i>' +
+      '<p>เบิกวัสดุสิ้นเปลือง ติดตามคำขอ ประวัติการเบิก และสรุปสถิติ</p>' + (nameEntry ? '</div>' : '') + '</section>' +
       '<section class="panel"><div class="box">' + inner + '</div></section></div>';
   }
   function show() {
@@ -318,7 +318,7 @@ const Login = (function () {
     ROOT().innerHTML = frame('<h2>เข้าสู่ระบบ</h2><p class="muted">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</p>' +
       '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย" aria-label="ค้นหาชื่อ"></div>' +
       '<div class="row end"><button type="button" class="btn sm" id="acct-refresh">ค้นหารายชื่อใหม่</button></div>' +
-      '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>');
+      '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>', true);
     const q = $('#q');
     q.focus();
     q.addEventListener('input', U.debounce(function () { search(false); }, 180));
@@ -531,6 +531,7 @@ const Login = (function () {
   }
   return { show: show, pickDept: pickDept, positionSkipped: positionSkipped, overlay: overlay };
 })();
+
 
 
 

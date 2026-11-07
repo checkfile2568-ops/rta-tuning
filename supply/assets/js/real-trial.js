@@ -1,6 +1,6 @@
 'use strict';
 const RealTrial=(function(){
- function banner(r){if(!r||!r.active)return '';return '<div role="status" style="position:sticky;top:0;z-index:200;padding:12px 16px;background:#ffe6dc;color:#742900;border-bottom:2px solid #bf6230"><b>รอบทดสอบบนฐานข้อมูลจริง</b> · รับ–เบิก–จ่ายมีผลต่อยอดจริงของระบบ ทุกบัญชีใช้ข้อมูลร่วมกัน · แอดมินสามารถล้างกลับยอด 0 ได้เมื่อจบรอบ</div>';}
+ function banner(r){if(!r||!r.active)return '';return '<div role="status" class="sample-data-banner"><b>ข้อมูลตัวอย่าง</b></div>';}
  return {banner:banner};
 })();
 App.view('real-trial',{
@@ -35,3 +35,4 @@ App.view('real-trial',{
   U.$('#rt-restore').onclick=()=>act('realTrial.restore','กู้คืนก่อนล้าง','กู้คืนรอบก่อนล้างล่าสุด','นำรอบที่ทดสอบกลับมาใช้งาน โดยคงบัญชีและสิทธิ์ล่าสุด ต้องยังไม่มีงานหลังล้างเท่านั้น',{archive_generation:r.archive_generation});
  }
 });
+
