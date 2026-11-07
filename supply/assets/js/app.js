@@ -297,11 +297,12 @@ const Login = (function () {
 
   function frame(inner) {
     const c = App.S.cfg || {};
-    return '<div class="login"><section class="art"><b>' + U.esc(c.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(c.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i>' +
+    return '<div class="login login-glass"><section class="art"><b>' + U.esc(c.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(c.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i>' +
       '<p>เบิกวัสดุสิ้นเปลือง ติดตามคำขอ ประวัติการเบิก และสรุปสถิติ</p></section>' +
       '<section class="panel"><div class="box">' + inner + '</div></section></div>';
   }
   function show() {
+    busy = false; waiting('');
     acct = Store.ls.get('last_acct', null);
     pin = '';
     if (acct) return pinStep();
@@ -334,51 +335,79 @@ const Login = (function () {
     } catch (e) { $('#err').textContent = e.message; }
   }
   function pinStep(msg) {
-    pin = '';
+    pin = ''; busy = false;
     const html = '<h2>ใส่ PIN</h2><div class="who"><span class="avatar">' + U.esc(acct.name.charAt(0)) + '</span><div><b>' + U.esc(acct.name) + '</b>' +
       '<span class="muted small">' + U.esc(acct.dept || '') + '</span></div>' +
       (overlayFor ? '' : '<button class="btn sm ghost" id="chg" style="margin-left:auto">เปลี่ยนชื่อ</button>') + '</div>' +
       (msg ? '<div class="notice warn"><div>' + U.esc(msg) + '</div></div>' : '') +
-      '<div class="pin-dots" id="dots"><i></i><i></i><i></i><i></i></div><p class="err" id="err" role="alert"></p>' +
+      '<div class="pin-stage" id="pin-stage"><div class="pin-dots" id="dots"><i></i><i></i><i></i><i></i></div><p class="err" id="err" role="alert"></p>' +
       '<input id="pinin" class="pin-input" inputmode="numeric" autocomplete="one-time-code" maxlength="4" aria-label="PIN 4 หลัก">' +
       '<div class="keypad" id="kp">' + [1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return '<button data-k="' + n + '">' + n + '</button>'; }).join('') +
-      '<button class="fn" data-k="clr">ล้าง</button><button data-k="0">0</button><button class="fn" data-k="del">ลบ</button></div>';
+      '<button class="fn" data-k="clr">ล้าง</button><button data-k="0">0</button><button class="fn" data-k="del">ลบ</button></div>' +
+      '<div class="login-wait" id="login-wait" hidden role="status" aria-live="polite" aria-atomic="true"><div class="login-wait-card">' +
+      '<div class="wait-dots" aria-hidden="true"><i></i><i></i><i></i></div>' +
+      '<div class="wait-symbol" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M12 22 20 10h24l8 12v30H12Z"/><path d="M12 22h40M27 10v22l5-3 5 3V10M36 41h9M36 46h9"/></svg></div>' +
+      '<h3>กำลังเข้าสู่ระบบ</h3><p class="wait-phase" id="login-wait-phase">กำลังตรวจสอบ PIN</p><p class="wait-hint" id="login-wait-hint">กรุณารอสักครู่</p>' +
+      '<div class="wait-shimmer" aria-hidden="true"><i></i></div></div></div></div>';
     if (overlayFor) { $('#reauth .box').innerHTML = html; }
     else ROOT().innerHTML = frame(html);
     const inp = $('#pinin');
     if (!('ontouchstart' in window)) inp.focus();
-    inp.addEventListener('input', function () { pin = inp.value.replace(/\D/g, '').slice(0, 4); dots(); if (pin.length === 4) submit(); });
+    inp.addEventListener('input', function () { if (busy) { inp.value = pin; return; } pin = inp.value.replace(/\D/g, '').slice(0, 4); dots(); if (pin.length === 4) submit(); });
     $('#kp').addEventListener('click', function (e) {
       const k = e.target.closest('[data-k]');
       if (!k || busy) return;
+      flashKey(k.dataset.k);
       const v = k.dataset.k;
       if (v === 'del') pin = pin.slice(0, -1); else if (v === 'clr') pin = ''; else if (pin.length < 4) pin += v;
       inp.value = pin; dots();
       if (pin.length === 4) submit();
     });
+    $('#kp').addEventListener('pointerdown', function(e) { const k = e.target.closest('[data-k]'); if (k && !busy) flashKey(k.dataset.k); });
     document.onkeydown = function (e) {
+      if (busy) { if (/^\d$/.test(e.key) || e.key === 'Backspace') e.preventDefault(); return; }
       if (!$('#kp')) { document.onkeydown = null; return; }
       if (document.activeElement === inp) return;
-      if (/^\d$/.test(e.key) && pin.length < 4) { pin += e.key; inp.value = pin; dots(); if (pin.length === 4) submit(); }
+      if (/^\d$/.test(e.key) && pin.length < 4) { flashKey(e.key); pin += e.key; inp.value = pin; dots(); if (pin.length === 4) submit(); }
       else if (e.key === 'Backspace') { pin = pin.slice(0, -1); inp.value = pin; dots(); }
     };
     const chg = $('#chg');
     if (chg) chg.onclick = function () { Store.ls.del('last_acct'); acct = null; show(); };
   }
   function dots() { U.$$('#dots i').forEach(function (d, i) { d.classList.toggle('on', i < pin.length); }); }
+  let waitTimer = null;
+  function flashKey(key) {
+    if (!/^(?:[0-9]|clr|del)$/.test(String(key))) return;
+    const btn = $('#kp [data-k="' + key + '"]'); if (!btn) return;
+    btn.classList.remove('key-flash'); void btn.offsetWidth; btn.classList.add('key-flash');
+    setTimeout(function() { btn.classList.remove('key-flash'); }, 380);
+  }
+  function waiting(phase) {
+    clearTimeout(waitTimer);
+    const stage = $('#pin-stage'), panel = $('#login-wait');
+    if (!stage || !panel) return;
+    stage.classList.toggle('is-waiting', !!phase); stage.setAttribute('aria-busy', phase ? 'true' : 'false');
+    panel.hidden = !phase;
+    U.$$('#kp button').forEach(function(b) { b.disabled = !!phase; });
+    const inp = $('#pinin'), chg = $('#chg'); if (inp) inp.disabled = !!phase; if (chg) chg.disabled = !!phase;
+    if (phase) {
+      $('#login-wait-phase').textContent = phase;
+      $('#login-wait-hint').textContent = 'กรุณารอสักครู่';
+      waitTimer = setTimeout(function() { const hint = $('#login-wait-hint'); if (hint) hint.textContent = 'กำลังรอการตอบกลับจากเซิร์ฟเวอร์…'; }, 8000);
+    }
+  }
   async function submit() {
     if (busy) return;
-    busy = true;
+    busy = true; waiting('กำลังตรวจสอบ PIN');
     const p = pin;
     try {
       const r = await API.call('login', { code: acct.code, pin: p });
       API.setToken(r.token);
       Store.ls.set('last_acct', { code: acct.code, name: r.user.name, dept: r.user.dept_name || acct.dept });
-      if (r.mustChangePin) { busy = false; return newPin(); }
-      busy = false;
-      if (overlayFor) return finishOverlay(r.user);
+      if (r.mustChangePin) { busy = false; waiting(''); return newPin(); }
+      if (overlayFor) { busy = false; waiting(''); return finishOverlay(r.user); }
     } catch (e) {
-      busy = false;
+      busy = false; waiting('');
       pin = '';
       const inp = $('#pinin'); if (inp) inp.value = '';
       dots();
@@ -390,6 +419,7 @@ const Login = (function () {
       return;
     }
     /* PIN ถูกต้องแล้ว — ถ้าโหลดหน้าแรกไม่สำเร็จ แสดงเป็นปัญหาการโหลด ไม่ใช่ PIN ผิด */
+    waiting('กำลังโหลดข้อมูล');
     try {
       const results = await Promise.all([API.call('me'), API.call('catalog').catch(function () { return null; })]);
       await App.afterLogin(results[0], results[1]);
@@ -398,7 +428,7 @@ const Login = (function () {
       ROOT().innerHTML = frame('<h2>เข้าสู่ระบบแล้ว แต่โหลดข้อมูลไม่สำเร็จ</h2>' + App.errorBox(e) +
         '<button class="btn primary block lg" id="retry">ลองโหลดอีกครั้ง</button>');
       $('#retry').onclick = function () { location.reload(); };
-    }
+    } finally { busy = false; waiting(''); }
   }
   /** บัญชีที่ต้องเปลี่ยน PIN — ระบบนี้อ่านบัญชีกลาง (PrintHub) อย่างเดียว จึงให้ไปตั้งที่หน้าตั้ง PIN (ไม่แสดงชื่อระบบอื่น) */
   function newPin() {
@@ -474,3 +504,4 @@ const Login = (function () {
   }
   return { show: show, pickDept: pickDept, positionSkipped: positionSkipped, overlay: overlay };
 })();
+
