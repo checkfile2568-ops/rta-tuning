@@ -311,31 +311,49 @@ const Login = (function () {
     if (acct) return pinStep();
     ROOT().innerHTML = frame('<h2>เข้าสู่ระบบ</h2><p class="muted">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</p>' +
       '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย" aria-label="ค้นหาชื่อ"></div>' +
-      '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res"></ul>');
+      '<div class="row end"><button type="button" class="btn sm" id="acct-refresh">ค้นหารายชื่อใหม่</button></div>' +
+      '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>');
     const q = $('#q');
     q.focus();
-    q.addEventListener('input', U.debounce(search, 180));
+    q.addEventListener('input', U.debounce(function () { search(false); }, 180));
+    q.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); search(true); } });
+    $('#acct-refresh').onclick = function () { search(true); };
   }
-  const memo = {};
-  async function search() {
-    const q = $('#q').value.trim();
-    const box = $('#res');
-    if (!q) { box.classList.add('hide'); return; }
+  const memo = Object.create(null);
+  let searchSeq = 0;
+  function accountQuery(value) { return String(value || '').normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g, '').trim(); }
+  async function search(force) {
+    const field = $('#q'), box = $('#res'), refresh = $('#acct-refresh');
+    if (!field || !box) return;
+    const q = accountQuery(field.value), seq = ++searchSeq;
+    if (!q) { box.classList.add('hide'); if (refresh) refresh.disabled = false; return; }
+    if (refresh) refresh.disabled = true;
+    box.classList.remove('hide'); box.textContent = 'กำลังค้นหารายชื่อ…';
+    $('#err').textContent = '';
     try {
-      const r = memo[q] || (memo[q] = await API.call('searchAccounts', { q: q }));
-      if (!$('#res') || $('#q').value.trim() !== q) return;
-      box.classList.remove('hide');
+      const cached = memo[q];
+      const r = !force && cached && Date.now() - cached.at < 30000
+        ? cached.rows : await API.call('searchAccounts', { q: q });
+      if (!Array.isArray(r)) throw new Error('ไม่สามารถอ่านรายชื่อได้ กรุณากดค้นหารายชื่อใหม่');
+      // Never retain an empty search. Newly added/activated users must be discoverable immediately.
+      if (r.length) memo[q] = { at: Date.now(), rows: r }; else delete memo[q];
+      if (seq !== searchSeq || !$('#res') || !$('#q') || accountQuery($('#q').value) !== q) return;
       box.innerHTML = r.length ? r.map(function (a, i) {
         return '<li><button data-i="' + i + '"><b>' + U.esc(a.name) + '</b><small>' + U.esc(a.dept || '—') + (a.ready ? '' : ' · ยังไม่ได้ตั้ง PIN') + '</small></button></li>';
-      }).join('') : '<li class="empty small">ไม่พบชื่อที่ขึ้นต้นด้วย "' + U.esc(q) + '"</li>';
+      }).join('') : '<li class="empty small">ไม่พบชื่อที่ขึ้นต้นด้วย "' + U.esc(q) + '"<br>ลองพิมพ์ชื่ออีกครั้ง หรือกด “ค้นหารายชื่อใหม่”</li>';
       box.onclick = function (e) {
         const b = e.target.closest('button[data-i]');
         if (!b) return;
         acct = r[Number(b.dataset.i)];
         pinStep();
       };
-      $('#err').textContent = '';
-    } catch (e) { $('#err').textContent = e.message; }
+    } catch (e) {
+      if (seq === searchSeq && $('#res') && $('#q') && accountQuery($('#q').value) === q) {
+        box.classList.add('hide'); $('#err').textContent = e.message;
+      }
+    } finally {
+      if (seq === searchSeq && refresh && refresh.isConnected) refresh.disabled = false;
+    }
   }
   function pinStep(msg) {
     pin = ''; busy = false;
@@ -507,5 +525,6 @@ const Login = (function () {
   }
   return { show: show, pickDept: pickDept, positionSkipped: positionSkipped, overlay: overlay };
 })();
+
 
 
