@@ -9,6 +9,7 @@ def integrate(source):
     if 'const trainingResponse = trainingDispatch_(e);' in source:
         raise ValueError('Training hooks already present; inspect current source instead of patching twice')
     hooks = [
+      ('function userName_(code) {', 'function userName_(code) {\n  if (TRAINING_SCOPE_) return trainingName_(code);'),
       ('function doPost(e) {', 'function doPost(e) {\n  const trainingResponse = trainingDispatch_(e);\n  if (trainingResponse !== null) return trainingResponse;'),
       ('function db_() {', 'function db_() {\n  if (TRAINING_SCOPE_) {\n    if (!DB_.ss) DB_.ss = SpreadsheetApp.openById(TRAINING_SCOPE_.id);\n    return DB_.ss;\n  }'),
       ("getProperty(k); }", "getProperty(trainingPropertyKey_(k)); }"),

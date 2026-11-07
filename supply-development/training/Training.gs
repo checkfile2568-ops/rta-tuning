@@ -56,6 +56,13 @@ function trainingUse_(record) {
   if (!record || !record.id || record.id===real) throw appErr_('TRAINING_DB_ERROR','ไม่สามารถใช้ฐานข้อมูลจริงเป็นพื้นที่ฝึกได้');
   TRAINING_SCOPE_=record; resetDb_();
 }
+function trainingName_(code) {
+  if(!code)return '';
+  const u=find_('USERS',code);
+  if(u&&u.full_name)return String(u.full_name);
+  if(TRAINING_SCOPE_&&TRAINING_SCOPE_.actor&&TRAINING_SCOPE_.actor.code===code)return TRAINING_SCOPE_.actor.name;
+  return String(code);
+}
 function trainingUser_(u) { return Object.assign({},u,{dept_id:'TRAIN_DEPT',position:u.position||'ผู้ทดลองใช้งาน'}); }
 function trainingDispatch_(e) {
   TRAINING_SCOPE_=null;
@@ -85,7 +92,7 @@ function trainingDispatch_(e) {
       const route=routes_()[action];
       if(!route||route.auth===false) throw appErr_('TRAINING_ACTION_BLOCKED','คำสั่งนี้ไม่รองรับในพื้นที่ฝึก');
       if(route.roles&&route.roles.indexOf(role)<0) throw appErr_('FORBIDDEN','บัญชีนี้ไม่มีสิทธิ์ทำรายการนี้');
-      trainingUse_(record);ctx.user=trainingUser_(realUser);
+      trainingUse_(Object.assign({},record,{actor:{code:realUser.code,name:realUser.name}}));ctx.user=trainingUser_(realUser);
       if(route.write) {
         if(!/^[0-9a-zA-Z-]{16,64}$/.test(String(body.client_uuid||''))) throw appErr_('BAD_UUID','คำขอไม่มีรหัสรายการ');
         ctx.uuid=sha_('TRAINING|'+record.generation+'|'+body.client_uuid);
@@ -154,7 +161,8 @@ function trainingSeed_(ctx,book) {
   trainingSeedRows_(book,'CONFIG',config);
   trainingSeedRows_(book,'DEPARTMENTS',[{dept_id:'TRAIN_DEPT',name:'ส่วนงานทดลอง (ตัวอย่าง)',order:1,active:true}]);
   trainingSeedRows_(book,'USERS',[{user_code:'TRAIN-USER1',full_name:'ผู้ขอเบิกตัวอย่าง 1',dept_id:'TRAIN_DEPT',role:'USER'},
-    {user_code:'TRAIN-USER2',full_name:'ผู้ขอเบิกตัวอย่าง 2',dept_id:'TRAIN_DEPT',role:'USER'}]);
+    {user_code:'TRAIN-USER2',full_name:'ผู้ขอเบิกตัวอย่าง 2',dept_id:'TRAIN_DEPT',role:'USER'},
+    {user_code:ctx.user.code,full_name:ctx.user.name,dept_id:'TRAIN_DEPT',role:ctx.user.role}]);
   const names=['รีม','อัน','กล่อง','ด้าม','เล่ม','เครื่อง','ม้วน','ห่อ'],units={};
   names.forEach(function(n,i){units[n]='TRAIN-U'+(i+1);});
   trainingSeedRows_(book,'UNITS',names.map(function(n){return {unit_id:units[n],name:n,aliases:'',active:true};}));
@@ -178,4 +186,20 @@ function trainingSeed_(ctx,book) {
   trainingSeedOp_(officer,'prepareRequest',{req_id:ready.req_id});
   const report=reconcileReport_();
   if(!report.ok)throw appErr_('TRAINING_SEED_FAILED','ยอดชุดฝึกไม่ผ่านการกระทบยอด');
+}
+
+/** Editor-owner installation helpers, not exposed by doPost/routes_. The editor's
+ * execution log identifies the Google owner; do not attribute this to an app user.
+ */
+function installTrainingExample() {
+  TRAINING_SCOPE_=null;resetDb_();
+  const result=trainingManage_({user:{code:'EDITOR_OWNER',name:'เจ้าของโครงการ (ติดตั้งชุดฝึก)',role:'ADMIN'},
+    uuid:Utilities.getUuid(),action:'training.create'},{confirm:'CREATE_TRAINING'});
+  Logger.log(JSON.stringify(result));return result;
+}
+function archiveTrainingExample() {
+  TRAINING_SCOPE_=null;resetDb_();const current=trainingState_().active;
+  const result=trainingManage_({user:{code:'EDITOR_OWNER',name:'เจ้าของโครงการ (ติดตั้งชุดฝึก)',role:'ADMIN'},
+    uuid:Utilities.getUuid(),action:'training.clear'},{confirm:'CLEAR_TRAINING',generation:current?current.generation:''});
+  Logger.log(JSON.stringify(result));return result;
 }

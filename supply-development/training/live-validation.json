@@ -1,0 +1,9 @@
+{
+  "api": "1.2.0",
+  "generation_tested": "9958a81a-54f0-46b6-b3f4-ec555c26ee54",
+  "seed_materials": 10,
+  "seed_receipt_total": 6811,
+  "prepare_issue_return_reconcile": true,
+  "production_catalog_unchanged": true,
+  "officer_create_denied": true
+}
