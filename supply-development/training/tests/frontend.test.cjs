@@ -36,7 +36,7 @@ function ui(role,scope,active){
  const {document}=parseHTML('<html><body><div id="v"></div></body></html>'),views={};
  const status={active,generation:active?gen:'',created_at:'2026-11-07',quote:[{name:'ตัวอย่าง',qty:15,unit:'รีม',price:120,total:1800}],supplier:'ผู้จำหน่ายตัวอย่าง',subtotal:6811,vat:476.77,total:7287.77};
  const context=vm.createContext({document,window:{},location:{},App:{S:{user:{role}},view:(name,v)=>views[name]=v},API:{scope:()=>scope,call:async()=>status},Outbox:{pending:()=>[]},U:{$:s=>document.querySelector(s),esc:s=>String(s??'').replace(/</g,'&lt;'),thDateTime:x=>x,n:x=>x,money:x=>Number(x).toFixed(2)}});
- vm.runInContext(code('training.js'),context);return {document,views};
+ vm.runInContext(code('training.js'),context);return {document,views,context};
 }
 test('only admins see create/clear; officers see enter and quotation; inactive controls are disabled',async()=>{
  for(const [role,active] of [['ADMIN',false],['ADMIN',true],['OFFICER',true]]){
@@ -50,4 +50,15 @@ test('only admins see create/clear; officers see enter and quotation; inactive c
 test('cleared generation stays visibly in practice and never silently falls back to live',async()=>{
  const e=ui('OFFICER',gen,false),el=e.document.querySelector('#v');await e.views.training.render(el);
  assert.match(el.textContent,/ชุดฝึกเดิมถูกล้างแล้ว/);assert.ok(e.document.querySelector('[data-act="training-leave"]'));
+});
+
+test('admin creation disables controls, shows real waiting text, and allows the slow seed request',async()=>{
+ const e=ui('ADMIN','',false),el=e.document.querySelector('#v');await e.views.training.render(el);
+ let resolve,options,action;e.context.U.confirm=async()=>true;e.context.U.uuid=()=>gen;e.context.U.toast=()=>{};e.context.App.render=()=>{};
+ e.context.API.call=(a,d,o)=>{action=a;options=o;return new Promise(r=>{resolve=r;});};
+ const button=e.document.querySelector('#training-create');await button.onclick();
+ assert.equal(action,'training.create');assert.equal(options.timeout,120000);assert.equal(options.write,true);
+ assert.equal(button.disabled,true);assert.match(e.document.querySelector('#training-progress').textContent,/กำลังสร้างชุดฝึก/);
+ resolve({active:true});await new Promise(setImmediate);
+ assert.equal(button.disabled,false);assert.equal(e.document.querySelector('#training-progress').textContent,'');
 });

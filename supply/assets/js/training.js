@@ -42,7 +42,7 @@ App.view('training', {
       (same ? '<a class="btn primary" href="#/queue">ทดลองคิวจ่ายวัสดุ</a><a class="btn" href="#/stock">ดูคลังตัวอย่าง</a>' : '') +
       (isAdmin ? '<button class="btn" id="training-clear"' + (!r.active ? ' disabled' : '') + '>ล้างชุดฝึก</button>' : '') +
       (current ? '<button class="btn" data-act="training-leave">กลับคลังจริง</button>' : '') + '</div>' +
-      '<p class="small muted">เฉพาะแอดมินสร้างและล้างได้ เจ้าหน้าที่พัสดุใช้ชุดร่วมกันได้จากเครื่องอื่น · ล้างแล้วชุดเดิมจะปิดใช้งานและเก็บสำเนาไว้กู้คืน ข้อมูลจริงและบัญชีผู้ใช้ไม่ถูกล้าง</p></div>' +
+      '<p id="training-progress" role="status" aria-live="polite"></p><p class="small muted">เฉพาะแอดมินสร้างและล้างได้ เจ้าหน้าที่พัสดุใช้ชุดร่วมกันได้จากเครื่องอื่น · ล้างแล้วชุดเดิมจะปิดใช้งานและเก็บสำเนาไว้กู้คืน ข้อมูลจริงและบัญชีผู้ใช้ไม่ถูกล้าง</p></div>' +
       '<div class="card"><h3>เริ่มทดลองอย่างไร</h3><ol><li>แอดมินกดสร้างข้อมูลตัวอย่าง แล้วเจ้าหน้าที่กดเข้าพื้นที่ฝึก</li>' +
       '<li>ตรวจคลัง 10 รายการ และประวัติรับเข้า 1 ใบตามใบเสนอราคา</li><li>เปิดคิวจ่าย มีตัวอย่างรอจัดเตรียม 1 ใบ และพร้อมรับ 1 ใบ ให้ลองจัดเตรียม → ส่งมอบ พร้อมระบุชื่อผู้รับ</li>' +
       '<li>ลองเบิกของตนเอง รับเข้าเพิ่ม รับคืน ตรวจนับ และตรวจยอดในสถิติ/ประวัติ</li><li>กลับหน้านี้ให้แอดมินล้างชุดฝึก แล้วกดสร้างใหม่เพื่อเริ่มรอบถัดไป</li></ol>' +
@@ -54,16 +54,21 @@ App.view('training', {
     let pending = false, opUUID = null, opAction = '';
     async function mutate(action, data, button) {
       if (pending) return;
-      pending = true; button.disabled = true;
+      pending = true;
+      const controls = Array.from(el.querySelectorAll('#training-create,#training-clear,#training-enter'));
+      const previous = controls.map(function (b) { return b.disabled; });
+      controls.forEach(function (b) { b.disabled = true; });
+      const progress = U.$('#training-progress');
+      progress.textContent = action === 'training.create' ? 'กำลังสร้างชุดฝึก กรุณารอสักครู่ อาจใช้เวลาประมาณ 1 นาที…' : 'กำลังล้างชุดฝึกและเก็บสำเนา…';
       // Keep a UUID after network uncertainty; a repeated click replays the same server operation.
       if (opAction !== action) { opAction = action; opUUID = U.uuid(); }
       try {
-        await API.write(action, data, opUUID);
+        await API.call(action, data, { write: true, uuid: opUUID, timeout: 120000 });
         U.toast(action === 'training.create' ? 'สร้างชุดฝึกแล้ว' : 'ล้างชุดฝึกแล้ว เก็บสำเนาชุดเก่าไว้', 'ok');
         if (action === 'training.clear' && API.scope()) { API.setTraining(''); location.reload(); }
         else App.render();
       } catch (e) { U.toast(e.message, 'err', 7000); }
-      finally { pending = false; if (button.isConnected) button.disabled = false; }
+      finally { pending = false; if (progress.isConnected) progress.textContent = ''; controls.forEach(function (b, i) { if (b.isConnected) b.disabled = previous[i]; }); }
     }
     const create = U.$('#training-create'), clear = U.$('#training-clear'), enter = U.$('#training-enter');
     if (create) create.onclick = async function () {

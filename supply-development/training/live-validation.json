@@ -5,5 +5,12 @@
   "seed_receipt_total": 6811,
   "prepare_issue_return_reconcile": true,
   "production_catalog_unchanged": true,
-  "officer_create_denied": true
+  "officer_create_denied": true,
+  "archived_generation_write_denied": true,
+  "officer_clear_denied": true,
+  "deployment_version": 4,
+  "ready_generation": "fc78ba43-8391-45c4-a707-c9c12144e715",
+  "fresh_seed_after_reset": true,
+  "fresh_pending_requests": 2,
+  "production_unchanged_after_reset": true
 }
