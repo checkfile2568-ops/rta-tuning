@@ -39,14 +39,16 @@ const Officer = (function () {
     const c = S.me.counts || {};
     el.innerHTML = '<div class="page-h"><h1>งานวันนี้</h1><p>' + U.thDate(new Date()) + ' · ' + U.esc(S.user.name) + '</p></div>' +
       (!S.cfg.cost_method ? '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b>ผู้ดูแลระบบต้องตั้งค่าก่อนบันทึกยอดยกมาและรับ-จ่าย</div></div>' : '') +
-      '<div class="kpis"><a class="kpi gold" href="#/queue" style="text-decoration:none"><small>รอจัดเตรียม</small><b>' + U.n(c.queuePrep || 0) + '</b><span>ใบ</span></a>' +
-      '<a class="kpi" href="#/queue" style="text-decoration:none"><small>พร้อมรับ (รอส่งมอบ)</small><b>' + U.n(c.queueReady || 0) + '</b><span>ใบ</span></a>' +
-      '<a class="kpi" href="#/reorder" style="text-decoration:none"><small>ถึงจุดสั่งซื้อ</small><b>' + U.n(c.reorder || 0) + '</b><span>รายการ</span></a>' +
-      (S.cfg.approval_enabled ? '<a class="kpi" href="#/approve" style="text-decoration:none"><small>รออนุมัติ</small><b>' + U.n(c.approvals || 0) + '</b><span>ใบ</span></a>' : '') + '</div>' +
+      '<div class="kpis today-kpis"><a class="kpi task-prep" href="#/queue" style="text-decoration:none"><small>รอจัดเตรียม</small><b>' + U.n(c.queuePrep || 0) + '</b><span>ใบ</span></a>' +
+      '<a class="kpi task-ready" href="#/queue" style="text-decoration:none"><small>พร้อมรับ (รอส่งมอบ)</small><b>' + U.n(c.queueReady || 0) + '</b><span>ใบ</span></a>' +
+      '<a class="kpi task-reorder" href="#/reorder" style="text-decoration:none"><small>ถึงจุดสั่งซื้อ</small><b>' + U.n(c.reorder || 0) + '</b><span>รายการ</span></a>' +
+      (S.cfg.approval_enabled ? '<a class="kpi task-approval" href="#/approve" style="text-decoration:none"><small>รออนุมัติ</small><b>' + U.n(c.approvals || 0) + '</b><span>ใบ</span></a>' : '') + '</div>' +
       '<div class="row" style="margin-bottom:18px"><a class="btn primary lg" href="#/queue">' + ICON('truck') + 'คิวจ่ายวัสดุ</a><a class="btn lg" href="#/receive">' + ICON('inbox') + 'รับเข้า</a>' +
       '<a class="btn lg" href="#/count">' + ICON('clip') + 'ตรวจนับ</a><a class="btn lg" href="#/req">' + ICON('box') + 'เบิกของตนเอง</a></div>' +
-      '<div class="card"><h3>คิวที่รอนานที่สุด</h3><div id="q5"><div class="skel"></div></div></div>' +
+      '<div class="card today-chart-card"><div><h3>สถานะคิวคำขอปัจจุบัน</h3><p class="small muted">จำนวนใบที่ยังรอดำเนินการ ณ เวลาที่โหลดข้อมูล</p><div id="today-legend"></div></div><div class="today-chart" id="today-chart"><canvas id="today-canvas" role="img" aria-label="กราฟสถานะคิวคำขอปัจจุบัน"></canvas></div></div>' +
+      '<div class="card"><h3>คิวคำขอเบิกพัสดุ</h3><div id="q5"><div class="skel"></div></div></div>' +
       (window.Notification && Notification.permission === 'default' ? '<p class="small muted">ระบบตรวจคำขอใหม่ทุก 1 นาทีขณะเปิดหน้านี้ไว้ <button class="btn sm" id="nt">เปิดการแจ้งเตือนบนเครื่องนี้</button></p>' : '');
+    drawTodayChart(el, c);
     const nt = U.$('#nt');
     if (nt) nt.onclick = function () { Notification.requestPermission().then(function () { nt.parentNode.remove(); }); };
     try {
@@ -56,6 +58,25 @@ const Officer = (function () {
           ' · ' + r.items.length + ' รายการ · ' + (r.age_days || 0) + ' วันทำการ</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>';
       }).join('') : '<p class="muted">ไม่มีคิวค้าง</p>';
     } catch (e) { U.$('#q5').innerHTML = App.errorBox(e); }
+  }
+  let todayChart = null;
+  async function drawTodayChart(el, c) {
+    if (todayChart) { todayChart.destroy(); todayChart = null; }
+    const entries = [
+      {label:'รอจัดเตรียม',value:Number(c.queuePrep)||0,color:'#C58A21'},
+      {label:'พร้อมรับ',value:Number(c.queueReady)||0,color:'#23836A'}
+    ].concat(S.cfg.approval_enabled ? [{label:'รออนุมัติ',value:Number(c.approvals)||0,color:'#7662B7'}] : []);
+    el.querySelector('#today-legend').innerHTML = entries.map(function(x) { return '<p class="today-legend-row"><i style="background:' + x.color + '" aria-hidden="true"></i><span>' + x.label + '</span><b>' + U.n(x.value) + ' ใบ</b></p>'; }).join('');
+    const holder = el.querySelector('#today-chart');
+    if (!entries.some(function(x) { return x.value > 0; })) { holder.innerHTML = '<div class="today-chart-empty">' + ICON('check') + '<b>ไม่มีคำขอค้าง</b><span>ทุกสถานะเป็น 0 ใบ</span></div>'; return; }
+    try {
+      await U.loadScript('assets/vendor/chart.umd.js');
+      if (!el.isConnected || !holder.isConnected || !el.querySelector('#today-canvas')) return;
+      todayChart = new Chart(el.querySelector('#today-canvas'), {
+        type:'doughnut',data:{labels:entries.map(function(x){return x.label;}),datasets:[{data:entries.map(function(x){return x.value;}),backgroundColor:entries.map(function(x){return x.color;}),borderWidth:3,borderColor:'#fff'}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.label + ': ' + U.n(ctx.raw) + ' ใบ';}}}}}
+      });
+    } catch (e) { if (holder.isConnected) holder.innerHTML = '<p class="small muted">แสดงกราฟไม่ได้ ดูจำนวนจริงจากรายการสถานะข้างต้นได้</p>'; }
   }
   /** แจ้งเจ้าหน้าที่พัสดุเมื่อมีคำขอเข้ามา (ในระบบ — LINE เป็นจุดต่อยอด) ตรวจทุก 60 วินาทีขณะเปิดหน้าอยู่ */
   let watching = false;
@@ -541,7 +562,7 @@ App.view('opening', {
       '<tr><td>จำกัดต่อครั้ง</td><td>จำนวนเบิกสูงสุดต่อครั้ง จำนวนเต็ม; ว่างหรือ 0 = ไม่จำกัด</td></tr>' +
       '<tr><td>รายละเอียด</td><td>รายละเอียดเพิ่มเติม ว่างได้</td></tr>' +
       '</tbody></table></div>' +
-      '<button class="btn" id="tpl">' + ICON('download') + 'ดาวน์โหลดแม่แบบ</button></div>' +
+      '<div class="template-downloads"><a class="btn primary" href="assets/templates/opening-original.xlsx" download="แม่แบบยอดยกมา-ต้นฉบับ.xlsx">' + ICON('download') + 'ไฟล์ต้นฉบับ Excel (.xlsx)</a><a class="btn" href="assets/templates/opening-original.csv" download="แม่แบบยอดยกมา-ต้นฉบับ.csv">' + ICON('download') + 'ไฟล์ต้นฉบับ CSV (.csv)</a><button class="btn" id="tpl">' + ICON('download') + 'แม่แบบพร้อมแถวตัวอย่าง</button></div><p class="small muted">เก็บไฟล์ต้นฉบับไว้ แล้วทำสำเนาสำหรับกรอกข้อมูล · ไฟล์ต้นฉบับมีหัวตาราง 10 ช่อง ไม่มีข้อมูลตัวอย่างปะปน · ไฟล์แม่แบบพร้อมตัวอย่างต้องลบแถวตัวอย่างก่อนนำเข้า · ระบบยังรับ .xls เดิมได้</p><h4>ตัวอย่างรูปแบบตาราง</h4><div class="tablewrap"><table class="t opening-example"><thead><tr>' + OPEN_COLS.map(function(c){return '<th>' + c + '</th>';}).join('') + '</tr></thead><tbody><tr><td>MAT-001</td><td>กระดาษ A4 80 แกรม</td><td>วัสดุสำนักงาน</td><td>รีม</td><td>10</td><td>110.00</td><td>5</td><td>20</td><td>5</td><td>ตัวอย่างการกรอก ไม่ใช่ยอดจริง</td></tr></tbody></table></div></div>' +
       '<div class="card"><h3>2. เลือกไฟล์และตรวจ</h3><p class="small muted">เลือกไฟล์ วางข้อความ หรือเพิ่มทีละรายการ — ทุกทางรวมเข้ารายการตรวจเดียวกัน</p><input type="file" id="file" accept=".xlsx,.xls,.csv" class="input"><div id="pv" style="margin-top:12px"></div></div>' +
       '<div class="card"><h3>หรือวางข้อความ</h3><p class="small muted">วางข้อมูลพร้อมหัวคอลัมน์ตามแม่แบบ คั่นแต่ละช่องด้วย Tab และขึ้นบรรทัดใหม่แต่ละรายการ ตรวจตัวอย่างก่อนนำเข้า ข้อมูลจะรวมกับรายการที่เตรียมไว้</p><textarea class="input" id="opening-text" rows="5" aria-label="ข้อความยอดยกมา"></textarea><button class="btn" id="opening-text-add">ตรวจและเพิ่มข้อความ</button></div>' +
       '<div class="card"><h3>หรือเพิ่มทีละรายการ</h3><form id="opening-single"><div class="grid2">' + OPEN_COLS.map(function (c, i) { return '<label class="field"><span>' + c + (i === 1 || i === 3 ? ' *' : '') + '</span><input class="input" name="' + OPEN_KEYS[i] + '"' + (i >= 4 && i <= 8 ? ' type="number" min="0" step="' + (i === 5 ? 'any' : '1') + '"' : '') + (i === 1 || i === 3 ? ' required' : '') + '></label>'; }).join('') + '</div><button class="btn primary">เพิ่มเข้ารายการตรวจ</button></form></div>' +

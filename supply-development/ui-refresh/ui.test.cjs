@@ -5,9 +5,9 @@ function context(){
  let instrumented=src.replace('S: S, ROLE_TH: ROLE_TH,','_navFor:navFor, _navHtml:navHtml, S: S, ROLE_TH: ROLE_TH,').replace('return { show: show, pickDept:', 'return { _frame:frame, show: show, pickDept:');
  vm.runInContext(instrumented+'\nthis.x={App,Login}',ctx);return ctx.x;
 }
-test('illustrated name entry remains a real live form; PIN frame keeps existing glass design',()=>{
+test('name and PIN share the illustration with opposite sliding states',()=>{
  const {Login}=context();const n=Login._frame('<input id="q">',true),p=Login._frame('<div class="keypad"></div>');
- assert.match(n,/login-name/);assert.match(n,/login-inventory.webp/);assert.match(n,/<input id="q">/);assert.doesNotMatch(p,/login-illustration|login-name/);assert.match(p,/login-glass/);
+ assert.match(n,/login-slide/);assert.match(n,/login-office-v2.webp/);assert.match(n,/<input id="q">/);assert.doesNotMatch(n,/login-slide is-pin/);assert.match(p,/login-slide is-pin/);assert.match(p,/login-glass/);
 });
 test('role menus keep all original destinations and request counts',()=>{
  const {App}=context();App.S.me={counts:{queuePrep:1,queueReady:2}};

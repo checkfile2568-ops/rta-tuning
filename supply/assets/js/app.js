@@ -99,10 +99,10 @@ const App = (function () {
     ROOT().innerHTML =
       (API.scope() ? Training.banner() : RealTrial.banner(S.me && S.me.realTrial)) +
       '<div class="shell' + cartCls + '">' +
-      '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><b>' + U.esc(S.cfg.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
+      '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><b>' + U.esc('ระบบบริหารวัสดุสำนักงาน') + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
       '<nav class="nav" id="nav">' + navHtml(navFor(u), route) + '</nav>' +
       '<div class="side-foot"><b>' + U.esc(u.name) + '</b>' + U.esc(ROLE_TH[u.role] || '') + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</div></aside>' +
-      '<div class="main"><header class="mhead"><i class="bar"></i><div><b>' + U.esc(S.cfg.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
+      '<div class="main"><header class="mhead"><i class="bar"></i><div><b>' + U.esc('ระบบบริหารวัสดุสำนักงาน') + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
       '<button class="userbtn" data-act="usermenu" aria-label="เมนูผู้ใช้">' + ICON('user') + ICON('chev') + '</button></header>' +
       '<div class="topbar"><span>' + today + '</span><button class="userbtn" data-act="usermenu"><span class="avatar">' + U.esc(init) + '</span>' + U.esc(u.name) + '</button></div>' +
       (v.cart ? '<div class="with-cart"><main class="content" id="view"></main><aside class="cart-panel" id="cartpanel" aria-label="ตะกร้า"></aside></div>'
@@ -123,7 +123,7 @@ const App = (function () {
     S.route = route;
     shell(route);
     const v = views[route];
-    document.title = (v.title || '') + ' · ' + (S.cfg.app_name || 'ระบบเบิกวัสดุ');
+    document.title = (v.title || '') + ' · ' + ('ระบบบริหารวัสดุสำนักงาน');
     const el = $('#view');
     try { await v.render(el, parts.slice(1)); }
     catch (e) { el.innerHTML = errorBox(e); }
@@ -304,18 +304,34 @@ const Login = (function () {
   const $ = U.$;
   let acct = null, pin = '', busy = false, overlayResolve = null, overlayFor = null;
 
+  const SYSTEM_NAME = 'ระบบบริหารวัสดุสำนักงาน';
+  const SYSTEM_ORG = 'ศาลจังหวัดลพบุรี';
+  const SYSTEM_TAGLINE = 'บริหารวัสดุอย่างเป็นระบบ สนับสนุนงานอย่างมีประสิทธิภาพ';
+  function loginHeading(nameEntry) {
+    return '<div class="login-heading"><span class="login-eyebrow">OFFICE SUPPLY MANAGEMENT</span>' +
+      '<h1>' + SYSTEM_NAME + '<span>' + SYSTEM_ORG + '</span></h1><p>' + SYSTEM_TAGLINE + '</p>' +
+      '<div class="login-steps" aria-label="ขั้นตอนเข้าสู่ระบบ"><span' + (nameEntry ? ' class="current" aria-current="step"' : '') + '>1 เลือกชื่อ</span><i aria-hidden="true"></i><span' + (!nameEntry ? ' class="current" aria-current="step"' : '') + '>2 ใส่ PIN</span></div></div>';
+  }
   function frame(inner, nameEntry) {
-    const c = App.S.cfg || {};
-    return '<div class="login login-glass' + (nameEntry ? ' login-name' : '') + '"><section class="art">' + (nameEntry ? '<img class="login-illustration" src="assets/img/login-inventory.webp?v=1.3.1" alt="" width="1122" height="1402" fetchpriority="high"><div class="login-brand-copy">' : '') + '<b>' + U.esc(c.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(c.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i>' +
-      '<p>เบิกวัสดุสิ้นเปลือง ติดตามคำขอ ประวัติการเบิก และสรุปสถิติ</p>' + (nameEntry ? '</div>' : '') + '</section>' +
-      '<section class="panel"><div class="box">' + inner + '</div></section></div>';
+    return '<div class="login login-glass login-slide' + (nameEntry ? '' : ' is-pin') + '"><div class="login-deck">' +
+      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-office-v2.webp?v=1.4.0" alt="" width="1122" height="1402" fetchpriority="high">' +
+      '<div class="login-art-caption"><span>วัสดุพร้อมใช้ ข้อมูลพร้อมตรวจสอบ</span><small>รับเข้า · เบิก · ส่งมอบ · ติดตาม</small></div></section>' +
+      '<section class="panel"><div class="box">' + loginHeading(nameEntry) + inner + '</div></section></div></div>';
+  }
+  // Keep the moving panels alive; replace only the form so CSS can animate both directions.
+  function mountLogin(inner, nameEntry) {
+    const shell = ROOT().querySelector('.login-slide');
+    if (!shell) { ROOT().innerHTML = frame(inner, nameEntry); return; }
+    shell.querySelector('.box').innerHTML = loginHeading(nameEntry) + inner;
+    void shell.offsetWidth;
+    shell.classList.toggle('is-pin', !nameEntry);
   }
   function show() {
     busy = false; waiting('');
     acct = Store.ls.get('last_acct', null);
     pin = '';
     if (acct) return pinStep();
-    ROOT().innerHTML = frame('<h2>เข้าสู่ระบบ</h2><p class="muted">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</p>' +
+    mountLogin('<h2>เข้าสู่ระบบ</h2><p class="muted">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</p>' +
       '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย" aria-label="ค้นหาชื่อ"></div>' +
       '<div class="row end"><button type="button" class="btn sm" id="acct-refresh">ค้นหารายชื่อใหม่</button></div>' +
       '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>', true);
@@ -377,7 +393,7 @@ const Login = (function () {
       '<h3>กำลังเข้าสู่ระบบ</h3><p class="wait-phase" id="login-wait-phase">กำลังตรวจสอบ PIN</p><p class="wait-hint" id="login-wait-hint">กรุณารอสักครู่</p>' +
       '<div class="wait-shimmer" aria-hidden="true"><i></i></div></div></div></div>';
     if (overlayFor) { $('#reauth .box').innerHTML = html; }
-    else ROOT().innerHTML = frame(html);
+    else mountLogin(html, false);
     const inp = $('#pinin');
     if (!('ontouchstart' in window)) inp.focus();
     inp.addEventListener('input', function () { if (busy) { inp.value = pin; return; } pin = inp.value.replace(/\D/g, '').slice(0, 4); dots(); if (pin.length === 4) submit(); });
