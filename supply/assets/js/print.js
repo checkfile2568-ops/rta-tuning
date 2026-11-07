@@ -12,6 +12,7 @@ const PrintDoc = (function () {
     while (rows.length < 8) rows.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
     const st = { ISSUED: 'จ่ายแล้ว', READY: 'พร้อมรับ', PENDING_PREP: 'รอจัดเตรียม', PENDING_APPROVAL: 'รออนุมัติ', CANCELLED: 'ยกเลิก', REJECTED: 'ไม่อนุมัติ' }[r.status] || r.status;
     return '<div class="sheet" style="--m:' + (r.print_margin_cm || 2) + 'cm">' +
+      (API.scope() ? '<div style="border:2px solid #a66b00;text-align:center;font-weight:bold;padding:6px">ข้อมูลตัวอย่างสำหรับฝึกใช้งาน — ห้ามใช้เป็นเอกสารเบิกจ่ายจริง</div>' : '') +
       '<h1>ใบเบิกวัสดุ</h1><p class="org">' + U.esc(r.org_name || 'ศาลจังหวัดลพบุรี') + '</p>' +
       '<div class="meta"><span>ส่วนงาน <b>' + U.esc(r.dept_name || '-') + '</b></span><span>เลขที่ <b>' + U.esc(r.req_no) + '</b></span></div>' +
       '<div class="meta"><span></span><span>วันที่ ' + U.thDate(r.created_at) + '</span></div>' +
@@ -59,3 +60,4 @@ App.view('print', {
     U.$('#pr').onclick = function () { PrintDoc.print(html, r.print_margin_cm); };
   }
 });
+

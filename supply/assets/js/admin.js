@@ -8,7 +8,7 @@ const Admin = (function () {
       (App.S.cfg.demo_accounts ? '<div class="notice warn"><div><b>ใช้บัญชีทดสอบอยู่</b>ยังไม่ได้ตั้ง PRINTHUB_DB_ID — ข้อมูลผู้ใช้เป็นข้อมูลสมมติ</div></div>' : '') +
       (!App.S.cfg.cost_method ? '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b><a href="#/settings">ตั้งค่า</a></div></div>' : '') +
       '<div class="kpis" id="k"><div class="skel"></div></div>' +
-      '<div class="cards"><a class="card" href="#/users" style="text-decoration:none">' + ICON('users', 'ic') + '<h3>ผู้ใช้และสิทธิ์</h3><p class="muted small">กำหนดผู้ขอเบิก หัวหน้าส่วน เจ้าหน้าที่พัสดุ ผู้ดูแลระบบ รายบัญชี</p></a>' +
+      '<div class="cards"><a class="card" href="#/training" style="text-decoration:none"><h3>ทดลองใช้งาน</h3><p class="muted small">สร้างหรือล้างชุดฝึกวัสดุ 10 รายการ แยกจากคลังจริง</p></a><a class="card" href="#/users" style="text-decoration:none">' + ICON('users', 'ic') + '<h3>ผู้ใช้และสิทธิ์</h3><p class="muted small">กำหนดผู้ขอเบิก หัวหน้าส่วน เจ้าหน้าที่พัสดุ ผู้ดูแลระบบ รายบัญชี</p></a>' +
       '<a class="card" href="#/settings" style="text-decoration:none"><h3>ตั้งค่าระบบ</h3><p class="muted small">วิธีคิดมูลค่า กฎกันคำขอซ้ำ การแสดงยอด เลขเอกสาร ระยะขอบพิมพ์</p></a>' +
       '<a class="card" href="#/backup" style="text-decoration:none"><h3>สำรองข้อมูล</h3><p class="muted small">สำรองทันที และตรวจสำเนาเทียบข้อมูลจริง</p></a>' +
       '<a class="card" href="#/reconcile" style="text-decoration:none"><h3>กระทบยอด</h3><p class="muted small">ตรวจยอดคงเหลือ ยอดจอง มูลค่า กับ ledger</p></a></div>';
@@ -210,3 +210,4 @@ App.view('backup', {
     await load();
   }
 });
+

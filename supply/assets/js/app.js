@@ -61,12 +61,12 @@ const App = (function () {
         .concat(appr ? [['approve', 'อนุมัติคำขอ', 'check', c.approvals]] : [])
         .concat([['-', 'งานของฉัน']]).concat(mine)
         .concat([['-', 'ข้อมูล'], ['suppliers', 'ผู้จำหน่าย', 'store'], ['opening', 'ยอดยกมา', 'upload'],
-          ['reconcile', 'กระทบยอด', 'scale'], ['audit', 'ประวัติการใช้งาน', 'log']]);
+          ['reconcile', 'กระทบยอด', 'scale'], ['audit', 'ประวัติการใช้งาน', 'log'], ['training', 'ทดลองใช้งาน', 'clip']]);
     }
     if (u.role === 'ADMIN') {
       return [['home', 'ภาพรวม', 'home'], ['dash', 'สถิติ/ประวัติ', 'chart'], ['users', 'ผู้ใช้และสิทธิ์', 'users'],
         ['depts', 'ส่วนงาน', 'building'], ['master', 'หมวด/หน่วย/วันหยุด', 'tag'], ['settings', 'ตั้งค่าระบบ', 'gear'],
-        ['backup', 'สำรองข้อมูล', 'db'], ['reconcile', 'กระทบยอด/ตรวจซ่อม', 'wrench', c.repairs], ['audit', 'Audit log', 'log'],
+        ['training', 'ทดลองใช้งาน', 'clip'], ['backup', 'สำรองข้อมูล', 'db'], ['reconcile', 'กระทบยอด/ตรวจซ่อม', 'wrench', c.repairs], ['audit', 'Audit log', 'log'],
         ['-', 'คลัง'], ['stock', 'คลังวัสดุ (ดู)', 'box'], ['opening', 'ยอดยกมา', 'upload'],
         ['-', 'งานของฉัน']].concat(mine);
     }
@@ -97,6 +97,7 @@ const App = (function () {
     const today = U.thDate(new Date()) + '<span class="sepv"></span>ปีงบประมาณ ' + U.fy();
     const cartCls = v.cart ? ' show-cartbar' : '';
     ROOT().innerHTML =
+      (API.scope() ? Training.banner() : '') +
       '<div class="shell' + cartCls + '">' +
       '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><b>' + U.esc(S.cfg.app_name || 'ระบบเบิกวัสดุ') + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
       '<nav class="nav" id="nav">' + navHtml(navFor(u), route) + '</nav>' +
@@ -130,6 +131,7 @@ const App = (function () {
     window.scrollTo(0, 0);
   }
   function errorBox(e) {
+    if (API.scope() && /^TRAINING_/.test(e && e.code || '')) return '<div class="notice warn"><div><b>พื้นที่ฝึกไม่พร้อมใช้งาน</b>' + U.esc(e.message) + '</div></div><a class="btn" href="#/training">เปิดเมนูทดลองใช้งาน</a> <button class="btn" data-act="training-leave">กลับคลังจริง</button>';
     return '<div class="notice err"><div><b>ทำรายการไม่สำเร็จ</b>' + U.esc(e && e.message || e) + '</div></div>' +
       '<button class="btn" onclick="App.render()">' + ICON('refresh') + 'ลองใหม่</button>';
   }
@@ -142,7 +144,7 @@ const App = (function () {
     const html = '<div class="who"><span class="avatar">' + U.esc(u.name.charAt(0)) + '</span><div><b>' + U.esc(u.name) + '</b><span class="muted small">' +
       U.esc(ROLE_TH[u.role]) + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</span></div></div>' +
       '<div class="menu-sheet"><nav class="nav">' + (more ? navHtml(items, S.route) : '') +
-      '<a href="#/profile">' + ICON('user') + '<span>โปรไฟล์และ PIN</span></a>' +
+      (API.scope() ? '' : '<a href="#/profile">' + ICON('user') + '<span>โปรไฟล์และ PIN</span></a>') +
       '<a href="#" data-act="logout">' + ICON('logout') + '<span>ออกจากระบบ</span></a></nav></div>';
     const wrap = document.createElement('div');
     wrap.className = 'modal-wrap';
@@ -236,7 +238,7 @@ const App = (function () {
     loadCart();
     Outbox.load(S.user.code);
     if (me.needDept) return Login.pickDept(me);
-    if (me.needPosition && !Login.positionSkipped(S.user.code)) return Login.pickDept(me, true);
+    if (!API.scope() && me.needPosition && !Login.positionSkipped(S.user.code)) return Login.pickDept(me, true);
     if (initialCatalog) {
       index(initialCatalog); S.catAt = new Date().toISOString();
       API.setCatalogVersion(initialCatalog.version);
@@ -276,6 +278,7 @@ const App = (function () {
     const t = e.target.closest('[data-act]');
     if (!t) return;
     const a = t.dataset.act;
+    if (a === 'training-leave') { e.preventDefault(); Training.leave(); return; }
     if (a === 'usermenu' || a === 'more') { e.preventDefault(); userMenu(); }
     else if (a === 'gocart') { e.preventDefault(); location.hash = '#/cart'; }
   });
@@ -504,4 +507,5 @@ const Login = (function () {
   }
   return { show: show, pickDept: pickDept, positionSkipped: positionSkipped, overlay: overlay };
 })();
+
 

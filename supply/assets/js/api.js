@@ -11,6 +11,8 @@ class ApiError extends Error {
 const API = (function () {
   const cfg = window.APP_CONFIG || {};
   let token = Store.token.get();
+  let training = Store.training.get();
+  Store.setScope(training);
   let lastCatVer = null;
   const listeners = { session: [], catalog: [] };
 
@@ -18,6 +20,7 @@ const API = (function () {
     opt = opt || {};
     if (!cfg.API_URL || /ใส่ URL/.test(cfg.API_URL)) throw new ApiError('NO_API', 'ยังไม่ได้ตั้งค่า API_URL ใน config.js');
     const body = { action: action, token: token, data: data || {} };
+    if (training && !/^training\./.test(action) && !/^(login|logout|searchAccounts|changePin)$/.test(action)) body.training = training;
     if (opt.write) body.client_uuid = opt.uuid || U.uuid();
     const ctrl = window.AbortController ? new AbortController() : null;
     const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, opt.timeout || 45000) : null;
@@ -48,6 +51,11 @@ const API = (function () {
 
   return {
     call: call,
+    scope: function () { return training; },
+    setTraining: function (g) {
+      if (g && !/^[a-f0-9-]{36}$/i.test(g)) throw new Error('ชุดฝึกไม่ถูกต้อง');
+      Store.training.set(g || ''); training = g || ''; Store.setScope(training); lastCatVer = null;
+    },
     write: function (action, data, uuid) { return call(action, data, { write: true, uuid: uuid }); },
     setToken: function (t) { token = t || ''; if (t) Store.token.set(t); else Store.token.del(); },
     token: function () { return token; },
@@ -63,6 +71,7 @@ const Outbox = (function () {
   const subs = [];
   function save() { if (code) Store.ls.set('outbox:' + code, items); subs.forEach(function (f) { f(items); }); }
   async function send(it) {
+    if ((it.scope || '') !== API.scope()) throw new ApiError('SCOPE_CHANGED', 'คำขอนี้เป็นของคนละพื้นที่ กรุณาเปิดพื้นที่เดิมก่อนส่ง');
     it.status = 'sending'; it.error = null; save();
     try {
       const r = await API.write('submitRequest', it.data, it.uuid);
@@ -82,7 +91,7 @@ const Outbox = (function () {
     list: function () { return items.slice(); },
     pending: function () { return items.filter(function (x) { return x.status !== 'done'; }); },
     add: function (data) {
-      const it = { uuid: U.uuid(), data: data, created: new Date().toISOString(), status: 'queued' };
+      const it = { uuid: U.uuid(), scope: API.scope(), data: data, created: new Date().toISOString(), status: 'queued' };
       items.push(it); save();
       return it;
     },
@@ -98,3 +107,4 @@ const Outbox = (function () {
     subscribe: function (f) { subs.push(f); }
   };
 })();
+
