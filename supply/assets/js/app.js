@@ -332,7 +332,7 @@ const Login = (function () {
   function frame(inner, step) {
     step = step || 0;
     return '<div class="login login-glass login-slide' + (step === 1 ? '' : ' is-pin') + '"><div class="login-deck">' +
-      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.6.0" alt="" width="1122" height="1402" fetchpriority="high">' +
+      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.6.1" alt="" width="1122" height="1402" fetchpriority="high">' +
       '<div class="login-art-caption"><span>วัสดุพร้อมใช้ ข้อมูลพร้อมตรวจสอบ</span><small>รับเข้า · เบิก · ส่งมอบ · ติดตาม</small></div></section>' +
       '<section class="panel"><div class="box">' + loginHeading(step) + inner + '</div>' +
       (VERSION ? '<p class="login-ver">รุ่น ' + U.esc(VERSION) + '</p>' : '') + '</section></div></div>';
@@ -360,8 +360,8 @@ const Login = (function () {
     if (acct) return pinStep();
     mountLogin('<h2 class="sr-only">เข้าสู่ระบบ</h2><label class="login-lead" for="q">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</label>' +
       '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย"></div>' +
-      '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>' +
-      '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="btn sm ghost" id="acct-refresh">ไม่พบชื่อ? ค้นหารายชื่อใหม่</button></div>', 1);
+      '<p class="err err-name" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>' +
+      '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="link-refresh" id="acct-refresh">' + ICON('refresh') + 'ค้นหาใหม่</button></div>', 1);
     const q = $('#q');
     q.focus();
     q.addEventListener('input', U.debounce(function () { search(false); }, 180));
@@ -370,6 +370,15 @@ const Login = (function () {
   }
   const memo = Object.create(null);
   let searchSeq = 0;
+  /** เน้นส่วนของชื่อที่ตรงกับคำที่พิมพ์ (รวมสระ/วรรณยุกต์ที่ตามหลัง ไม่ตัดกลางตัวอักษรไทย) */
+  function highlight(name, q) {
+    const n = String(name || '').normalize('NFC');
+    const at = q ? n.toLowerCase().indexOf(q.toLowerCase()) : -1;
+    if (at < 0) return U.esc(n);
+    let end = at + q.length;
+    while (end < n.length && /[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/.test(n.charAt(end))) end++;
+    return U.esc(n.slice(0, at)) + '<mark>' + U.esc(n.slice(at, end)) + '</mark>' + U.esc(n.slice(end));
+  }
   function accountQuery(value) { return String(value || '').normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g, '').trim(); }
   async function search(force) {
     const field = $('#q'), box = $('#res'), refresh = $('#acct-refresh');
@@ -378,7 +387,8 @@ const Login = (function () {
     const refreshRow = $('#acct-refresh-row');
     if (!q) { box.classList.add('hide'); if (refreshRow) refreshRow.classList.add('hide'); if (refresh) refresh.disabled = false; return; }
     if (refresh) refresh.disabled = true;
-    box.classList.remove('hide'); box.textContent = 'กำลังค้นหารายชื่อ…';
+    box.classList.remove('hide'); box.classList.add('is-loading');
+    box.innerHTML = '<li class="acct-searching" role="status">กำลังค้นหารายชื่อ…</li>';
     $('#err').textContent = '';
     try {
       const cached = memo[q];
@@ -388,9 +398,10 @@ const Login = (function () {
       // Never retain an empty search. Newly added/activated users must be discoverable immediately.
       if (r.length) memo[q] = { at: Date.now(), rows: r }; else delete memo[q];
       if (seq !== searchSeq || !$('#res') || !$('#q') || accountQuery($('#q').value) !== q) return;
+      box.classList.remove('is-loading');
       box.innerHTML = r.length ? r.map(function (a, i) {
-        return '<li><button data-i="' + i + '"><b>' + U.esc(a.name) + '</b><small>' + U.esc(a.dept || '—') + (a.ready ? '' : ' · ยังไม่ได้ตั้ง PIN') + '</small></button></li>';
-      }).join('') : '<li class="empty small">ไม่พบชื่อที่ขึ้นต้นด้วย "' + U.esc(q) + '"<br>ลองพิมพ์ชื่ออีกครั้ง หรือกด “ค้นหารายชื่อใหม่”</li>';
+        return '<li style="--i:' + Math.min(i, 8) + '"><button data-i="' + i + '"><b>' + highlight(a.name, q) + '</b><small>' + U.esc(a.dept || '—') + (a.ready ? '' : ' · ยังไม่ได้ตั้ง PIN') + '</small></button></li>';
+      }).join('') : '<li class="empty small">ไม่พบชื่อที่ขึ้นต้นด้วย "' + U.esc(q) + '"<br>ลองพิมพ์ชื่ออีกครั้ง หรือแตะ “ค้นหาใหม่”</li>';
       box.onclick = function (e) {
         const b = e.target.closest('button[data-i]');
         if (!b) return;
@@ -399,7 +410,7 @@ const Login = (function () {
       };
     } catch (e) {
       if (seq === searchSeq && $('#res') && $('#q') && accountQuery($('#q').value) === q) {
-        box.classList.add('hide'); $('#err').textContent = e.message;
+        box.classList.add('hide'); box.classList.remove('is-loading'); $('#err').textContent = e.message;
       }
     } finally {
       if (seq === searchSeq && refresh && refresh.isConnected) refresh.disabled = false;
@@ -468,6 +479,25 @@ const Login = (function () {
       waitTimer = setTimeout(function() { const hint = $('#login-wait-hint'); if (hint) hint.textContent = 'กำลังรอการตอบกลับจากเซิร์ฟเวอร์…'; }, 8000);
     }
   }
+  /** ผล PIN: ถูก = จุดเขียว + เครื่องหมายถูกสั้น ๆ ก่อนเข้า · ผิด = จุดแดงกระพริบ + สั่นเบา ๆ (มือถือ) */
+  function pinResult(ok) {
+    const d = $('#dots'), er = $('#err');
+    if (!d) return Promise.resolve();
+    d.classList.remove('good', 'bad'); void d.offsetWidth;
+    if (!ok) {
+      d.classList.add('bad');
+      try { if (navigator.vibrate) navigator.vibrate([70, 50, 70]); } catch (e) { /**/ }
+      setTimeout(function () { d.classList.remove('bad'); }, 700);
+      return Promise.resolve();
+    }
+    waiting('');
+    busy = true;
+    U.$$('#kp button').forEach(function (b) { b.disabled = true; });
+    d.classList.add('good');
+    if (er) { er.classList.add('ok'); er.innerHTML = '<span class="pin-ok-mark" aria-hidden="true"></span>PIN ถูกต้อง'; }
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return new Promise(function (res) { setTimeout(res, reduce ? 150 : 650); });
+  }
   async function submit() {
     if (busy) return;
     busy = true; waiting('กำลังตรวจสอบ PIN');
@@ -477,14 +507,16 @@ const Login = (function () {
       API.setToken(r.token);
       Store.ls.set('last_acct', { code: acct.code, name: r.user.name, dept: r.user.dept_name || acct.dept });
       if (r.mustChangePin) { busy = false; waiting(''); return newPin(); }
+      await pinResult(true);
       if (overlayFor) { busy = false; waiting(''); return finishOverlay(r.user); }
     } catch (e) {
       busy = false; waiting('');
+      if (e && e.code !== 'NETWORK') pinResult(false);
       pin = '';
       const inp = $('#pinin'); if (inp) inp.value = '';
       dots();
       const d = $('#dots'); if (d) { d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); }
-      const er = $('#err'); if (er) er.textContent = e.message;
+      const er = $('#err'); if (er) { er.classList.remove('ok'); er.textContent = e.message; }
       if (e && e.code === 'PIN_CHANGE_AT_PRINTHUB' && er && window.APP_CONFIG && APP_CONFIG.PIN_URL) {
         er.insertAdjacentHTML('beforeend', ' <a href="' + U.esc(APP_CONFIG.PIN_URL) + '" target="_blank" rel="noopener">เปิดหน้าตั้ง PIN</a>');
       }
