@@ -92,7 +92,7 @@ App.view('home', {
       (freq.length ? '<div class="card"><h3>ใช้บ่อย</h3><div class="chips" id="freq">' + freq.map(function (m) {
         return '<button class="chip" data-id="' + U.esc(m.mat_id) + '">+ ' + U.esc(m.name) + '</button>';
       }).join('') + '</div></div>' : '') +
-      '<div class="card"><div class="row"><h3 style="margin:0">คำขอล่าสุด</h3><span class="spacer"></span><button class="btn sm" id="again">' + ICON('copy') + 'เบิกซ้ำใบล่าสุด</button></div><div id="latest"><div class="skel"></div><div class="skel"></div></div></div>';
+      '<div id="active"></div><div class="card"><div class="row"><h3 style="margin:0">คำขอล่าสุด</h3><span class="spacer"></span><button class="btn sm" id="again">' + ICON('copy') + 'เบิกซ้ำใบล่าสุด</button></div><div id="latest"><div class="skel"></div><div class="skel"></div></div></div>';
     const f = U.$('#freq');
     if (f) f.onclick = function (e) {
       const b = e.target.closest('[data-id]');
@@ -104,6 +104,11 @@ App.view('home', {
     };
     let mine = [];
     try { mine = await API.call('myRequests', { limit: 5 }); } catch (e) { U.$('#latest').innerHTML = App.errorBox(e); return; }
+    const active = mine.filter(function (r) { return ['PENDING_APPROVAL', 'PENDING_PREP', 'READY'].indexOf(r.status) >= 0; });
+    if (active.length && U.$('#active')) U.$('#active').innerHTML = active.map(function (r) {
+      return '<div class="card flow-card"><div class="row"><h3 style="margin:0">สถานะคำขอ ' + U.esc(r.req_no) + '</h3><span class="spacer"></span><a class="small" href="#/my">รายละเอียด</a></div>' +
+        My.timeline(r) + (r.status !== 'READY' ? Track.permitHtml() : '') + '</div>';
+    }).join('');
     U.$('#latest').innerHTML = mine.length ? mine.slice(0, 3).map(function (r) {
       return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line-2)"><div><b>' + U.esc(r.req_no) + '</b> <span class="muted small">' + U.thShort(r.created_at) + ' · ' + r.items.length + ' รายการ</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>';
     }).join('') + '<p><a href="#/my">ดูคำขอทั้งหมด</a></p>' : '<p class="muted">ยังไม่มีคำขอ</p>';
@@ -238,18 +243,32 @@ App.view('cart', {
 
 /* ---------------------------------------------------------------- คำขอของฉัน */
 const My = (function () {
+  /** โฟลสถานะคำขอ — คำนวณจากสถานะและเวลาที่ระบบบันทึกอยู่แล้ว (เจ้าหน้าที่ไม่ต้องกดอะไรเพิ่ม)
+   *  ส่งคำขอ → (อนุมัติ) → กำลังดำเนินการ → พร้อมรับ → ส่งมอบเสร็จสิ้น */
   function timeline(r) {
-    const steps = [['ยื่นคำขอ', r.created_at]];
-    if (App.S.cfg.approval_enabled || r.approved_at) steps.push(['อนุมัติ', r.approved_at]);
-    steps.push(['พร้อมรับ', r.ready_at], ['ส่งมอบแล้ว', r.issued_at]);
-    return '<ol class="tl">' + steps.map(function (s) {
-      return '<li class="' + (s[1] ? 'done' : '') + '"><b>' + s[0] + '</b>' + (s[1] ? U.thDateTime(s[1]) : '') + '</li>';
-    }).join('') + '</ol>';
+    const st = r.status;
+    const prepDone = r.ready_at || r.issued_at;
+    const steps = [{ k: 'sent', t: 'ส่งคำขอ', at: r.created_at, done: true }];
+    if (App.S.cfg.approval_enabled || r.approved_at || st === 'PENDING_APPROVAL') steps.push({ k: 'appr', t: 'อนุมัติ', at: r.approved_at, done: !!r.approved_at || (st !== 'PENDING_APPROVAL') });
+    steps.push({ k: 'prep', t: 'กำลังดำเนินการ', at: prepDone ? r.ready_at || r.issued_at : '', done: !!prepDone },
+               { k: 'ready', t: 'พร้อมรับ', at: r.ready_at, done: !!r.ready_at && st !== 'PENDING_PREP' },
+               { k: 'issued', t: 'ส่งมอบเสร็จสิ้น', at: r.issued_at, done: st === 'ISSUED' });
+    const nowKey = { PENDING_APPROVAL: 'appr', PENDING_PREP: 'prep', READY: 'ready' }[st] || '';
+    const hint = {
+      PENDING_APPROVAL: 'รอหัวหน้าส่วนอนุมัติ',
+      PENDING_PREP: 'เจ้าหน้าที่พัสดุกำลังจัดเตรียมของ — ระบบจะแจ้งเมื่อพร้อมรับ',
+      READY: 'ของพร้อมแล้ว ติดต่อรับที่งานพัสดุ',
+      ISSUED: 'ส่งมอบเสร็จสิ้น' + (r.issued_at ? ' ' + U.thDateTime(r.issued_at) : '') + (r.receiver_name ? ' · ผู้รับ ' + r.receiver_name : '')
+    }[st] || '';
+    return '<ol class="tl flow">' + steps.map(function (s) {
+      const now = s.k === nowKey;
+      return '<li class="' + (s.done && !now ? 'done' : '') + (now ? ' now' : '') + '"' + (now ? ' aria-current="step"' : '') + '><b>' + s.t + '</b>' +
+        (s.done && s.at && !now ? U.thDateTime(s.at) : now ? 'ขั้นตอนปัจจุบัน' : '') + '</li>';
+    }).join('') + '</ol>' + (hint ? '<p class="flow-hint st-' + st + '">' + U.esc(hint) + '</p>' : '');
   }
   function card(r) {
     const open = ['PENDING_APPROVAL', 'PENDING_PREP', 'READY'].indexOf(r.status) >= 0;
     return '<div class="card req-card"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.thDateTime(r.created_at) + '</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>' +
-      (r.status === 'READY' ? '<div class="notice info" style="margin:10px 0 0"><div><b>พร้อมรับของแล้ว</b>ติดต่อรับที่งานพัสดุ</div></div>' : '') +
       '<ul class="items">' + r.items.map(function (i) {
         const got = i.qty_issued !== null && i.qty_issued !== undefined;
         return '<li><span>' + U.esc(i.name) + '</span><span class="muted">ขอ ' + U.n(i.qty_req) + (i.qty_approved !== null && i.qty_approved !== i.qty_req ? ' · อนุมัติ ' + U.n(i.qty_approved) : '') +
@@ -286,8 +305,68 @@ const My = (function () {
     U.toast('สร้างร่างจากใบ ' + r.req_no + ' แล้ว กรุณาตรวจจำนวนก่อนส่ง', 'ok');
     location.hash = '#/cart';
   }
-  return { card: card, outCard: outCard, reorder: reorder };
+  return { card: card, outCard: outCard, reorder: reorder, timeline: timeline };
 })();
+
+/* ---------------------------------------------------------------- ติดตามสถานะคำขออัตโนมัติ (ผู้ขอ/หัวหน้าส่วน)
+ *  ระหว่างเปิดระบบไว้ ตรวจทุก 90 วินาที (เฉพาะตอนหน้าจอแสดงอยู่) เมื่อมีของพร้อมรับเพิ่ม → แจ้งบนจอ + แจ้งเตือนเครื่อง (ถ้าอนุญาต) */
+const Track = (function () {
+  let timer = null, last = null;
+  function notify(n) {
+    U.toast('มีของพร้อมรับ ' + n + ' ใบ — ติดต่อรับที่งานพัสดุ', 'ok', 8000);
+    try { if (window.Notification && Notification.permission === 'granted') new Notification(U.APP_NAME, { body: 'ของที่ขอเบิกพร้อมรับแล้ว ติดต่อรับที่งานพัสดุ' }); } catch (e) { /**/ }
+  }
+  async function tick() {
+    if (document.visibilityState !== 'visible' || document.querySelector('.modal-wrap')) return;
+    const me = await App.refreshMe();
+    if (!me) return;
+    const n = (me.counts || {}).myReady || 0;
+    if (last !== null && n > last) {
+      notify(n);
+      if (/^(home|my)$/.test(App.S.route)) App.render();
+    }
+    last = n;
+  }
+  function watch() {
+    if (timer) return;
+    last = ((App.S.me || {}).counts || {}).myReady || 0;
+    timer = setInterval(tick, 90000);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && timer) tick(); });
+  }
+  /** ปุ่มขออนุญาตแจ้งเตือนบนเครื่อง (แสดงเมื่อยังไม่เคยตอบ) */
+  function permitHtml() {
+    return window.Notification && Notification.permission === 'default'
+      ? '<p class="small muted" style="margin:8px 0 0"><button class="btn sm" data-act="notify-permit">' + ICON('alert') + 'เปิดการแจ้งเตือนเมื่อของพร้อมรับ</button></p>' : '';
+  }
+  document.addEventListener('click', function (e) {
+    const b = e.target.closest('[data-act="notify-permit"]');
+    if (!b) return;
+    Notification.requestPermission().then(function () { b.parentNode.remove(); });
+  });
+  return { watch: watch, permitHtml: permitHtml };
+})();
+
+/* ---------------------------------------------------------------- เปิดจาก QR บนใบเบิก (#/scan/<req_id>)
+ *  เจ้าหน้าที่พัสดุ/ผู้ดูแล → เปิดใบนั้นในคิวจ่าย · ผู้ขอ/หัวหน้าส่วน → ดูสถานะใบนั้น */
+App.view('scan', {
+  title: 'เปิดใบเบิก',
+  render: async function (el, params) {
+    const id = params && params[0] ? decodeURIComponent(params[0]) : '';
+    if (!id) { location.replace('#/home'); return; }
+    if (App.S.user.role === 'OFFICER' || App.S.user.role === 'ADMIN') { location.replace('#/queue/' + encodeURIComponent(id)); return; }
+    el.innerHTML = '<div class="page-h"><h1>ใบเบิก</h1><p>สถานะล่าสุดของใบที่สแกน</p></div><div id="one"><div class="skel"></div></div>';
+    try {
+      const r = await API.call('getRequest', { req_id: id });
+      U.$('#one').innerHTML = My.card(r) + '<p><a href="#/my">ดูคำขอทั้งหมดของฉัน</a></p>';
+      U.$('#one').onclick = function (e) {
+        const a = e.target.closest('[data-again]');
+        if (a) My.reorder(r);
+        const c = e.target.closest('[data-cancel]');
+        if (c) location.hash = '#/my';
+      };
+    } catch (e) { U.$('#one').innerHTML = App.errorBox(e); }
+  }
+});
 
 App.view('my', {
   title: 'คำขอของฉัน',
@@ -295,7 +374,7 @@ App.view('my', {
     const S = App.S;
     const F = S.forms.my = S.forms.my || { tab: 'open' };
     el.innerHTML = '<div class="page-h"><h1>คำขอของฉัน</h1><p>ติดตามสถานะ ยกเลิกก่อนจ่าย และพิมพ์ใบเบิก</p></div>' +
-      '<div class="seg" id="tab"><button data-t="open">กำลังดำเนินการ</button><button data-t="done">จ่ายแล้ว</button><button data-t="closed">ยกเลิก/ไม่อนุมัติ</button></div><div id="list" style="margin-top:16px"><div class="skel"></div><div class="skel"></div></div>';
+      '<div class="seg" id="tab"><button data-t="open">กำลังดำเนินการ</button><button data-t="done">ส่งมอบเสร็จสิ้น</button><button data-t="closed">ยกเลิก/ไม่อนุมัติ</button></div><div id="list" style="margin-top:16px"><div class="skel"></div><div class="skel"></div></div>';
     let rows = [];
     const draw = function () {
       U.$$('#tab button').forEach(function (b) { b.classList.toggle('on', b.dataset.t === F.tab); });

@@ -1,4 +1,4 @@
-/* ระบบเบิกวัสดุ · print.css — แบบฟอร์ม A4 มาตรฐาน (TH Sarabun New 16 pt)
+/* ระบบบริหารวัสดุสำนักงาน · print.css — แบบฟอร์ม A4 มาตรฐาน (TH Sarabun New 16 pt)
  * ใช้ TH Sarabun New ที่ติดตั้งในเครื่อง ถ้าไม่มีใช้ Sarabun (OFL) ที่ฝังไว้ ปรับขนาดให้ใกล้เคียง */
 @font-face { font-family: 'PrintTHSN'; src: local('TH Sarabun New'), local('THSarabunNew'), local('TH SarabunPSK'), local('THSarabunPSK'); font-weight: 400; }
 @font-face { font-family: 'PrintTHSN'; src: local('TH Sarabun New Bold'), local('THSarabunNew-Bold'), local('TH SarabunPSK Bold'), local('THSarabunPSK-Bold'); font-weight: 700; }
@@ -36,3 +36,21 @@
   #print-root .sheet { box-shadow: none; margin: 0; width: auto; min-height: auto; padding: 0; }
   .noprint { display: none !important; }
 }
+
+/* 1.5.0 — หัวใบเบิกมี QR · ใบจัดเตรียมรวม · พิมพ์หลายใบต่อกัน */
+.sheet { position: relative; }
+.sheet .head { display: grid; grid-template-columns: 24mm 1fr 24mm; align-items: start; gap: 4mm; }
+.sheet .qr { text-align: center; }
+.sheet .qr svg { width: 21mm; height: 21mm; display: block; margin: 0 auto; }
+.sheet .qr small { display: block; font-size: 10pt; line-height: 1.1; margin-top: 1mm; }
+.sheet.pick table td.small { font-size: 13pt; }
+.sheet.pick tr.grp td { background: #f2f2f2; }
+.sheet.pick table.list td, .sheet.pick table.list th { font-size: 14pt; }
+.sheet .sign.one { grid-template-columns: 1fr; justify-items: end; }
+.sheet .sign.one div { text-align: center; }
+@media print {
+  #print-root .sheet + .sheet { break-before: page; page-break-before: always; }
+  .sheet.pick tr.grp td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+.sheet .nw { white-space: nowrap; }
+.sheet.pick td.small .nw { display: inline-block; margin-right: 4pt; }

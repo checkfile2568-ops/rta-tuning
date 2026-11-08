@@ -72,7 +72,7 @@ const U = (function () {
         form.addEventListener('submit', function (e) {
           e.preventDefault();
           const v = {};
-          U.$$('[name]', form).forEach(function (f) { v[f.name] = f.type === 'checkbox' ? f.checked : f.value; });
+          U.$$('[name]', form).forEach(function (f) { if (f.type === 'radio') { if (f.checked) v[f.name] = f.value; } else v[f.name] = f.type === 'checkbox' ? f.checked : f.value; });
           if (o.validate) { const m = o.validate(v, form); if (m) { const er = form.querySelector('.modal-err') || form.insertBefore(document.createElement('p'), form.querySelector('.modal-actions')); er.className = 'modal-err'; er.textContent = m; return; } }
           done(v);
         });
@@ -106,6 +106,15 @@ const U = (function () {
       return { ok: '<span class="badge ok">พร้อมเบิก</span>', low: '<span class="badge low">ใกล้หมด</span>',
                out: '<span class="badge out">หมด</span>' }[lvl] || '';
     }
+  };
+  /** ลิงก์เปิดใบเบิก (ใช้ใน QR บนใบเบิก) — เจ้าหน้าที่สแกนแล้วเปิดใบนั้นในคิวจ่าย ผู้ขอสแกนแล้วเห็นสถานะ */
+  U.reqLink = function (reqId) { return new URL('./', location.href).href + '#/scan/' + encodeURIComponent(reqId); };
+  /** QR เป็น SVG (โหลดไลบรารีเมื่อใช้ครั้งแรก) — ไม่สำเร็จคืนค่าว่าง ใบเบิกยังพิมพ์ได้ */
+  U.qrSvg = function (text) {
+    return U.loadScript('assets/vendor/qrcode-generator.js?v=1.5.0').then(function () {
+      const q = window.qrcode(0, 'M'); q.addData(text); q.make();
+      return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    }).catch(function () { return ''; });
   };
   /** ชื่อระบบที่แสดงทุกจุดในหน้าเว็บ — แก้ที่ config.js (APP_NAME) จุดเดียว */
   U.APP_NAME = (window.APP_CONFIG && APP_CONFIG.APP_NAME) || 'ระบบบริหารวัสดุสำนักงาน';

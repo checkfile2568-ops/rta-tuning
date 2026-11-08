@@ -123,11 +123,11 @@ const App = (function () {
     S.route = route;
     shell(route);
     const v = views[route];
-    document.title = (v.title || '') + ' · ' + ('ระบบบริหารวัสดุสำนักงาน');
+    document.title = (v.title || '') + ' · ' + U.APP_NAME;
     const el = $('#view');
     try { await v.render(el, parts.slice(1)); }
     catch (e) { el.innerHTML = errorBox(e); }
-    if (v.cart && window.Req) Req.renderCart();
+    if (v.cart && typeof Req !== 'undefined') Req.renderCart();
     window.scrollTo(0, 0);
   }
   function errorBox(e) {
@@ -258,7 +258,8 @@ const App = (function () {
       Store.set('catalog:' + S.user.code, { data: initialCatalog, at: S.catAt, role: S.user.role });
     } else await loadCatalog().catch(function () { return null; });
     render();
-    if (S.user.role === 'OFFICER' && window.Officer) Officer.watch();
+    if (S.user.role === 'OFFICER' && typeof Officer !== 'undefined') Officer.watch();
+    if ((S.user.role === 'USER' || S.user.role === 'HEAD') && typeof Track !== 'undefined') Track.watch();
     Outbox.resumeAll().then(function (r) {
       if (r.some(function (x) { return x; })) { U.toast('ส่งคำขอที่ค้างไว้เรียบร้อย', 'ok'); refreshMe(); }
     });
@@ -331,7 +332,7 @@ const Login = (function () {
   function frame(inner, step) {
     step = step || 0;
     return '<div class="login login-glass login-slide' + (step === 1 ? '' : ' is-pin') + '"><div class="login-deck">' +
-      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.4.2" alt="" width="1122" height="1402" fetchpriority="high">' +
+      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.5.0" alt="" width="1122" height="1402" fetchpriority="high">' +
       '<div class="login-art-caption"><span>วัสดุพร้อมใช้ ข้อมูลพร้อมตรวจสอบ</span><small>รับเข้า · เบิก · ส่งมอบ · ติดตาม</small></div></section>' +
       '<section class="panel"><div class="box">' + loginHeading(step) + inner + '</div>' +
       (VERSION ? '<p class="login-ver">รุ่น ' + U.esc(VERSION) + '</p>' : '') + '</section></div></div>';
