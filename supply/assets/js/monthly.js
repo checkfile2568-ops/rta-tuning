@@ -69,7 +69,7 @@ const Monthly = (function () {
       (draft ? '<div class="mr-flag">ร่าง — ยังไม่ยืนยัน</div>' : '') +
       '<h1>รายงานวัสดุคงเหลือประจำเดือน ' + U.esc(rep.label) + '</h1><p class="org">' + U.esc(info.org_name || 'ศาลจังหวัดลพบุรี') + ' · ปีงบประมาณ ' + U.esc(rep.fy || '') + '</p>' +
       '<div class="meta"><span>เลขที่ ' + U.esc(rep.report_no || '') + ' · ช่วงข้อมูลทั้งเดือน ' + U.esc(rep.label) + '</span><span>' +
-      (draft ? 'สถานะ: <b>ร่าง</b>' : 'สถานะ: <b>ยืนยันแล้ว</b> ' + U.thDateTime(rep.confirmed_at)) + '</span></div>' +
+      (draft ? 'สถานะ: <b>ร่าง</b>' : 'สถานะ: <b>ยืนยันแล้ว</b> ' + U.thDateTime(rep.confirmed_at) + (rep.reopen_count ? ' (ฉบับแก้ไขครั้งที่ ' + rep.reopen_count + ')' : '')) + '</span></div>' +
       '<table><thead><tr><th style="width:4%">ที่</th><th style="width:' + (showVal ? 8 : 9) + '%">รหัส</th><th>รายการ</th><th style="width:7%">หน่วย</th>' +
       COLS.map(function (c) { return '<th style="width:' + (showVal ? 11 : 10) + '%">' + c[1] + (showVal ? '<br><small>จำนวน / มูลค่า (บาท)</small>' : '<br><small>จำนวน</small>') + '</th>'; }).join('') +
       '</tr></thead><tbody>' + rows + tot + '</tbody></table>' +
@@ -126,6 +126,11 @@ App.view('monthly', {
       const s = rep.summary || {}, c = rep.check || {};
       const adj = rep.items.filter(function (x) { return x.adj_qty; });
       const notes = [];
+      if (rep.reopen_count) {
+        notes.push('<div class="notice ' + (rep.status === 'DRAFT' ? 'warn' : 'info') + '"><div><b>' + (rep.status === 'DRAFT' ? 'ยกเลิกการยืนยันเพื่อแก้ไข' : 'ฉบับแก้ไขครั้งที่ ' + rep.reopen_count) + '</b>' +
+          'ยกเลิกการยืนยันโดย ' + U.esc(rep.reopened_name) + ' ' + U.thDateTime(rep.reopened_at) + ' · เหตุผล: ' + U.esc(rep.reopen_reason) +
+          (rep.status === 'DRAFT' && officer ? '<br>แก้รายการที่ผิดก่อน: จำนวนส่งมอบผิด → <a href="#/queue/issued">คิวจ่ายวัสดุ แท็บ "ส่งมอบแล้ว"</a> · ยอดคลังผิด → <a href="#/count">ตรวจนับ/ปรับยอด</a> (เลือกเดือน ' + U.esc(rep.label) + ') แล้วกด "สร้างร่างใหม่" และยืนยันอีกครั้ง' : '') + '</div></div>');
+      }
       if (rep.status === 'DRAFT') {
         if (c.stale) notes.push('<div class="notice warn"><div><b>ข้อมูลของเดือนนี้เปลี่ยนหลังจัดทำร่าง</b>กด "สร้างร่างใหม่" แล้วตรวจอีกครั้งก่อนยืนยัน</div></div>');
         notes.push('<div class="notice info"><div><b>ตรวจก่อนยืนยัน</b>' +
@@ -149,10 +154,27 @@ App.view('monthly', {
         (officer && rep.status === 'DRAFT' ? '<button class="btn" id="mr-gen">' + ICON('refresh') + 'สร้างร่างใหม่</button>' : '') +
         '<button class="btn" id="mr-xl">' + ICON('download') + 'Excel</button><button class="btn" id="mr-pr">' + ICON('print') + 'ดูตัวอย่างพิมพ์</button>' +
         (officer && rep.status === 'DRAFT' ? '<button class="btn primary lg" id="mr-ok"' + (c.stale ? ' disabled' : '') + '>' + ICON('check') + 'ยืนยันรายงาน</button>' : '') +
-        (!officer && rep.status === 'DRAFT' ? '<span class="small muted">เจ้าหน้าที่พัสดุเป็นผู้ยืนยันรายงาน</span>' : '') + '</div></div>';
+        (!officer && rep.status === 'DRAFT' ? '<span class="small muted">เจ้าหน้าที่พัสดุเป็นผู้ยืนยันรายงาน</span>' : '') +
+        (officer && rep.status === 'CONFIRMED' ? (rep.can_reopen ? '<button class="btn ghost" id="mr-re">' + ICON('refresh') + 'ยกเลิกการยืนยันเพื่อแก้ไข</button>'
+          : '<span class="small muted">แก้ไขได้เฉพาะรายงานเดือนล่าสุดที่ยืนยัน</span>') : '') + '</div></div>';
       U.$('#mr-val').onchange = function () { F.showVal = this.checked; App.render(); };
       U.$('#mr-xl').onclick = function () { Monthly.exportXlsx(rep, F.showVal); };
       U.$('#mr-pr').onclick = function () { S.forms.monthlyPrint = { rep: rep, showVal: F.showVal, info: list }; location.hash = '#/print/monthly'; };
+      const re = U.$('#mr-re');
+      if (re) re.onclick = async function () {
+        const v = await U.modal({ title: 'ยกเลิกการยืนยันรายงาน ' + rep.label, ok: 'ยกเลิกการยืนยัน', danger: true,
+          html: '<p>รายงาน ' + U.esc(rep.report_no) + ' จะกลับเป็น<b>ร่าง</b> เพื่อให้แก้รายการของเดือนนี้ได้ แล้วจัดทำร่างใหม่และยืนยันอีกครั้ง (เลขที่รายงานเดิม)</p>' +
+            '<ul class="small"><li>แก้จำนวนที่ส่งมอบผิด: คิวจ่ายวัสดุ → แท็บ "ส่งมอบแล้ว"</li><li>แก้ยอดคลังผิด: ตรวจนับ/ปรับยอด → เลือกเดือน ' + U.esc(rep.label) + '</li>' +
+            '<li>ระบบบันทึกผู้ยกเลิก เวลา และเหตุผลไว้ในประวัติ · ฉบับที่ยืนยันใหม่ระบุ "ฉบับแก้ไขครั้งที่ ' + (rep.reopen_count + 1) + '"</li></ul>' +
+            '<label class="field"><span>เหตุผลที่ต้องแก้ไข *</span><textarea class="input" name="reason" required></textarea></label>',
+          validate: function (x) { return x.reason && x.reason.trim() ? '' : 'กรุณาระบุเหตุผล'; } });
+        if (!v) return;
+        try {
+          await API.write('monthlyReopen', { ym: rep.ym, reason: v.reason.trim() });
+          U.toast('ยกเลิกการยืนยัน ' + rep.label + ' แล้ว — แก้รายการแล้วสร้างร่างใหม่', 'ok');
+          App.refreshMe(); App.render();
+        } catch (er) { U.toast(er.message, 'err', 7000); }
+      };
       const ok = U.$('#mr-ok');
       if (ok) ok.onclick = async function () {
         const v = await U.modal({ title: 'ยืนยันรายงานเดือน ' + rep.label, ok: 'ยืนยันรายงาน',

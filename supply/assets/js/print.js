@@ -8,7 +8,7 @@ const PrintDoc = (function () {
   function reqSheet(r, qr) {
     const rows = r.items.map(function (i, n) {
       return '<tr><td class="c">' + (n + 1) + '</td><td>' + U.esc(i.name) + '</td><td class="c">' + U.esc(i.unit_name) + '</td><td class="r">' + U.n(i.qty_approved !== null ? i.qty_approved : i.qty_req) + '</td>' +
-        '<td class="r">' + (i.qty_issued !== null ? U.n(i.qty_issued) : '') + '</td><td>' + (i.qty_returned ? 'รับคืน ' + U.n(i.qty_returned) : '') + '</td></tr>';
+        '<td class="r">' + (i.qty_issued !== null ? U.n(i.qty_issued - (i.qty_returned || 0)) : '') + '</td><td>' + (i.qty_returned ? 'จ่าย ' + U.n(i.qty_issued) + ' คืน/แก้ ' + U.n(i.qty_returned) : '') + '</td></tr>';
     });
     while (rows.length < 8) rows.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
     const st = { ISSUED: 'จ่ายแล้ว', READY: 'พร้อมรับ', PENDING_PREP: 'รอจัดเตรียม', PENDING_APPROVAL: 'รออนุมัติ', CANCELLED: 'ยกเลิก', REJECTED: 'ไม่อนุมัติ' }[r.status] || r.status;
@@ -28,6 +28,7 @@ const PrintDoc = (function () {
       '<div>ลงชื่อ' + dots + '<br>หัวหน้าส่วน<br>(' + (r.head_name ? U.esc(r.head_name) : dots) + ')<small>' + U.esc(r.dept_name || '') + '</small><small>วันที่ ' + d(r.approved_at) + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>เจ้าหน้าที่พัสดุ<br>(' + (r.issuer_name ? U.esc(r.issuer_name) : dots) + ')<small>&nbsp;</small><small>วันที่ ' + d(r.issued_at) + '</small></div></div>' +
       '<div class="recv">ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว &nbsp; ลงชื่อ' + dots + 'ผู้รับของ (' + (r.receiver_name ? U.esc(r.receiver_name) : dots) + ') วันที่ ' + d(r.issued_at) + '</div>' +
+      (r.edit_count ? '<p style="font-size:14pt">หมายเหตุ: แก้ไขจำนวนที่จ่าย ' + r.edit_count + ' ครั้ง ล่าสุด ' + U.thDateTime(r.edited_at) + ' โดย ' + U.esc(r.edited_name) + ' เหตุผล ' + U.esc(r.edit_reason) + '</p>' : '') +
       '<div class="foot"><span>พิมพ์จาก' + U.esc(U.APP_NAME) + ' ' + U.thDateTime(new Date()) + '</span><span>สถานะ: ' + U.esc(st) + '</span></div></div>';
   }
   /** ใบจัดเตรียมวัสดุรวม: รวมรายการจากหลายใบ เรียงตามหมวด → รหัส · มีช่องติ๊กและจำนวนแยกตามใบ */
