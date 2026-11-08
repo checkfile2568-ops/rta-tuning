@@ -332,7 +332,7 @@ const Login = (function () {
   function frame(inner, step) {
     step = step || 0;
     return '<div class="login login-glass login-slide' + (step === 1 ? '' : ' is-pin') + '"><div class="login-deck">' +
-      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.5.0" alt="" width="1122" height="1402" fetchpriority="high">' +
+      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.6.0" alt="" width="1122" height="1402" fetchpriority="high">' +
       '<div class="login-art-caption"><span>วัสดุพร้อมใช้ ข้อมูลพร้อมตรวจสอบ</span><small>รับเข้า · เบิก · ส่งมอบ · ติดตาม</small></div></section>' +
       '<section class="panel"><div class="box">' + loginHeading(step) + inner + '</div>' +
       (VERSION ? '<p class="login-ver">รุ่น ' + U.esc(VERSION) + '</p>' : '') + '</section></div></div>';

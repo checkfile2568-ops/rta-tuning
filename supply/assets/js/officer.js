@@ -383,8 +383,9 @@ App.view('receive', {
       sups.map(function (s) { return '<option value="' + U.esc(s.name) + '">'; }).join('') + '</datalist><small>ไม่พบในรายการ = เพิ่มร้านใหม่ให้อัตโนมัติ</small></label>' +
       '<label class="field"><span>วันที่รับ</span><input class="input" type="date" id="dt" max="' + U.ymd() + '" value="' + U.esc(F.date) + '"><small id="dth"></small></label>' +
       '<label class="field"><span>เลขใบส่งของ/ใบกำกับ</span><input class="input" id="inv" value="' + U.esc(F.inv) + '"></label></div>' +
-      '<label class="field"><span>เพิ่มรายการ</span><input class="input" id="pick" list="ml" placeholder="พิมพ์ชื่อหรือรหัสวัสดุ แล้วเลือก"><datalist id="ml">' +
+      '<label class="field"><span>เพิ่มทีละรายการ</span><input class="input" id="pick" list="ml" placeholder="พิมพ์ชื่อหรือรหัสวัสดุ แล้วเลือก"><datalist id="ml">' +
       S.catalog.materials.filter(function (m) { return m.active !== false; }).map(function (m) { return '<option value="' + U.esc(m.code + ' · ' + m.name) + '">'; }).join('') + '</datalist></label>' +
+      RcvImport.toolbarHtml() +
       '<div class="tablewrap"><table class="t"><thead><tr><th>วัสดุ</th><th>หน่วยที่รับ</th><th class="num">จำนวน</th><th class="num">ราคา/หน่วย</th><th class="num">รวม (บาท)</th><th></th></tr></thead><tbody id="lines"></tbody>' +
       '<tfoot><tr><th colspan="4" class="num">รวมทั้งสิ้น</th><th class="num" id="tot">0.00</th><th></th></tr></tfoot></table></div>' +
       '<label class="field" style="margin-top:12px"><span>หมายเหตุ</span><input class="input" id="note" value="' + U.esc(F.note) + '"></label>' +
@@ -414,6 +415,7 @@ App.view('receive', {
       U.$('#dth').textContent = F.date ? U.thDate(F.date + 'T00:00:00') : '';
     };
     draw();
+    RcvImport.mount(F, draw);
     const bind = function (id, k) { U.$(id).oninput = function () { F[k] = this.value; if (k === 'date') draw(); }; };
     bind('#sup', 'sup'); bind('#dt', 'date'); bind('#inv', 'inv'); bind('#note', 'note');
     U.$('#pick').onchange = function () {
