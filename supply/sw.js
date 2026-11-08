@@ -8,7 +8,7 @@ const SHELL = ['./', 'index.html', 'config.js' + V, 'manifest.json',
   'assets/css/app.css' + V, 'assets/css/print.css' + V,
   'assets/js/util.js' + V, 'assets/js/store.js' + V, 'assets/js/api.js' + V, 'assets/js/app.js' + V,
   'assets/js/user.js' + V, 'assets/js/officer.js' + V, 'assets/js/admin.js' + V, 'assets/js/dash.js' + V,
-  'assets/js/training.js' + V, 'assets/js/real-trial.js' + V, 'assets/js/print.js' + V, 'assets/img/icon.svg', 'assets/img/login-office-v2.webp' + V, 'assets/templates/opening-original.xlsx', 'assets/templates/opening-original.csv',
+  'assets/js/training.js' + V, 'assets/js/real-trial.js' + V, 'assets/js/print.js' + V, 'assets/img/icon.svg', 'assets/img/login-locker.webp' + V, 'assets/templates/opening-original.xlsx', 'assets/templates/opening-original.csv',
   'assets/fonts/noto-sans-thai-thai-400-normal.woff2', 'assets/fonts/noto-sans-thai-thai-600-normal.woff2',
   'assets/fonts/noto-sans-thai-thai-700-normal.woff2', 'assets/fonts/noto-sans-thai-latin-400-normal.woff2'];
 
