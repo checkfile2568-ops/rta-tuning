@@ -37,7 +37,7 @@
   .noprint { display: none !important; }
 }
 
-/* 1.5.0 — หัวใบเบิกมี QR · ใบจัดเตรียมรวม · พิมพ์หลายใบต่อกัน */
+/* 1.6.0 — หัวใบเบิกมี QR · ใบจัดเตรียมรวม · พิมพ์หลายใบต่อกัน */
 .sheet { position: relative; }
 .sheet .head { display: grid; grid-template-columns: 24mm 1fr 24mm; align-items: start; gap: 4mm; }
 .sheet .qr { text-align: center; }
