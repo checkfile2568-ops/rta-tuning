@@ -6,6 +6,7 @@ App.view('dash', {
   render: async function (el) {
     const S = App.S;
     const F = S.forms.dash = S.forms.dash || { dept: S.user.dept_id || 'ALL', fy: U.fy(), tab: 'hist', q: '' };
+    F.open = F.open || {};
     const fyNow = U.fy();
     el.innerHTML = '<div class="page-h"><h1>ประวัติการเบิกและสถิติ</h1><p>ดูได้ว่าแต่ละส่วนงานเคยเบิกอะไรไปบ้าง · เริ่มที่ส่วนงานของคุณ</p></div>' +
       '<div class="row" style="margin-bottom:14px"><select class="input" id="dp" style="width:auto;min-width:220px"><option value="ALL">ทั้งศาล</option>' +
@@ -15,19 +16,38 @@ App.view('dash', {
     if (F.dept === 'ALL') U.$('#dp').value = 'ALL';
     let d = null;
     const charts = [];
+    // สรุปต่อวัสดุ: ส่วนงานที่เบิก + รายใบ (ผู้เบิก เลขที่ใบเบิก จำนวน วันที่) จากประวัติการรับ
+    const matRow = function (s) {
+      const key = s.name + '|' + s.unit;
+      const list = d.history.filter(function (h) { return h.name === s.name && h.unit === s.unit; });
+      const depts = {};
+      list.forEach(function (h) { const k = h.dept_name || '(ไม่ระบุ)'; depts[k] = (depts[k] || 0) + 1; });
+      const open = !!F.open[key];
+      return '<div class="ms-row"><div class="ms-top"><b class="ms-name">' + U.esc(s.name) + '</b>' +
+        '<span class="ms-sum"><b>' + U.n(s.qty) + '</b> ' + U.esc(s.unit) + ' · ' + U.n(s.times) + ' ครั้ง · ล่าสุด ' + U.thShort(s.last) + '</span></div>' +
+        (Object.keys(depts).length ? '<div class="ms-depts">' + Object.keys(depts).map(function (k) { return '<span class="ms-chip">' + U.esc(k) + ' · ' + depts[k] + ' ใบ</span>'; }).join('') + '</div>' : '') +
+        (list.length ? '<button class="ms-tg" data-ms="' + U.esc(key) + '">' + (open ? 'ซ่อนผู้เบิก' : 'ดูผู้เบิก (' + list.length + ')') + '</button>' : '') +
+        (open ? '<div class="ms-reqs">' + list.map(function (h) {
+          return '<div class="ms-req"><span><b>' + U.esc(h.req_no) + '</b> · ' + (h.requester ? U.esc(h.requester) : '<span class="muted">—</span>') + ' · ' + U.esc(h.dept_name || '') + '</span>' +
+            '<span class="nw"><b>' + U.n(h.qty) + '</b> ' + U.esc(h.unit) + ' · ' + U.thShort(h.ts) + '</span></div>';
+        }).join('') + '</div>' : '') + '</div>';
+    };
     const drawHist = function () {
       const rows = d.history.filter(function (h) { return !F.q || U.match(h.name + ' ' + h.req_no + ' ' + h.requester, F.q); });
       const sum = d.summary.filter(function (s) { return !F.q || U.match(s.name, F.q); });
       U.$('#body').innerHTML = '<div class="search">' + ICON('search') + '<input id="hq" type="search" placeholder="ค้นหาชื่อวัสดุ เลขใบ หรือผู้เบิก" value="' + U.esc(F.q) + '"></div>' +
         '<div class="card"><div class="row"><h3 style="margin:0">สรุปต่อวัสดุ · ' + U.esc(d.dept_name) + ' · ปีงบประมาณ ' + d.fy + '</h3><span class="spacer"></span><button class="btn sm" id="xl">' + ICON('download') + 'Excel</button></div>' +
-        (sum.length ? '<div class="tablewrap" style="margin-top:10px;max-height:340px"><table class="t"><thead><tr><th>วัสดุ</th><th class="num">รวมที่ได้รับ</th><th class="num">จำนวนครั้ง</th><th>เบิกล่าสุด</th></tr></thead><tbody>' +
-          sum.map(function (s) { return '<tr><td>' + U.esc(s.name) + '</td><td class="num"><b>' + U.n(s.qty) + '</b> ' + U.esc(s.unit) + '</td><td class="num">' + U.n(s.times) + '</td><td>' + U.thShort(s.last) + '</td></tr>'; }).join('') + '</tbody></table></div>'
+        (sum.length ? '<div class="ms-list">' + (F.sumAll ? sum : sum.slice(0, 5)).map(matRow).join('') + '</div>' +
+          (sum.length > 5 ? '<button class="btn ghost sm" id="ms-more">' + (F.sumAll ? 'ซ่อนรายการ (แสดง 5 รายการ)' : 'แสดงทั้งหมด (' + sum.length + ' รายการ)') + '</button>' : '') +
+          (d.history_total > d.history.length ? '<p class="small muted">รายชื่อผู้เบิกอ้างอิง ' + d.history.length + ' รายการล่าสุด — ส่งออก Excel เพื่อดูทั้งหมด</p>' : '')
           : '<p class="muted">ยังไม่มีการเบิกในช่วงนี้</p>') + '</div>' +
         '<div class="card"><h3>รายการที่ได้รับ (ล่าสุดก่อน)</h3>' + (rows.length ? '<div class="tablewrap"><table class="t"><thead><tr><th>วันที่</th><th>เลขที่ใบเบิก</th>' + (d.dept_id === 'ALL' ? '<th>ส่วนงาน</th>' : '') + '<th>ผู้เบิก</th><th>วัสดุ</th><th class="num">จำนวนที่ได้รับ</th></tr></thead><tbody>' +
           rows.map(function (h) { return '<tr><td>' + U.thShort(h.ts) + '</td><td>' + U.esc(h.req_no) + '</td>' + (d.dept_id === 'ALL' ? '<td>' + U.esc(h.dept_name) + '</td>' : '') + '<td>' + (h.requester ? U.esc(h.requester) : '<span class="muted">—</span>') + '</td><td>' + U.esc(h.name) + '</td>' +
             '<td class="num">' + U.n(h.qty) + ' ' + U.esc(h.unit) + (h.returned ? ' <small class="muted">(คืน ' + h.returned + ')</small>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' +
           (d.history_total > d.history.length ? '<p class="small muted">แสดง ' + d.history.length + ' จาก ' + d.history_total + ' รายการ — ส่งออก Excel เพื่อดูทั้งหมด</p>' : '') : '<p class="muted">ไม่มีรายการ</p>') +
         (d.dept_id !== d.my_dept_id && !d.can_value ? '<p class="small muted">ชื่อผู้เบิกแสดงเฉพาะส่วนงานของคุณ</p>' : '') + '</div>';
+      if (U.$('#ms-more')) U.$('#ms-more').onclick = function () { F.sumAll = !F.sumAll; drawHist(); };
+      U.$$('[data-ms]').forEach(function (b) { b.onclick = function () { F.open[b.dataset.ms] = !F.open[b.dataset.ms]; drawHist(); }; });
       U.$('#hq').oninput = U.debounce(function () { F.q = this.value; drawHist(); const i = U.$('#hq'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 250);
       U.$('#xl').onclick = function () {
         U.exportXlsx('ประวัติการเบิก ' + d.dept_name + ' ปีงบ ' + d.fy, [
@@ -38,7 +58,7 @@ App.view('dash', {
     const drawStat = async function () {
       const k = d.kpi;
       const st = k.by_status || {};
-      U.$('#body').innerHTML = '<div class="kpis">' + Admin.kpi('จำนวนใบเบิก', U.n(k.req_count), 'รอจัดเตรียม ' + (st.PENDING_PREP || 0) + ' · พร้อมรับ ' + (st.READY || 0) + ' · จ่ายแล้ว ' + (st.ISSUED || 0) + ' · ยกเลิก ' + (st.CANCELLED || 0)) +
+      U.$('#body').innerHTML = '<div class="kpis tint">' + Admin.kpi('จำนวนใบเบิก', U.n(k.req_count), 'รอจัดเตรียม ' + (st.PENDING_PREP || 0) + ' · พร้อมรับ ' + (st.READY || 0) + ' · จ่ายแล้ว ' + (st.ISSUED || 0) + ' · ยกเลิก ' + (st.CANCELLED || 0)) +
         Admin.kpi('รายการที่จ่าย', U.n(k.lines_issued), U.n(k.materials_used) + ' ชนิดวัสดุ') +
         Admin.kpi('เวลาเฉลี่ยยื่นถึงส่งมอบ', k.avg_lead_days === null ? '—' : k.avg_lead_days + ' วัน', 'วันทำการ · มัธยฐาน ' + (k.median_lead_days === null ? '—' : k.median_lead_days) + ' · ค้างเกิน ' + k.lead_alert_days + ' วัน ' + k.open_over_days + ' ใบ') +
         (d.can_value ? Admin.kpi('มูลค่าเบิกจ่าย', U.money(k.value_issued), 'บาท') + Admin.kpi('มูลค่าคงคลัง ณ วันนี้', U.money(k.inventory_value), 'บาท · ' + U.n(k.inventory_items) + ' รายการมียอด') +

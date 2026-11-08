@@ -686,3 +686,30 @@ label.radio input, label.check input { width: 18px; height: 18px; flex: none; }
 .mr-t tr.grp td { background: var(--bg); font-size: .9rem; }
 .mr-t tr.sub td { background: #f7f9fd; font-weight: 600; font-size: .88rem; }
 .card > svg.ic { width: 30px; height: 30px; color: var(--gold); margin-bottom: 6px; display: block; }
+
+/* 1.7.1 — สรุปต่อวัสดุ (ประวัติ): ส่วนงานที่เบิก + รายชื่อผู้เบิก · แสดง 5 รายการแรก */
+.ms-list { margin-top: 10px; border-top: 1px solid var(--line); }
+.ms-row { padding: 12px 2px; border-bottom: 1px solid var(--line); }
+.ms-top { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; }
+.ms-name { color: var(--navy-ink); }
+.ms-sum { color: var(--muted); font-size: .92rem; font-variant-numeric: tabular-nums; }
+.ms-sum b { color: var(--navy-ink); }
+.ms-depts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ms-chip { font-size: .82rem; background: var(--gold-pale, #fbf4e2); color: #6b4e12; border-radius: 999px; padding: 2px 10px; }
+.ms-tg { margin-top: 6px; background: none; border: 0; padding: 4px 0; color: var(--navy); font-weight: 600; cursor: pointer; font-size: .9rem; }
+.ms-tg:hover { text-decoration: underline; }
+.ms-reqs { margin-top: 6px; background: var(--bg, #f5f7fb); border-radius: 10px; padding: 4px 12px; }
+.ms-req { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: .9rem; }
+.ms-req:last-child { border-bottom: 0; }
+.ms-req .nw { white-space: nowrap; color: var(--muted); }
+#ms-more { margin-top: 10px; }
+
+/* 1.7.1 — กล่องสรุปสถิติแยกสี */
+.kpis.tint .kpi { border-top: 4px solid var(--k); background: linear-gradient(180deg, var(--kb) 0, #fff 70%); }
+.kpis.tint .kpi b { color: var(--k); }
+.kpis.tint .kpi:nth-child(6n+1) { --k: #1d4e89; --kb: #eaf1fb; }
+.kpis.tint .kpi:nth-child(6n+2) { --k: #1f7a4d; --kb: #e8f6ee; }
+.kpis.tint .kpi:nth-child(6n+3) { --k: #b5651d; --kb: #fdf1e6; }
+.kpis.tint .kpi:nth-child(6n+4) { --k: #6b3fa0; --kb: #f2ecfa; }
+.kpis.tint .kpi:nth-child(6n+5) { --k: #0f7c86; --kb: #e5f5f6; }
+.kpis.tint .kpi:nth-child(6n+6) { --k: #b23a48; --kb: #fbecee; }
