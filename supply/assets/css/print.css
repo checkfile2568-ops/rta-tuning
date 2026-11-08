@@ -68,3 +68,19 @@
 .sheet.mr th small { font-size: 12pt; font-weight: 400; display: block; line-height: 1.1; }
 .sheet.mr td .v { color: #333; }
 .sheet.mr tr { break-inside: avoid; }
+
+/* 1.7.1 — ใบเบิกตามแบบราชการ: ขอบ บน 2.5 ขวา 2 ล่าง 2 ซ้าย 3 ซม. · TH Sarabun 17 pt · เส้นตารางบางสีจาง */
+.sheet.req { padding: 2.5cm 2cm 2cm 3cm; font-size: 17pt; line-height: 1.2; }
+.sheet.req h1 { font-size: 20pt; }
+.sheet.req th, .sheet.req td { border: 0.5pt solid #9a9a9a; padding: 1pt 5pt; }
+.sheet.req th { font-size: 16pt; vertical-align: middle; line-height: 1.1; }
+.sheet.req p.indent { text-indent: 2.5cm; margin: 0 0 6pt; }
+.sheet.req .sign { gap: 8pt; }
+.sheet.req .sign small { font-size: 15pt; }
+.sheet.req .recv { width: max-content; max-width: 100%; margin: 18pt auto 0; text-align: center; line-height: 1.35; break-inside: avoid; page-break-inside: avoid; }
+.sheet.req .pagefoot { position: absolute; left: 3cm; right: 2cm; bottom: 1cm; margin: 0; font-size: 13pt; }
+@media print {
+  /* ข้อความซ้ายล่างและเลขหน้า พิมพ์ที่ขอบกระดาษทุกหน้าโดย print.js */
+  #print-root .sheet.req .pagefoot { display: none; }
+  #print-root .sheet.req th, #print-root .sheet.req td { border-color: #9a9a9a; }
+}

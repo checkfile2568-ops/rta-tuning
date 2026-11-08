@@ -3,23 +3,38 @@
 'use strict';
 const PrintDoc = (function () {
   const dots = '..................................';
+  /** ข้อความท้ายกระดาษซ้ายล่าง (ใบเบิก) */
+  function stamp() { return 'พิมพ์จาก' + U.APP_NAME + ' ' + U.thDateTime(new Date()); }
+  /** ระยะขอบตามระเบียบงานสารบรรณ (ซม.): บน ขวา ล่าง ซ้าย — ซ้าย 3 ขวา 2 */
+  const OFFICIAL = [2.5, 2, 2, 3];
+  /** ประมาณจำนวนหน้าของแผ่นในหน้าตัวอย่าง (ความสูงเนื้อหา ÷ ความสูงพื้นที่พิมพ์) */
+  function pagesOf(sheet, marginsCm, landscape) {
+    const mm = 96 / 25.4;
+    const pageH = (landscape ? 210 : 297) * mm - (marginsCm[0] + marginsCm[2]) * 10 * mm;
+    let bottom = 0;
+    Array.prototype.forEach.call(sheet.children, function (c) {
+      if (c.classList.contains('pagefoot')) return;
+      bottom = Math.max(bottom, c.offsetTop + c.offsetHeight);
+    });
+    const top = parseFloat(getComputedStyle(sheet).paddingTop) || 0;
+    return Math.max(1, Math.ceil((bottom - top - 2) / pageH));
+  }
   function d(v) { return v ? U.thDate(v) : '...../...../.....'; }
   /** qr = SVG จาก U.qrSvg(U.reqLink(req_id)) — ว่างได้ */
   function reqSheet(r, qr) {
     const rows = r.items.map(function (i, n) {
-      return '<tr><td class="c">' + (n + 1) + '</td><td>' + U.esc(i.name) + '</td><td class="c">' + U.esc(i.unit_name) + '</td><td class="r">' + U.n(i.qty_approved !== null ? i.qty_approved : i.qty_req) + '</td>' +
-        '<td class="r">' + (i.qty_issued !== null ? U.n(i.qty_issued - (i.qty_returned || 0)) : '') + '</td><td>' + (i.qty_returned ? 'จ่าย ' + U.n(i.qty_issued) + ' คืน/แก้ ' + U.n(i.qty_returned) : '') + '</td></tr>';
+      return '<tr><td class="c">' + (n + 1) + '</td><td>' + U.esc(i.name) + '</td><td class="c">' + U.esc(i.unit_name) + '</td><td class="c">' + U.n(i.qty_approved !== null ? i.qty_approved : i.qty_req) + '</td>' +
+        '<td class="c">' + (i.qty_issued !== null ? U.n(i.qty_issued - (i.qty_returned || 0)) : '') + '</td><td>' + (i.qty_returned ? 'จ่าย ' + U.n(i.qty_issued) + ' คืน/แก้ ' + U.n(i.qty_returned) : '') + '</td></tr>';
     });
     while (rows.length < 8) rows.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
-    const st = { ISSUED: 'จ่ายแล้ว', READY: 'พร้อมรับ', PENDING_PREP: 'รอจัดเตรียม', PENDING_APPROVAL: 'รออนุมัติ', CANCELLED: 'ยกเลิก', REJECTED: 'ไม่อนุมัติ' }[r.status] || r.status;
-    return '<div class="sheet" style="--m:' + (r.print_margin_cm || App.S.cfg.print_margin_cm || 2) + 'cm">' +
+    return '<div class="sheet req">' +
       (API.scope() ? '<div style="border:2px solid #a66b00;text-align:center;font-weight:bold;padding:6px">ข้อมูลตัวอย่างสำหรับฝึกใช้งาน — ห้ามใช้เป็นเอกสารเบิกจ่ายจริง</div>' : '') +
       (!API.scope() && App.S.me && App.S.me.realTrial && App.S.me.realTrial.active ? '<div style="border:2px solid #bf6230;text-align:center;font-weight:bold;padding:6px">รอบทดสอบบนฐานข้อมูลจริง</div>' : '') +
       '<div class="head"><div></div><div><h1>ใบเบิกวัสดุ</h1><p class="org">' + U.esc(r.org_name || App.S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</p></div>' +
       '<div class="qr">' + (qr ? qr + '<small>สแกนเปิดใบนี้</small>' : '') + '</div></div>' +
       '<div class="meta"><span>ส่วนงาน <b>' + U.esc(r.dept_name || '-') + '</b></span><span>เลขที่ <b>' + U.esc(r.req_no) + '</b></span></div>' +
       '<div class="meta"><span></span><span>วันที่ ' + U.thDate(r.created_at) + '</span></div>' +
-      '<p>ข้าพเจ้า <span class="dotted">' + U.esc(r.requester_name) + '</span> ตำแหน่ง <span class="dotted">' + U.esc(r.requester_position || dots) + '</span> ' +
+      '<p class="indent">ข้าพเจ้า <span class="dotted">' + U.esc(r.requester_name) + '</span> ตำแหน่ง <span class="dotted">' + U.esc(r.requester_position || dots) + '</span> ' +
       'มีความประสงค์ขอเบิกวัสดุตามรายการต่อไปนี้ เพื่อ <span class="dotted">' + U.esc(r.purpose || 'ใช้ในราชการ') + '</span></p>' +
       '<table><thead><tr><th style="width:9%">ลำดับ</th><th>รายการ</th><th style="width:13%">หน่วยนับ</th><th style="width:15%">จำนวนที่ขอเบิก</th><th style="width:14%">จำนวนที่จ่าย</th><th style="width:15%">หมายเหตุ</th></tr></thead>' +
       '<tbody>' + rows.join('') + '</tbody></table>' +
@@ -27,9 +42,10 @@ const PrintDoc = (function () {
       '<div>ลงชื่อ' + dots + '<br>ผู้ขอเบิก<br>(' + U.esc(r.requester_name) + ')<small>' + U.esc(r.requester_position || '') + '</small><small>วันที่ ' + d(r.created_at) + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>หัวหน้าส่วน<br>(' + (r.head_name ? U.esc(r.head_name) : dots) + ')<small>' + U.esc(r.dept_name || '') + '</small><small>วันที่ ' + d(r.approved_at) + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>เจ้าหน้าที่พัสดุ<br>(' + (r.issuer_name ? U.esc(r.issuer_name) : dots) + ')<small>&nbsp;</small><small>วันที่ ' + d(r.issued_at) + '</small></div></div>' +
-      '<div class="recv">ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว &nbsp; ลงชื่อ' + dots + 'ผู้รับของ (' + (r.receiver_name ? U.esc(r.receiver_name) : dots) + ') วันที่ ' + d(r.issued_at) + '</div>' +
+      '<div class="recv"><div>ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว</div><div>ลงชื่อ' + dots + 'ผู้รับของ</div>' +
+      '<div>(' + (r.receiver_name ? U.esc(r.receiver_name) : dots) + ')</div><div>วันที่ ' + d(r.issued_at) + '</div></div>' +
       (r.edit_count ? '<p style="font-size:14pt">หมายเหตุ: แก้ไขจำนวนที่จ่าย ' + r.edit_count + ' ครั้ง ล่าสุด ' + U.thDateTime(r.edited_at) + ' โดย ' + U.esc(r.edited_name) + ' เหตุผล ' + U.esc(r.edit_reason) + '</p>' : '') +
-      '<div class="foot"><span>พิมพ์จาก' + U.esc(U.APP_NAME) + ' ' + U.thDateTime(new Date()) + '</span><span>สถานะ: ' + U.esc(st) + '</span></div></div>';
+      '<div class="foot pagefoot"><span>' + U.esc(stamp()) + '</span><span class="pgno"></span></div></div>';
   }
   /** ใบจัดเตรียมวัสดุรวม: รวมรายการจากหลายใบ เรียงตามหมวด → รหัส · มีช่องติ๊กและจำนวนแยกตามใบ */
   function pickSheet(reqs) {
@@ -74,15 +90,22 @@ const PrintDoc = (function () {
       '<div class="sign one"><div>ลงชื่อ' + dots + 'ผู้จัดเตรียม<br>(' + U.esc(S.user.name) + ') วันที่ ...../...../.....</div></div>' +
       '<div class="foot"><span>ใบจัดเตรียมใช้ภายในงานพัสดุ — ไม่ใช่หลักฐานการจ่าย</span><span>' + U.esc(U.APP_NAME) + '</span></div></div>';
   }
-  function print(sheetHtml, marginCm, landscape) {
+  /** opts: { margins:[บน,ขวา,ล่าง,ซ้าย] ซม., pages: จำนวนหน้า (>1 จึงพิมพ์เลขหน้า), stamp: ข้อความซ้ายล่างทุกหน้า } */
+  function print(sheetHtml, marginCm, landscape, opts) {
+    opts = opts || {};
     const root = U.$('#print-root');
     root.innerHTML = sheetHtml;
     let st = U.$('#page-style');
     if (!st) { st = document.createElement('style'); st.id = 'page-style'; document.head.appendChild(st); }
-    st.textContent = '@page { size: A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin: ' + (marginCm || 2) + 'cm; @bottom-right { content: "หน้า " counter(page) "/" counter(pages); font-family: "PrintTHSN", "PrintSarabun", serif; font-size: 12pt; } }';
+    const m = opts.margins ? opts.margins.map(function (x) { return x + 'cm'; }).join(' ') : (marginCm || 2) + 'cm';
+    const font = 'font-family: "PrintTHSN", "PrintSarabun", serif; font-size: 13pt; color: #333; vertical-align: top; padding-top: 4mm;';
+    const q = function (t) { return '"' + String(t).replace(/["\\]/g, '') + '"'; };
+    st.textContent = '@page { size: A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin: ' + m + ';' +
+      (opts.pages > 1 ? ' @bottom-right { content: "หน้า " counter(page) "/" counter(pages); ' + font + ' }' : '') +
+      (opts.stamp ? ' @bottom-left { content: ' + q(opts.stamp) + '; ' + font + ' }' : '') + ' }';
     setTimeout(function () { window.print(); }, 50);
   }
-  return { reqSheet: reqSheet, pickSheet: pickSheet, print: print };
+  return { reqSheet: reqSheet, pickSheet: pickSheet, print: print, pagesOf: pagesOf, OFFICIAL: OFFICIAL, stamp: stamp };
 })();
 
 App.view('print', {
@@ -90,7 +113,7 @@ App.view('print', {
   render: async function (el, params) {
     el.innerHTML = '<div class="page-h row noprint"><div><h1>ใบเบิกวัสดุ</h1><p>ตรวจตัวอย่างก่อนพิมพ์ · บันทึกเป็น PDF ได้จากหน้าต่างพิมพ์</p></div><span class="spacer"></span>' +
       '<button class="btn" onclick="history.back()">กลับ</button><button class="btn primary lg" id="pr">' + ICON('print') + 'พิมพ์ / บันทึก PDF</button></div><div class="print-preview" id="pv"><div class="skel"></div></div>';
-    let html = '', margin = App.S.cfg.print_margin_cm || 2, landscape = false;
+    let html = '', margin = App.S.cfg.print_margin_cm || 2, landscape = false, slip = false;
     if (params[0] === 'monthly') {
       const M = App.S.forms.monthlyPrint;
       if (!M || !M.rep) { location.replace('#/monthly'); return; }
@@ -108,11 +131,12 @@ App.view('print', {
       else {
         const qrs = await Promise.all(B.rows.map(function (r) { return U.qrSvg(U.reqLink(r.req_id)); }));
         html = B.rows.map(function (r, i) { return PrintDoc.reqSheet(r, qrs[i]); }).join('');
+        slip = true;
       }
     } else {
       const r = await API.call('getRequest', { req_id: params[0] });
       html = PrintDoc.reqSheet(r, await U.qrSvg(U.reqLink(r.req_id)));
-      margin = r.print_margin_cm || margin;
+      slip = true;
     }
     const pv = U.$('#pv');
     pv.innerHTML = html;
@@ -131,7 +155,20 @@ App.view('print', {
     };
     fit();
     window.addEventListener('resize', fit);
-    U.$('#pr').onclick = function () { PrintDoc.print(html, margin, landscape); };
+    // ใบเบิก: ขอบตามระเบียบงานสารบรรณ · ข้อความซ้ายล่างทุกหน้า · เลขหน้าเมื่อมีมากกว่า 1 หน้า (พิมพ์ใบเดียว)
+    const sheets = U.$$('.sheet', pv);
+    const margins = slip ? PrintDoc.OFFICIAL : [margin, margin, margin, margin];
+    // นับหน้าหลังโหลดฟอนต์เสร็จ (ฟอนต์สำรองกว้างกว่า ทำให้นับเกิน)
+    const count = function () {
+      const n = sheets.length === 1 ? PrintDoc.pagesOf(sheets[0], margins, landscape) : 1;
+      const pg = sheets.length === 1 ? U.$('.pgno', sheets[0]) : null;
+      if (pg) pg.textContent = n > 1 ? 'ทั้งหมด ' + n + ' หน้า' : '';
+      return n;
+    };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(count); else count();
+    U.$('#pr').onclick = function () {
+      PrintDoc.print(html, margin, landscape, { margins: margins, pages: count(), stamp: slip ? PrintDoc.stamp() : '' });
+    };
   }
 });
 
