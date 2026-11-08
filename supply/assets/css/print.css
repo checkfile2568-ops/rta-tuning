@@ -37,7 +37,7 @@
   .noprint { display: none !important; }
 }
 
-/* 1.6.1 — หัวใบเบิกมี QR · ใบจัดเตรียมรวม · พิมพ์หลายใบต่อกัน */
+/* 1.7.0 — หัวใบเบิกมี QR · ใบจัดเตรียมรวม · พิมพ์หลายใบต่อกัน */
 .sheet { position: relative; }
 .sheet .head { display: grid; grid-template-columns: 24mm 1fr 24mm; align-items: start; gap: 4mm; }
 .sheet .qr { text-align: center; }
@@ -54,3 +54,17 @@
 }
 .sheet .nw { white-space: nowrap; }
 .sheet.pick td.small .nw { display: inline-block; margin-right: 4pt; }
+
+/* 1.7.0 — รายงานวัสดุคงเหลือประจำเดือน: TH Sarabun 17 pt · มีมูลค่า = A4 แนวนอน */
+.sheet.mr { font-size: 17pt; line-height: 1.15; }
+.sheet.mr h1 { font-size: 20pt; }
+.sheet.mr table { margin: 4pt 0 10pt; }
+.sheet.mr table td, .sheet.mr table th { padding: 1pt 4pt; }
+.sheet.mr tr.grp td { background: #f2f2f2; }
+.sheet.mr tr.tot td { border-top: 2px solid #000; }
+.sheet.mr.land { width: 297mm; min-height: 210mm; }
+.sheet.mr .mr-flag { border: 2px solid #a66b00; text-align: center; font-weight: bold; padding: 2pt; margin-bottom: 6pt; }
+@media print { .sheet.mr tr.grp td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+.sheet.mr th small { font-size: 12pt; font-weight: 400; display: block; line-height: 1.1; }
+.sheet.mr td .v { color: #333; }
+.sheet.mr tr { break-inside: avoid; }

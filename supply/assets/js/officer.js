@@ -37,7 +37,11 @@ const Officer = (function () {
 
   async function home(el) {
     const c = S.me.counts || {};
+    const mp = S.me.monthly;
     el.innerHTML = '<div class="page-h"><h1>งานวันนี้</h1><p>' + U.thDate(new Date()) + ' · ' + U.esc(S.user.name) + '</p></div>' +
+      (mp ? '<div class="notice warn">' + ICON('doc') + '<div><b>รายงานวัสดุคงเหลือเดือน ' + U.esc(mp.label) + (mp.status === 'DRAFT' ? ' รอยืนยัน' : ' ยังไม่ได้จัดทำ') + '</b>' +
+        (mp.status === 'DRAFT' ? (mp.mode === 'AUTO' ? 'ระบบจัดทำร่างให้แล้ว' : 'มีร่างรายงานแล้ว') + ' <a href="#/monthly/' + U.esc(mp.ym) + '">ตรวจและยืนยัน</a>'
+          : (mp.mode === 'AUTO' ? 'ระบบจะจัดทำร่างให้ในคืนนี้ หรือ' : '') + ' <a href="#/monthly/' + U.esc(mp.ym) + '">จัดทำรายงาน</a>') + '</div></div>' : '') +
       (!S.cfg.cost_method ? '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b>ผู้ดูแลระบบต้องตั้งค่าก่อนบันทึกยอดยกมาและรับ-จ่าย</div></div>' : '') +
       '<div class="kpis today-kpis"><a class="kpi task-prep" href="#/queue" style="text-decoration:none"><small>รอจัดเตรียม</small><b>' + U.n(c.queuePrep || 0) + '</b><span>ใบ</span></a>' +
       '<a class="kpi task-ready" href="#/queue" style="text-decoration:none"><small>พร้อมรับ (รอส่งมอบ)</small><b>' + U.n(c.queueReady || 0) + '</b><span>ใบ</span></a>' +
@@ -110,20 +114,35 @@ App.view('queue', {
     const S = App.S;
     const F = S.forms.queue = S.forms.queue || { tab: 'PENDING_PREP' };
     // #/queue/<req_id> = เปิดจาก QR บนใบเบิก: แสดงเฉพาะใบนั้น
-    const focus = params && params[0] ? decodeURIComponent(params[0]) : '';
+    const p0 = params && params[0] ? decodeURIComponent(params[0]) : '';
+    if (p0 === 'issued') F.tab = 'ISSUED';
+    const focus = p0 === 'issued' ? '' : p0;
     el.innerHTML = '<div class="page-h row"><div><h1>คิวจ่ายวัสดุ</h1><p>เรียงจากยื่นก่อน · เตรียมของแล้วแตะ "เตรียมพร้อมรับ" · ส่งของจริงแล้วแตะ "ยืนยันส่งมอบ" · สแกน QR บนใบเบิกเพื่อเปิดใบนั้นทันที</p></div><span class="spacer"></span>' +
       '<button class="btn" id="pp">' + ICON('print') + 'พิมพ์ใบเตรียมของ</button><button class="btn" id="rf">' + ICON('refresh') + 'รีเฟรช</button></div>' +
       '<div id="focusbar"></div><div class="seg" id="tab"></div><div id="list" style="margin-top:16px"><div class="skel"></div><div class="skel"></div></div>';
     let focusInfo = null;
-    let rows = [];
+    let rows = [], issued = [];
     const officer = S.user.role === 'OFFICER';
     const lim = function (i) { return i.qty_approved !== null ? i.qty_approved : i.qty_req; };
+    const net = function (i) { return (i.qty_issued || 0) - (i.qty_returned || 0); };
+    // ใบที่ส่งมอบแล้ว: แก้จำนวนได้จนกว่าจะยืนยันรายงานประจำเดือนของเดือนที่ส่งมอบ
+    const issuedCard = function (r) {
+      return '<div class="card req-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) +
+        ' · ส่งมอบ ' + U.thDateTime(r.issued_at) + (r.receiver_name ? ' · ผู้รับ ' + U.esc(r.receiver_name) : '') + '</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>' +
+        (r.edit_count ? '<p class="small" style="color:var(--warn,#a66b00)">แก้ไขการส่งมอบแล้ว ' + r.edit_count + ' ครั้ง · ล่าสุดโดย ' + U.esc(r.edited_name) + ' ' + U.thDateTime(r.edited_at) + ' · เหตุผล: ' + U.esc(r.edit_reason) + '</p>' : '') +
+        '<div class="tablewrap" style="margin-top:10px"><table class="t"><thead><tr><th>วัสดุ</th><th class="num">ขอ</th><th class="num">ส่งมอบ</th></tr></thead><tbody>' +
+        r.items.map(function (i) { return '<tr><td>' + U.esc(i.name) + '</td><td class="num">' + U.n(lim(i)) + ' ' + U.esc(i.unit_name) + '</td><td class="num"><b>' + U.n(net(i)) + '</b></td></tr>'; }).join('') +
+        '</tbody></table></div><div class="acts">' + (officer && r.editable ? '<button class="btn primary" data-a="edit">' + ICON('edit') + 'แก้ไขการส่งมอบ</button>' : '') +
+        '<a class="btn" href="#/print/' + U.esc(r.req_id) + '">' + ICON('print') + 'พิมพ์</a>' +
+        (r.editable ? '<span class="small muted">แก้ได้จนกว่าจะยืนยันรายงานเดือน' + U.esc(r.month_label || '') + '</span>' : '') + '</div></div>';
+    };
     const draw = function () {
       const n = function (st) { return rows.filter(function (r) { return r.status === st; }).length; };
       const tabs = [['PENDING_PREP', 'รอจัดเตรียม'], ['READY', 'พร้อมรับ']];
       if (S.cfg.approval_enabled || n('PENDING_APPROVAL')) tabs.push(['PENDING_APPROVAL', 'รออนุมัติ']);
-      U.$('#tab').innerHTML = tabs.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (F.tab === t[0] ? 'on' : '') + '">' + t[1] + ' (' + n(t[0]) + ')</button>'; }).join('');
-      let list = rows.filter(function (r) { return r.status === F.tab; });
+      tabs.push(['ISSUED', 'ส่งมอบแล้ว']);
+      U.$('#tab').innerHTML = tabs.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (F.tab === t[0] ? 'on' : '') + '">' + t[1] + ' (' + (t[0] === 'ISSUED' ? issued.length : n(t[0])) + ')</button>'; }).join('');
+      let list = F.tab === 'ISSUED' ? issued : rows.filter(function (r) { return r.status === F.tab; });
       if (focus) {
         const hit = rows.find(function (r) { return r.req_id === focus; });
         U.$('#tab').style.display = 'none';
@@ -136,11 +155,12 @@ App.view('queue', {
             (f && f.status === 'ISSUED' ? 'ส่งมอบแล้วเมื่อ ' + U.thDateTime(f.issued_at) + (f.receiver_name ? ' · ผู้รับ ' + U.esc(f.receiver_name) : '') :
               f ? 'ใบนี้ไม่อยู่ในคิวจ่าย' + (f.reason ? ' · เหตุผล: ' + U.esc(f.reason) : '') : 'ใบนี้อาจถูกยกเลิกหรือส่งมอบไปแล้ว') +
             ' · ' + (f ? '<a href="#/print/' + U.esc(f.req_id) + '">พิมพ์ใบเบิก</a> · ' : '') + '<a href="#/queue">แสดงทั้งคิว</a></div></div>';
-          list = [];
+          list = f && f.status === 'ISSUED' && f.items ? [f] : [];
         }
       } else { U.$('#tab').style.display = ''; U.$('#focusbar').innerHTML = ''; }
       const alert = S.cfg.lead_alert_days || 3;
       U.$('#list').innerHTML = list.length ? list.map(function (r) {
+        if (r.status === 'ISSUED') return issuedCard(r);
         const prep = r.status === 'PENDING_PREP';
         return '<div class="card req-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.esc(r.requester_name) +
           (r.requester_position ? ' (' + U.esc(r.requester_position) + ')' : '') + ' · ' + U.esc(r.dept_name) + ' · ยื่น ' + U.thDateTime(r.created_at) + '</span></div><span class="spacer"></span>' +
@@ -155,11 +175,12 @@ App.view('queue', {
           (officer && r.status !== 'PENDING_APPROVAL' ? '<div class="acts">' + (prep ? '<button class="btn primary" data-a="ready">' + ICON('check') + 'เตรียมพร้อมรับ</button><button class="btn" data-a="issue">ส่งมอบทันที</button>'
             : '<button class="btn primary" data-a="issue">' + ICON('truck') + 'ยืนยันส่งมอบ</button>') +
             '<a class="btn" href="#/print/' + U.esc(r.req_id) + '">' + ICON('print') + 'พิมพ์</a><button class="btn ghost" data-a="cancel">ยกเลิก</button></div>' : '') + '</div>';
-      }).join('') : (focus ? '' : '<div class="empty">' + ICON('truck') + '<p>ไม่มีคำขอในคิวนี้</p></div>');
+      }).join('') : (focus ? '' : '<div class="empty">' + ICON('truck') + '<p>' + (F.tab === 'ISSUED' ? 'ไม่มีใบที่ส่งมอบแล้วและยังแก้ไขได้ (เดือนที่ยืนยันรายงานแล้วแก้ไม่ได้)' : 'ไม่มีคำขอในคิวนี้') + '</p></div>');
     };
     const load = async function () {
       try {
-        rows = await API.call('queue');
+        const got = await Promise.all([API.call('queue'), API.call('issuedList').catch(function () { return []; })]);
+        rows = got[0]; issued = got[1] || [];
         if (focus && !rows.some(function (r) { return r.req_id === focus; })) {
           try { focusInfo = await API.call('getRequest', { req_id: focus }); } catch (e) { focusInfo = null; }
         }
@@ -190,10 +211,32 @@ App.view('queue', {
     U.$('#list').onclick = async function (e) {
       const b = e.target.closest('[data-a]'); if (!b) return;
       const card = b.closest('.card');
-      const r = rows.find(function (x) { return x.req_id === card.dataset.id; });
+      const r = rows.concat(issued, focusInfo ? [focusInfo] : []).find(function (x) { return x.req_id === card.dataset.id; });
       const a = b.dataset.a;
       try {
-        if (a === 'ready') {
+        if (a === 'edit') {
+          const v = await U.modal({
+            title: 'แก้ไขการส่งมอบ ' + r.req_no, ok: 'บันทึกการแก้ไข',
+            html: '<p class="small muted">ใส่จำนวนที่ส่งมอบจริง — ส่งเกิน ระบบลง "รับคืน" เข้าคลัง · ส่งขาด ระบบลง "จ่ายเพิ่ม" ตัดคลัง · ไม่ลบรายการเดิมในบัญชี</p>' +
+              '<div class="tablewrap"><table class="t"><thead><tr><th>วัสดุ</th><th class="num">ขอ</th><th class="num">บันทึกไว้</th><th class="num">ที่ถูกต้อง</th></tr></thead><tbody>' + r.items.map(function (i) {
+                return '<tr><td>' + U.esc(i.name) + '</td><td class="num">' + U.n(i.qty_req) + '</td><td class="num">' + U.n(net(i)) + '</td>' +
+                  '<td class="num"><input class="input num" type="number" min="0" max="' + i.qty_req + '" name="q_' + U.esc(i.item_id) + '" value="' + net(i) + '"></td></tr>';
+              }).join('') + '</tbody></table></div>' +
+              '<label class="field"><span>เหตุผลการแก้ไข *</span><textarea class="input" name="reason" required placeholder="เช่น นับของผิดตอนส่งมอบ ผู้รับแจ้งได้ไม่ครบ"></textarea></label>',
+            validate: function (x) {
+              if (!x.reason || !x.reason.trim()) return 'กรุณาระบุเหตุผลการแก้ไข';
+              const ch = r.items.filter(function (i) { return Number(x['q_' + i.item_id]) !== net(i); });
+              if (!ch.length) return 'จำนวนยังเหมือนเดิม — แก้ช่อง "ที่ถูกต้อง" ก่อน';
+              const bad = ch.find(function (i) { const q = Number(x['q_' + i.item_id]); return !(q >= 0) || q > i.qty_req || Math.floor(q) !== q; });
+              return bad ? 'จำนวนของ ' + bad.name + ' ต้องเป็น 0 ถึง ' + bad.qty_req : '';
+            }
+          });
+          if (!v) return;
+          const items = r.items.filter(function (i) { return Number(v['q_' + i.item_id]) !== net(i); }).map(function (i) { return { item_id: i.item_id, qty: Number(v['q_' + i.item_id]) }; });
+          const res = await API.write('issueEdit', { req_id: r.req_id, reason: v.reason.trim(), items: items });
+          U.toast('แก้ไขการส่งมอบ ' + r.req_no + ' แล้ว ' + res.lines + ' รายการ (ลงบัญชีเดือน' + res.month + ')' + (res.ret_no ? ' · ใบรับคืน ' + res.ret_no : ''), 'ok', 6000);
+          if (focusInfo && focusInfo.req_id === r.req_id) { try { focusInfo = await API.call('getRequest', { req_id: r.req_id }); } catch (e2) { /**/ } }
+        } else if (a === 'ready') {
           const items = U.$$('input[data-item]', card).map(function (i) { return { item_id: i.dataset.item, qty_ready: Number(i.value) }; });
           b.classList.add('busy');
           await API.write('prepareRequest', { req_id: r.req_id, items: items });
@@ -479,12 +522,19 @@ App.view('count', {
   render: async function (el) {
     const S = App.S;
     await Officer.needCatalog();
-    const F = S.forms.count = S.forms.count || { q: '', cat: '', counted: {}, reason: '' };
+    const F = S.forms.count = S.forms.count || { q: '', cat: '', counted: {}, reason: '', ym: '' };
+    // เดือนก่อนที่ยังไม่ยืนยันรายงาน ลงปรับยอดย้อนเข้าเดือนนั้นได้ (เช่น หลังยกเลิกการยืนยันเพื่อแก้ไข)
+    const openM = (S.me && S.me.openMonths) || [];
+    if (F.ym && !openM.some(function (m) { return m.ym === F.ym; })) F.ym = '';
     el.innerHTML = '<div class="page-h"><h1>ตรวจนับ / ปรับยอด</h1><p>กรอกเฉพาะรายการที่นับได้ไม่ตรงกับระบบ — ช่องว่าง = ตรงกับระบบ · นับได้ต้องไม่น้อยกว่ายอดจองค้าง</p></div>' +
       '<div class="row" style="margin-bottom:12px"><div class="search" style="flex:1;min-width:240px;margin:0">' + ICON('search') + '<input id="q" type="search" placeholder="ค้นหาวัสดุ" value="' + U.esc(F.q) + '"></div>' +
       '<select class="input" id="cat" style="width:auto"><option value="">ทุกหมวด</option>' + (S.catalog.categories || []).map(function (c) { return '<option value="' + U.esc(c.cat_id) + '"' + (F.cat === c.cat_id ? ' selected' : '') + '>' + U.esc(c.name) + '</option>'; }).join('') + '</select></div>' +
       '<div class="tablewrap"><table class="t"><thead><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th class="num">ยอดระบบ</th><th class="num">จอง</th><th class="num">นับได้</th><th class="num">ส่วนต่าง</th></tr></thead><tbody id="tb"></tbody></table></div>' +
-      '<div class="card" style="margin-top:16px"><label class="field"><span>เหตุผล / เลขที่บันทึกการตรวจนับ *</span><input class="input" id="rs" value="' + U.esc(F.reason) + '"></label>' +
+      '<div class="card" style="margin-top:16px">' +
+      (openM.length ? '<label class="field"><span>ลงบัญชีเป็นของเดือน</span><select class="input" id="ym" style="max-width:340px"><option value="">เดือนปัจจุบัน</option>' +
+        openM.map(function (m) { return '<option value="' + U.esc(m.ym) + '"' + (F.ym === m.ym ? ' selected' : '') + '>' + U.esc(m.label) + ' (ย้อนหลัง)</option>'; }).join('') +
+        '</select><small>เลือกเดือนก่อนเมื่อต้องแก้ยอดที่ผิดของเดือนนั้น — ทำได้เฉพาะเดือนที่ยังไม่ยืนยันรายงานประจำเดือน แล้วสร้างร่างรายงานเดือนนั้นใหม่</small></label>' : '') +
+      '<label class="field"><span>เหตุผล / เลขที่บันทึกการตรวจนับ *</span><input class="input" id="rs" value="' + U.esc(F.reason) + '"></label>' +
       '<div class="row"><span id="cnt" class="muted"></span><span class="spacer"></span><button class="btn ghost" id="clr">ล้างค่าที่กรอก</button><button class="btn primary lg" id="save">บันทึกปรับยอด</button></div></div>';
     const changed = function () {
       return Object.keys(F.counted).filter(function (id) { const m = S.idx[id]; return m && F.counted[id] !== '' && Number(F.counted[id]) !== m.balance; });
@@ -506,6 +556,7 @@ App.view('count', {
     U.$('#q').oninput = function () { F.q = this.value; draw(); };
     U.$('#cat').onchange = function () { F.cat = this.value; draw(); };
     U.$('#rs').oninput = function () { F.reason = this.value; };
+    if (U.$('#ym')) U.$('#ym').onchange = function () { F.ym = this.value; };
     U.$('#tb').addEventListener('input', function (e) {
       const tr = e.target.closest('tr[data-id]'); if (!tr) return;
       const m = S.idx[tr.dataset.id];
@@ -522,10 +573,12 @@ App.view('count', {
       if (!ids.length) { U.toast('ยังไม่มีรายการที่นับได้ไม่ตรง', 'warn'); return; }
       if (!F.reason.trim()) { U.toast('กรุณาระบุเหตุผลหรือเลขที่บันทึกการตรวจนับ', 'err'); return; }
       const html = '<ul>' + ids.map(function (id) { const m = S.idx[id]; const d = Number(F.counted[id]) - m.balance; return '<li>' + U.esc(m.name) + ': ' + U.n(m.balance) + ' → ' + U.n(F.counted[id]) + ' (' + (d > 0 ? '+' : '') + d + ')</li>'; }).join('') + '</ul>';
-      if (!(await U.confirm('ยืนยันปรับยอด ' + ids.length + ' รายการ', html, 'บันทึกปรับยอด'))) return;
+      const ymL = F.ym ? (openM.find(function (m) { return m.ym === F.ym; }) || {}).label : '';
+      if (!(await U.confirm('ยืนยันปรับยอด ' + ids.length + ' รายการ', html + (ymL ? '<p class="small"><b>ลงบัญชีย้อนหลังเป็นของเดือน ' + U.esc(ymL) + '</b></p>' : ''), 'บันทึกปรับยอด'))) return;
       try {
-        const r = await API.write('adjust', { reason: F.reason, items: ids.map(function (id) { return { mat_id: id, qty_counted: Number(F.counted[id]) }; }) });
-        U.toast('บันทึกปรับยอด ' + r.adj_no + ' แล้ว', 'ok');
+        const r = await API.write('adjust', { reason: F.reason, ym: F.ym || undefined, items: ids.map(function (id) { return { mat_id: id, qty_counted: Number(F.counted[id]) }; }) });
+        U.toast('บันทึกปรับยอด ' + r.adj_no + ' แล้ว' + (F.ym ? ' (ลงเดือน' + r.month + ' — สร้างร่างรายงานเดือนนั้นใหม่)' : ''), 'ok', 6000);
+        App.refreshMe();
         S.forms.count = null;
         await App.refreshCatalog();
         App.render();

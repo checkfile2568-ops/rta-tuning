@@ -272,10 +272,11 @@ const My = (function () {
       '<ul class="items">' + r.items.map(function (i) {
         const got = i.qty_issued !== null && i.qty_issued !== undefined;
         return '<li><span>' + U.esc(i.name) + '</span><span class="muted">ขอ ' + U.n(i.qty_req) + (i.qty_approved !== null && i.qty_approved !== i.qty_req ? ' · อนุมัติ ' + U.n(i.qty_approved) : '') +
-          (got ? ' · <b style="color:var(--ink)">ได้รับ ' + U.n(i.qty_issued) + '</b>' : '') + (i.qty_returned ? ' · คืน ' + U.n(i.qty_returned) : '') + ' ' + U.esc(i.unit_name) + '</span></li>';
+          (got ? ' · <b style="color:var(--ink)">ได้รับ ' + U.n(i.qty_issued - (i.qty_returned || 0)) + '</b>' : '') + ' ' + U.esc(i.unit_name) + '</span></li>';
       }).join('') + '</ul>' +
       (r.status === 'CANCELLED' || r.status === 'REJECTED' ? '<p class="muted small">เหตุผล: ' + U.esc(r.reason || '-') + '</p>' : timeline(r)) +
       (r.receiver_name ? '<p class="muted small">ผู้รับของ: ' + U.esc(r.receiver_name) + '</p>' : '') +
+      (r.edit_count ? '<p class="muted small">เจ้าหน้าที่พัสดุแก้ไขจำนวนที่ส่งมอบ ' + U.thDateTime(r.edited_at) + ' · ' + U.esc(r.edit_reason) + '</p>' : '') +
       '<div class="acts">' + (open ? '<button class="btn sm" data-cancel="' + U.esc(r.req_id) + '">' + ICON('x') + 'ยกเลิก</button>' : '') +
       '<a class="btn sm" href="#/print/' + U.esc(r.req_id) + '">' + ICON('print') + 'พิมพ์ใบเบิก</a>' +
       '<button class="btn sm" data-again="' + U.esc(r.req_id) + '">' + ICON('copy') + 'เบิกซ้ำเป็นร่าง</button></div></div>';
@@ -296,7 +297,7 @@ const My = (function () {
     const skip = [];
     r.items.forEach(function (i) {
       const m = S.idx[i.mat_id];
-      const q = i.qty_issued !== null && i.qty_issued !== undefined ? i.qty_issued : i.qty_req;
+      const q = i.qty_issued !== null && i.qty_issued !== undefined ? i.qty_issued - (i.qty_returned || 0) : i.qty_req;
       if (!m || Req.maxFor(m) < 1 || q < 1) { skip.push(i.name); return; }
       S.cart[i.mat_id] = Math.min(q, Req.maxFor(m));
     });

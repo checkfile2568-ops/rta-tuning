@@ -57,7 +57,7 @@ const App = (function () {
     if (u.role === 'OFFICER') {
       return [['home', 'หน้าแรก', 'home'], ['queue', 'คิวจ่ายวัสดุ', 'truck', (c.queuePrep || 0) + (c.queueReady || 0)],
         ['stock', 'คลังวัสดุ', 'box'], ['receive', 'รับเข้า', 'inbox'], ['count', 'ตรวจนับ/ปรับยอด', 'clip'],
-        ['reorder', 'จุดสั่งซื้อ', 'alert', c.reorder], ['dash', 'สถิติ/ประวัติ', 'chart']]
+        ['reorder', 'จุดสั่งซื้อ', 'alert', c.reorder], ['monthly', 'รายงานประจำเดือน', 'doc', c.monthly], ['dash', 'สถิติ/ประวัติ', 'chart']]
         .concat(appr ? [['approve', 'อนุมัติคำขอ', 'check', c.approvals]] : [])
         .concat([['-', 'งานของฉัน']]).concat(mine)
         .concat([['-', 'ข้อมูล'], ['suppliers', 'ผู้จำหน่าย', 'store'], ['opening', 'ยอดยกมา', 'upload'],
@@ -67,7 +67,7 @@ const App = (function () {
       return [['home', 'ภาพรวม', 'home'], ['dash', 'สถิติ/ประวัติ', 'chart'], ['users', 'ผู้ใช้และสิทธิ์', 'users'],
         ['depts', 'ส่วนงาน', 'building'], ['master', 'หมวด/หน่วย/วันหยุด', 'tag'], ['settings', 'ตั้งค่าระบบ', 'gear'],
         ['training', 'ทดลองใช้งาน', 'clip'], ['real-trial', 'ทดสอบฐานจริง / ล้างยอด', 'db'], ['backup', 'สำรองข้อมูล', 'db'], ['reconcile', 'กระทบยอด/ตรวจซ่อม', 'wrench', c.repairs], ['audit', 'Audit log', 'log'],
-        ['-', 'คลัง'], ['stock', 'คลังวัสดุ (ดู)', 'box'], ['opening', 'ยอดยกมา', 'upload'],
+        ['-', 'คลัง'], ['stock', 'คลังวัสดุ (ดู)', 'box'], ['monthly', 'รายงานประจำเดือน', 'doc', c.monthly], ['opening', 'ยอดยกมา', 'upload'],
         ['-', 'งานของฉัน']].concat(mine);
     }
     const base = [['home', 'หน้าแรก', 'home']].concat(mine).concat([['dash', 'ประวัติ', 'clock']]);
@@ -332,7 +332,7 @@ const Login = (function () {
   function frame(inner, step) {
     step = step || 0;
     return '<div class="login login-glass login-slide' + (step === 1 ? '' : ' is-pin') + '"><div class="login-deck">' +
-      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.6.1" alt="" width="1122" height="1402" fetchpriority="high">' +
+      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.7.0" alt="" width="1122" height="1402" fetchpriority="high">' +
       '<div class="login-art-caption"><span>วัสดุพร้อมใช้ ข้อมูลพร้อมตรวจสอบ</span><small>รับเข้า · เบิก · ส่งมอบ · ติดตาม</small></div></section>' +
       '<section class="panel"><div class="box">' + loginHeading(step) + inner + '</div>' +
       (VERSION ? '<p class="login-ver">รุ่น ' + U.esc(VERSION) + '</p>' : '') + '</section></div></div>';

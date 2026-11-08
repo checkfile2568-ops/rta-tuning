@@ -111,7 +111,7 @@ const U = (function () {
   U.reqLink = function (reqId) { return new URL('./', location.href).href + '#/scan/' + encodeURIComponent(reqId); };
   /** QR เป็น SVG (โหลดไลบรารีเมื่อใช้ครั้งแรก) — ไม่สำเร็จคืนค่าว่าง ใบเบิกยังพิมพ์ได้ */
   U.qrSvg = function (text) {
-    return U.loadScript('assets/vendor/qrcode-generator.js?v=1.6.1').then(function () {
+    return U.loadScript('assets/vendor/qrcode-generator.js?v=1.7.0').then(function () {
       const q = window.qrcode(0, 'M'); q.addData(text); q.make();
       return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
     }).catch(function () { return ''; });

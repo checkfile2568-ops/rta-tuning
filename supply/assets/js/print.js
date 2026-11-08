@@ -8,7 +8,7 @@ const PrintDoc = (function () {
   function reqSheet(r, qr) {
     const rows = r.items.map(function (i, n) {
       return '<tr><td class="c">' + (n + 1) + '</td><td>' + U.esc(i.name) + '</td><td class="c">' + U.esc(i.unit_name) + '</td><td class="r">' + U.n(i.qty_approved !== null ? i.qty_approved : i.qty_req) + '</td>' +
-        '<td class="r">' + (i.qty_issued !== null ? U.n(i.qty_issued) : '') + '</td><td>' + (i.qty_returned ? 'รับคืน ' + U.n(i.qty_returned) : '') + '</td></tr>';
+        '<td class="r">' + (i.qty_issued !== null ? U.n(i.qty_issued - (i.qty_returned || 0)) : '') + '</td><td>' + (i.qty_returned ? 'จ่าย ' + U.n(i.qty_issued) + ' คืน/แก้ ' + U.n(i.qty_returned) : '') + '</td></tr>';
     });
     while (rows.length < 8) rows.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
     const st = { ISSUED: 'จ่ายแล้ว', READY: 'พร้อมรับ', PENDING_PREP: 'รอจัดเตรียม', PENDING_APPROVAL: 'รออนุมัติ', CANCELLED: 'ยกเลิก', REJECTED: 'ไม่อนุมัติ' }[r.status] || r.status;
@@ -28,6 +28,7 @@ const PrintDoc = (function () {
       '<div>ลงชื่อ' + dots + '<br>หัวหน้าส่วน<br>(' + (r.head_name ? U.esc(r.head_name) : dots) + ')<small>' + U.esc(r.dept_name || '') + '</small><small>วันที่ ' + d(r.approved_at) + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>เจ้าหน้าที่พัสดุ<br>(' + (r.issuer_name ? U.esc(r.issuer_name) : dots) + ')<small>&nbsp;</small><small>วันที่ ' + d(r.issued_at) + '</small></div></div>' +
       '<div class="recv">ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว &nbsp; ลงชื่อ' + dots + 'ผู้รับของ (' + (r.receiver_name ? U.esc(r.receiver_name) : dots) + ') วันที่ ' + d(r.issued_at) + '</div>' +
+      (r.edit_count ? '<p style="font-size:14pt">หมายเหตุ: แก้ไขจำนวนที่จ่าย ' + r.edit_count + ' ครั้ง ล่าสุด ' + U.thDateTime(r.edited_at) + ' โดย ' + U.esc(r.edited_name) + ' เหตุผล ' + U.esc(r.edit_reason) + '</p>' : '') +
       '<div class="foot"><span>พิมพ์จาก' + U.esc(U.APP_NAME) + ' ' + U.thDateTime(new Date()) + '</span><span>สถานะ: ' + U.esc(st) + '</span></div></div>';
   }
   /** ใบจัดเตรียมวัสดุรวม: รวมรายการจากหลายใบ เรียงตามหมวด → รหัส · มีช่องติ๊กและจำนวนแยกตามใบ */
@@ -73,12 +74,12 @@ const PrintDoc = (function () {
       '<div class="sign one"><div>ลงชื่อ' + dots + 'ผู้จัดเตรียม<br>(' + U.esc(S.user.name) + ') วันที่ ...../...../.....</div></div>' +
       '<div class="foot"><span>ใบจัดเตรียมใช้ภายในงานพัสดุ — ไม่ใช่หลักฐานการจ่าย</span><span>' + U.esc(U.APP_NAME) + '</span></div></div>';
   }
-  function print(sheetHtml, marginCm) {
+  function print(sheetHtml, marginCm, landscape) {
     const root = U.$('#print-root');
     root.innerHTML = sheetHtml;
     let st = U.$('#page-style');
     if (!st) { st = document.createElement('style'); st.id = 'page-style'; document.head.appendChild(st); }
-    st.textContent = '@page { size: A4 portrait; margin: ' + (marginCm || 2) + 'cm; @bottom-right { content: "หน้า " counter(page) "/" counter(pages); font-family: "PrintTHSN", "PrintSarabun", serif; font-size: 12pt; } }';
+    st.textContent = '@page { size: A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin: ' + (marginCm || 2) + 'cm; @bottom-right { content: "หน้า " counter(page) "/" counter(pages); font-family: "PrintTHSN", "PrintSarabun", serif; font-size: 12pt; } }';
     setTimeout(function () { window.print(); }, 50);
   }
   return { reqSheet: reqSheet, pickSheet: pickSheet, print: print };
@@ -89,8 +90,14 @@ App.view('print', {
   render: async function (el, params) {
     el.innerHTML = '<div class="page-h row noprint"><div><h1>ใบเบิกวัสดุ</h1><p>ตรวจตัวอย่างก่อนพิมพ์ · บันทึกเป็น PDF ได้จากหน้าต่างพิมพ์</p></div><span class="spacer"></span>' +
       '<button class="btn" onclick="history.back()">กลับ</button><button class="btn primary lg" id="pr">' + ICON('print') + 'พิมพ์ / บันทึก PDF</button></div><div class="print-preview" id="pv"><div class="skel"></div></div>';
-    let html = '', margin = App.S.cfg.print_margin_cm || 2;
-    if (params[0] === 'batch') {
+    let html = '', margin = App.S.cfg.print_margin_cm || 2, landscape = false;
+    if (params[0] === 'monthly') {
+      const M = App.S.forms.monthlyPrint;
+      if (!M || !M.rep) { location.replace('#/monthly'); return; }
+      U.$('.page-h h1').textContent = 'รายงานวัสดุคงเหลือ ' + M.rep.label;
+      html = Monthly.sheetHtml(M.rep, M.showVal, M.info || {});
+      margin = 1.5; landscape = !!M.showVal;
+    } else if (params[0] === 'batch') {
       const B = App.S.forms.batchPrint;
       if (!B || !B.rows || !B.rows.length) {
         el.innerHTML = '<h1>พิมพ์ใบเตรียมของ</h1><div class="notice warn"><div><b>ยังไม่ได้เลือกใบเบิก</b>เลือกจากหน้า คิวจ่ายวัสดุ แล้วกด "พิมพ์ใบเตรียมของ"</div></div><a class="btn" href="#/queue">ไปคิวจ่ายวัสดุ</a>';
@@ -124,7 +131,7 @@ App.view('print', {
     };
     fit();
     window.addEventListener('resize', fit);
-    U.$('#pr').onclick = function () { PrintDoc.print(html, margin); };
+    U.$('#pr').onclick = function () { PrintDoc.print(html, margin, landscape); };
   }
 });
 
