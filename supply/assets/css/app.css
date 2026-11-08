@@ -647,3 +647,14 @@ label.radio input, label.check input { width: 18px; height: 18px; flex: none; }
 .ri-t tr.ri-skip { opacity: .55; }
 .ri-note { display: block; color: var(--low, #a35a00); margin-top: 4px; font-size: .8rem; }
 .ri-t td:last-child label.check { white-space: nowrap; padding: 4px 0; }
+
+/* หน้าเข้าสู่ระบบ: ข้อความกำลังค้นหาไม่มีกรอบ กระพริบ · "ค้นหาใหม่" เป็นลิงก์สีจาง */
+.acct-list.is-loading { border: 0; background: none; overflow: visible; }
+.acct-searching { padding: 8px 2px; color: #4a6386; font-weight: 600; animation: acct-blink 1.1s ease-in-out infinite; }
+@keyframes acct-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+.login .err-name:empty { min-height: 0; margin: 0; }
+.link-refresh { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 6px 4px; color: #7f95b5; font: inherit; font-size: .9rem; cursor: pointer; border-radius: 8px; }
+.link-refresh svg { width: 16px; height: 16px; }
+.link-refresh:hover, .link-refresh:focus-visible { color: #2f5e9e; background: #eef3fb; }
+.link-refresh:disabled { opacity: .5; cursor: default; }
+@media(prefers-reduced-motion:reduce) { .acct-searching { animation: none; } }
