@@ -73,12 +73,12 @@ const PrintDoc = (function () {
       '<div class="sign one"><div>ลงชื่อ' + dots + 'ผู้จัดเตรียม<br>(' + U.esc(S.user.name) + ') วันที่ ...../...../.....</div></div>' +
       '<div class="foot"><span>ใบจัดเตรียมใช้ภายในงานพัสดุ — ไม่ใช่หลักฐานการจ่าย</span><span>' + U.esc(U.APP_NAME) + '</span></div></div>';
   }
-  function print(sheetHtml, marginCm) {
+  function print(sheetHtml, marginCm, landscape) {
     const root = U.$('#print-root');
     root.innerHTML = sheetHtml;
     let st = U.$('#page-style');
     if (!st) { st = document.createElement('style'); st.id = 'page-style'; document.head.appendChild(st); }
-    st.textContent = '@page { size: A4 portrait; margin: ' + (marginCm || 2) + 'cm; @bottom-right { content: "หน้า " counter(page) "/" counter(pages); font-family: "PrintTHSN", "PrintSarabun", serif; font-size: 12pt; } }';
+    st.textContent = '@page { size: A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin: ' + (marginCm || 2) + 'cm; @bottom-right { content: "หน้า " counter(page) "/" counter(pages); font-family: "PrintTHSN", "PrintSarabun", serif; font-size: 12pt; } }';
     setTimeout(function () { window.print(); }, 50);
   }
   return { reqSheet: reqSheet, pickSheet: pickSheet, print: print };
@@ -89,8 +89,14 @@ App.view('print', {
   render: async function (el, params) {
     el.innerHTML = '<div class="page-h row noprint"><div><h1>ใบเบิกวัสดุ</h1><p>ตรวจตัวอย่างก่อนพิมพ์ · บันทึกเป็น PDF ได้จากหน้าต่างพิมพ์</p></div><span class="spacer"></span>' +
       '<button class="btn" onclick="history.back()">กลับ</button><button class="btn primary lg" id="pr">' + ICON('print') + 'พิมพ์ / บันทึก PDF</button></div><div class="print-preview" id="pv"><div class="skel"></div></div>';
-    let html = '', margin = App.S.cfg.print_margin_cm || 2;
-    if (params[0] === 'batch') {
+    let html = '', margin = App.S.cfg.print_margin_cm || 2, landscape = false;
+    if (params[0] === 'monthly') {
+      const M = App.S.forms.monthlyPrint;
+      if (!M || !M.rep) { location.replace('#/monthly'); return; }
+      U.$('.page-h h1').textContent = 'รายงานวัสดุคงเหลือ ' + M.rep.label;
+      html = Monthly.sheetHtml(M.rep, M.showVal, M.info || {});
+      margin = 1.5; landscape = !!M.showVal;
+    } else if (params[0] === 'batch') {
       const B = App.S.forms.batchPrint;
       if (!B || !B.rows || !B.rows.length) {
         el.innerHTML = '<h1>พิมพ์ใบเตรียมของ</h1><div class="notice warn"><div><b>ยังไม่ได้เลือกใบเบิก</b>เลือกจากหน้า คิวจ่ายวัสดุ แล้วกด "พิมพ์ใบเตรียมของ"</div></div><a class="btn" href="#/queue">ไปคิวจ่ายวัสดุ</a>';
@@ -124,7 +130,7 @@ App.view('print', {
     };
     fit();
     window.addEventListener('resize', fit);
-    U.$('#pr').onclick = function () { PrintDoc.print(html, margin); };
+    U.$('#pr').onclick = function () { PrintDoc.print(html, margin, landscape); };
   }
 });
 

@@ -37,7 +37,11 @@ const Officer = (function () {
 
   async function home(el) {
     const c = S.me.counts || {};
+    const mp = S.me.monthly;
     el.innerHTML = '<div class="page-h"><h1>งานวันนี้</h1><p>' + U.thDate(new Date()) + ' · ' + U.esc(S.user.name) + '</p></div>' +
+      (mp ? '<div class="notice warn">' + ICON('doc') + '<div><b>รายงานวัสดุคงเหลือเดือน ' + U.esc(mp.label) + (mp.status === 'DRAFT' ? ' รอยืนยัน' : ' ยังไม่ได้จัดทำ') + '</b>' +
+        (mp.status === 'DRAFT' ? (mp.mode === 'AUTO' ? 'ระบบจัดทำร่างให้แล้ว' : 'มีร่างรายงานแล้ว') + ' <a href="#/monthly/' + U.esc(mp.ym) + '">ตรวจและยืนยัน</a>'
+          : (mp.mode === 'AUTO' ? 'ระบบจะจัดทำร่างให้ในคืนนี้ หรือ' : '') + ' <a href="#/monthly/' + U.esc(mp.ym) + '">จัดทำรายงาน</a>') + '</div></div>' : '') +
       (!S.cfg.cost_method ? '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b>ผู้ดูแลระบบต้องตั้งค่าก่อนบันทึกยอดยกมาและรับ-จ่าย</div></div>' : '') +
       '<div class="kpis today-kpis"><a class="kpi task-prep" href="#/queue" style="text-decoration:none"><small>รอจัดเตรียม</small><b>' + U.n(c.queuePrep || 0) + '</b><span>ใบ</span></a>' +
       '<a class="kpi task-ready" href="#/queue" style="text-decoration:none"><small>พร้อมรับ (รอส่งมอบ)</small><b>' + U.n(c.queueReady || 0) + '</b><span>ใบ</span></a>' +

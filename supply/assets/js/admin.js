@@ -186,7 +186,7 @@ App.view('settings', {
   render: async function (el) {
     const r = await API.call('getConfig');
     const c = r.config;
-    const lab = { ONE_PENDING: '1 ใบค้างต่อคน (ตามคู่มือ)', NO_DUP_MAT: 'ห้ามวัสดุซ้ำในคำขอค้าง', NONE: 'ไม่จำกัด', AVG: 'ถัวเฉลี่ยถ่วงน้ำหนัก', FIFO: 'เข้าก่อนออกก่อน (FIFO)' };
+    const lab = { ONE_PENDING: '1 ใบค้างต่อคน (ตามคู่มือ)', NO_DUP_MAT: 'ห้ามวัสดุซ้ำในคำขอค้าง', NONE: 'ไม่จำกัด', AVG: 'ถัวเฉลี่ยถ่วงน้ำหนัก', FIFO: 'เข้าก่อนออกก่อน (FIFO)' , AUTO: 'อัตโนมัติ — ระบบจัดทำร่างทุกวันที่ 1', MANUAL: 'เจ้าหน้าที่พัสดุจัดทำเอง'};
     const field = function (k) {
       const x = c[k];
       if (!x) return '';
@@ -201,6 +201,9 @@ App.view('settings', {
       '<div class="card"><h3>การเบิก</h3>' + field('request_rule') + field('show_qty_to_user') + field('approval_enabled') + field('requests_paused') + field('lead_alert_days') + field('default_lead_days') + '</div>' +
       '<div class="card"><h3>หน่วยงานและเอกสาร</h3><div class="grid2">' + field('org_name') + field('app_name') + '</div>' + field('print_margin_cm') +
       '<div class="grid3">' + ['prefix_REQ', 'prefix_RCV', 'prefix_ADJ', 'prefix_RET', 'prefix_OPN', 'prefix_PO'].map(field).join('') + '</div></div>' +
+      '<div class="card"><h3>รายงานวัสดุคงเหลือประจำเดือน</h3>' + field('monthly_report_mode') +
+      '<p class="small muted">อัตโนมัติ: ทุกวันที่ 1 เวลาประมาณ 02:00 ระบบจัดทำร่างของเดือนก่อน แล้วแจ้งเจ้าหน้าที่พัสดุให้ตรวจและยืนยัน · เจ้าหน้าที่พัสดุจัดทำ: กด "จัดทำรายงาน" เองเมื่อปิดเดือน (ระบบเตือนที่หน้าแรกถ้ายังไม่ทำ) · ทั้งสองแบบต้องยืนยันก่อนตัวเลขถูกล็อก</p>' +
+      field('monthly_show_value') + '</div>' +
       '<div class="card"><h3>การเข้าใช้</h3><div class="grid2">' + field('pin_max_fail') + field('pin_lock_minutes') + field('session_minutes') + field('recheck_minutes') + '</div>' + field('line_notify_enabled') + '</div>' +
       '<div class="row end"><button class="btn primary lg">บันทึกการตั้งค่า</button></div></form>';
     U.$('#f').onsubmit = async function (e) {
