@@ -27,14 +27,51 @@ const Admin = (function () {
 App.view('users', {
   title: 'ผู้ใช้และสิทธิ์', roles: ['ADMIN'],
   render: async function (el) {
-    const F = App.S.forms.users = App.S.forms.users || { q: '' };
+    const F = App.S.forms.users = App.S.forms.users || { q: '', f: 'all' };
+    const cfg = window.APP_CONFIG || {};
+    const adminUrl = cfg.ACCOUNT_ADMIN_URL || cfg.PIN_URL || '';
+    const pinUrl = cfg.PIN_URL || adminUrl;
     el.innerHTML = '<div class="page-h"><h1>ผู้ใช้และสิทธิ์</h1><p>บัญชี (ชื่อ-สกุล PIN เปิด/ปิด) สร้างและแก้ที่ PrintHub — ระบบนี้อ่านอย่างเดียว · หน้านี้กำหนดสิทธิ์ ส่วนงาน และตำแหน่งสำหรับ' + U.esc(U.APP_NAME) + ' · บัญชีใหม่เป็น "ผู้ขอเบิก" อัตโนมัติ</p></div>' +
+      '<div class="card acct-help"><div class="row"><div><b>บัญชีและ PIN จัดการที่บัญชีกลาง</b><br><span class="small muted">ระบบนี้อ่านบัญชีอย่างเดียว — ตั้ง/รีเซ็ต PIN เปิด/ปิดบัญชี และปลดล็อกที่บัญชีกลาง ทำที่หน้าผู้ดูแลบัญชีกลาง</span></div><span class="spacer"></span>' +
+      (adminUrl ? '<a class="btn primary" href="' + U.esc(adminUrl) + '" target="_blank" rel="noopener">' + ICON('users') + 'เปิดหน้าผู้ดูแลบัญชีกลาง</a>' : '') + '</div>' +
+      '<details><summary class="small">สถานะแต่ละแบบ ต้องทำอย่างไร</summary><ul class="small acct-steps">' +
+      '<li><span class="badge low">ยังไม่ตั้ง PIN</span> ผู้ดูแลบัญชีกลางตั้ง PIN ชั่วคราวให้ แล้วแจ้งผู้ใช้ตั้ง PIN ของตนเอง</li>' +
+      '<li><span class="badge low">ต้องตั้ง PIN ใหม่</span> ผู้ใช้เปิดหน้าตั้ง PIN แล้วตั้ง PIN ใหม่ให้เสร็จ (ห้ามกดข้าม) จึงเข้าระบบนี้ได้</li>' +
+      '<li><span class="badge out">ล็อก (PIN ผิด)</span> ล็อกเฉพาะระบบนี้ — กดปุ่ม "ปลดล็อก" ในแถวนั้นได้เลย</li>' +
+      '<li><span class="badge out">ถูกล็อกที่บัญชีกลาง</span> ปลดล็อกที่หน้าผู้ดูแลบัญชีกลาง</li>' +
+      '<li><span class="badge gray">ปิดบัญชี</span> เปิดบัญชีที่หน้าผู้ดูแลบัญชีกลาง</li></ul>' +
+      '<p class="small muted">ปุ่ม "คัดลอกข้อความแจ้ง" ในแถวที่มีปัญหา ใช้ส่งต่อทาง LINE/ข้อความให้ผู้ใช้ทำเองได้</p></details></div>' +
+      '<div class="chips" id="flt"></div>' +
       '<div class="search">' + ICON('search') + '<input id="q" type="search" placeholder="ค้นหาชื่อหรือส่วนงาน" value="' + U.esc(F.q) + '"></div><div id="t"><div class="skel"></div></div>';
     const [acc, ms] = await Promise.all([API.call('accounts'), API.call('masters')]);
     const roles = [['USER', 'ผู้ขอเบิก'], ['HEAD', 'หัวหน้าส่วน'], ['OFFICER', 'เจ้าหน้าที่พัสดุ'], ['ADMIN', 'ผู้ดูแลระบบ'], ['NONE', 'ไม่ให้เข้า']];
     const depts = ms.departments.filter(function (d) { return d.active; });
+    const issue = function (a) {
+      if (!a.active) return 'off';
+      if (a.locked) return a.lock_source === 'PRINTHUB' ? 'lockc' : 'locks';
+      if (!a.has_pin) return 'nopin';
+      if (a.must_change) return 'chg';
+      return '';
+    };
+    const FL = [['all', 'ทั้งหมด', function () { return true; }], ['nopin', 'ยังไม่ตั้ง PIN', function (a) { return a.active && !a.has_pin; }],
+      ['chg', 'ต้องตั้ง PIN ใหม่', function (a) { return a.active && a.has_pin && a.must_change; }], ['lock', 'ล็อก', function (a) { return a.locked; }],
+      ['off', 'ปิดบัญชี', function (a) { return !a.active; }]];
+    const msgFor = function (a) {
+      const k = issue(a);
+      const head = 'เรียน ' + a.name + ' — ' + U.APP_NAME + ': ';
+      if (k === 'nopin' || k === 'chg') return head + 'กรุณาตั้ง PIN ของท่านที่ ' + pinUrl + ' แล้วใช้ PIN นั้นเข้าสู่ระบบ';
+      if (k === 'locks') return head + 'บัญชีถูกล็อกชั่วคราวเพราะใส่ PIN ผิดหลายครั้ง ผู้ดูแลปลดล็อกให้แล้ว กรุณาลองใหม่';
+      if (k === 'lockc') return head + 'บัญชีกลางถูกล็อก กรุณาติดต่อผู้ดูแลบัญชีกลาง';
+      if (k === 'off') return head + 'บัญชีปิดใช้งานอยู่ กรุณาติดต่อผู้ดูแลบัญชีกลาง';
+      return '';
+    };
     const draw = function () {
-      const rows = acc.filter(function (a) { return !F.q || U.match(a.name + ' ' + a.account_dept + ' ' + a.dept_name + ' ' + a.role_th, F.q); });
+      const fl = (FL.find(function (x) { return x[0] === F.f; }) || FL[0]);
+      U.$('#flt').innerHTML = FL.map(function (x) {
+        const n = acc.filter(x[2]).length;
+        return '<button class="chip' + (F.f === x[0] ? ' on' : '') + '" data-f="' + x[0] + '"' + (x[0] !== 'all' && !n ? ' disabled' : '') + '>' + x[1] + ' (' + n + ')</button>';
+      }).join('');
+      const rows = acc.filter(fl[2]).filter(function (a) { return !F.q || U.match(a.name + ' ' + a.account_dept + ' ' + a.dept_name + ' ' + a.role_th, F.q); });
       U.$('#t').innerHTML = '<div class="tablewrap"><table class="t access-table"><thead><tr><th>ชื่อ-สกุล</th><th>สิทธิ์ในระบบนี้</th><th>ส่วนงาน</th><th>ตำแหน่ง</th><th>เข้าใช้ล่าสุด</th><th></th></tr></thead><tbody>' +
         rows.map(function (a) {
           return '<tr data-c="' + U.esc(a.code) + '"><td><b>' + U.esc(a.name) + '</b><br><small class="muted">' + U.esc(a.code) + (a.account_dept ? ' · บัญชีระบุ: ' + U.esc(a.account_dept) : '') + '</small>' +
@@ -45,12 +82,15 @@ App.view('users', {
             '<td><select class="input" name="dept"><option value="">— ยังไม่ระบุ —</option>' + depts.map(function (d) { return '<option value="' + U.esc(d.dept_id) + '"' + (d.dept_id === a.dept_id ? ' selected' : '') + '>' + U.esc(d.name) + '</option>'; }).join('') + '</select></td>' +
             '<td><input class="input" name="pos" list="pl" value="' + U.esc(a.position) + '"></td><td class="small">' + (a.last_login ? U.thDateTime(a.last_login) : '—') + '</td>' +
             '<td><div class="row" style="flex-wrap:nowrap"><button class="btn sm primary" data-a="save">บันทึก</button><button class="btn sm" data-a="out" title="ให้ออกจากระบบทันที">ออกจากระบบ</button>' +
-            (a.locked && a.lock_source === 'SUPPLY' ? '<button class="btn sm" data-a="unlock" title="ปลดล็อกการใส่ PIN ผิดในระบบนี้">ปลดล็อก</button>' : '') + '</div></td></tr>';
+            (a.locked && a.lock_source === 'SUPPLY' ? '<button class="btn sm" data-a="unlock" title="ปลดล็อกการใส่ PIN ผิดในระบบนี้">ปลดล็อก</button>' : '') + '</div>' +
+            (issue(a) ? '<div class="row" style="flex-wrap:nowrap;margin-top:6px"><button class="btn sm ghost" data-a="copy" title="คัดลอกข้อความแจ้งผู้ใช้">' + ICON('copy') + 'คัดลอกข้อความแจ้ง</button>' +
+              (issue(a) !== 'locks' && adminUrl ? '<a class="btn sm ghost" href="' + U.esc(adminUrl) + '" target="_blank" rel="noopener">บัญชีกลาง</a>' : '') + '</div>' : '') + '</td></tr>';
         }).join('') + '</tbody></table></div><datalist id="pl">' + (ms.positions || []).map(function (p) { return '<option value="' + U.esc(p) + '">'; }).join('') + '</datalist>' +
         '<p class="small muted">สิทธิ์ที่เปลี่ยนมีผลภายในไม่กี่นาที · "ออกจากระบบ" มีผลทันที (ใช้เมื่อถอนสิทธิ์เร่งด่วน) · ใส่ PIN ผิดในระบบนี้ล็อกเฉพาะระบบนี้ ไม่กระทบ PrintHub · ลืม PIN / ปิดบัญชี ทำที่ PrintHub</p>';
     };
     draw();
     U.$('#q').oninput = function () { F.q = this.value; draw(); };
+    U.$('#flt').onclick = function (e) { const b = e.target.closest('[data-f]'); if (b) { F.f = b.dataset.f; draw(); } };
     U.$('#t').onclick = async function (e) {
       const b = e.target.closest('[data-a]'); if (!b) return;
       const tr = b.closest('tr');
@@ -61,6 +101,10 @@ App.view('users', {
           const r = await API.write('saveAccess', { user_code: a.code, role: role, dept_id: tr.querySelector('[name=dept]').value, position: tr.querySelector('[name=pos]').value });
           U.toast('บันทึกสิทธิ์ ' + a.name + ' เป็น ' + r.role_th + (r.replaced_head ? ' (แทนหัวหน้าเดิม: ' + r.replaced_head + ')' : ''), 'ok', 5000);
           App.render();
+        } else if (b.dataset.a === 'copy') {
+          const text = msgFor(a);
+          try { await navigator.clipboard.writeText(text); U.toast('คัดลอกข้อความแจ้ง ' + a.name + ' แล้ว', 'ok'); }
+          catch (er) { await U.modal({ title: 'ข้อความแจ้งผู้ใช้', ok: 'ปิด', html: '<textarea class="input" rows="4" readonly>' + U.esc(text) + '</textarea>' }); }
         } else if (b.dataset.a === 'unlock') {
           await API.call('unlockAccount', { user_code: a.code });
           U.toast('ปลดล็อก ' + a.name + ' แล้ว', 'ok');
@@ -157,7 +201,7 @@ App.view('settings', {
       '<div class="card"><h3>การเบิก</h3>' + field('request_rule') + field('show_qty_to_user') + field('approval_enabled') + field('requests_paused') + field('lead_alert_days') + field('default_lead_days') + '</div>' +
       '<div class="card"><h3>หน่วยงานและเอกสาร</h3><div class="grid2">' + field('org_name') + field('app_name') + '</div>' + field('print_margin_cm') +
       '<div class="grid3">' + ['prefix_REQ', 'prefix_RCV', 'prefix_ADJ', 'prefix_RET', 'prefix_OPN', 'prefix_PO'].map(field).join('') + '</div></div>' +
-      '<div class="card"><h3>การเข้าใช้</h3><div class="grid2">' + field('pin_max_fail') + field('pin_lock_minutes') + field('session_minutes') + field('recheck_minutes') + '</div>' + field('allow_pin_change') + field('line_notify_enabled') + '</div>' +
+      '<div class="card"><h3>การเข้าใช้</h3><div class="grid2">' + field('pin_max_fail') + field('pin_lock_minutes') + field('session_minutes') + field('recheck_minutes') + '</div>' + field('line_notify_enabled') + '</div>' +
       '<div class="row end"><button class="btn primary lg">บันทึกการตั้งค่า</button></div></form>';
     U.$('#f').onsubmit = async function (e) {
       e.preventDefault();

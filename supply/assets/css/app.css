@@ -457,7 +457,7 @@ table.access-table select option { font-size: .8rem; }
  .login-name .art b { font-size:1.5rem; max-width:none; }
 }
 
-/* Sliding name → PIN: persistent artwork and form panels (1.4.2). */
+/* Sliding name → PIN: persistent artwork and form panels (1.5.0). */
 .login-slide { display:flex; align-items:center; justify-content:center; min-height:100dvh; padding:24px; background:radial-gradient(ellipse at 12% 8%,#dceafa,transparent 55%),#f0f4fa; }
 .login-slide .login-deck { position:relative; width:min(1180px,100%); min-height:760px; border:8px solid #fff; border-radius:32px; overflow:hidden; background:#f4f8ff; box-shadow:0 24px 80px #14355b22; }
 .login-slide .art { position:absolute; z-index:2; inset:0 auto 0 0; width:50%; padding:0; min-height:0; border-radius:23px; background:#071a33; transform:translateX(0); transition:transform .65s cubic-bezier(.65,0,.25,1); }
@@ -522,7 +522,7 @@ table.access-table select option { font-size: .8rem; }
 /* เปิดหน้าครั้งแรกจากโครง index.html — วางแผงตามขั้นตอนทันที ไม่เล่นแอนิเมชันเลื่อน */
 .login-slide.no-anim .art, .login-slide.no-anim .panel { transition:none!important; animation:none!important; }
 
-/* ===== หน้าเข้าสู่ระบบ 1.4.2 — ให้พอดีทุกขนาดจอ =====
+/* ===== หน้าเข้าสู่ระบบ 1.5.0 — ให้พอดีทุกขนาดจอ =====
  * จอกว้าง: แผงภาพ + แผงฟอร์มสูงไม่เกินจอ (ไม่ตายตัว 760px)
  * จอแคบ ≤860px หรือจอเตี้ย ≤500px (มือถือแนวนอน): เรียงเป็นการ์ดเดียว เลื่อนดูได้ตั้งแต่บนสุด */
 .sr-only { position:absolute!important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
@@ -601,4 +601,36 @@ table.access-table select option { font-size: .8rem; }
  .login-slide .keypad button { min-height:42px; }
  .login-slide .err { min-height:1.2em; margin:0 0 4px; }
  .login-ver { margin-top:4px; }
+}
+
+/* ===== 1.5.0 — โฟลสถานะ · พิมพ์ใบเตรียมของ · สถานะบัญชี ===== */
+.chip.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.chip:disabled { opacity: .45; cursor: default; }
+.chips#flt { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.tl.flow li.now { color: var(--navy-ink); }
+.tl.flow li.now b { color: var(--navy); }
+.tl.flow li.now::before { background: linear-gradient(90deg, var(--ok) 0 40%, var(--line) 40%); }
+.tl.flow li.now::after { background: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 0 5px rgba(198,161,91,.25); animation: flow-pulse 1.6s ease-in-out infinite; }
+@keyframes flow-pulse { 50% { box-shadow: 0 0 0 1px var(--gold), 0 0 0 9px rgba(198,161,91,0); } }
+.flow-hint { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; font-size: .9rem; background: var(--bg); color: var(--ink-2); }
+.flow-hint.st-READY { background: #e9f6f0; color: #1d6a52; font-weight: 600; }
+.flow-hint.st-ISSUED { background: #eef2f8; }
+.flow-card { border-left: 4px solid var(--gold); }
+label.radio, label.check { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; border-radius: 10px; }
+label.radio:hover, label.check:hover { background: var(--bg); }
+label.radio input, label.check input { width: 18px; height: 18px; flex: none; }
+.pick-list { max-height: 46vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+.acct-help details { margin-top: 10px; }
+.acct-help summary { cursor: pointer; color: var(--navy); font-weight: 600; }
+.acct-steps { margin: 8px 0; padding-left: 0; list-style: none; display: grid; gap: 6px; }
+.acct-steps .badge { margin-right: 6px; }
+@media(prefers-reduced-motion:reduce) { .tl.flow li.now::after { animation: none; } }
+.notice > svg { width: 22px; height: 22px; flex: none; margin-top: 2px; }
+@media (max-width:520px) {
+ .tl.flow { flex-direction: column; gap: 0; }
+ .tl.flow li { min-width: 0; padding: 0 0 12px 24px; }
+ .tl.flow li::before { top: 12px; bottom: 0; left: 5px; right: auto; width: 3px; height: auto; }
+ .tl.flow li:last-child::before { display: none; }
+ .tl.flow li.now::before { background: var(--line); }
+ .tl.flow li b { display: inline; margin-right: 8px; }
 }

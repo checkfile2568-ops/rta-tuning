@@ -106,11 +106,15 @@ const Officer = (function () {
 /* ---------------------------------------------------------------- คิวจ่ายวัสดุ */
 App.view('queue', {
   title: 'คิวจ่ายวัสดุ', roles: OA,
-  render: async function (el) {
+  render: async function (el, params) {
     const S = App.S;
     const F = S.forms.queue = S.forms.queue || { tab: 'PENDING_PREP' };
-    el.innerHTML = '<div class="page-h row"><div><h1>คิวจ่ายวัสดุ</h1><p>เรียงจากยื่นก่อน · เตรียมของแล้วแตะ "เตรียมพร้อมรับ" · ส่งของจริงแล้วแตะ "ยืนยันส่งมอบ"</p></div><span class="spacer"></span>' +
-      '<button class="btn" id="rf">' + ICON('refresh') + 'รีเฟรช</button></div><div class="seg" id="tab"></div><div id="list" style="margin-top:16px"><div class="skel"></div><div class="skel"></div></div>';
+    // #/queue/<req_id> = เปิดจาก QR บนใบเบิก: แสดงเฉพาะใบนั้น
+    const focus = params && params[0] ? decodeURIComponent(params[0]) : '';
+    el.innerHTML = '<div class="page-h row"><div><h1>คิวจ่ายวัสดุ</h1><p>เรียงจากยื่นก่อน · เตรียมของแล้วแตะ "เตรียมพร้อมรับ" · ส่งของจริงแล้วแตะ "ยืนยันส่งมอบ" · สแกน QR บนใบเบิกเพื่อเปิดใบนั้นทันที</p></div><span class="spacer"></span>' +
+      '<button class="btn" id="pp">' + ICON('print') + 'พิมพ์ใบเตรียมของ</button><button class="btn" id="rf">' + ICON('refresh') + 'รีเฟรช</button></div>' +
+      '<div id="focusbar"></div><div class="seg" id="tab"></div><div id="list" style="margin-top:16px"><div class="skel"></div><div class="skel"></div></div>';
+    let focusInfo = null;
     let rows = [];
     const officer = S.user.role === 'OFFICER';
     const lim = function (i) { return i.qty_approved !== null ? i.qty_approved : i.qty_req; };
@@ -119,7 +123,22 @@ App.view('queue', {
       const tabs = [['PENDING_PREP', 'รอจัดเตรียม'], ['READY', 'พร้อมรับ']];
       if (S.cfg.approval_enabled || n('PENDING_APPROVAL')) tabs.push(['PENDING_APPROVAL', 'รออนุมัติ']);
       U.$('#tab').innerHTML = tabs.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (F.tab === t[0] ? 'on' : '') + '">' + t[1] + ' (' + n(t[0]) + ')</button>'; }).join('');
-      const list = rows.filter(function (r) { return r.status === F.tab; });
+      let list = rows.filter(function (r) { return r.status === F.tab; });
+      if (focus) {
+        const hit = rows.find(function (r) { return r.req_id === focus; });
+        U.$('#tab').style.display = 'none';
+        if (hit) {
+          list = [hit];
+          U.$('#focusbar').innerHTML = '<div class="notice info"><div><b>เปิดจาก QR · ใบ ' + U.esc(hit.req_no) + '</b>' + U.esc(hit.status_th || '') + ' <a href="#/queue">แสดงทั้งคิว</a></div></div>';
+        } else {
+          const f = focusInfo;
+          U.$('#focusbar').innerHTML = '<div class="notice ' + (f && f.status === 'ISSUED' ? 'ok' : 'warn') + '"><div><b>' + (f ? 'ใบ ' + U.esc(f.req_no) + ' · ' + U.esc(f.status_th) : 'ไม่พบใบนี้ในคิว') + '</b>' +
+            (f && f.status === 'ISSUED' ? 'ส่งมอบแล้วเมื่อ ' + U.thDateTime(f.issued_at) + (f.receiver_name ? ' · ผู้รับ ' + U.esc(f.receiver_name) : '') :
+              f ? 'ใบนี้ไม่อยู่ในคิวจ่าย' + (f.reason ? ' · เหตุผล: ' + U.esc(f.reason) : '') : 'ใบนี้อาจถูกยกเลิกหรือส่งมอบไปแล้ว') +
+            ' · ' + (f ? '<a href="#/print/' + U.esc(f.req_id) + '">พิมพ์ใบเบิก</a> · ' : '') + '<a href="#/queue">แสดงทั้งคิว</a></div></div>';
+          list = [];
+        }
+      } else { U.$('#tab').style.display = ''; U.$('#focusbar').innerHTML = ''; }
       const alert = S.cfg.lead_alert_days || 3;
       U.$('#list').innerHTML = list.length ? list.map(function (r) {
         const prep = r.status === 'PENDING_PREP';
@@ -136,10 +155,35 @@ App.view('queue', {
           (officer && r.status !== 'PENDING_APPROVAL' ? '<div class="acts">' + (prep ? '<button class="btn primary" data-a="ready">' + ICON('check') + 'เตรียมพร้อมรับ</button><button class="btn" data-a="issue">ส่งมอบทันที</button>'
             : '<button class="btn primary" data-a="issue">' + ICON('truck') + 'ยืนยันส่งมอบ</button>') +
             '<a class="btn" href="#/print/' + U.esc(r.req_id) + '">' + ICON('print') + 'พิมพ์</a><button class="btn ghost" data-a="cancel">ยกเลิก</button></div>' : '') + '</div>';
-      }).join('') : '<div class="empty">' + ICON('truck') + '<p>ไม่มีคำขอในคิวนี้</p></div>';
+      }).join('') : (focus ? '' : '<div class="empty">' + ICON('truck') + '<p>ไม่มีคำขอในคิวนี้</p></div>');
     };
     const load = async function () {
-      try { rows = await API.call('queue'); draw(); } catch (e) { U.$('#list').innerHTML = App.errorBox(e); }
+      try {
+        rows = await API.call('queue');
+        if (focus && !rows.some(function (r) { return r.req_id === focus; })) {
+          try { focusInfo = await API.call('getRequest', { req_id: focus }); } catch (e) { focusInfo = null; }
+        }
+        draw();
+      } catch (e) { U.$('#list').innerHTML = App.errorBox(e); }
+    };
+    // พิมพ์ใบเตรียมของ: เลือกใบในแท็บปัจจุบัน แล้วพิมพ์แบบรวม (ใบจัดเตรียม) หรือแยก (ใบเบิกทีละใบ)
+    U.$('#pp').onclick = async function () {
+      const st = focus ? null : F.tab;
+      const pool = rows.filter(function (r) { return focus ? r.req_id === focus : r.status === st; });
+      if (!pool.length) { U.toast('ไม่มีใบเบิกในแท็บนี้', 'warn'); return; }
+      const v = await U.modal({
+        title: 'พิมพ์ใบเตรียมของ', ok: 'ดูตัวอย่างก่อนพิมพ์',
+        html: '<div class="seg" style="margin-bottom:12px"><label class="radio"><input type="radio" name="mode" value="pick" checked> รวมเป็นใบจัดเตรียม (เรียงตามหมวด)</label>' +
+          '<label class="radio"><input type="radio" name="mode" value="each"> แยกพิมพ์ใบเบิกทีละใบ</label></div>' +
+          '<p class="small muted">เลือกใบที่จะพิมพ์ (' + pool.length + ' ใบ)</p><div class="pick-list">' + pool.map(function (r) {
+            return '<label class="check"><input type="checkbox" name="r_' + U.esc(r.req_id) + '" checked> <b>' + U.esc(r.req_no) + '</b> <span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name || '') + ' · ' + r.items.length + ' รายการ</span></label>';
+          }).join('') + '</div>',
+        validate: function (val) { return pool.some(function (r) { return val['r_' + r.req_id]; }) ? '' : 'เลือกอย่างน้อย 1 ใบ'; }
+      });
+      if (!v) return;
+      await Officer.needCatalog();
+      S.forms.batchPrint = { mode: v.mode === 'each' ? 'each' : 'pick', rows: pool.filter(function (r) { return v['r_' + r.req_id]; }) };
+      location.hash = '#/print/batch';
     };
     U.$('#tab').onclick = function (e) { const b = e.target.closest('[data-t]'); if (b) { F.tab = b.dataset.t; draw(); } };
     U.$('#rf').onclick = load;
