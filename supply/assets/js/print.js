@@ -32,17 +32,17 @@ const PrintDoc = (function () {
       (!API.scope() && App.S.me && App.S.me.realTrial && App.S.me.realTrial.active ? '<div style="border:2px solid #bf6230;text-align:center;font-weight:bold;padding:6px">รอบทดสอบบนฐานข้อมูลจริง</div>' : '') +
       '<div class="head"><div></div><div><h1>ใบเบิกวัสดุ</h1><p class="org">' + U.esc(r.org_name || App.S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</p></div>' +
       '<div class="qr">' + (qr ? qr + '<small>สแกนเปิดใบนี้</small>' : '') + '</div></div>' +
-      '<div class="meta"><span>ส่วนงาน <b>' + U.esc(r.dept_name || '-') + '</b></span><span>เลขที่ <b>' + U.esc(r.req_no) + '</b></span></div>' +
+      '<div class="meta"><span>ใบเบิกวัสดุ <b>' + U.esc(r.dept_name || '-') + '</b></span><span>เลขที่ <b>' + U.esc(r.req_no) + '</b></span></div>' +
       '<div class="meta"><span></span><span>วันที่ ' + U.thDate(r.created_at) + '</span></div>' +
-      '<p class="indent">ข้าพเจ้า <span class="dotted">' + U.esc(r.requester_name) + '</span> ตำแหน่ง <span class="dotted">' + U.esc(r.requester_position || dots) + '</span> ' +
-      'มีความประสงค์ขอเบิกวัสดุตามรายการต่อไปนี้ เพื่อ <span class="dotted">' + U.esc(r.purpose || 'ใช้ในราชการ') + '</span></p>' +
-      '<table><thead><tr><th style="width:9%">ลำดับ</th><th>รายการ</th><th style="width:13%">หน่วยนับ</th><th style="width:15%">จำนวนที่ขอเบิก</th><th style="width:14%">จำนวนที่จ่าย</th><th style="width:15%">หมายเหตุ</th></tr></thead>' +
+      '<p class="indent">ข้าพเจ้า ' + U.esc(r.requester_name) + ' ตำแหน่ง ' + U.esc(r.requester_position || '-') + ' ' +
+      'มีความประสงค์ขอเบิกวัสดุตามรายการต่อไปนี้ เพื่อ' + U.esc(r.purpose || 'ใช้ในราชการ') + '</p>' +
+      '<table><thead><tr><th style="width:9%">ลำดับ</th><th>รายการ</th><th style="width:13%">หน่วยนับ</th><th style="width:13%">จำนวนที่<br>เบิก</th><th style="width:13%">จำนวนที่<br>จ่าย</th><th style="width:15%">หมายเหตุ</th></tr></thead>' +
       '<tbody>' + rows.join('') + '</tbody></table>' +
       '<div class="sign">' +
       '<div>ลงชื่อ' + dots + '<br>ผู้ขอเบิก<br>(' + U.esc(r.requester_name) + ')<small>' + U.esc(r.requester_position || '') + '</small><small>วันที่ ' + d(r.created_at) + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>หัวหน้าส่วน<br>(' + (r.head_name ? U.esc(r.head_name) : dots) + ')<small>' + U.esc(r.dept_name || '') + '</small><small>วันที่ ' + d(r.approved_at) + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>เจ้าหน้าที่พัสดุ<br>(' + (r.issuer_name ? U.esc(r.issuer_name) : dots) + ')<small>&nbsp;</small><small>วันที่ ' + d(r.issued_at) + '</small></div></div>' +
-      '<div class="recv"><div>ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว</div><div>ลงชื่อ' + dots + 'ผู้รับของ</div>' +
+      '<div class="recv"><div>ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว</div><div>ลงชื่อ' + dots + 'ผู้รับวัสดุ</div>' +
       '<div>(' + (r.receiver_name ? U.esc(r.receiver_name) : dots) + ')</div><div>วันที่ ' + d(r.issued_at) + '</div></div>' +
       (r.edit_count ? '<p style="font-size:14pt">หมายเหตุ: แก้ไขจำนวนที่จ่าย ' + r.edit_count + ' ครั้ง ล่าสุด ' + U.thDateTime(r.edited_at) + ' โดย ' + U.esc(r.edited_name) + ' เหตุผล ' + U.esc(r.edit_reason) + '</p>' : '') +
       '<div class="foot pagefoot"><span>' + U.esc(stamp()) + '</span><span class="pgno"></span></div></div>';
