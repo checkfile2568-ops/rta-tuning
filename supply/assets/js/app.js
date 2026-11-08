@@ -360,8 +360,8 @@ const Login = (function () {
     if (acct) return pinStep();
     mountLogin('<h2 class="sr-only">เข้าสู่ระบบ</h2><label class="login-lead" for="q">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</label>' +
       '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย"></div>' +
-      '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>' +
-      '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="btn sm ghost" id="acct-refresh">ไม่พบชื่อ? ค้นหารายชื่อใหม่</button></div>', 1);
+      '<p class="err err-name" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>' +
+      '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="link-refresh" id="acct-refresh">' + ICON('refresh') + 'ค้นหาใหม่</button></div>', 1);
     const q = $('#q');
     q.focus();
     q.addEventListener('input', U.debounce(function () { search(false); }, 180));
@@ -378,7 +378,8 @@ const Login = (function () {
     const refreshRow = $('#acct-refresh-row');
     if (!q) { box.classList.add('hide'); if (refreshRow) refreshRow.classList.add('hide'); if (refresh) refresh.disabled = false; return; }
     if (refresh) refresh.disabled = true;
-    box.classList.remove('hide'); box.textContent = 'กำลังค้นหารายชื่อ…';
+    box.classList.remove('hide'); box.classList.add('is-loading');
+    box.innerHTML = '<li class="acct-searching" role="status">กำลังค้นหารายชื่อ…</li>';
     $('#err').textContent = '';
     try {
       const cached = memo[q];
@@ -388,9 +389,10 @@ const Login = (function () {
       // Never retain an empty search. Newly added/activated users must be discoverable immediately.
       if (r.length) memo[q] = { at: Date.now(), rows: r }; else delete memo[q];
       if (seq !== searchSeq || !$('#res') || !$('#q') || accountQuery($('#q').value) !== q) return;
+      box.classList.remove('is-loading');
       box.innerHTML = r.length ? r.map(function (a, i) {
         return '<li><button data-i="' + i + '"><b>' + U.esc(a.name) + '</b><small>' + U.esc(a.dept || '—') + (a.ready ? '' : ' · ยังไม่ได้ตั้ง PIN') + '</small></button></li>';
-      }).join('') : '<li class="empty small">ไม่พบชื่อที่ขึ้นต้นด้วย "' + U.esc(q) + '"<br>ลองพิมพ์ชื่ออีกครั้ง หรือกด “ค้นหารายชื่อใหม่”</li>';
+      }).join('') : '<li class="empty small">ไม่พบชื่อที่ขึ้นต้นด้วย "' + U.esc(q) + '"<br>ลองพิมพ์ชื่ออีกครั้ง หรือแตะ “ค้นหาใหม่”</li>';
       box.onclick = function (e) {
         const b = e.target.closest('button[data-i]');
         if (!b) return;
@@ -399,7 +401,7 @@ const Login = (function () {
       };
     } catch (e) {
       if (seq === searchSeq && $('#res') && $('#q') && accountQuery($('#q').value) === q) {
-        box.classList.add('hide'); $('#err').textContent = e.message;
+        box.classList.add('hide'); box.classList.remove('is-loading'); $('#err').textContent = e.message;
       }
     } finally {
       if (seq === searchSeq && refresh && refresh.isConnected) refresh.disabled = false;
