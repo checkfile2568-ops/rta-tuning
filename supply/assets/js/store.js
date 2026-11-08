@@ -1,7 +1,7 @@
-/* ระบบเบิกวัสดุ · store.js — แคชในเครื่อง
+/* ระบบบริหารวัสดุสำนักงาน · store.js — แคชในเครื่อง
  *  • IndexedDB: รายการวัสดุ (catalog) แยกตามบัญชี — ค้นหาในเครื่องทันที
  *  • localStorage: ตะกร้า/ร่าง และคิวส่ง แยกตามบัญชี (หมุนจอ/สลับแอป/หมดเวลาแล้วกลับมาทำต่อได้)
- *  • sessionStorage: token (ปิดแท็บแล้วหาย)
+ *  • sessionStorage: token (ปิดแท็บแล้วหาย · เปิด/รีเฟรชหน้าเองต้องใส่ PIN ใหม่)
  *  ออกจากระบบ/สลับบัญชี → ล้างข้อมูลเฉพาะผู้ใช้ทั้งหมด */
 'use strict';
 const Store = (function () {
@@ -55,6 +55,15 @@ const Store = (function () {
     set: function (k, v) { k = scoped(k); return tx('readwrite', function (s) { if (s) return s.put(v, k); mem[k] = v; return null; }); },
     del: function (k) { k = scoped(k); return tx('readwrite', function (s) { if (s) return s.delete(k); delete mem[k]; return null; }); },
     ls: ls,
+    /** รีโหลดที่ระบบสั่งเอง (สลับพื้นที่ฝึก/รอบข้อมูล/โหลดซ้ำหลังเข้าสู่ระบบ) ใช้ session เดิมต่อได้ครั้งเดียวภายใน 60 วินาที
+     *  ผู้ใช้เปิดหรือรีเฟรชหน้าเอง = ไม่มีเครื่องหมายนี้ → ต้องใส่ PIN ใหม่ */
+    resume: {
+      mark: function () { try { sessionStorage.setItem('sp:resume', String(Date.now())); } catch (e) { /**/ } },
+      take: function () {
+        try { const at = Number(sessionStorage.getItem('sp:resume') || 0); sessionStorage.removeItem('sp:resume'); return at > 0 && Date.now() - at < 60000; }
+        catch (e) { return false; }
+      }
+    },
     token: {
       get: function () { try { return sessionStorage.getItem('sp:token') || ''; } catch (e) { return ''; } },
       set: function (t) { try { sessionStorage.setItem('sp:token', t); } catch (e) { /**/ } },

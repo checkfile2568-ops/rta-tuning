@@ -8,7 +8,7 @@ const Training = (function () {
   async function switchMode(generation) {
     if (Outbox.pending().length) { U.toast('มีคำขอค้างส่งในพื้นที่นี้ กรุณาจัดการคำขอค้างก่อนสลับพื้นที่', 'err', 6000); return; }
     // A hard reload discards outstanding callbacks and reloads the correctly namespaced drafts/catalog.
-    API.setTraining(generation); location.hash = '#/training'; location.reload();
+    API.setTraining(generation); App.reload('#/training');
   }
   async function leave() {
     if (!API.scope()) return;
@@ -65,7 +65,7 @@ App.view('training', {
       try {
         await API.call(action, data, { write: true, uuid: opUUID, timeout: 120000 });
         U.toast(action === 'training.create' ? 'สร้างชุดฝึกแล้ว' : 'ล้างชุดฝึกแล้ว เก็บสำเนาชุดเก่าไว้', 'ok');
-        if (action === 'training.clear' && API.scope()) { API.setTraining(''); location.reload(); }
+        if (action === 'training.clear' && API.scope()) { API.setTraining(''); App.reload(); }
         else App.render();
       } catch (e) { U.toast(e.message, 'err', 7000); }
       finally { pending = false; if (progress.isConnected) progress.textContent = ''; controls.forEach(function (b, i) { if (b.isConnected) b.disabled = previous[i]; }); }

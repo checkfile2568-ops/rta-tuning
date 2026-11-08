@@ -1,4 +1,4 @@
-/* ระบบเบิกวัสดุ · admin.js — ภาพรวม · ผู้ใช้และสิทธิ์ · ส่วนงาน · หมวด/หน่วย/วันหยุด · ตั้งค่าระบบ · สำรองข้อมูล */
+/* ระบบบริหารวัสดุสำนักงาน · admin.js — ภาพรวม · ผู้ใช้และสิทธิ์ · ส่วนงาน · หมวด/หน่วย/วันหยุด · ตั้งค่าระบบ · สำรองข้อมูล */
 'use strict';
 const Admin = (function () {
   async function home(el) {
@@ -28,14 +28,14 @@ App.view('users', {
   title: 'ผู้ใช้และสิทธิ์', roles: ['ADMIN'],
   render: async function (el) {
     const F = App.S.forms.users = App.S.forms.users || { q: '' };
-    el.innerHTML = '<div class="page-h"><h1>ผู้ใช้และสิทธิ์</h1><p>บัญชี (ชื่อ-สกุล PIN เปิด/ปิด) สร้างและแก้ที่ PrintHub — ระบบนี้อ่านอย่างเดียว · หน้านี้กำหนดสิทธิ์ ส่วนงาน และตำแหน่งสำหรับระบบเบิกวัสดุ · บัญชีใหม่เป็น "ผู้ขอเบิก" อัตโนมัติ</p></div>' +
+    el.innerHTML = '<div class="page-h"><h1>ผู้ใช้และสิทธิ์</h1><p>บัญชี (ชื่อ-สกุล PIN เปิด/ปิด) สร้างและแก้ที่ PrintHub — ระบบนี้อ่านอย่างเดียว · หน้านี้กำหนดสิทธิ์ ส่วนงาน และตำแหน่งสำหรับ' + U.esc(U.APP_NAME) + ' · บัญชีใหม่เป็น "ผู้ขอเบิก" อัตโนมัติ</p></div>' +
       '<div class="search">' + ICON('search') + '<input id="q" type="search" placeholder="ค้นหาชื่อหรือส่วนงาน" value="' + U.esc(F.q) + '"></div><div id="t"><div class="skel"></div></div>';
     const [acc, ms] = await Promise.all([API.call('accounts'), API.call('masters')]);
     const roles = [['USER', 'ผู้ขอเบิก'], ['HEAD', 'หัวหน้าส่วน'], ['OFFICER', 'เจ้าหน้าที่พัสดุ'], ['ADMIN', 'ผู้ดูแลระบบ'], ['NONE', 'ไม่ให้เข้า']];
     const depts = ms.departments.filter(function (d) { return d.active; });
     const draw = function () {
       const rows = acc.filter(function (a) { return !F.q || U.match(a.name + ' ' + a.account_dept + ' ' + a.dept_name + ' ' + a.role_th, F.q); });
-      U.$('#t').innerHTML = '<div class="tablewrap"><table class="t access-table"><thead><tr><th>ชื่อ-สกุล</th><th>สิทธิ์ระบบเบิกวัสดุ</th><th>ส่วนงาน</th><th>ตำแหน่ง</th><th>เข้าใช้ล่าสุด</th><th></th></tr></thead><tbody>' +
+      U.$('#t').innerHTML = '<div class="tablewrap"><table class="t access-table"><thead><tr><th>ชื่อ-สกุล</th><th>สิทธิ์ในระบบนี้</th><th>ส่วนงาน</th><th>ตำแหน่ง</th><th>เข้าใช้ล่าสุด</th><th></th></tr></thead><tbody>' +
         rows.map(function (a) {
           return '<tr data-c="' + U.esc(a.code) + '"><td><b>' + U.esc(a.name) + '</b><br><small class="muted">' + U.esc(a.code) + (a.account_dept ? ' · บัญชีระบุ: ' + U.esc(a.account_dept) : '') + '</small>' +
             (!a.active ? '<br><span class="badge gray">ปิดบัญชี</span>' : '') + (a.locked ? '<br><span class="badge out">' + (a.lock_source === 'PRINTHUB' ? 'ถูกล็อกที่ PrintHub' : 'ล็อก (PIN ผิด)') + '</span>' : '') +

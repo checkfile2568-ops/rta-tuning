@@ -1,4 +1,4 @@
-/* ระบบเบิกวัสดุ · officer.js — งานเจ้าหน้าที่พัสดุ: คิวจ่าย · คลังวัสดุ/บัญชีวัสดุรายตัว · รับเข้า · ตรวจนับ ·
+/* ระบบบริหารวัสดุสำนักงาน · officer.js — งานเจ้าหน้าที่พัสดุ: คิวจ่าย · คลังวัสดุ/บัญชีวัสดุรายตัว · รับเข้า · ตรวจนับ ·
  * จุดสั่งซื้อ · ผู้จำหน่าย · ยอดยกมา · กระทบยอด/ตรวจซ่อม · ประวัติการใช้งาน */
 'use strict';
 const OA = ['OFFICER', 'ADMIN'];
@@ -93,7 +93,7 @@ const Officer = (function () {
       const n = me.counts.queuePrep || 0;
       if (n > last) {
         U.toast('มีคำขอเบิกใหม่ ' + (n - last) + ' ใบ · รอจัดเตรียมทั้งหมด ' + n + ' ใบ', 'info', 7000);
-        try { if (window.Notification && Notification.permission === 'granted') new Notification('ระบบเบิกวัสดุ', { body: 'มีคำขอเบิกใหม่ ' + (n - last) + ' ใบ' }); } catch (e) { /**/ }
+        try { if (window.Notification && Notification.permission === 'granted') new Notification(U.APP_NAME, { body: 'มีคำขอเบิกใหม่ ' + (n - last) + ' ใบ' }); } catch (e) { /**/ }
       }
       last = n;
       title(n);
