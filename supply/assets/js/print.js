@@ -1,4 +1,4 @@
-/* ระบบเบิกวัสดุ · print.js — ใบเบิกวัสดุ A4 แนวตั้ง (TH Sarabun New 16 pt) ดูตัวอย่างก่อนพิมพ์ทุกครั้ง
+/* ระบบบริหารวัสดุสำนักงาน · print.js — ใบเบิกวัสดุ A4 แนวตั้ง (TH Sarabun New 16 pt) ดูตัวอย่างก่อนพิมพ์ทุกครั้ง
  * ชื่อผู้ขอเบิก ตำแหน่ง ส่วนงาน หัวหน้าส่วน = snapshot ณ วันที่ยื่น · ชื่อเจ้าหน้าที่พัสดุ = ตอนส่งมอบ · ไม่แสดงราคา */
 'use strict';
 const PrintDoc = (function () {
@@ -26,7 +26,7 @@ const PrintDoc = (function () {
       '<div>ลงชื่อ' + dots + '<br>หัวหน้าส่วน<br>(' + (r.head_name ? U.esc(r.head_name) : dots) + ')<small>' + U.esc(r.dept_name || '') + '</small><small>วันที่ ' + d(r.approved_at) + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>เจ้าหน้าที่พัสดุ<br>(' + (r.issuer_name ? U.esc(r.issuer_name) : dots) + ')<small>&nbsp;</small><small>วันที่ ' + d(r.issued_at) + '</small></div></div>' +
       '<div class="recv">ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว &nbsp; ลงชื่อ' + dots + 'ผู้รับของ (' + (r.receiver_name ? U.esc(r.receiver_name) : dots) + ') วันที่ ' + d(r.issued_at) + '</div>' +
-      '<div class="foot"><span>พิมพ์จากระบบเบิกวัสดุ ' + U.thDateTime(new Date()) + '</span><span>สถานะ: ' + U.esc(st) + '</span></div></div>';
+      '<div class="foot"><span>พิมพ์จาก' + U.esc(U.APP_NAME) + ' ' + U.thDateTime(new Date()) + '</span><span>สถานะ: ' + U.esc(st) + '</span></div></div>';
   }
   function print(sheetHtml, marginCm) {
     const root = U.$('#print-root');

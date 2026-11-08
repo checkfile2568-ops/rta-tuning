@@ -1,6 +1,6 @@
 {
   "name": "ระบบบริหารวัสดุสำนักงาน ศาลจังหวัดลพบุรี",
-  "short_name": "เบิกวัสดุ",
+  "short_name": "วัสดุสำนักงาน",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

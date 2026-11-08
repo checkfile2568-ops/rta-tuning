@@ -25,7 +25,7 @@ App.view('real-trial',{
    const progress=U.$('#rt-progress');progress.textContent='กำลังดำเนินการและตรวจสำเนา กรุณารอสักครู่…';
    if(lastAction!==action){lastAction=action;uuid=U.uuid();}
    try{await API.call(action,Object.assign({confirm:confirmation,generation:r.generation,cost_method:form.cost_method},extra||{}),{write:true,uuid:uuid,timeout:120000,workspaceSwitch:action!=='realTrial.seed'});
-    U.toast('ดำเนินการสำเร็จ','ok');if(action==='realTrial.seed'){await App.refreshMe();App.render();}else{location.hash='#/real-trial';location.reload();}
+    U.toast('ดำเนินการสำเร็จ','ok');if(action==='realTrial.seed'){await App.refreshMe();App.render();}else{App.reload('#/real-trial');}
    }catch(e){U.toast(e.message,'err',8000);}
    finally{pending=false;if(progress.isConnected)progress.textContent='';buttons.forEach((b,i)=>{if(b.isConnected)b.disabled=disabled[i];});}
   }

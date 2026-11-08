@@ -1,4 +1,4 @@
-/* ระบบเบิกวัสดุ · app.js — โครงหน้า เมนูตามบทบาท router เข้าสู่ระบบ และแคชรายการวัสดุ */
+/* ระบบบริหารวัสดุสำนักงาน · app.js — โครงหน้า เมนูตามบทบาท router เข้าสู่ระบบ และแคชรายการวัสดุ */
 'use strict';
 const ICON = (function () {
   const p = {
@@ -99,10 +99,10 @@ const App = (function () {
     ROOT().innerHTML =
       (API.scope() ? Training.banner() : RealTrial.banner(S.me && S.me.realTrial)) +
       '<div class="shell' + cartCls + '">' +
-      '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><b>' + U.esc('ระบบบริหารวัสดุสำนักงาน') + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
+      '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
       '<nav class="nav" id="nav">' + navHtml(navFor(u), route) + '</nav>' +
       '<div class="side-foot"><b>' + U.esc(u.name) + '</b>' + U.esc(ROLE_TH[u.role] || '') + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</div></aside>' +
-      '<div class="main"><header class="mhead"><i class="bar"></i><div><b>' + U.esc('ระบบบริหารวัสดุสำนักงาน') + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
+      '<div class="main"><header class="mhead"><i class="bar"></i><div><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
       '<button class="userbtn" data-act="usermenu" aria-label="เมนูผู้ใช้">' + ICON('user') + ICON('chev') + '</button></header>' +
       '<div class="topbar"><span>' + today + '</span><button class="userbtn" data-act="usermenu"><span class="avatar">' + U.esc(init) + '</span>' + U.esc(u.name) + '</button></div>' +
       (v.cart ? '<div class="with-cart"><main class="content" id="view"></main><aside class="cart-panel" id="cartpanel" aria-label="ตะกร้า"></aside></div>'
@@ -172,6 +172,12 @@ const App = (function () {
     location.hash = '';
     location.reload();
   }
+  /** รีโหลดที่ระบบสั่งเอง — ใช้ session เดิมต่อ ไม่ถาม PIN ซ้ำ */
+  function reload(hash) {
+    Store.resume.mark();
+    if (hash !== undefined) location.hash = hash;
+    location.reload();
+  }
 
   /* ---------------------------------------------------------- รายการวัสดุ (แคช IndexedDB) */
   function index(cat) {
@@ -223,6 +229,13 @@ const App = (function () {
 
   /* ---------------------------------------------------------- เริ่มระบบ */
   async function boot() {
+    const resume = Store.resume.take();
+    if (API.token() && !resume) {
+      // เปิดหรือรีเฟรชหน้าแรก → ใส่ PIN ใหม่ทุกครั้ง: ปิด session เดิมที่เซิร์ฟเวอร์ (ไม่รอผล) แล้วล้าง token ในเครื่อง
+      // ร่างคำขอ/ตะกร้า/คิวส่งอยู่ใน localStorage แยกตามบัญชี — ใส่ PIN แล้วทำต่อได้ครบ
+      API.call('logout').catch(function () { /* หมดเวลาอยู่แล้ว */ });
+      API.setToken('');
+    }
     if (!API.token()) { Store.clearCatalogs(''); return Login.show(); }
     try {
       const me = await API.call('me');
@@ -276,7 +289,7 @@ const App = (function () {
     if (document.getElementById('workspace-required')) return;
     const wrap = document.createElement('div'); wrap.id = 'workspace-required'; wrap.className = 'modal-wrap'; wrap.style.zIndex = '9999';
     wrap.innerHTML = '<div class="modal" role="alertdialog" aria-label="รอบข้อมูลเปลี่ยนแล้ว"><h2>รอบข้อมูลเปลี่ยนแล้ว</h2><p>แอดมินเริ่มหรือล้างรอบข้อมูล กรุณาเปิดหน้าล่าสุด ร่างและคำขอค้างจากรอบเก่าจะไม่ถูกส่งเข้ารอบใหม่</p><button class="btn primary" id="workspace-reload">เปิดหน้าล่าสุด</button></div>';
-    document.body.appendChild(wrap); wrap.querySelector('button').onclick = function () { location.reload(); };
+    document.body.appendChild(wrap); wrap.querySelector('button').onclick = function () { reload(); };
   });
   API.on('catalog', function () { if (S.user) refreshCatalog().catch(function () {}); });
 
@@ -292,7 +305,7 @@ const App = (function () {
 
   return {
     S: S, ROLE_TH: ROLE_TH, view: function (k, v) { views[k] = v; }, render: render, boot: boot, afterLogin: afterLogin,
-    refreshMe: refreshMe, loadCatalog: loadCatalog, logout: logout, refreshCatalog: refreshCatalog, saveCart: saveCart, errorBox: errorBox,
+    refreshMe: refreshMe, loadCatalog: loadCatalog, logout: logout, reload: reload, refreshCatalog: refreshCatalog, saveCart: saveCart, errorBox: errorBox,
     go: function (h) { if (location.hash === h) render(); else location.hash = h; }
   };
 })();
@@ -304,37 +317,50 @@ const Login = (function () {
   const $ = U.$;
   let acct = null, pin = '', busy = false, overlayResolve = null, overlayFor = null;
 
-  const SYSTEM_NAME = 'ระบบบริหารวัสดุสำนักงาน';
+  const SYSTEM_NAME = U.APP_NAME;
   const SYSTEM_ORG = 'ศาลจังหวัดลพบุรี';
   const SYSTEM_TAGLINE = 'บริหารวัสดุอย่างเป็นระบบ สนับสนุนงานอย่างมีประสิทธิภาพ';
-  function loginHeading(nameEntry) {
+  const VERSION = (window.APP_CONFIG && APP_CONFIG.VERSION) || '';
+  /** step: 1 = เลือกชื่อ, 2 = ใส่ PIN, 0/ไม่ระบุ = หน้าตั้งค่าหลังเข้าสู่ระบบ (ไม่แสดงป้ายขั้นตอน) */
+  function loginHeading(step) {
+    const chip = function (n, label) { return '<span' + (step === n ? ' class="current" aria-current="step"' : '') + '>' + n + ' ' + label + '</span>'; };
     return '<div class="login-heading"><span class="login-eyebrow">OFFICE SUPPLY MANAGEMENT</span>' +
       '<h1>' + SYSTEM_NAME + '<span>' + SYSTEM_ORG + '</span></h1><p>' + SYSTEM_TAGLINE + '</p>' +
-      '<div class="login-steps" aria-label="ขั้นตอนเข้าสู่ระบบ"><span' + (nameEntry ? ' class="current" aria-current="step"' : '') + '>1 เลือกชื่อ</span><i aria-hidden="true"></i><span' + (!nameEntry ? ' class="current" aria-current="step"' : '') + '>2 ใส่ PIN</span></div></div>';
+      (step === 1 || step === 2 ? '<div class="login-steps" aria-label="ขั้นตอนเข้าสู่ระบบ">' + chip(1, 'เลือกชื่อ') + '<i aria-hidden="true"></i>' + chip(2, 'ใส่ PIN') + '</div>' : '') + '</div>';
   }
-  function frame(inner, nameEntry) {
-    return '<div class="login login-glass login-slide' + (nameEntry ? '' : ' is-pin') + '"><div class="login-deck">' +
-      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-office-v2.webp?v=1.4.0" alt="" width="1122" height="1402" fetchpriority="high">' +
+  function frame(inner, step) {
+    step = step || 0;
+    return '<div class="login login-glass login-slide' + (step === 1 ? '' : ' is-pin') + '"><div class="login-deck">' +
+      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.4.2" alt="" width="1122" height="1402" fetchpriority="high">' +
       '<div class="login-art-caption"><span>วัสดุพร้อมใช้ ข้อมูลพร้อมตรวจสอบ</span><small>รับเข้า · เบิก · ส่งมอบ · ติดตาม</small></div></section>' +
-      '<section class="panel"><div class="box">' + loginHeading(nameEntry) + inner + '</div></section></div></div>';
+      '<section class="panel"><div class="box">' + loginHeading(step) + inner + '</div>' +
+      (VERSION ? '<p class="login-ver">รุ่น ' + U.esc(VERSION) + '</p>' : '') + '</section></div></div>';
   }
   // Keep the moving panels alive; replace only the form so CSS can animate both directions.
-  function mountLogin(inner, nameEntry) {
+  function mountLogin(inner, step) {
     const shell = ROOT().querySelector('.login-slide');
-    if (!shell) { ROOT().innerHTML = frame(inner, nameEntry); return; }
-    shell.querySelector('.box').innerHTML = loginHeading(nameEntry) + inner;
+    if (!shell) { ROOT().innerHTML = frame(inner, step); return; }
+    shell.querySelector('.box').innerHTML = loginHeading(step) + inner;
+    if (shell.hasAttribute('data-boot')) {
+      // โครงหน้าจาก index.html: วางตำแหน่งขั้นตอนแรกทันที ไม่เลื่อนแผงตอนเปิดหน้า
+      shell.removeAttribute('data-boot');
+      shell.classList.add('no-anim');
+      shell.classList.toggle('is-pin', step !== 1);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { shell.classList.remove('no-anim'); }); });
+      return;
+    }
     void shell.offsetWidth;
-    shell.classList.toggle('is-pin', !nameEntry);
+    shell.classList.toggle('is-pin', step !== 1);
   }
   function show() {
     busy = false; waiting('');
     acct = Store.ls.get('last_acct', null);
     pin = '';
     if (acct) return pinStep();
-    mountLogin('<h2>เข้าสู่ระบบ</h2><p class="muted">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</p>' +
-      '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย" aria-label="ค้นหาชื่อ"></div>' +
-      '<div class="row end"><button type="button" class="btn sm" id="acct-refresh">ค้นหารายชื่อใหม่</button></div>' +
-      '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>', true);
+    mountLogin('<h2 class="sr-only">เข้าสู่ระบบ</h2><label class="login-lead" for="q">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</label>' +
+      '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย"></div>' +
+      '<p class="err" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>' +
+      '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="btn sm ghost" id="acct-refresh">ไม่พบชื่อ? ค้นหารายชื่อใหม่</button></div>', 1);
     const q = $('#q');
     q.focus();
     q.addEventListener('input', U.debounce(function () { search(false); }, 180));
@@ -348,7 +374,8 @@ const Login = (function () {
     const field = $('#q'), box = $('#res'), refresh = $('#acct-refresh');
     if (!field || !box) return;
     const q = accountQuery(field.value), seq = ++searchSeq;
-    if (!q) { box.classList.add('hide'); if (refresh) refresh.disabled = false; return; }
+    const refreshRow = $('#acct-refresh-row');
+    if (!q) { box.classList.add('hide'); if (refreshRow) refreshRow.classList.add('hide'); if (refresh) refresh.disabled = false; return; }
     if (refresh) refresh.disabled = true;
     box.classList.remove('hide'); box.textContent = 'กำลังค้นหารายชื่อ…';
     $('#err').textContent = '';
@@ -375,11 +402,12 @@ const Login = (function () {
       }
     } finally {
       if (seq === searchSeq && refresh && refresh.isConnected) refresh.disabled = false;
+      if (seq === searchSeq && refreshRow && refreshRow.isConnected && $('#q') && accountQuery($('#q').value)) refreshRow.classList.remove('hide');
     }
   }
   function pinStep(msg) {
     pin = ''; busy = false;
-    const html = '<h2>ใส่ PIN</h2><div class="who"><span class="avatar">' + U.esc(acct.name.charAt(0)) + '</span><div><b>' + U.esc(acct.name) + '</b>' +
+    const html = (overlayFor ? '<h2>ใส่ PIN</h2>' : '<h2 class="sr-only">ใส่ PIN</h2>') + '<div class="who"><span class="avatar">' + U.esc(acct.name.charAt(0)) + '</span><div><b>' + U.esc(acct.name) + '</b>' +
       '<span class="muted small">' + U.esc(acct.dept || '') + '</span></div>' +
       (overlayFor ? '' : '<button class="btn sm ghost" id="chg" style="margin-left:auto">เปลี่ยนชื่อ</button>') + '</div>' +
       (msg ? '<div class="notice warn"><div>' + U.esc(msg) + '</div></div>' : '') +
@@ -393,7 +421,7 @@ const Login = (function () {
       '<h3>กำลังเข้าสู่ระบบ</h3><p class="wait-phase" id="login-wait-phase">กำลังตรวจสอบ PIN</p><p class="wait-hint" id="login-wait-hint">กรุณารอสักครู่</p>' +
       '<div class="wait-shimmer" aria-hidden="true"><i></i></div></div></div></div>';
     if (overlayFor) { $('#reauth .box').innerHTML = html; }
-    else mountLogin(html, false);
+    else mountLogin(html, 2);
     const inp = $('#pinin');
     if (!('ontouchstart' in window)) inp.focus();
     inp.addEventListener('input', function () { if (busy) { inp.value = pin; return; } pin = inp.value.replace(/\D/g, '').slice(0, 4); dots(); if (pin.length === 4) submit(); });
@@ -470,7 +498,7 @@ const Login = (function () {
       if (e && /^SESSION_|PIN_CHANGE/.test(e.code)) { show(); return; }
       ROOT().innerHTML = frame('<h2>เข้าสู่ระบบแล้ว แต่โหลดข้อมูลไม่สำเร็จ</h2>' + App.errorBox(e) +
         '<button class="btn primary block lg" id="retry">ลองโหลดอีกครั้ง</button>');
-      $('#retry').onclick = function () { location.reload(); };
+      $('#retry').onclick = function () { App.reload(); };
     } finally { busy = false; waiting(''); }
   }
   /** บัญชีที่ต้องเปลี่ยน PIN — ระบบนี้อ่านบัญชีกลาง (PrintHub) อย่างเดียว จึงให้ไปตั้งที่หน้าตั้ง PIN (ไม่แสดงชื่อระบบอื่น) */
