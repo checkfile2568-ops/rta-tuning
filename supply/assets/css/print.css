@@ -75,9 +75,11 @@
 .sheet.req th, .sheet.req td { border: 0.5pt solid #9a9a9a; padding: 1pt 5pt; }
 .sheet.req th { font-size: 16pt; vertical-align: middle; line-height: 1.1; }
 .sheet.req p.indent { text-indent: 2.5cm; margin: 0 0 6pt; }
-.sheet.req .sign { gap: 8pt; }
+.sheet.req .sign { gap: 8pt; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .sheet.req .sign small { font-size: 15pt; }
-.sheet.req .recv { width: max-content; max-width: 100%; margin: 18pt auto 0; text-align: center; line-height: 1.35; break-inside: avoid; page-break-inside: avoid; }
+.sheet.req .recv { width: max-content; max-width: 100%; margin: 18pt 0 0; text-align: center; line-height: 1.35; break-inside: avoid; page-break-inside: avoid; }
+.sheet.req .recv > div:first-child { text-align: left; }
+.sheet.req .sign small.fit { overflow: hidden; }
 .sheet.req .pagefoot { position: absolute; left: 3cm; right: 2cm; bottom: 1cm; margin: 0; font-size: 13pt; }
 @media print {
   /* ข้อความซ้ายล่างและเลขหน้า พิมพ์ที่ขอบกระดาษทุกหน้าโดย print.js */

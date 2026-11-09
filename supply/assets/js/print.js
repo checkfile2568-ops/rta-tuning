@@ -7,6 +7,15 @@ const PrintDoc = (function () {
   function stamp() { return 'พิมพ์จาก' + U.APP_NAME + ' ' + U.thDateTime(new Date()); }
   /** ระยะขอบตามระเบียบงานสารบรรณ (ซม.): บน ขวา ล่าง ซ้าย — ซ้าย 3 ขวา 2 */
   const OFFICIAL = [2.5, 2, 2, 3];
+  /** ตำแหน่ง/ส่วนงานที่ยาว: ลดขนาดตัวอักษรให้อยู่บรรทัดเดียว ถ้าเล็กสุดแล้วยังไม่พอ ให้ขึ้นบรรทัดที่ 2 */
+  function fitText(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('.fit'), function (el) {
+      el.style.whiteSpace = 'nowrap'; el.style.fontSize = '';
+      let pt = parseFloat(getComputedStyle(el).fontSize) * 0.75;
+      while (el.scrollWidth > el.clientWidth + 1 && pt > 11) { pt -= 0.5; el.style.fontSize = pt + 'pt'; }
+      if (el.scrollWidth > el.clientWidth + 1) el.style.whiteSpace = 'normal';
+    });
+  }
   /** ประมาณจำนวนหน้าของแผ่นในหน้าตัวอย่าง (ความสูงเนื้อหา ÷ ความสูงพื้นที่พิมพ์) */
   function pagesOf(sheet, marginsCm, landscape) {
     const mm = 96 / 25.4;
@@ -39,8 +48,8 @@ const PrintDoc = (function () {
       '<table><thead><tr><th style="width:9%">ลำดับ</th><th>รายการ</th><th style="width:13%">หน่วยนับ</th><th style="width:13%">จำนวนที่<br>เบิก</th><th style="width:13%">จำนวนที่<br>จ่าย</th><th style="width:15%">หมายเหตุ</th></tr></thead>' +
       '<tbody>' + rows.join('') + '</tbody></table>' +
       '<div class="sign">' +
-      '<div>ลงชื่อ' + dots + '<br>ผู้ขอเบิก<br>(' + U.esc(r.requester_name) + ')<small>' + U.esc(r.requester_position || '') + '</small><small>วันที่ ' + d(r.created_at) + '</small></div>' +
-      '<div>ลงชื่อ' + dots + '<br>หัวหน้าส่วน<br>(' + (r.head_name ? U.esc(r.head_name) : dots) + ')<small>' + U.esc(r.dept_name || '') + '</small><small>วันที่ ' + d(r.approved_at) + '</small></div>' +
+      '<div>ลงชื่อ' + dots + '<br>ผู้ขอเบิก<br>(' + U.esc(r.requester_name) + ')<small class="fit">' + U.esc(r.requester_position || '') + '</small><small>วันที่ ' + d(r.created_at) + '</small></div>' +
+      '<div>ลงชื่อ' + dots + '<br>หัวหน้าส่วน<br>(' + (r.head_name ? U.esc(r.head_name) : dots) + ')<small class="fit">' + U.esc(r.dept_name || '') + '</small><small>วันที่ ' + d(r.approved_at) + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>เจ้าหน้าที่พัสดุ<br>(' + (r.issuer_name ? U.esc(r.issuer_name) : dots) + ')<small>&nbsp;</small><small>วันที่ ' + d(r.issued_at) + '</small></div></div>' +
       '<div class="recv"><div>ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว</div><div>ลงชื่อ' + dots + 'ผู้รับวัสดุ</div>' +
       '<div>(' + (r.receiver_name ? U.esc(r.receiver_name) : dots) + ')</div><div>วันที่ ' + d(r.issued_at) + '</div></div>' +
@@ -105,7 +114,7 @@ const PrintDoc = (function () {
       (opts.stamp ? ' @bottom-left { content: ' + q(opts.stamp) + '; ' + font + ' }' : '') + ' }';
     setTimeout(function () { window.print(); }, 50);
   }
-  return { reqSheet: reqSheet, pickSheet: pickSheet, print: print, pagesOf: pagesOf, OFFICIAL: OFFICIAL, stamp: stamp };
+  return { reqSheet: reqSheet, pickSheet: pickSheet, print: print, pagesOf: pagesOf, fitText: fitText, OFFICIAL: OFFICIAL, stamp: stamp };
 })();
 
 App.view('print', {
@@ -160,6 +169,7 @@ App.view('print', {
     const margins = slip ? PrintDoc.OFFICIAL : [margin, margin, margin, margin];
     // นับหน้าหลังโหลดฟอนต์เสร็จ (ฟอนต์สำรองกว้างกว่า ทำให้นับเกิน)
     const count = function () {
+      PrintDoc.fitText(pv);
       const n = sheets.length === 1 ? PrintDoc.pagesOf(sheets[0], margins, landscape) : 1;
       const pg = sheets.length === 1 ? U.$('.pgno', sheets[0]) : null;
       if (pg) pg.textContent = n > 1 ? 'ทั้งหมด ' + n + ' หน้า' : '';
@@ -167,7 +177,11 @@ App.view('print', {
     };
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(count); else count();
     U.$('#pr').onclick = function () {
-      PrintDoc.print(html, margin, landscape, { margins: margins, pages: count(), stamp: slip ? PrintDoc.stamp() : '' });
+      const n = count();
+      // พิมพ์จากหน้าตัวอย่างที่ปรับขนาดตัวอักษรแล้ว (ตัดการย่อขนาดหน้าจอออก)
+      const clone = pv.cloneNode(true);
+      Array.prototype.forEach.call(clone.querySelectorAll('.sheet'), function (sh) { sh.style.transform = ''; sh.style.marginBottom = ''; });
+      PrintDoc.print(clone.innerHTML, margin, landscape, { margins: margins, pages: n, stamp: slip ? PrintDoc.stamp() : '' });
     };
   }
 });
