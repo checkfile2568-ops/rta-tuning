@@ -39,7 +39,7 @@ const PrintDoc = (function () {
     return '<div class="sheet req">' +
       (API.scope() ? '<div style="border:2px solid #a66b00;text-align:center;font-weight:bold;padding:6px">ข้อมูลตัวอย่างสำหรับฝึกใช้งาน — ห้ามใช้เป็นเอกสารเบิกจ่ายจริง</div>' : '') +
       (!API.scope() && App.S.me && App.S.me.realTrial && App.S.me.realTrial.active ? '<div style="border:2px solid #bf6230;text-align:center;font-weight:bold;padding:6px">รอบทดสอบบนฐานข้อมูลจริง</div>' : '') +
-      '<div class="head"><div></div><div><h1>ใบเบิกวัสดุ</h1><p class="org">' + U.esc(r.org_name || App.S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</p></div>' +
+      '<div class="head"><div class="seal"><img src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี"></div><div><h1>ใบเบิกวัสดุ</h1><p class="org">' + U.esc(r.org_name || App.S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</p></div>' +
       '<div class="qr">' + (qr ? qr + '<small>สแกนเปิดใบนี้</small>' : '') + '</div></div>' +
       '<div class="meta"><span>ใบเบิกวัสดุ <b>' + U.esc(r.dept_name || '-') + '</b></span><span>เลขที่ <b>' + U.esc(r.req_no) + '</b></span></div>' +
       '<div class="meta"><span></span><span>วันที่ ' + U.thDate(r.created_at) + '</span></div>' +
@@ -112,7 +112,10 @@ const PrintDoc = (function () {
     st.textContent = '@page { size: A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin: ' + m + ';' +
       (opts.pages > 1 ? ' @bottom-right { content: "หน้า " counter(page) "/" counter(pages); ' + font + ' }' : '') +
       (opts.stamp ? ' @bottom-left { content: ' + q(opts.stamp) + '; ' + font + ' }' : '') + ' }';
-    setTimeout(function () { window.print(); }, 50);
+    // รอภาพ (ตราศาล) ถอดรหัสเสร็จก่อนสั่งพิมพ์ (1.7.4)
+    const imgs = Array.prototype.slice.call(root.querySelectorAll('img'));
+    Promise.all(imgs.map(function (im) { return im.decode ? im.decode().catch(function () {}) : null; }))
+      .then(function () { setTimeout(function () { window.print(); }, 50); });
   }
   return { reqSheet: reqSheet, pickSheet: pickSheet, print: print, pagesOf: pagesOf, fitText: fitText, OFFICIAL: OFFICIAL, stamp: stamp };
 })();

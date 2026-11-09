@@ -74,7 +74,7 @@ const Monthly = (function () {
     return '<div class="sheet mr' + (showVal ? ' land' : '') + '" style="--m:' + (info.print_margin_cm || 1.5) + 'cm">' +
       (API.scope() ? '<div class="mr-flag">ข้อมูลตัวอย่างสำหรับฝึกใช้งาน — ห้ามใช้เป็นเอกสารจริง</div>' : '') +
       (draft ? '<div class="mr-flag">ร่าง — ยังไม่ยืนยัน</div>' : '') +
-      '<h1>รายงานวัสดุคงเหลือประจำเดือน ' + U.esc(rep.label) + '</h1><p class="org">' + U.esc(info.org_name || 'ศาลจังหวัดลพบุรี') + ' · ปีงบประมาณ ' + U.esc(rep.fy || '') + '</p>' +
+      '<img class="mr-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี"><h1>รายงานวัสดุคงเหลือประจำเดือน ' + U.esc(rep.label) + '</h1><p class="org">' + U.esc(info.org_name || 'ศาลจังหวัดลพบุรี') + ' · ปีงบประมาณ ' + U.esc(rep.fy || '') + '</p>' +
       '<div class="meta"><span>เลขที่ ' + U.esc(rep.report_no || '') + ' · ช่วงข้อมูลทั้งเดือน ' + U.esc(rep.label) + '</span><span>' +
       (draft ? 'สถานะ: <b>ร่าง</b>' : 'สถานะ: <b>ยืนยันแล้ว</b> ' + U.thDateTime(rep.confirmed_at) + (rep.reopen_count ? ' (ฉบับแก้ไขครั้งที่ ' + rep.reopen_count + ')' : '')) + '</span></div>' +
       '<table><thead><tr><th style="width:4%">ที่</th><th style="width:' + (showVal ? 8 : 9) + '%">รหัส</th><th>รายการ</th><th style="width:7%">หน่วย</th>' +

@@ -86,3 +86,7 @@
   #print-root .sheet.req .pagefoot { display: none; }
   #print-root .sheet.req th, #print-root .sheet.req td { border-color: #9a9a9a; }
 }
+/* 1.7.4 ตราศาลบนเอกสารพิมพ์ */
+.sheet .head .seal img { display: block; height: 21mm; width: auto; margin: 0 auto; }
+.sheet.mr .mr-seal { display: block; height: 15mm; width: auto; margin: 0 auto 3pt; }
+@media print { .sheet .head .seal img, .sheet.mr .mr-seal { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
