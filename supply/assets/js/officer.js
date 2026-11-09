@@ -421,10 +421,13 @@ App.view('receive', {
     let masters = { suppliers: [] };
     try { masters = await API.call('masters'); } catch (e) { /**/ }
     const sups = (masters.suppliers || []).filter(function (s) { return s.active; });
+    // 1.7.3 ลงบัญชีตามวันที่รับ: เดือนปัจจุบัน หรือเดือนก่อนที่ยังไม่ยืนยันรายงาน
+    const openM = ((S.me && S.me.openMonths) || []).map(function (m) { return m.ym; }).sort();
+    const minDate = (openM[0] || U.ymd().slice(0, 7)) + '-01';
     el.innerHTML = '<div class="page-h"><h1>รับเข้าวัสดุ</h1><p>ไม่มีใบสั่งซื้อ · ราคาล่าสุดเติมให้ ตรวจราคาจริงก่อนบันทึก · ระบบแปลงหน่วยซื้อเป็นหน่วยหลักให้</p></div>' +
       '<div class="card"><div class="grid3"><label class="field"><span>ผู้จำหน่าย</span><input class="input" id="sup" list="sl" value="' + U.esc(F.sup) + '" placeholder="พิมพ์บางส่วนของชื่อร้าน"><datalist id="sl">' +
       sups.map(function (s) { return '<option value="' + U.esc(s.name) + '">'; }).join('') + '</datalist><small>ไม่พบในรายการ = เพิ่มร้านใหม่ให้อัตโนมัติ</small></label>' +
-      '<label class="field"><span>วันที่รับ</span><input class="input" type="date" id="dt" max="' + U.ymd() + '" value="' + U.esc(F.date) + '"><small id="dth"></small></label>' +
+      '<label class="field"><span>วันที่รับ</span><input class="input" type="date" id="dt" min="' + minDate + '" max="' + U.ymd() + '" value="' + U.esc(F.date) + '"><small id="dth"></small></label>' +
       '<label class="field"><span>เลขใบส่งของ/ใบกำกับ</span><input class="input" id="inv" value="' + U.esc(F.inv) + '"></label></div>' +
       '<label class="field"><span>เพิ่มทีละรายการ</span><input class="input" id="pick" list="ml" placeholder="พิมพ์ชื่อหรือรหัสวัสดุ แล้วเลือก"><datalist id="ml">' +
       S.catalog.materials.filter(function (m) { return m.active !== false; }).map(function (m) { return '<option value="' + U.esc(m.code + ' · ' + m.name) + '">'; }).join('') + '</datalist></label>' +
@@ -455,7 +458,8 @@ App.view('receive', {
           '<td><button class="iconbtn" data-rm aria-label="นำออก">' + ICON('x') + '</button></td></tr>';
       }).join('') || '<tr><td colspan="6" class="muted">ยังไม่มีรายการ — พิมพ์ชื่อวัสดุในช่องด้านบน</td></tr>';
       U.$('#tot').textContent = U.money(tot);
-      U.$('#dth').textContent = F.date ? U.thDate(F.date + 'T00:00:00') : '';
+      U.$('#dth').textContent = F.date ? U.thDate(F.date + 'T00:00:00') + ' · ลงบัญชีตามวันที่นี้' +
+        (F.date.slice(0, 7) < U.ymd().slice(0, 7) ? ' (เดือนก่อน — สร้างร่างรายงานเดือนนั้นใหม่)' : '') + ' · เลือกได้ตั้งแต่ ' + U.thDate(minDate + 'T00:00:00') : '';
     };
     draw();
     RcvImport.mount(F, draw);
@@ -529,11 +533,11 @@ App.view('count', {
     el.innerHTML = '<div class="page-h"><h1>ตรวจนับ / ปรับยอด</h1><p>กรอกเฉพาะรายการที่นับได้ไม่ตรงกับระบบ — ช่องว่าง = ตรงกับระบบ · นับได้ต้องไม่น้อยกว่ายอดจองค้าง</p></div>' +
       '<div class="row" style="margin-bottom:12px"><div class="search" style="flex:1;min-width:240px;margin:0">' + ICON('search') + '<input id="q" type="search" placeholder="ค้นหาวัสดุ" value="' + U.esc(F.q) + '"></div>' +
       '<select class="input" id="cat" style="width:auto"><option value="">ทุกหมวด</option>' + (S.catalog.categories || []).map(function (c) { return '<option value="' + U.esc(c.cat_id) + '"' + (F.cat === c.cat_id ? ' selected' : '') + '>' + U.esc(c.name) + '</option>'; }).join('') + '</select></div>' +
-      '<div class="tablewrap"><table class="t"><thead><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th class="num">ยอดระบบ</th><th class="num">จอง</th><th class="num">นับได้</th><th class="num">ส่วนต่าง</th></tr></thead><tbody id="tb"></tbody></table></div>' +
+      '<div class="tablewrap"><table class="t"><thead><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th class="num">ยอดระบบ (วันนี้)</th><th class="num">จอง</th><th class="num">นับได้</th><th class="num">ส่วนต่าง</th></tr></thead><tbody id="tb"></tbody></table></div>' +
       '<div class="card" style="margin-top:16px">' +
       (openM.length ? '<label class="field"><span>ลงบัญชีเป็นของเดือน</span><select class="input" id="ym" style="max-width:340px"><option value="">เดือนปัจจุบัน</option>' +
         openM.map(function (m) { return '<option value="' + U.esc(m.ym) + '"' + (F.ym === m.ym ? ' selected' : '') + '>' + U.esc(m.label) + ' (ย้อนหลัง)</option>'; }).join('') +
-        '</select><small>เลือกเดือนก่อนเมื่อต้องแก้ยอดที่ผิดของเดือนนั้น — ทำได้เฉพาะเดือนที่ยังไม่ยืนยันรายงานประจำเดือน แล้วสร้างร่างรายงานเดือนนั้นใหม่</small></label>' : '') +
+        '</select><small>เลือกเดือนก่อนเมื่อต้องแก้ยอดที่ผิดของเดือนนั้น — <b>กรอกจำนวนที่นับได้วันนี้</b> ระบบเทียบกับยอดวันนี้ แล้วลงส่วนต่างเป็นของเดือนที่เลือก · ระบบไม่ให้ลดจนยอดเดือนนั้นหรือหลังจากนั้นติดลบ · ทำได้เฉพาะเดือนที่ยังไม่ยืนยันรายงาน แล้วสร้างร่างรายงานเดือนนั้นใหม่</small></label>' : '') +
       '<label class="field"><span>เหตุผล / เลขที่บันทึกการตรวจนับ *</span><input class="input" id="rs" value="' + U.esc(F.reason) + '"></label>' +
       '<div class="row"><span id="cnt" class="muted"></span><span class="spacer"></span><button class="btn ghost" id="clr">ล้างค่าที่กรอก</button><button class="btn primary lg" id="save">บันทึกปรับยอด</button></div></div>';
     const changed = function () {

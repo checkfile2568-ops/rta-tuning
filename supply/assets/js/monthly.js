@@ -1,9 +1,13 @@
 /* ระบบบริหารวัสดุสำนักงาน · monthly.js — รายงานวัสดุคงเหลือประจำเดือน
  *  ร่าง (จัดทำอัตโนมัติวันที่ 1 หรือเจ้าหน้าที่พัสดุจัดทำ) → ตรวจ → ยืนยัน (ล็อกตัวเลข) → พิมพ์ A4 / Excel
- *  พิมพ์ด้วย TH Sarabun 17 pt · มีมูลค่า = A4 แนวนอน · เฉพาะจำนวน = A4 แนวตั้ง · ลงนามผู้จัดทำ (เจ้าหน้าที่พัสดุ) */
+ *  พิมพ์ด้วย TH Sarabun 17 pt · มีมูลค่า = A4 แนวนอน · เฉพาะจำนวน = A4 แนวตั้ง · ลงนามผู้จัดทำ (เจ้าหน้าที่พัสดุ)
+ *  1.7.3: เดือนที่มีรับคืน แสดงช่อง "รับคืน" แยก (ยกมา + รับ + รับคืน − จ่าย ± ปรับยอด = คงเหลือ) · ไม่มีรับคืน แสดง 5 ช่อง */
 'use strict';
 const Monthly = (function () {
-  const COLS = [['open', 'ยกมา'], ['in', 'รับ'], ['out', 'จ่าย'], ['adj', 'ปรับยอด'], ['close', 'คงเหลือ']];
+  const COLS5 = [['open', 'ยกมา'], ['in', 'รับ'], ['out', 'จ่าย'], ['adj', 'ปรับยอด'], ['close', 'คงเหลือ']];
+  const COLS6 = [['open', 'ยกมา'], ['in', 'รับ'], ['ret', 'รับคืน'], ['out', 'จ่าย'], ['adj', 'ปรับยอด'], ['close', 'คงเหลือ']];
+  /** เดือนที่มีรับคืน แสดงช่อง "รับคืน" แยก · ไม่มีรับคืน แสดง 5 ช่องตามเดิม (1.7.3) */
+  function cols(rep) { return rep.items.some(function (x) { return Number(x.ret_qty) || Number(x.ret_value); }) ? COLS6 : COLS5; }
   const STATUS = { NONE: ['ยังไม่จัดทำ', 'gray nodot'], DRAFT: ['ร่าง · รอยืนยัน', 'low'], CONFIRMED: ['ยืนยันแล้ว', 'ok'] };
   function badge(st, extra) { const s = STATUS[st] || STATUS.NONE; return '<span class="badge ' + s[1] + '">' + s[0] + (extra || '') + '</span>'; }
   function qty(v) { return v ? U.n(v) : '–'; }
@@ -26,28 +30,31 @@ const Monthly = (function () {
 
   /* ------------------------------------------------------------ ตารางบนหน้าจอ */
   function tableHtml(rep, showVal) {
+    const COLS = cols(rep);
     const span = showVal ? 2 : 1;
     const sub = showVal ? '<th class="num">จำนวน</th><th class="num">มูลค่า</th>' : '<th class="num">จำนวน</th>';
     const cell = function (x, k, bold) {
       const q = x[k + '_qty'], v = x[k + '_value'];
-      const neg = k === 'adj' && q < 0 ? ' style="color:var(--out)"' : '';
+      const neg = (k === 'adj' || k === 'close') && (q < 0 || v < -0.005) ? ' style="color:var(--out)"' : '';
       return '<td class="num"' + neg + '>' + (bold ? '<b>' + U.n(q) + '</b>' : qty(q)) + '</td>' + (showVal ? '<td class="num"' + neg + '>' + (bold ? '<b>' + U.money(v) + '</b>' : val(v)) + '</td>' : '');
     };
     const body = groups(rep.items).map(function (g) {
-      return '<tr class="grp"><td colspan="' + (3 + 5 * span) + '"><b>' + U.esc(g.cat) + '</b> · ' + g.rows.length + ' รายการ</td></tr>' +
+      return '<tr class="grp"><td colspan="' + (3 + COLS.length * span) + '"><b>' + U.esc(g.cat) + '</b> · ' + g.rows.length + ' รายการ</td></tr>' +
         g.rows.map(function (x) {
           return '<tr><td>' + U.esc(x.code) + '</td><td>' + U.esc(x.name) + '</td><td>' + U.esc(x.unit_name) + '</td>' +
-            cell(x, 'open') + cell(x, 'in') + cell(x, 'out') + cell(x, 'adj') + cell(x, 'close', true) + '</tr>';
+            COLS.map(function (c) { return cell(x, c[0], c[0] === 'close'); }).join('') + '</tr>';
         }).join('') +
         (showVal ? '<tr class="sub"><td colspan="3" class="num">รวม' + U.esc(g.cat) + '</td>' + COLS.map(function (c) { return '<td></td><td class="num">' + U.money(sum(g.rows, c[0] + '_value')) + '</td>'; }).join('') + '</tr>' : '');
     }).join('');
     return '<div class="tablewrap" style="margin-top:12px"><table class="t mr-t"><thead><tr><th rowspan="2">รหัส</th><th rowspan="2">รายการ</th><th rowspan="2">หน่วย</th>' +
-      COLS.map(function (c) { return '<th colspan="' + span + '" class="c">' + c[1] + '</th>'; }).join('') + '</tr><tr>' + sub + sub + sub + sub + sub + '</tr></thead><tbody>' +
-      (body || '<tr><td colspan="' + (3 + 5 * span) + '" class="muted">ไม่มีวัสดุ</td></tr>') + '</tbody></table></div>';
+      COLS.map(function (c) { return '<th colspan="' + span + '" class="c">' + c[1] + '</th>'; }).join('') + '</tr><tr>' + COLS.map(function () { return sub; }).join('') + '</tr></thead><tbody>' +
+      (body || '<tr><td colspan="' + (3 + COLS.length * span) + '" class="muted">ไม่มีวัสดุ</td></tr>') + '</tbody></table></div>';
   }
 
   /* ------------------------------------------------------------ แบบพิมพ์ A4 (TH Sarabun 17 pt) */
   function sheetHtml(rep, showVal, info) {
+    const COLS = cols(rep), six = COLS.length === 6;
+    const cw = showVal ? (six ? 9.5 : 11) : (six ? 8.5 : 10);
     // มีมูลค่า: จำนวนและมูลค่าอยู่ในช่องเดียวกัน (จำนวนบรรทัดบน มูลค่าบรรทัดล่าง) ให้ชื่อวัสดุกว้างพอที่ขนาดตัวอักษร 17 pt
     const cell = function (x, k, bold) {
       const q = x[k + '_qty'], v = x[k + '_value'];
@@ -55,9 +62,9 @@ const Monthly = (function () {
       return '<td class="r nw">' + b(q ? U.n(q) : '-') + (showVal ? '<br><span class="v">' + b(v ? U.money(v) : '-') + '</span>' : '') + '</td>';
     };
     const rows = groups(rep.items).map(function (g) {
-      return '<tr class="grp"><td colspan="9"><b>' + U.esc(g.cat) + '</b></td></tr>' + g.rows.map(function (x, i) {
+      return '<tr class="grp"><td colspan="' + (4 + COLS.length) + '"><b>' + U.esc(g.cat) + '</b></td></tr>' + g.rows.map(function (x, i) {
         return '<tr><td class="c">' + (i + 1) + '</td><td class="nw">' + U.esc(x.code) + '</td><td>' + U.esc(x.name) + '</td><td class="c">' + U.esc(x.unit_name) + '</td>' +
-          cell(x, 'open') + cell(x, 'in') + cell(x, 'out') + cell(x, 'adj') + cell(x, 'close', true) + '</tr>';
+          COLS.map(function (c) { return cell(x, c[0], c[0] === 'close'); }).join('') + '</tr>';
       }).join('');
     }).join('');
     const tot = showVal ? '<tr class="tot"><td colspan="4" class="r"><b>รวมมูลค่าทั้งสิ้น (บาท)</b></td>' + COLS.map(function (c) { return '<td class="r nw"><b>' + U.money(sum(rep.items, c[0] + '_value')) + '</b></td>'; }).join('') + '</tr>' : '';
@@ -71,13 +78,14 @@ const Monthly = (function () {
       '<div class="meta"><span>เลขที่ ' + U.esc(rep.report_no || '') + ' · ช่วงข้อมูลทั้งเดือน ' + U.esc(rep.label) + '</span><span>' +
       (draft ? 'สถานะ: <b>ร่าง</b>' : 'สถานะ: <b>ยืนยันแล้ว</b> ' + U.thDateTime(rep.confirmed_at) + (rep.reopen_count ? ' (ฉบับแก้ไขครั้งที่ ' + rep.reopen_count + ')' : '')) + '</span></div>' +
       '<table><thead><tr><th style="width:4%">ที่</th><th style="width:' + (showVal ? 8 : 9) + '%">รหัส</th><th>รายการ</th><th style="width:7%">หน่วย</th>' +
-      COLS.map(function (c) { return '<th style="width:' + (showVal ? 11 : 10) + '%">' + c[1] + (showVal ? '<br><small>จำนวน / มูลค่า (บาท)</small>' : '<br><small>จำนวน</small>') + '</th>'; }).join('') +
+      COLS.map(function (c) { return '<th style="width:' + cw + '%">' + c[1] + (showVal ? '<br><small>จำนวน / มูลค่า (บาท)</small>' : '<br><small>จำนวน</small>') + '</th>'; }).join('') +
       '</tr></thead><tbody>' + rows + tot + '</tbody></table>' +
       '<div class="sign one"><div>ลงชื่อ..................................................ผู้จัดทำ<br>(' + (who ? U.esc(who) : '..................................................') + ')' +
       '<small>เจ้าหน้าที่พัสดุ</small><small>วันที่ ' + (d ? U.thDate(d) : '...../...../.....') + '</small></div></div>' +
       '<div class="foot"><span>พิมพ์จาก' + U.esc(U.APP_NAME) + ' ' + U.thDateTime(new Date()) + '</span><span>' + (showVal ? 'แสดงจำนวนและมูลค่า' : 'แสดงเฉพาะจำนวน') + '</span></div></div>';
   }
   function exportXlsx(rep, showVal) {
+    const COLS = cols(rep);
     const head = ['หมวด', 'รหัส', 'รายการ', 'หน่วย'];
     COLS.forEach(function (c) { head.push(c[1] + ' (จำนวน)'); if (showVal) head.push(c[1] + ' (มูลค่า)'); });
     const rows = rep.items.map(function (x) {
@@ -133,6 +141,8 @@ App.view('monthly', {
       }
       if (rep.status === 'DRAFT') {
         if (c.stale) notes.push('<div class="notice warn"><div><b>ข้อมูลของเดือนนี้เปลี่ยนหลังจัดทำร่าง</b>กด "สร้างร่างใหม่" แล้วตรวจอีกครั้งก่อนยืนยัน</div></div>');
+        if (c.negatives && c.negatives.length) notes.push('<div class="notice err"><div><b>ยอดคงเหลือติดลบ ' + c.negatives.length + ' รายการ — ยืนยันไม่ได้</b>' +
+          U.esc(c.negatives.slice(0, 5).join(' · ')) + '<br>ตรวจรายการที่ลงย้อนหลังเข้าเดือนนี้ (ปรับยอด / แก้ไขการส่งมอบ) ให้ถูกต้อง แล้วกด "สร้างร่างใหม่"</div></div>');
         notes.push('<div class="notice info"><div><b>ตรวจก่อนยืนยัน</b>' +
           (c.current_match === null || c.current_match === undefined ? 'มีรายการรับ-จ่ายหลังสิ้นเดือน ' + U.n(c.after_rows || 0) + ' รายการ (ยอดคงเหลือปัจจุบันจึงต่างจากสิ้นเดือนได้)' :
             'ยอดคงเหลือตรงกับคลังปัจจุบัน ' + U.n(c.current_match) + '/' + U.n(rep.items.length) + ' รายการ') +
@@ -147,13 +157,13 @@ App.view('monthly', {
         '<label class="check"><input type="checkbox" id="mr-val"' + (F.showVal ? ' checked' : '') + '> แสดงมูลค่า (บาท)</label></div>' +
         '<div class="kpis" style="margin-top:12px">' + k('วัสดุทั้งหมด', U.n(s.items || rep.items.length) + ' รายการ', 'เคลื่อนไหว ' + U.n(s.moved || 0) + ' รายการ') +
         (F.showVal ? k('มูลค่ายกมา', U.money(s.open_value), 'บาท') + k('รับเข้า', U.money(s.in_value), 'บาท · ' + U.n(s.receipts || 0) + ' ใบรับ') +
-          k('จ่ายออก', U.money(s.out_value), 'บาท · ' + U.n(s.issues || 0) + ' ใบเบิก') + k('มูลค่าคงเหลือ', U.money(s.close_value), 'บาท')
-          : k('ใบรับเข้า', U.n(s.receipts || 0), 'ใบ') + k('ใบเบิกที่จ่าย', U.n(s.issues || 0), 'ใบ') + k('ปรับยอด', U.n(s.adjusts || 0), 'ครั้ง')) + '</div>' +
+          k('จ่ายออก', U.money(s.out_value), 'บาท · ' + U.n(s.issues || 0) + ' ใบเบิก' + (s.ret_value ? ' · รับคืน ' + U.money(s.ret_value) : '')) + k('มูลค่าคงเหลือ', U.money(s.close_value), 'บาท')
+          : k('ใบรับเข้า', U.n(s.receipts || 0), 'ใบ') + k('ใบเบิกที่จ่าย', U.n(s.issues || 0), 'ใบ' + (s.returns ? ' · รับคืน ' + U.n(s.returns) + ' ครั้ง' : '')) + k('ปรับยอด', U.n(s.adjusts || 0), 'ครั้ง')) + '</div>' +
         notes.join('') + Monthly.tableHtml(rep, F.showVal) +
         '<div class="row end" style="margin-top:14px">' +
         (officer && rep.status === 'DRAFT' ? '<button class="btn" id="mr-gen">' + ICON('refresh') + 'สร้างร่างใหม่</button>' : '') +
         '<button class="btn" id="mr-xl">' + ICON('download') + 'Excel</button><button class="btn" id="mr-pr">' + ICON('print') + 'ดูตัวอย่างพิมพ์</button>' +
-        (officer && rep.status === 'DRAFT' ? '<button class="btn primary lg" id="mr-ok"' + (c.stale ? ' disabled' : '') + '>' + ICON('check') + 'ยืนยันรายงาน</button>' : '') +
+        (officer && rep.status === 'DRAFT' ? '<button class="btn primary lg" id="mr-ok"' + (c.stale || (c.negatives && c.negatives.length) ? ' disabled' : '') + '>' + ICON('check') + 'ยืนยันรายงาน</button>' : '') +
         (!officer && rep.status === 'DRAFT' ? '<span class="small muted">เจ้าหน้าที่พัสดุเป็นผู้ยืนยันรายงาน</span>' : '') +
         (officer && rep.status === 'CONFIRMED' ? (rep.can_reopen ? '<button class="btn ghost" id="mr-re">' + ICON('refresh') + 'ยกเลิกการยืนยันเพื่อแก้ไข</button>'
           : '<span class="small muted">แก้ไขได้เฉพาะรายงานเดือนล่าสุดที่ยืนยัน</span>') : '') + '</div></div>';
