@@ -713,3 +713,19 @@ label.radio input, label.check input { width: 18px; height: 18px; flex: none; }
 .kpis.tint .kpi:nth-child(6n+4) { --k: #6b3fa0; --kb: #f2ecfa; }
 .kpis.tint .kpi:nth-child(6n+5) { --k: #0f7c86; --kb: #e5f5f6; }
 .kpis.tint .kpi:nth-child(6n+6) { --k: #b23a48; --kb: #fbecee; }
+
+/* ---------- 1.7.4 ตราศาล (หน้าเข้าสู่ระบบ · แถบเมนู) และข้อความ PIN ถูกต้องในการ์ดกำลังเข้าสู่ระบบ ---------- */
+.login-heading { display:grid; grid-template-columns:auto 1fr; column-gap:16px; align-items:center; }
+.login-heading > p, .login-heading > .login-steps { grid-column:1 / -1; }
+.login-seal { display:block; height:84px; width:auto; filter:drop-shadow(0 4px 10px #6b4a1a26); }
+.login-title { min-width:0; }
+.brand-seal { display:block; height:64px; width:auto; margin:0 0 12px; filter:drop-shadow(0 3px 8px #0006); }
+.login-wait-card .wait-phase.is-ok { display:inline-flex; align-items:center; gap:8px; background:#dff5ea; color:#13724c; }
+.login-wait-card .wait-phase.is-ok .pin-ok-mark { width:18px; height:18px; flex:none; }
+.login-wait-card .wait-phase.is-ok .pin-ok-mark::after { left:6px; top:3px; width:4px; height:9px; }
+@media (min-width:861px) and (max-height:820px) { .login-seal { height:70px; } }
+@media (max-width:860px), (max-height:500px) { .login-seal { height:62px; } .login-heading { column-gap:12px; } }
+@media (max-width:860px) and (max-height:700px) { .login-seal { height:52px; } }
+@media (max-height:500px) { .login-seal { height:40px; } }
+@media (max-width:900px) { .brand { text-align:center; padding:0 4px 14px; } .brand-seal { height:44px; margin:0 auto 6px; } }
+.mhead-seal { display:block; height:38px; width:auto; flex:none; filter:drop-shadow(0 2px 5px #0005); }

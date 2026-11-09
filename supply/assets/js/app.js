@@ -99,10 +99,10 @@ const App = (function () {
     ROOT().innerHTML =
       (API.scope() ? Training.banner() : RealTrial.banner(S.me && S.me.realTrial)) +
       '<div class="shell' + cartCls + '">' +
-      '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
+      '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><img class="brand-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
       '<nav class="nav" id="nav">' + navHtml(navFor(u), route) + '</nav>' +
       '<div class="side-foot"><b>' + U.esc(u.name) + '</b>' + U.esc(ROLE_TH[u.role] || '') + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</div></aside>' +
-      '<div class="main"><header class="mhead"><i class="bar"></i><div><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
+      '<div class="main"><header class="mhead"><img class="mhead-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><div><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
       '<button class="userbtn" data-act="usermenu" aria-label="เมนูผู้ใช้">' + ICON('user') + ICON('chev') + '</button></header>' +
       '<div class="topbar"><span>' + today + '</span><button class="userbtn" data-act="usermenu"><span class="avatar">' + U.esc(init) + '</span>' + U.esc(u.name) + '</button></div>' +
       (v.cart ? '<div class="with-cart"><main class="content" id="view"></main><aside class="cart-panel" id="cartpanel" aria-label="ตะกร้า"></aside></div>'
@@ -325,8 +325,9 @@ const Login = (function () {
   /** step: 1 = เลือกชื่อ, 2 = ใส่ PIN, 0/ไม่ระบุ = หน้าตั้งค่าหลังเข้าสู่ระบบ (ไม่แสดงป้ายขั้นตอน) */
   function loginHeading(step) {
     const chip = function (n, label) { return '<span' + (step === n ? ' class="current" aria-current="step"' : '') + '>' + n + ' ' + label + '</span>'; };
-    return '<div class="login-heading"><span class="login-eyebrow">OFFICE SUPPLY MANAGEMENT</span>' +
-      '<h1>' + SYSTEM_NAME + '<span>' + SYSTEM_ORG + '</span></h1><p>' + SYSTEM_TAGLINE + '</p>' +
+    return '<div class="login-heading"><img class="login-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240">' +
+      '<div class="login-title"><span class="login-eyebrow">OFFICE SUPPLY MANAGEMENT</span>' +
+      '<h1>' + SYSTEM_NAME + '<span>' + SYSTEM_ORG + '</span></h1></div><p>' + SYSTEM_TAGLINE + '</p>' +
       (step === 1 || step === 2 ? '<div class="login-steps" aria-label="ขั้นตอนเข้าสู่ระบบ">' + chip(1, 'เลือกชื่อ') + '<i aria-hidden="true"></i>' + chip(2, 'ใส่ PIN') + '</div>' : '') + '</div>';
   }
   function frame(inner, step) {
@@ -474,6 +475,7 @@ const Login = (function () {
     U.$$('#kp button').forEach(function(b) { b.disabled = !!phase; });
     const inp = $('#pinin'), chg = $('#chg'); if (inp) inp.disabled = !!phase; if (chg) chg.disabled = !!phase;
     if (phase) {
+      $('#login-wait-phase').classList.remove('is-ok');
       $('#login-wait-phase').textContent = phase;
       $('#login-wait-hint').textContent = 'กรุณารอสักครู่';
       waitTimer = setTimeout(function() { const hint = $('#login-wait-hint'); if (hint) hint.textContent = 'กำลังรอการตอบกลับจากเซิร์ฟเวอร์…'; }, 8000);
@@ -490,11 +492,13 @@ const Login = (function () {
       setTimeout(function () { d.classList.remove('bad'); }, 700);
       return Promise.resolve();
     }
-    waiting('');
     busy = true;
     U.$$('#kp button').forEach(function (b) { b.disabled = true; });
     d.classList.add('good');
-    if (er) { er.classList.add('ok'); er.innerHTML = '<span class="pin-ok-mark" aria-hidden="true"></span>PIN ถูกต้อง'; }
+    // 1.7.4 แสดง "PIN ถูกต้อง" ในการ์ดกำลังเข้าสู่ระบบเดิม (เปลี่ยนเฉพาะข้อความ) ไม่สลับกลับไปหน้าแป้นตัวเลข
+    const ph = $('#login-wait-phase');
+    if (ph && !$('#login-wait').hidden) { clearTimeout(waitTimer); ph.classList.add('is-ok'); ph.innerHTML = '<span class="pin-ok-mark" aria-hidden="true"></span>PIN ถูกต้อง'; const ht = $('#login-wait-hint'); if (ht) ht.textContent = 'กรุณารอสักครู่'; }
+    else if (er) { er.classList.add('ok'); er.innerHTML = '<span class="pin-ok-mark" aria-hidden="true"></span>PIN ถูกต้อง'; }
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     return new Promise(function (res) { setTimeout(res, reduce ? 150 : 650); });
   }
