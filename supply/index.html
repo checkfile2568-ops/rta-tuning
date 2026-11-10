@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/css/app.css?v=1.8.0">
 <link rel="stylesheet" href="assets/css/print.css?v=1.8.0">
+<link rel="stylesheet" href="assets/print-kit/core/print-kit.css?v=1.0.0">
 </head>
 <body>
 <div id="root"><div class="clay-login" data-boot><div class="clay-phone"><header class="clay-brand"><img src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><div><h1>ระบบบริหารวัสดุสำนักงาน</h1><span>ศาลจังหวัดลพบุรี</span></div></header><div class="box"><div class="skel"></div><div class="skel"></div></div><p class="login-ver">รุ่น 1.8.0</p></div></div></div>
@@ -29,7 +30,9 @@
 <script src="assets/js/admin.js?v=1.8.0"></script>
 <script src="assets/js/dash.js?v=1.8.0"></script>
 <script src="assets/js/monthly.js?v=1.8.0"></script>
-<script src="assets/js/print.js?v=1.8.0"></script>
+<script src="assets/print-kit/core/print-kit.js?v=1.0.0"></script>
+<script src="assets/print-kit/supply-adapter.js?v=1.0.0"></script>
+<script src="assets/js/print.js?v=1.8.1"></script>
 <script>
   App.boot();
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

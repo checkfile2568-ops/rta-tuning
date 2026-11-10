@@ -1,0 +1,84 @@
+/* ═══════════════════════════════════════════════════════════════════════
+ * print-kit · print-kit.css · v1.0.0 (9 พ.ย. 2569)
+ * แกนกลางการพิมพ์เอกสาร A4 ของศาลจังหวัดลพบุรี — ใช้ร่วมกันทุกระบบ
+ * ฟอนต์ TH Sarabun New ฝังในชุด (ฟอนต์แห่งชาติ SIPA ใช้และแจกจ่ายได้)
+ * พิมพ์ออกมาเหมือนกันทุกเครื่อง ไม่ขึ้นกับฟอนต์ที่ติดตั้ง
+ * ค่ารูปแบบ (ขนาด ตัวหนา จัดแนว กระจายอักษร ระยะบรรทัด) มาจากแม่แบบ JSON
+ * ผ่าน inline style ที่ print-kit.js ใส่ให้ — ไฟล์นี้เป็นค่าตั้งต้นเท่านั้น
+ * ═══════════════════════════════════════════════════════════════════════ */
+@font-face { font-family: 'PK Sarabun'; src: url(../fonts/THSarabunNew-Regular.woff2) format('woff2'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'PK Sarabun'; src: url(../fonts/THSarabunNew-Bold.woff2) format('woff2'); font-weight: 700; font-display: block; }
+
+/* ── แผ่นกระดาษ (หน้าตัวอย่างบนจอ) ── */
+.pk-sheet {
+  --pk-mt: 2.5cm; --pk-mr: 2cm; --pk-mb: 2cm; --pk-ml: 3cm;
+  position: relative; box-sizing: border-box;
+  width: 210mm; min-height: 297mm;
+  padding: var(--pk-mt) var(--pk-mr) var(--pk-mb) var(--pk-ml);
+  background: #fff; color: #000;
+  font-family: 'PK Sarabun', 'TH Sarabun New', 'TH SarabunPSK', serif;
+  font-size: 16pt; line-height: 1.2;
+  font-kerning: normal; -webkit-font-smoothing: antialiased;
+  word-break: normal; overflow-wrap: break-word; line-break: strict;
+}
+.pk-sheet.pk-land { width: 297mm; min-height: 210mm; }
+.pk-sheet * { box-sizing: border-box; }
+.pk-sheet p { margin: 0; }
+
+/* ── บล็อก ── */
+.pk-b { margin: 0; }
+.pk-b.pk-distribute { text-align: justify; text-align-last: justify; text-justify: inter-character; }
+.pk-b.pk-justify { text-align: justify; text-justify: inter-word; }
+.pk-nb { white-space: nowrap; }                 /* ชื่อคน "พ.ศ. ๒๕๖๙" ไม่ให้ขาดกลางบรรทัด */
+.pk-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12pt; }
+.pk-row > .pk-l { text-align: left; } .pk-row > .pk-r { text-align: right; margin-left: auto; }
+
+/* หัวเอกสาร: ตรา | ชื่อเอกสาร | QR */
+.pk-head { display: grid; grid-template-columns: 24mm 1fr 24mm; align-items: start; gap: 4mm; }
+.pk-head .pk-seal img { display: block; height: 21mm; width: auto; margin: 0 auto; }
+.pk-head .pk-title { text-align: center; }
+.pk-head .pk-qr { text-align: center; }
+.pk-head .pk-qr svg { width: 21mm; height: 21mm; display: block; margin: 0 auto; }
+.pk-head .pk-qr small { display: block; font-size: 10pt; line-height: 1.1; margin-top: 1mm; }
+.pk-garuda { display: block; margin: 0 auto; height: 3cm; width: auto; }  /* ครุฑ 3 ซม. หนังสือภายนอก */
+
+/* ตาราง */
+.pk-sheet .pk-table { margin-top: 0; }   /* กันสไตล์ตารางของระบบปลายทาง */
+.pk-table { width: 100%; border-collapse: collapse; table-layout: fixed; }  /* กว้างตามที่ตั้งในแม่แบบ หน้าจอ = กระดาษ */
+.pk-table th, .pk-table td { border: 0.5pt solid #9a9a9a; padding: 1pt 5pt; vertical-align: top; }
+.pk-table th { padding: 1pt 3pt; font-weight: 700; text-align: center; vertical-align: middle; line-height: 1.1; white-space: nowrap; }  /* หัวคอลัมน์ไม่ตัดคำ ขึ้นบรรทัดเฉพาะที่กด Enter ไว้ */
+.pk-table .c { text-align: center; } .pk-table .r { text-align: right; }
+.pk-table thead { display: table-header-group; }
+.pk-table tr { break-inside: avoid; page-break-inside: avoid; }
+
+/* ช่องลงนาม */
+.pk-sign { display: grid; gap: 8pt; break-inside: avoid; page-break-inside: avoid; }
+.pk-sign > div { text-align: center; min-width: 0; }
+.pk-sign small { display: block; }
+.pk-sigl { display: flex; align-items: baseline; margin-top: 1.4em; }
+.pk-sigl i { flex: 1; border-bottom: 1.3px dotted #000; margin-left: 2pt; min-width: 2cm; }
+.pk-sign .pk-fit { overflow: hidden; }
+.pk-recv { width: max-content; max-width: 100%; text-align: center; break-inside: avoid; }
+.pk-recv > div:first-child { text-align: left; }
+
+/* ท้ายกระดาษ (หน้าจอ) — ตอนพิมพ์จริงใช้ @page ของ print-kit.js */
+.pk-pagefoot { position: absolute; left: var(--pk-ml); right: var(--pk-mr); bottom: 1cm; display: flex; justify-content: space-between; font-size: 13pt; color: #333; }
+
+/* ป้ายเตือน (ข้อมูลฝึก/ทดสอบ) และลายน้ำตัวอย่าง */
+.pk-flag { border: 2px solid #a66b00; text-align: center; font-weight: 700; padding: 2pt 6pt; margin-bottom: 6pt; }
+.pk-sheet.pk-sample::after {
+  content: 'ตัวอย่าง'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 120pt; font-weight: 700; color: rgba(200, 0, 0, .09); transform: rotate(-30deg); pointer-events: none;
+}
+/* ช่องเติมข้อมูลที่ไม่รู้จัก (เฉพาะหน้าตัวอย่าง) */
+.pk-unknown { background: #ffd7d7; color: #b00000; outline: 1px dashed #b00000; }
+
+@media print {
+  html, body { background: #fff !important; margin: 0 !important; }
+  .pk-noprint { display: none !important; }
+  .pk-sheet { width: auto !important; min-height: auto !important; padding: 0 !important; box-shadow: none !important; transform: none !important; margin: 0 !important; }
+  .pk-sheet + .pk-sheet { break-before: page; page-break-before: always; }
+  .pk-sheet .pk-pagefoot { display: none; }
+  .pk-sheet.pk-sample::after { position: fixed; }
+  .pk-sheet img, .pk-sheet tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
