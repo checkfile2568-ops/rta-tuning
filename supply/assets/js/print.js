@@ -29,8 +29,40 @@ const PrintDoc = (function () {
     return Math.max(1, Math.ceil((bottom - top - 2) / pageH));
   }
   function d(v) { return v ? U.thDate(v) : '...../...../.....'; }
+
+  /* ── print-kit (ฐานกลางแม่แบบเอกสารที่ปริ้นฮับ) · 1.8.0 ──
+   * ใช้แม่แบบจากปริ้นฮับเมื่อมีฉบับที่เผยแพร่แล้วเท่านั้น
+   * ไม่มี / อ่านไม่ได้ / backend ยังไม่มีคำสั่ง printTemplates → ใช้แบบเดิมด้านล่าง (ไม่พัง) */
+  let PKT = null;
+  async function loadTemplates() {
+    if (PKT) return PKT;
+    try { const r = await API.call('printTemplates'); PKT = (r && r.templates) || {}; }
+    catch (e) { PKT = {}; }
+    return PKT;
+  }
+  function pkTpl(id) { return window.PrintKit && PKT && PKT[id] && PKT[id].tpl ? PKT[id].tpl : null; }
+  /** ระยะขอบใบเบิก: ตามแม่แบบที่เผยแพร่ (ถ้ามี) ไม่งั้นตามระเบียบ */
+  function slipMargins() { const t = pkTpl('supply.req'); return t && t.page && t.page.margins ? t.page.margins.map(Number) : OFFICIAL; }
+  function pkReq(r, qr, tpl) {
+    const data = PrintKitSupply.reqData(r, App.S.cfg, U.APP_NAME);
+    data['ป้ายเตือน'] = API.scope() ? 'ข้อมูลตัวอย่างสำหรับฝึกใช้งาน — ห้ามใช้เป็นเอกสารเบิกจ่ายจริง'
+      : (App.S.me && App.S.me.realTrial && App.S.me.realTrial.active ? 'รอบทดสอบบนฐานข้อมูลจริง' : '');
+    const out = PrintKit.render(tpl, data, {
+      assetBase: 'assets/img/',
+      slots: {
+        flags: function (x) { return x['ป้ายเตือน'] ? '<div class="pk-flag">' + U.esc(x['ป้ายเตือน']) + '</div>' : ''; },
+        qr: function () { return qr ? qr + '<small>สแกนเปิดใบนี้</small>' : ''; }
+      }
+    });
+    // ให้หน้าพิมพ์เดิมของระบบรู้จักแผ่น (.sheet) ช่องย่อตัวอักษร (.fit) และเลขหน้า (.pgno)
+    return out.html.replace('class="pk-sheet', 'class="sheet pk-sheet').replace('class="pk-pagefoot"', 'class="pk-pagefoot pagefoot"')
+      .replace('class="pk-pgno"', 'class="pk-pgno pgno"').replace(/class="pk-fit"/g, 'class="pk-fit fit"');
+  }
+
   /** qr = SVG จาก U.qrSvg(U.reqLink(req_id)) — ว่างได้ */
   function reqSheet(r, qr) {
+    const tpl = pkTpl('supply.req');
+    if (tpl) { try { return pkReq(r, qr, tpl); } catch (e) { /* แม่แบบมีปัญหา → ใช้แบบเดิม */ } }
     const rows = r.items.map(function (i, n) {
       return '<tr><td class="c">' + (n + 1) + '</td><td>' + U.esc(i.name) + '</td><td class="c">' + U.esc(i.unit_name) + '</td><td class="c">' + U.n(i.qty_approved !== null ? i.qty_approved : i.qty_req) + '</td>' +
         '<td class="c">' + (i.qty_issued !== null ? U.n(i.qty_issued - (i.qty_returned || 0)) : '') + '</td><td>' + (i.qty_returned ? 'จ่าย ' + U.n(i.qty_issued) + ' คืน/แก้ ' + U.n(i.qty_returned) : '') + '</td></tr>';
@@ -117,7 +149,8 @@ const PrintDoc = (function () {
     Promise.all(imgs.map(function (im) { return im.decode ? im.decode().catch(function () {}) : null; }))
       .then(function () { setTimeout(function () { window.print(); }, 50); });
   }
-  return { reqSheet: reqSheet, pickSheet: pickSheet, print: print, pagesOf: pagesOf, fitText: fitText, OFFICIAL: OFFICIAL, stamp: stamp };
+  return { reqSheet: reqSheet, pickSheet: pickSheet, print: print, pagesOf: pagesOf, fitText: fitText, OFFICIAL: OFFICIAL, stamp: stamp,
+           loadTemplates: loadTemplates, slipMargins: slipMargins };
 })();
 
 App.view('print', {
@@ -141,12 +174,14 @@ App.view('print', {
       U.$('.page-h h1').textContent = B.mode === 'pick' ? 'ใบจัดเตรียมวัสดุ (รวม)' : 'ใบเบิก ' + B.rows.length + ' ใบ';
       if (B.mode === 'pick') html = PrintDoc.pickSheet(B.rows);
       else {
+        await PrintDoc.loadTemplates();
         const qrs = await Promise.all(B.rows.map(function (r) { return U.qrSvg(U.reqLink(r.req_id)); }));
         html = B.rows.map(function (r, i) { return PrintDoc.reqSheet(r, qrs[i]); }).join('');
         slip = true;
       }
     } else {
-      const r = await API.call('getRequest', { req_id: params[0] });
+      const both = await Promise.all([API.call('getRequest', { req_id: params[0] }), PrintDoc.loadTemplates()]);
+      const r = both[0];
       html = PrintDoc.reqSheet(r, await U.qrSvg(U.reqLink(r.req_id)));
       slip = true;
     }
@@ -169,7 +204,7 @@ App.view('print', {
     window.addEventListener('resize', fit);
     // ใบเบิก: ขอบตามระเบียบงานสารบรรณ · ข้อความซ้ายล่างทุกหน้า · เลขหน้าเมื่อมีมากกว่า 1 หน้า (พิมพ์ใบเดียว)
     const sheets = U.$$('.sheet', pv);
-    const margins = slip ? PrintDoc.OFFICIAL : [margin, margin, margin, margin];
+    const margins = slip ? PrintDoc.slipMargins() : [margin, margin, margin, margin];
     // นับหน้าหลังโหลดฟอนต์เสร็จ (ฟอนต์สำรองกว้างกว่า ทำให้นับเกิน)
     const count = function () {
       PrintDoc.fitText(pv);

@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/css/app.css?v=1.7.4">
 <link rel="stylesheet" href="assets/css/print.css?v=1.7.4">
+<link rel="stylesheet" href="assets/print-kit/core/print-kit.css?v=1.0.0">
 </head>
 <body>
 <div id="root"><div class="login login-glass login-slide" data-boot><div class="login-deck"><section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.7.4" alt="" width="1122" height="1402" fetchpriority="high"><div class="login-art-caption"><span>วัสดุพร้อมใช้ ข้อมูลพร้อมตรวจสอบ</span><small>รับเข้า · เบิก · ส่งมอบ · ติดตาม</small></div></section><section class="panel"><div class="box"><div class="login-heading"><img class="login-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><div class="login-title"><span class="login-eyebrow">OFFICE SUPPLY MANAGEMENT</span><h1>ระบบบริหารวัสดุสำนักงาน<span>ศาลจังหวัดลพบุรี</span></h1></div></div><div class="skel"></div><div class="skel"></div></div><p class="login-ver">รุ่น 1.7.4</p></section></div></div></div>
@@ -29,7 +30,9 @@
 <script src="assets/js/admin.js?v=1.7.4"></script>
 <script src="assets/js/dash.js?v=1.7.4"></script>
 <script src="assets/js/monthly.js?v=1.7.4"></script>
-<script src="assets/js/print.js?v=1.7.4"></script>
+<script src="assets/print-kit/core/print-kit.js?v=1.0.0"></script>
+<script src="assets/print-kit/supply-adapter.js?v=1.0.0"></script>
+<script src="assets/js/print.js?v=1.8.0"></script>
 <script>
   App.boot();
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
