@@ -729,3 +729,127 @@ label.radio input, label.check input { width: 18px; height: 18px; flex: none; }
 @media (max-height:500px) { .login-seal { height:40px; } }
 @media (max-width:900px) { .brand { text-align:center; padding:0 4px 14px; } .brand-seal { height:44px; margin:0 auto 6px; } }
 .mhead-seal { display:block; height:38px; width:auto; flex:none; filter:drop-shadow(0 2px 5px #0005); }
+
+/* ===================================================================
+ * 1.8.0 หน้าเข้าสู่ระบบแบบดินปั้น (Claymorphism) โทนกรมท่า-ทอง
+ * =================================================================== */
+.clay-login { --c-bg:#c5d0e2; --c-panel:#f3f6fb; --c-card:#d6deef; --c-ink:#13294b; --c-ink2:#33476b; --c-muted:#4a5b78; --c-navy:#1f3d6b; --c-gold:#c9a24a;
+  --c-raise: 0 8px 16px rgba(20,40,80,.14), inset 0 4px 7px rgba(255,255,255,.95), inset 0 -5px 8px rgba(60,80,130,.09);
+  --c-press: inset 0 4px 8px rgba(20,40,80,.18), inset 0 -3px 5px rgba(255,255,255,.9);
+  min-height:100vh; min-height:100dvh; box-sizing:border-box; display:flex; justify-content:center; align-items:flex-start; padding:28px 16px max(28px,var(--safe-b,0px));
+  background:radial-gradient(ellipse at 12% 0%,#dbe2f0 0,transparent 58%),radial-gradient(ellipse at 100% 100%,#d9d3c3 0,transparent 55%),var(--c-bg); color:var(--c-ink); }
+@media (min-height:780px) { .clay-login { align-items:center; } }
+.clay-phone { width:min(440px,100%); box-sizing:border-box; padding:22px 18px 16px; border-radius:40px; background:var(--c-panel);
+  box-shadow:0 18px 40px rgba(20,40,80,.22), inset 0 6px 10px rgba(255,255,255,.9), inset 0 -8px 14px rgba(60,80,130,.10); }
+.clay-brand { display:flex; align-items:center; gap:12px; padding:2px 6px 16px; }
+.clay-brand img { width:40px; height:56px; object-fit:contain; flex:none; filter:drop-shadow(0 4px 6px rgba(20,40,80,.25)); }
+.clay-brand h1 { margin:0; font-size:1.2rem; line-height:1.3; font-weight:700; color:var(--c-ink); }
+.clay-brand span { display:block; font-size:.82rem; font-weight:500; color:var(--c-muted); }
+.clay-login .box { width:auto; padding:0; border:0; background:none; box-shadow:none; }
+.clay-login .box.clay-in { animation:pin-arrive .28s ease-out; }
+.clay-login .box > h2 { font-size:1.2rem; margin:0 0 8px; }
+/* การ์ดต้อนรับ + กล่องพัสดุดินปั้น */
+.clay-hero { position:relative; min-height:142px; box-sizing:border-box; margin:0 0 16px; padding:20px 18px 18px 20px; border-radius:28px; overflow:hidden; background:var(--c-card);
+  box-shadow:0 14px 26px rgba(20,40,80,.20), inset 0 5px 9px rgba(255,255,255,.75), inset 0 -8px 12px rgba(50,75,130,.16); }
+.clay-hello { margin:0; font-size:1.65rem; line-height:1.2; font-weight:700; color:#12305c; }
+.clay-sub { margin:8px 0 0; max-width:58%; font-size:.88rem; line-height:1.5; color:var(--c-ink2); }
+.clay-mascot { position:absolute; right:10px; top:14px; width:136px; height:124px; pointer-events:none; }
+.clay-mascot i { position:absolute; display:block; }
+.clay-mascot .m-slip { left:70px; top:0; width:54px; height:66px; box-sizing:border-box; padding:10px 8px; border-radius:9px; background:#fffdf6; transform:rotate(8deg); display:flex; flex-direction:column; gap:5px;
+  box-shadow:0 4px 8px rgba(0,0,0,.08), inset 0 -3px 4px rgba(0,0,0,.05); }
+.clay-mascot .m-slip b { display:block; height:4px; border-radius:3px; background:#d9e0ee; }
+.clay-mascot .m-slip b:first-child { width:70%; background:var(--c-gold); } .clay-mascot .m-slip b:nth-child(3) { width:85%; } .clay-mascot .m-slip b:nth-child(4) { width:60%; }
+.clay-mascot .m-body { left:8px; top:46px; width:104px; height:74px; border-radius:20px; background:radial-gradient(circle at 30% 25%,#f7d9a6,#d9a05d 80%);
+  box-shadow:0 10px 18px rgba(120,70,20,.30), inset 0 6px 10px rgba(255,255,255,.45), inset 0 -8px 12px rgba(120,70,20,.25); }
+.clay-mascot .m-lid { left:2px; top:34px; width:116px; height:22px; border-radius:12px; background:radial-gradient(circle at 30% 30%,#fbe4bb,#e3ad6c 80%); box-shadow:0 4px 8px rgba(120,70,20,.22), inset 0 -3px 5px rgba(120,70,20,.2); }
+.clay-mascot .m-tape { left:52px; top:34px; width:16px; height:86px; border-radius:5px; background:radial-gradient(circle at 35% 25%,#4f6fa6,var(--c-navy) 80%); box-shadow:inset 0 -3px 4px rgba(5,20,50,.3); }
+.clay-mascot .m-eye { top:74px; width:10px; height:6px; border-top:3px solid #5a3510; border-radius:50% 50% 0 0; } .clay-mascot .m-eye.l { left:26px; } .clay-mascot .m-eye.r { left:84px; }
+.clay-mascot .m-cheek { top:88px; width:12px; height:7px; border-radius:50%; background:#f3a9a0; opacity:.85; } .clay-mascot .m-cheek.l { left:22px; } .clay-mascot .m-cheek.r { left:86px; }
+.clay-mascot .m-mouth { left:36px; top:92px; width:12px; height:7px; border-bottom:3px solid #5a3510; border-radius:0 0 50% 50%; }
+.clay-mascot .m-star { left:0; top:4px; width:16px; height:16px; border-radius:50%; background:radial-gradient(circle at 35% 35%,#fff2c9,var(--c-gold)); box-shadow:0 0 10px rgba(201,162,74,.8); }
+/* ขั้นตอน */
+.clay-steps { list-style:none; margin:0 0 16px; padding:0; display:flex; align-items:center; gap:10px; font-size:.86rem; }
+.clay-steps li { display:flex; align-items:center; gap:8px; padding:5px 14px 5px 5px; border-radius:18px; background:var(--c-panel); color:var(--c-muted); box-shadow:inset 0 2px 5px rgba(20,40,80,.14); }
+.clay-steps li span { width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background:#e1e7f2; font-size:.75rem; font-weight:700; }
+.clay-steps li.on { background:var(--c-navy); color:#fff; font-weight:600; box-shadow:0 6px 12px rgba(20,45,95,.28), inset 0 3px 5px rgba(255,255,255,.30), inset 0 -3px 6px rgba(5,20,50,.22); }
+.clay-steps li.on span { background:var(--c-panel); color:var(--c-navy); }
+.clay-steps li.sep { flex:0 0 22px; height:4px; padding:0; border-radius:2px; background:#e1e7f2; box-shadow:none; }
+/* ค้นหาชื่อ */
+.clay-login .login-lead { margin:0 0 8px 4px; font-size:.95rem; font-weight:600; color:var(--c-ink); }
+.clay-login .search { margin:0 0 8px; }
+.clay-login .search svg { left:18px; color:var(--c-navy); }
+.clay-login .search input { min-height:58px; border:0; border-radius:22px; padding:10px 16px 10px 52px; background:#e7edf6; color:var(--c-ink); box-shadow:var(--c-press); }
+.clay-login .search input::placeholder { color:#6a7a95; }
+.clay-login .search input:focus { outline:3px solid rgba(31,61,107,.28); outline-offset:2px; border:0; }
+.clay-login .err { margin:4px 0; min-height:1.4em; text-align:center; font-weight:600; color:#b3261e; }
+.clay-login .err:empty { min-height:0; margin:0; }
+.clay-login .err.ok { color:#13724c; }
+.clay-login .acct-list { border:0; border-radius:0; overflow:visible; margin:6px 0 0; padding:2px 2px 6px; display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto; }
+.clay-login .acct-list button { display:flex; align-items:center; gap:12px; width:100%; min-height:64px; padding:10px 12px; border:0; border-radius:22px; background:var(--c-panel); text-align:left; color:var(--c-ink); box-shadow:var(--c-raise); cursor:pointer; }
+.clay-login .acct-list button:hover { background:#eaf0fa; }
+.clay-login .acct-list button:focus-visible { outline:3px solid rgba(31,61,107,.35); outline-offset:2px; background:#eaf0fa; }
+.clay-login .acct-list button:active { box-shadow:var(--c-press); }
+.clay-login .acct-list .av { width:44px; height:44px; flex:none; border-radius:50%; display:grid; place-items:center; font-size:1.1rem; font-weight:700;
+  box-shadow:0 5px 10px rgba(20,40,80,.20), inset 0 -4px 6px rgba(0,0,0,.12), inset 0 3px 5px rgba(255,255,255,.6); }
+.clay-login .av0 { background:radial-gradient(circle at 35% 30%,#ffd9a8,#f0a970 70%); color:#6b3712; }
+.clay-login .av1 { background:radial-gradient(circle at 35% 30%,#c9d8f2,#7d9cd0 75%); color:#12305c; }
+.clay-login .av2 { background:radial-gradient(circle at 35% 30%,#fff1c2,#e0b85a 80%); color:#6b4a0e; }
+.clay-login .acct-list .tx { flex:1; min-width:0; }
+.clay-login .acct-list b { font-weight:600; }
+.clay-login .acct-list small { color:var(--c-muted); }
+.clay-login .acct-list mark { background:#f4e6c3; color:#6b4a0e; border-radius:6px; padding:0 2px; }
+.clay-login .acct-list .go { width:20px; height:20px; flex:none; fill:none; stroke:var(--c-navy); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+.clay-login .acct-list .empty, .clay-login .acct-searching { padding:12px 6px; text-align:center; color:var(--c-muted); }
+.clay-login .link-refresh { min-height:44px; padding:0 18px; border-radius:22px; background:var(--c-panel); color:var(--c-navy); font-weight:600; box-shadow:var(--c-raise); }
+.clay-login .link-refresh:hover, .clay-login .link-refresh:focus-visible { background:#eaf0fa; color:var(--c-navy); }
+.clay-help { margin:16px 0 0; text-align:center; font-size:.8rem; line-height:1.6; color:var(--c-muted); }
+/* ใส่ PIN */
+.clay-login .who { display:flex; align-items:center; gap:12px; flex-wrap:nowrap; margin:0 0 14px; padding:14px; border:0; border-radius:26px; background:var(--c-card);
+  box-shadow:0 12px 22px rgba(20,40,80,.18), inset 0 5px 9px rgba(255,255,255,.75), inset 0 -7px 11px rgba(50,75,130,.15); }
+.clay-login .who .avatar { width:52px; height:52px; flex:none; font-size:1.3rem; font-weight:700; color:#6b3712; background:radial-gradient(circle at 35% 30%,#ffd9a8,#f0a970 70%);
+  box-shadow:0 6px 12px rgba(150,90,40,.25), inset 0 -4px 6px rgba(150,80,30,.20), inset 0 3px 5px rgba(255,255,255,.6); }
+.clay-login .who > div { flex:1; min-width:0; }
+.clay-login .who b { color:#12305c; font-size:1.02rem; }
+.clay-login .who .muted { color:var(--c-ink2); }
+.clay-login .who #chg { flex:none; min-height:44px; padding:0 14px; border:0; border-radius:16px; background:var(--c-panel); color:var(--c-navy); font-weight:600; font-size:.85rem; box-shadow:var(--c-raise); }
+.clay-login .pin-stage { position:relative; border-radius:26px; padding:2px; }
+.clay-login .pin-dots { gap:18px; margin:8px 0 8px; }
+.clay-login .pin-dots i { width:22px; height:22px; border:0; background:#e3e9f4; box-shadow:inset 0 3px 5px rgba(20,40,80,.18); }
+.clay-login .pin-dots i.on { background:radial-gradient(circle at 35% 30%,#7d9cd0,var(--c-navy) 75%); box-shadow:0 4px 8px rgba(20,45,95,.30), inset 0 -3px 4px rgba(5,20,50,.25); }
+.clay-login .keypad { gap:12px; padding:4px 2px 6px; }
+.clay-login .keypad button { position:relative; overflow:hidden; min-height:64px; border:0; border-radius:24px; background:var(--c-panel); color:var(--c-ink); font-size:1.6rem; font-weight:600;
+  box-shadow:0 8px 14px rgba(20,40,80,.15), inset 0 4px 7px rgba(255,255,255,.95), inset 0 -5px 8px rgba(60,80,130,.10); transition:transform .08s, box-shadow .12s, background .12s; }
+@media (hover:hover) { .clay-login .keypad button:not(:disabled):hover { background:#eaf0fa; } }
+.clay-login .keypad button:not(:disabled):active, .clay-login .keypad button.key-flash { background:#dde5f3; box-shadow:inset 0 4px 8px rgba(20,40,80,.20); transform:translateY(1px); }
+.clay-login .keypad button:focus-visible { outline:3px solid rgba(31,61,107,.4); outline-offset:3px; }
+.clay-login .keypad button.clr { background:#f4e6c3; color:#7a5a12; font-size:1rem; box-shadow:0 8px 14px rgba(120,90,20,.15), inset 0 4px 7px rgba(255,255,255,.8), inset 0 -5px 8px rgba(120,90,20,.12); }
+.clay-login .keypad button.del { display:grid; place-items:center; }
+.clay-login .keypad button.del svg { width:28px; height:28px; fill:none; stroke:var(--c-navy); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.clay-login .keypad button:disabled { opacity:.55; }
+.clay-login .login-wait { inset:0; padding:0; border-radius:inherit; overflow:hidden; }
+.clay-login .login-wait-card { height:100%; max-height:100%; box-sizing:border-box; padding:18px 14px; border:0; border-radius:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(243,246,251,.97); box-shadow:inset 0 4px 8px rgba(20,40,80,.10); }
+.clay-login .login-wait-card h3 { color:var(--c-ink); }
+.clay-login .login-wait-card .wait-phase { background:#dde5f3; color:var(--c-navy); }
+.clay-login .wait-symbol svg { stroke:var(--c-navy); }
+.clay-login .login-ver { margin:12px 0 0; text-align:center; font-size:.72rem; color:#6a7a95; }
+@media (max-width:420px) {
+ .clay-login { padding:10px 10px max(10px,var(--safe-b,0px)); }
+ .clay-phone { padding:18px 14px 14px; border-radius:34px; }
+ .clay-hello { font-size:1.45rem; }
+ .clay-mascot { transform:scale(.86); transform-origin:top right; }
+ .clay-login .keypad { gap:10px; }
+ .clay-login .keypad button { min-height:58px; }
+}
+@media (max-height:720px) {
+ .clay-hero { min-height:118px; padding:16px; margin-bottom:12px; }
+ .clay-mascot { transform:scale(.78); transform-origin:top right; }
+ .clay-login .keypad button { min-height:52px; }
+ .clay-brand { padding-bottom:10px; }
+}
+@media (max-height:560px) {
+ .clay-hero, .clay-login .is-pin .clay-help { display:none; }
+ .clay-login .keypad { grid-template-columns:repeat(6,1fr); gap:8px; }
+ .clay-login .keypad button { min-height:44px; font-size:1.25rem; border-radius:18px; }
+}
+@media (prefers-reduced-motion:reduce) { .clay-login .box.clay-in { animation:none; } .clay-login .keypad button { transition:none; } }
