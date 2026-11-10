@@ -323,36 +323,31 @@ const Login = (function () {
   const SYSTEM_TAGLINE = 'บริหารวัสดุอย่างเป็นระบบ สนับสนุนงานอย่างมีประสิทธิภาพ';
   const VERSION = (window.APP_CONFIG && APP_CONFIG.VERSION) || '';
   /** step: 1 = เลือกชื่อ, 2 = ใส่ PIN, 0/ไม่ระบุ = หน้าตั้งค่าหลังเข้าสู่ระบบ (ไม่แสดงป้ายขั้นตอน) */
+  /* 1.8.0 หน้าเข้าสู่ระบบแบบดินปั้น (Claymorphism) โทนกรมท่า-ทอง — ตามแบบในงานออกแบบ "ระบบวัสดุ · เข้าสู่ระบบ" */
+  const MASCOT = '<div class="clay-mascot" aria-hidden="true"><i class="m-slip"><b></b><b></b><b></b><b></b></i><i class="m-body"></i><i class="m-lid"></i><i class="m-tape"></i>' +
+    '<i class="m-eye l"></i><i class="m-eye r"></i><i class="m-cheek l"></i><i class="m-cheek r"></i><i class="m-mouth"></i><i class="m-star"></i></div>';
+  /** step: 1 = เลือกชื่อ, 2 = ใส่ PIN, 0/ไม่ระบุ = หน้าตั้งค่าหลังเข้าสู่ระบบ (ไม่แสดงป้ายขั้นตอน) */
   function loginHeading(step) {
-    const chip = function (n, label) { return '<span' + (step === n ? ' class="current" aria-current="step"' : '') + '>' + n + ' ' + label + '</span>'; };
-    return '<div class="login-heading"><img class="login-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240">' +
-      '<div class="login-title"><span class="login-eyebrow">OFFICE SUPPLY MANAGEMENT</span>' +
-      '<h1>' + SYSTEM_NAME + '<span>' + SYSTEM_ORG + '</span></h1></div><p>' + SYSTEM_TAGLINE + '</p>' +
-      (step === 1 || step === 2 ? '<div class="login-steps" aria-label="ขั้นตอนเข้าสู่ระบบ">' + chip(1, 'เลือกชื่อ') + '<i aria-hidden="true"></i>' + chip(2, 'ใส่ PIN') + '</div>' : '') + '</div>';
+    const chip = function (n, label) { return '<li' + (step === n ? ' class="on" aria-current="step"' : '') + '><span>' + n + '</span>' + label + '</li>'; };
+    return (step === 1 ? '<section class="clay-hero"><p class="clay-hello">ยินดีต้อนรับ</p><p class="clay-sub">เบิกวัสดุ ติดตามสถานะ<br>ด้วยชื่อและ PIN 4 หลัก</p>' + MASCOT + '</section>' : '') +
+      (step === 1 || step === 2 ? '<ol class="clay-steps" aria-label="ขั้นตอนเข้าสู่ระบบ">' + chip(1, 'เลือกชื่อ') + '<li class="sep" aria-hidden="true"></li>' + chip(2, 'ใส่ PIN') + '</ol>' : '');
   }
   function frame(inner, step) {
     step = step || 0;
-    return '<div class="login login-glass login-slide' + (step === 1 ? '' : ' is-pin') + '"><div class="login-deck">' +
-      '<section class="art" aria-hidden="true"><img class="login-illustration" src="assets/img/login-locker.webp?v=1.7.0" alt="" width="1122" height="1402" fetchpriority="high">' +
-      '<div class="login-art-caption"><span>วัสดุพร้อมใช้ ข้อมูลพร้อมตรวจสอบ</span><small>รับเข้า · เบิก · ส่งมอบ · ติดตาม</small></div></section>' +
-      '<section class="panel"><div class="box">' + loginHeading(step) + inner + '</div>' +
-      (VERSION ? '<p class="login-ver">รุ่น ' + U.esc(VERSION) + '</p>' : '') + '</section></div></div>';
+    return '<div class="clay-login' + (step === 2 ? ' is-pin' : '') + '"><div class="clay-phone">' +
+      '<header class="clay-brand"><img src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240">' +
+      '<div><h1>' + SYSTEM_NAME + '</h1><span>' + SYSTEM_ORG + '</span></div></header>' +
+      '<div class="box">' + loginHeading(step) + inner + '</div>' +
+      (VERSION ? '<p class="login-ver">รุ่น ' + U.esc(VERSION) + '</p>' : '') + '</div></div>';
   }
-  // Keep the moving panels alive; replace only the form so CSS can animate both directions.
   function mountLogin(inner, step) {
-    const shell = ROOT().querySelector('.login-slide');
+    const shell = ROOT().querySelector('.clay-login');
     if (!shell) { ROOT().innerHTML = frame(inner, step); return; }
-    shell.querySelector('.box').innerHTML = loginHeading(step) + inner;
-    if (shell.hasAttribute('data-boot')) {
-      // โครงหน้าจาก index.html: วางตำแหน่งขั้นตอนแรกทันที ไม่เลื่อนแผงตอนเปิดหน้า
-      shell.removeAttribute('data-boot');
-      shell.classList.add('no-anim');
-      shell.classList.toggle('is-pin', step !== 1);
-      requestAnimationFrame(function () { requestAnimationFrame(function () { shell.classList.remove('no-anim'); }); });
-      return;
-    }
-    void shell.offsetWidth;
-    shell.classList.toggle('is-pin', step !== 1);
+    shell.removeAttribute('data-boot');
+    shell.classList.toggle('is-pin', step === 2);
+    const box = shell.querySelector('.box');
+    box.innerHTML = loginHeading(step) + inner;
+    box.classList.remove('clay-in'); void box.offsetWidth; box.classList.add('clay-in');
   }
   function show() {
     busy = false; waiting('');
@@ -362,7 +357,8 @@ const Login = (function () {
     mountLogin('<h2 class="sr-only">เข้าสู่ระบบ</h2><label class="login-lead" for="q">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</label>' +
       '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย"></div>' +
       '<p class="err err-name" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>' +
-      '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="link-refresh" id="acct-refresh">' + ICON('refresh') + 'ค้นหาใหม่</button></div>', 1);
+      '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="link-refresh" id="acct-refresh">' + ICON('refresh') + 'ค้นหาใหม่</button></div>' +
+      '<p class="clay-help">ไม่พบชื่อ หรือยังไม่ได้ตั้ง PIN ติดต่อผู้ดูแลระบบ<br>ใช้ PIN เดียวกับปริ้นฮับ</p>', 1);
     const q = $('#q');
     q.focus();
     q.addEventListener('input', U.debounce(function () { search(false); }, 180));
@@ -401,7 +397,9 @@ const Login = (function () {
       if (seq !== searchSeq || !$('#res') || !$('#q') || accountQuery($('#q').value) !== q) return;
       box.classList.remove('is-loading');
       box.innerHTML = r.length ? r.map(function (a, i) {
-        return '<li style="--i:' + Math.min(i, 8) + '"><button data-i="' + i + '"><b>' + highlight(a.name, q) + '</b><small>' + U.esc(a.dept || '—') + (a.ready ? '' : ' · ยังไม่ได้ตั้ง PIN') + '</small></button></li>';
+        return '<li style="--i:' + Math.min(i, 8) + '"><button data-i="' + i + '"><span class="av av' + (i % 3) + '" aria-hidden="true">' + U.esc(String(a.name || '?').charAt(0)) + '</span>' +
+          '<span class="tx"><b>' + highlight(a.name, q) + '</b><small>' + U.esc(a.dept || '—') + (a.ready ? '' : ' · ยังไม่ได้ตั้ง PIN') + '</small></span>' +
+          '<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>';
       }).join('') : '<li class="empty small">ไม่พบชื่อที่ขึ้นต้นด้วย "' + U.esc(q) + '"<br>ลองพิมพ์ชื่ออีกครั้ง หรือแตะ “ค้นหาใหม่”</li>';
       box.onclick = function (e) {
         const b = e.target.closest('button[data-i]');
@@ -427,12 +425,13 @@ const Login = (function () {
       '<div class="pin-stage" id="pin-stage"><div class="pin-dots" id="dots"><i></i><i></i><i></i><i></i></div><p class="err" id="err" role="alert"></p>' +
       '<input id="pinin" class="pin-input" inputmode="numeric" autocomplete="one-time-code" maxlength="4" aria-label="PIN 4 หลัก">' +
       '<div class="keypad" id="kp">' + [1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return '<button data-k="' + n + '">' + n + '</button>'; }).join('') +
-      '<button class="fn" data-k="clr">ล้าง</button><button data-k="0">0</button><button class="fn" data-k="del">ลบ</button></div>' +
+      '<button class="fn clr" data-k="clr">ล้าง</button><button data-k="0">0</button><button class="fn del" data-k="del" aria-label="ลบตัวเลขล่าสุด"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h10a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/></svg></button></div>' +
       '<div class="login-wait" id="login-wait" hidden role="status" aria-live="polite" aria-atomic="true"><div class="login-wait-card">' +
       '<div class="wait-dots" aria-hidden="true"><i></i><i></i><i></i></div>' +
       '<div class="wait-symbol" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M12 22 20 10h24l8 12v30H12Z"/><path d="M12 22h40M27 10v22l5-3 5 3V10M36 41h9M36 46h9"/></svg></div>' +
       '<h3>กำลังเข้าสู่ระบบ</h3><p class="wait-phase" id="login-wait-phase">กำลังตรวจสอบ PIN</p><p class="wait-hint" id="login-wait-hint">กรุณารอสักครู่</p>' +
-      '<div class="wait-shimmer" aria-hidden="true"><i></i></div></div></div></div>';
+      '<div class="wait-shimmer" aria-hidden="true"><i></i></div></div></div></div>' +
+      (overlayFor ? '' : '<p class="clay-help">ลืม PIN? ติดต่อผู้ดูแลระบบ · ใช้ PIN เดียวกับปริ้นฮับ</p>');
     if (overlayFor) { $('#reauth .box').innerHTML = html; }
     else mountLogin(html, 2);
     const inp = $('#pinin');
