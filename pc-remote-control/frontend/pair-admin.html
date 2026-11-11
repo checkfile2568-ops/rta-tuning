@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f14">
+  <title>เชื่อมต่อมือถือ | PC Remote Control Center</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <main class="main" style="max-width:760px;margin:auto">
+    <header class="topbar">
+      <div><h1>เชื่อมต่อมือถือ</h1><p>สร้างรหัสจับคู่แบบใช้ครั้งเดียว อายุ 10 นาที</p></div>
+      <div class="top-actions"><a class="ghost" href="index.html">กลับหน้าหลัก</a></div>
+    </header>
+
+    <section id="setupBanner" class="banner warning hidden">ยังไม่ได้ตั้งค่า Supabase</section>
+    <section id="loginCard" class="login-card">
+      <h2>เข้าสู่ระบบ</h2>
+      <label>อีเมล<input id="email" type="email" autocomplete="username"></label>
+      <label>รหัสผ่าน<input id="password" type="password" autocomplete="current-password"></label>
+      <button id="loginBtn" class="primary">เข้าสู่ระบบ</button>
+      <p id="loginMessage" class="message"></p>
+    </section>
+
+    <section id="pairPanel" class="panel hidden">
+      <div class="panel-head"><div><span class="eyebrow">MOBILE PAIRING</span><h3>สร้าง QR สำหรับมือถือ</h3></div></div>
+      <label>เลือกเครื่อง<select id="deviceSelect"></select></label>
+      <label>ชื่อมือถือ/อุปกรณ์<input id="mobileName" value="มือถือของฉัน" maxlength="80"></label>
+      <button id="createPairBtn" class="primary">สร้าง QR เชื่อมต่อ</button>
+      <div id="pairResult" class="hidden" style="margin-top:20px;text-align:center">
+        <div id="qr"></div>
+        <p>รหัสจับคู่</p>
+        <h2 id="pairCode" style="letter-spacing:.25em"></h2>
+        <p id="pairExpiry"></p>
+        <p><a id="pairLink" class="ghost" href="#">เปิดหน้าจับคู่</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/pair-admin.js"></script>
+</body>
+</html>

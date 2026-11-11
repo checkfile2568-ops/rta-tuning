@@ -1,0 +1,5 @@
+pc-agent/config.json
+pc-agent/logs/
+__pycache__/
+*.pyc
+.env
