@@ -2,10 +2,10 @@
  *  • index.html, config.js, manifest.json → ดึงจากเครือข่ายก่อน (แก้ API_URL แล้วมีผลทันที) ออฟไลน์ค่อยใช้แคช
  *  • ไฟล์ใน assets/ (มี ?v= กำกับรุ่น) → ใช้แคชก่อนแล้วอัปเดตเบื้องหลัง
  *  • ล้างเฉพาะแคชของระบบนี้ (ชื่อขึ้นต้น supply-shell-) — โดเมนนี้มีระบบอื่นอยู่ด้วย */
-const CACHE = 'supply-shell-1.8.0';
-const V = '?v=1.8.0';
+const CACHE = 'supply-shell-1.8.2';
+const V = '?v=1.8.2';
 const SHELL = ['./', 'index.html', 'config.js' + V, 'manifest.json',
-  'assets/css/app.css' + V, 'assets/css/print.css' + V,
+  'assets/css/app.css' + V, 'assets/css/bento.css' + V, 'assets/css/print.css' + V,
   'assets/js/util.js' + V, 'assets/js/store.js' + V, 'assets/js/api.js' + V, 'assets/js/app.js' + V,
   'assets/js/user.js' + V, 'assets/js/officer.js' + V, 'assets/js/receive-import.js' + V, 'assets/js/admin.js' + V, 'assets/js/dash.js' + V,
   'assets/js/training.js' + V, 'assets/js/real-trial.js' + V, 'assets/js/monthly.js' + V, 'assets/js/print.js' + V, 'assets/vendor/qrcode-generator.js' + V, 'assets/img/icon.svg', 'assets/img/court-seal.webp' + V, 'assets/img/favicon-64.png' + V, 'assets/templates/opening-original.xlsx', 'assets/templates/opening-original.csv',

@@ -2,6 +2,17 @@
  * จุดสั่งซื้อ · ผู้จำหน่าย · ยอดยกมา · กระทบยอด/ตรวจซ่อม · ประวัติการใช้งาน */
 'use strict';
 const OA = ['OFFICER', 'ADMIN'];
+function pendingStockWrite(action) { return API.pendingWrite ? API.pendingWrite(action) : null; }
+function syncStockPending(el, action) {
+  const pending = pendingStockWrite(action), save = el.querySelector(action === 'receive' ? '#save' : '#go');
+  el.querySelectorAll('[data-pending-lock]').forEach(function (x) { x.disabled = false; x.removeAttribute('data-pending-lock'); });
+  if (pending) el.querySelectorAll('input,select,textarea,button').forEach(function (x) {
+    if (x !== save && !x.disabled) { x.disabled = true; x.setAttribute('data-pending-lock', ''); }
+  });
+  const status = el.querySelector('#stock-write-status');
+  if (status) { status.hidden = !pending; status.textContent = pending ? 'รายการเดิมยังไม่ทราบผลบันทึก เก็บข้อมูลเดิมไว้แล้ว กดตรวจสอบผลรายการเดิม ระบบจะใช้รหัสเดิมป้องกันบันทึกซ้ำ' : ''; }
+  if (save) save.textContent = pending ? 'ตรวจสอบผลรายการเดิม' : action === 'receive' ? 'บันทึกรับเข้า' : 'นำเข้ายอดยกมา';
+}
 const Officer = (function () {
   const S = App.S;
   function isOfficer() { return S.user.role === 'OFFICER'; }
@@ -36,6 +47,7 @@ const Officer = (function () {
   async function needCatalog() { if (!S.catalog || !('balance' in (S.catalog.materials[0] || { balance: 0 }))) await App.loadCatalog(true); }
 
   async function home(el) {
+    el.classList.add('bento-surface');
     const c = S.me.counts || {};
     const mp = S.me.monthly;
     el.innerHTML = '<div class="page-h"><h1>งานวันนี้</h1><p>' + U.thDate(new Date()) + ' · ' + U.esc(S.user.name) + '</p></div>' +
@@ -43,14 +55,14 @@ const Officer = (function () {
         (mp.status === 'DRAFT' ? (mp.mode === 'AUTO' ? 'ระบบจัดทำร่างให้แล้ว' : 'มีร่างรายงานแล้ว') + ' <a href="#/monthly/' + U.esc(mp.ym) + '">ตรวจและยืนยัน</a>'
           : (mp.mode === 'AUTO' ? 'ระบบจะจัดทำร่างให้ในคืนนี้ หรือ' : '') + ' <a href="#/monthly/' + U.esc(mp.ym) + '">จัดทำรายงาน</a>') + '</div></div>' : '') +
       (!S.cfg.cost_method ? '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b>ผู้ดูแลระบบต้องตั้งค่าก่อนบันทึกยอดยกมาและรับ-จ่าย</div></div>' : '') +
-      '<div class="kpis today-kpis"><a class="kpi task-prep" href="#/queue" style="text-decoration:none"><small>รอจัดเตรียม</small><b>' + U.n(c.queuePrep || 0) + '</b><span>ใบ</span></a>' +
+      '<div class="bento-grid bento-officer"><div class="kpis today-kpis bento-metrics bento-full"><a class="kpi task-prep" href="#/queue" style="text-decoration:none"><small>รอจัดเตรียม</small><b>' + U.n(c.queuePrep || 0) + '</b><span>ใบ</span></a>' +
       '<a class="kpi task-ready" href="#/queue" style="text-decoration:none"><small>พร้อมรับ (รอส่งมอบ)</small><b>' + U.n(c.queueReady || 0) + '</b><span>ใบ</span></a>' +
       '<a class="kpi task-reorder" href="#/reorder" style="text-decoration:none"><small>ถึงจุดสั่งซื้อ</small><b>' + U.n(c.reorder || 0) + '</b><span>รายการ</span></a>' +
       (S.cfg.approval_enabled ? '<a class="kpi task-approval" href="#/approve" style="text-decoration:none"><small>รออนุมัติ</small><b>' + U.n(c.approvals || 0) + '</b><span>ใบ</span></a>' : '') + '</div>' +
-      '<div class="row" style="margin-bottom:18px"><a class="btn primary lg" href="#/queue">' + ICON('truck') + 'คิวจ่ายวัสดุ</a><a class="btn lg" href="#/receive">' + ICON('inbox') + 'รับเข้า</a>' +
-      '<a class="btn lg" href="#/count">' + ICON('clip') + 'ตรวจนับ</a><a class="btn lg" href="#/req">' + ICON('box') + 'เบิกของตนเอง</a></div>' +
-      '<div class="card today-chart-card"><div><h3>สถานะคิวคำขอปัจจุบัน</h3><p class="small muted">จำนวนใบที่ยังรอดำเนินการ ณ เวลาที่โหลดข้อมูล</p><div id="today-legend"></div></div><div class="today-chart" id="today-chart"><canvas id="today-canvas" role="img" aria-label="กราฟสถานะคิวคำขอปัจจุบัน"></canvas></div></div>' +
-      '<div class="card"><h3>คิวคำขอเบิกพัสดุ</h3><div id="q5"><div class="skel"></div></div></div>' +
+      '<section class="bento-welcome bento-full"><div><span class="bento-eyebrow">ศาลจังหวัดลพบุรี · งานพัสดุ</span><h2>จัดการวัสดุ พร้อมทุกงาน</h2><p>ตรวจคิว รับเข้า และส่งมอบ จากพื้นที่ทำงานเดียว</p></div><nav class="bento-actions" aria-label="งานพัสดุที่ใช้บ่อย"><a class="btn gold lg" href="#/queue">' + ICON('truck') + 'คิวจ่ายวัสดุ</a><a class="btn lg" href="#/receive">' + ICON('inbox') + 'รับเข้า</a>' +
+      '<a class="btn lg" href="#/count">' + ICON('clip') + 'ตรวจนับ</a><a class="btn lg" href="#/req">' + ICON('box') + 'เบิกของตนเอง</a></nav></section>' +
+      '<div class="card today-chart-card bento-wide"><div><span class="bento-eyebrow">ภาพรวมคิว</span><h3>สถานะคิวคำขอปัจจุบัน</h3><p class="small muted">จำนวนใบที่ยังรอดำเนินการ ณ เวลาที่โหลดข้อมูล</p><div id="today-legend"></div></div><div class="today-chart" id="today-chart"><canvas id="today-canvas" role="img" aria-label="กราฟสถานะคิวคำขอปัจจุบัน"></canvas></div></div>' +
+      '<div class="card bento-wide bento-queue"><div class="row"><h3>คิวคำขอเบิกพัสดุ</h3><span class="spacer"></span><a class="small" href="#/queue">ดูทั้งหมด →</a></div><div id="q5"><div class="skel"></div></div></div></div>' +
       (window.Notification && Notification.permission === 'default' ? '<p class="small muted">ระบบตรวจคำขอใหม่ทุก 1 นาทีขณะเปิดหน้านี้ไว้ <button class="btn sm" id="nt">เปิดการแจ้งเตือนบนเครื่องนี้</button></p>' : '');
     drawTodayChart(el, c);
     const nt = U.$('#nt');
@@ -421,11 +433,17 @@ App.view('receive', {
     let masters = { suppliers: [] };
     try { masters = await API.call('masters'); } catch (e) { /**/ }
     const sups = (masters.suppliers || []).filter(function (s) { return s.active; });
+    const recovery = pendingStockWrite('receive');
+    if (recovery) {
+      const p = recovery.data, supplier = sups.find(function (s) { return s.sup_id === p.sup_id; });
+      F.sup = supplier ? supplier.name : p.sup_name || ''; F.date = p.rcv_date; F.inv = p.invoice_no; F.note = p.note;
+      F.lines = p.items.map(function (x) { return { mat_id: x.mat_id, unit_id: x.unit_id, qty: x.qty, price: x.unit_price }; });
+    }
     // 1.7.3 ลงบัญชีตามวันที่รับ: เดือนปัจจุบัน หรือเดือนก่อนที่ยังไม่ยืนยันรายงาน
     const openM = ((S.me && S.me.openMonths) || []).map(function (m) { return m.ym; }).sort();
     const minDate = (openM[0] || U.ymd().slice(0, 7)) + '-01';
     el.innerHTML = '<div class="page-h"><h1>รับเข้าวัสดุ</h1><p>ไม่มีใบสั่งซื้อ · ราคาล่าสุดเติมให้ ตรวจราคาจริงก่อนบันทึก · ระบบแปลงหน่วยซื้อเป็นหน่วยหลักให้</p></div>' +
-      '<div class="card"><div class="grid3"><label class="field"><span>ผู้จำหน่าย</span><input class="input" id="sup" list="sl" value="' + U.esc(F.sup) + '" placeholder="พิมพ์บางส่วนของชื่อร้าน"><datalist id="sl">' +
+      '<div class="notice warn" id="stock-write-status" role="status" hidden></div><div class="card"><div class="grid3"><label class="field"><span>ผู้จำหน่าย</span><input class="input" id="sup" list="sl" value="' + U.esc(F.sup) + '" placeholder="พิมพ์บางส่วนของชื่อร้าน"><datalist id="sl">' +
       sups.map(function (s) { return '<option value="' + U.esc(s.name) + '">'; }).join('') + '</datalist><small>ไม่พบในรายการ = เพิ่มร้านใหม่ให้อัตโนมัติ</small></label>' +
       '<label class="field"><span>วันที่รับ</span><input class="input" type="date" id="dt" min="' + minDate + '" max="' + U.ymd() + '" value="' + U.esc(F.date) + '"><small id="dth"></small></label>' +
       '<label class="field"><span>เลขใบส่งของ/ใบกำกับ</span><input class="input" id="inv" value="' + U.esc(F.inv) + '"></label></div>' +
@@ -494,23 +512,30 @@ App.view('receive', {
     });
     U.$('#lines').addEventListener('click', function (e) { if (e.target.closest('[data-rm]')) { F.lines.splice(Number(e.target.closest('tr').dataset.i), 1); draw(); } });
     U.$('#clr').onclick = function () { S.forms.receive = null; App.render(); };
+    let saving = false, completed = false;
     U.$('#save').onclick = async function () {
+      if (saving || completed) return;
       if (!F.lines.length) { U.toast('ยังไม่มีรายการ', 'warn'); return; }
       const bad = F.lines.find(function (l) { return !(Number(l.qty) > 0) || l.price === '' || !(Number(l.price) >= 0); });
       if (bad) { U.toast('กรุณากรอกจำนวนและยืนยันราคาต่อหน่วยให้ครบทุกรายการ', 'err'); return; }
       const sum = F.lines.map(function (l) { const m = S.idx[l.mat_id]; const f = Officer.factorOf(m, l.unit_id); return '<li>' + U.esc(m.name) + ' — ' + U.n(l.qty) + ' × ' + U.money(l.price) + (f !== 1 ? ' (= ' + U.n(l.qty * f) + ' ' + U.esc(m.unit_name) + ')' : '') + '</li>'; }).join('');
-      if (!(await U.confirm('ยืนยันบันทึกรับเข้า', '<ul>' + sum + '</ul>รวม ' + U.$('#tot').textContent + ' บาท', 'บันทึกรับเข้า'))) return;
-      const btn = this; btn.classList.add('busy');
+      saving = true;
+      const retry = pendingStockWrite('receive');
+      if (!(await U.confirm(retry ? 'ตรวจสอบผลรายการเดิม' : 'ยืนยันบันทึกรับเข้า', '<ul>' + sum + '</ul>รวม ' + U.$('#tot').textContent + ' บาท' + (retry ? ' · ส่งรายการเดิมด้วยรหัสเดิม หากบันทึกแล้วระบบจะคืนเลขเอกสารเดิม' : ''), retry ? 'ตรวจสอบรายการเดิม' : 'บันทึกรับเข้า'))) { saving = false; return; }
+      const btn = this; btn.classList.add('busy'); btn.disabled = true;
       const sup = sups.find(function (s) { return s.name === F.sup.trim(); });
       try {
-        const r = await API.write('receive', { sup_id: sup ? sup.sup_id : '', sup_name: sup ? '' : F.sup.trim(), rcv_date: F.date, invoice_no: F.inv, note: F.note,
+        const r = await API.write('receive', retry ? retry.data : { sup_id: sup ? sup.sup_id : '', sup_name: sup ? '' : F.sup.trim(), rcv_date: F.date, invoice_no: F.inv, note: F.note,
           items: F.lines.map(function (l) { return { mat_id: l.mat_id, unit_id: l.unit_id, qty: Number(l.qty), unit_price: Number(l.price) }; }) });
+        completed = true;
         U.toast('บันทึกรับเข้า ' + r.rcv_no + ' แล้ว รวม ' + U.money(r.total) + ' บาท', 'ok', 5000);
         S.forms.receive = null;
-        await App.refreshCatalog();
+        await App.refreshCatalog().catch(function () { U.toast('บันทึกรับเข้าแล้ว แต่อัปเดตยอดบนหน้าจอไม่ได้ กรุณาเปิดหน้าล่าสุด', 'warn', 6000); });
         App.render();
-      } catch (er) { btn.classList.remove('busy'); U.toast(er.message, 'err', 6000); }
+      } catch (er) { btn.classList.remove('busy'); btn.disabled = false; syncStockPending(el, 'receive'); U.toast(er.message, 'err', 6000); }
+      finally { saving = false; }
     };
+    syncStockPending(el, 'receive');
     try {
       const rc = await API.call('receipts', { limit: 10 });
       U.$('#recent').innerHTML = rc.length ? '<div class="tablewrap"><table class="t"><thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้จำหน่าย</th><th>ใบส่งของ</th><th>รายการ</th><th class="num">รวม (บาท)</th></tr></thead><tbody>' +
@@ -647,6 +672,8 @@ App.view('opening', {
     const S = App.S;
     await Officer.needCatalog();
     const F = S.forms.opening = S.forms.opening || { rows: [], done: {}, source: '' };
+    const recovery = pendingStockWrite('importOpenings');
+    if (recovery && !F.rows.length) { F.rows = recovery.data.rows.map(function (r) { return Object.assign({}, r); }); F.source = recovery.data.source; }
     el.innerHTML = '<div class="page-h"><h1>นำเข้ายอดยกมา</h1><p>นำเข้าบัญชีวัสดุเดิมครั้งเดียว พร้อมจำนวนและต้นทุนต่อหน่วยที่ตรวจรับรองแล้ว — วัสดุที่มีความเคลื่อนไหวในระบบแล้วนำเข้าซ้ำไม่ได้</p></div>' +
       (S.cfg.cost_method ? '<div class="notice info"><div>วิธีคิดมูลค่า: <b>' + (S.cfg.cost_method === 'FIFO' ? 'เข้าก่อนออกก่อน (FIFO)' : 'ถัวเฉลี่ยถ่วงน้ำหนัก (AVG)') + '</b> — ล็อกหลังมีรายการแรก</div></div>'
         : '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b>ผู้ดูแลระบบต้องเลือกที่ "ตั้งค่าระบบ" ก่อนนำเข้า</div></div>') +
@@ -669,7 +696,7 @@ App.view('opening', {
       '<div class="card"><h3>2. เลือกไฟล์และตรวจ</h3><p class="small muted">เลือกไฟล์ วางข้อความ หรือเพิ่มทีละรายการ — ทุกทางรวมเข้ารายการตรวจเดียวกัน</p><input type="file" id="file" accept=".xlsx,.xls,.csv" class="input"><div id="pv" style="margin-top:12px"></div></div>' +
       '<div class="card"><h3>หรือวางข้อความ</h3><p class="small muted">วางข้อมูลพร้อมหัวคอลัมน์ตามแม่แบบ คั่นแต่ละช่องด้วย Tab และขึ้นบรรทัดใหม่แต่ละรายการ ตรวจตัวอย่างก่อนนำเข้า ข้อมูลจะรวมกับรายการที่เตรียมไว้</p><textarea class="input" id="opening-text" rows="5" aria-label="ข้อความยอดยกมา"></textarea><button class="btn" id="opening-text-add">ตรวจและเพิ่มข้อความ</button></div>' +
       '<div class="card"><h3>หรือเพิ่มทีละรายการ</h3><form id="opening-single"><div class="grid2">' + OPEN_COLS.map(function (c, i) { return '<label class="field"><span>' + c + (i === 1 || i === 3 ? ' *' : '') + '</span><input class="input" name="' + OPEN_KEYS[i] + '"' + (i >= 4 && i <= 8 ? ' type="number" min="0" step="' + (i === 5 ? 'any' : '1') + '"' : '') + (i === 1 || i === 3 ? ' required' : '') + '></label>'; }).join('') + '</div><button class="btn primary">เพิ่มเข้ารายการตรวจ</button></form></div>' +
-      '<div class="card"><h3>3. ยืนยันนำเข้า</h3><label class="field"><span>แหล่งข้อมูลและผู้รับรองยอด *</span><input class="input" id="src" value="' + U.esc(F.source) + '" placeholder="เช่น บัญชีวัสดุ ณ 30 ก.ย. 2569 รับรองโดย ..."></label>' +
+      '<div class="notice warn" id="stock-write-status" role="status" hidden></div><div class="card"><h3>3. ยืนยันนำเข้า</h3><label class="field"><span>แหล่งข้อมูลและผู้รับรองยอด *</span><input class="input" id="src" value="' + U.esc(F.source) + '" placeholder="เช่น บัญชีวัสดุ ณ 30 ก.ย. 2569 รับรองโดย ..."></label>' +
       '<button class="btn primary lg" id="go"' + (S.cfg.cost_method ? '' : ' disabled') + '>' + ICON('upload') + 'นำเข้ายอดยกมา</button><div id="res" style="margin-top:12px"></div></div>';
     const unitOk = function (t) { return !!Officer.unitFromText(t); };
     const draw = function () {
@@ -799,7 +826,21 @@ App.view('opening', {
       } catch (er) { U.toast('อ่านไฟล์ไม่ได้: ' + er.message, 'err', 7000); }
       finally { this.value = ''; }
     };
+    let importing = false;
     U.$('#go').onclick = async function () {
+      if (importing) return;
+      const pending = pendingStockWrite('importOpenings');
+      if (pending) {
+        importing = true; this.disabled = true;
+        try {
+          const r = await API.write('importOpenings', pending.data);
+          pending.data.rows.forEach(function (x) { F.done[x.line] = r.batch_no; });
+          U.$('#res').textContent = 'บันทึกยอดยกมาแล้ว เลขที่ ' + r.batch_no;
+          await App.refreshCatalog().catch(function () {}); draw();
+        } catch (e) { U.toast(e.message, 'err', 6000); }
+        finally { importing = false; this.disabled = false; syncStockPending(el, 'importOpenings'); }
+        return;
+      }
       recheck();
       const todo = F.rows.filter(function (r) { return !r._err && !F.done[r.line]; });
       if (!todo.length) { U.toast('ไม่มีแถวที่พร้อมนำเข้า', 'warn'); return; }
@@ -816,7 +857,9 @@ App.view('opening', {
       });
       if (!F.source.trim()) { U.toast('กรุณาระบุแหล่งข้อมูลและผู้รับรองยอด', 'err'); return; }
       if (!(await U.confirm('ยืนยันนำเข้ายอดยกมา', 'นำเข้า ' + todo.length + ' แถว — บันทึกเป็นยอดยกมา (OPEN) ลงบัญชีวัสดุ', 'นำเข้า'))) return;
-      const btn = this; btn.classList.add('busy');
+      if (importing) return;
+      importing = true;
+      const btn = this; btn.classList.add('busy'); btn.disabled = true;
       const out = [];
       let sent = 0;
       for (let i = 0; i < batches.length; i++) {
@@ -836,10 +879,13 @@ App.view('opening', {
         }
       }
       btn.classList.remove('busy');
+      btn.disabled = false; importing = false;
       U.$('#res').innerHTML = '<div class="notice info"><div>' + out.map(U.esc).join('<br>') + '</div></div>';
       draw();
+      syncStockPending(el, 'importOpenings');
       App.refreshCatalog().catch(function () {});
     };
+    syncStockPending(el, 'importOpenings');
   }
 });
 

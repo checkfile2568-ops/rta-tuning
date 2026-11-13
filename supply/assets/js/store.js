@@ -8,9 +8,9 @@ const Store = (function () {
   let dataScope = '';
   let realEpoch = '';
   function scoped(k) {
-    return dataScope && /^(catalog|cart|purpose|outbox):/.test(k)
+    return dataScope && /^(catalog|cart|purpose|outbox|write):/.test(k)
       ? k.replace(':', ':training:' + dataScope + ':')
-      : realEpoch && /^(catalog|cart|purpose|outbox):/.test(k) ? k.replace(':', ':real:' + realEpoch + ':') : k;
+      : realEpoch && /^(catalog|cart|purpose|outbox|write):/.test(k) ? k.replace(':', ':real:' + realEpoch + ':') : k;
   }
   let dbp = null;
   const mem = {};
@@ -41,7 +41,7 @@ const Store = (function () {
   }
   const ls = {
     get: function (k, def) { try { const v = localStorage.getItem('sp:' + scoped(k)); return v === null ? def : JSON.parse(v); } catch (e) { return def; } },
-    set: function (k, v) { try { localStorage.setItem('sp:' + scoped(k), JSON.stringify(v)); } catch (e) { /* เต็ม */ } },
+    set: function (k, v) { try { localStorage.setItem('sp:' + scoped(k), JSON.stringify(v)); return true; } catch (e) { return false; } },
     del: function (k) { try { localStorage.removeItem('sp:' + scoped(k)); } catch (e) { /**/ } }
   };
   return {
@@ -82,9 +82,24 @@ const Store = (function () {
     },
     /** ล้างข้อมูลเฉพาะผู้ใช้ (ตะกร้า คิวส่ง แคชรายการ) */
     clearUser: function (code) {
-      ls.del('cart:' + code); ls.del('outbox:' + code); ls.del('purpose:' + code);
+      // Match the exact account suffix in every real/training generation, including legacy keys.
+      const owns = function (key) {
+        const p = String(key).split(':');
+        return /^(catalog|cart|outbox|purpose|write)$/.test(p[0]) && p[p.length - 1] === code &&
+          (p.length === 2 || (p.length === 4 && /^(real|training)$/.test(p[1])));
+      };
+      try {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('sp:') === 0 && owns(k.slice(3))) keys.push(k); }
+        keys.forEach(function (k) { localStorage.removeItem(k); });
+      } catch (e) { /* storage disabled */ }
       Store.token.del(); Store.training.set('');
-      return Store.del('catalog:' + code);
+      return tx('readwrite', function (s) {
+        if (!s) { Object.keys(mem).filter(owns).forEach(function (k) { delete mem[k]; }); return null; }
+        const cursor = s.openCursor();
+        cursor.onsuccess = function () { const c = cursor.result; if (c) { if (owns(c.key)) c.delete(); c.continue(); } };
+        return null;
+      });
     }
   };
 })();

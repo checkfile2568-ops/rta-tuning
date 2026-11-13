@@ -3,21 +3,21 @@ const {parseHTML}=require(process.env.LINKEDOM_PATH||'linkedom');
 const web=path.resolve(__dirname,'../../supply');
 function env(last=null){
  const {window,document}=parseHTML('<html><body><div id="root"></div><div id="view"></div></body></html>');
- const memory={last_acct:last},calls=[],wait={},charts=[];
- const U={esc:x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),$:s=>document.querySelector(s),$$:s=>[...document.querySelectorAll(s)],debounce:f=>f,n:x=>String(x),thDate:()=>'',loadScript:async()=>{},toast(){},thShort:()=>'',fy:()=>2570,exportXlsx:(...args)=>calls.push({action:'export',args})};
+ const memory={last_acct:last},calls=[],wait={},charts=[],animation=[];
+ const U={APP_NAME:'ระบบบริหารวัสดุสำนักงาน',esc:x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),$:s=>document.querySelector(s),$$:s=>[...document.querySelectorAll(s)],debounce:f=>f,n:x=>String(x),thDate:()=>'',loadScript:async()=>{},toast(){},thShort:()=>'',fy:()=>2570,exportXlsx:(...args)=>calls.push({action:'export',args})};
  const API={on(){},scope:()=>'',setToken(){},call:(a,d)=>{calls.push({action:a,data:d});if(a==='searchAccounts')return Promise.resolve([{code:'FIXTURE',name:'ชื่อทดสอบ',dept:'ส่วนงานทดสอบ'}]);if(a==='queue')return Promise.resolve([]);return new Promise((resolve,reject)=>wait[a]={resolve,reject});}};
- const ctx=vm.createContext({window,document,U,API,Store:{ls:{get:(k,f)=>memory[k]??f,set:(k,v)=>memory[k]=v,del:k=>delete memory[k]}},Outbox:{},location:{hash:'',reload(){}},sessionStorage:{getItem(){return null}},setTimeout:(f,ms)=>ms<1000?setTimeout(f,ms):0,clearTimeout,console,FormData:class {constructor(form){this.form=form}get(k){return this.form.querySelector('[name="'+k+'"]').value}},Chart:function(canvas,opts){charts.push(opts);this.destroy=()=>{};}});
+ const ctx=vm.createContext({window,document,U,API,Store:{ls:{get:(k,f)=>memory[k]??f,set:(k,v)=>memory[k]=v,del:k=>delete memory[k]}},Outbox:{},location:{hash:'',reload(){}},sessionStorage:{getItem(){return null}},setTimeout:(f,ms)=>ms===650?(animation.push(f),0):ms<1000?setTimeout(f,ms):0,clearTimeout,console,FormData:class {constructor(form){this.form=form}get(k){return this.form.querySelector('[name="'+k+'"]').value}},Chart:function(canvas,opts){charts.push(opts);this.destroy=()=>{};}});
  vm.runInContext(fs.readFileSync(path.join(web,'assets/js/app.js'),'utf8')+'\nthis.x={App,Login,ICON}',ctx);
  ctx.x.App.afterLogin=async()=>{document.querySelector('#root').innerHTML='<p id="done">loaded</p>';};
- return {ctx,...ctx.x,window,document,U,calls,wait,charts};
+ return {ctx,...ctx.x,window,document,U,calls,wait,charts,animation};
 }
 const tick=()=>new Promise(setImmediate);
-test('name → PIN → change name preserves both sliding panels, escaped account and exact brand',async()=>{
- const e=env();e.Login.show();const shell=e.document.querySelector('.login-slide'),art=e.document.querySelector('.art');
- assert.ok(!shell.classList.contains('is-pin'));assert.match(shell.textContent,/ระบบบริหารวัสดุสำนักงานศาลจังหวัดลพบุรี/);assert.match(shell.textContent,/บริหารวัสดุอย่างเป็นระบบ สนับสนุนงานอย่างมีประสิทธิภาพ/);
+test('name → PIN → change name preserves clay shell, brand, account selection and keypad',async()=>{
+ const e=env();e.Login.show();const shell=e.document.querySelector('.clay-login'),brand=e.document.querySelector('.clay-brand');
+ assert.ok(!shell.classList.contains('is-pin'));assert.match(shell.textContent,/ระบบบริหารวัสดุสำนักงานศาลจังหวัดลพบุรี/);assert.match(shell.textContent,/เบิกวัสดุ ติดตามสถานะ/);
  const q=e.document.querySelector('#q');q.value='ชื่อ';q.dispatchEvent(new e.window.Event('input'));await tick();e.document.querySelector('#res button').dispatchEvent(new e.window.Event('click',{bubbles:true}));
- assert.equal(e.document.querySelector('.login-slide'),shell);assert.equal(e.document.querySelector('.art'),art);assert.ok(shell.classList.contains('is-pin'));assert.equal(e.document.querySelectorAll('#kp button').length,12);
- e.document.querySelector('#chg').onclick();assert.equal(e.document.querySelector('.art'),art);assert.ok(!shell.classList.contains('is-pin'));assert.ok(e.document.querySelector('#q'));
+ assert.equal(e.document.querySelector('.clay-login'),shell);assert.equal(e.document.querySelector('.clay-brand'),brand);assert.ok(shell.classList.contains('is-pin'));assert.equal(e.document.querySelectorAll('#kp button').length,12);
+ e.document.querySelector('#chg').onclick();assert.equal(e.document.querySelector('.clay-brand'),brand);assert.ok(!shell.classList.contains('is-pin'));assert.ok(e.document.querySelector('#q'));
 });
 test('wrong PIN restores input; retry locks duplicate keys through both real loading phases',async()=>{
  const e=env({code:'FIXTURE',name:'<ชื่อทดสอบ>',dept:'ส่วนงาน'});e.Login.show();assert.equal(e.document.querySelector('.who b').textContent,'<ชื่อทดสอบ>');
@@ -25,7 +25,8 @@ test('wrong PIN restores input; retry locks duplicate keys through both real loa
  fill();assert.equal(e.calls.length,1);assert.equal(e.document.querySelector('#login-wait').hidden,false);
  e.document.querySelector('#kp [data-k="1"]').dispatchEvent(new e.window.Event('click',{bubbles:true}));assert.equal(e.calls.length,1);
  e.wait.login.reject(Error('PIN ไม่ถูกต้อง'));await tick();assert.equal(e.document.querySelector('#login-wait').hidden,true);assert.equal(e.document.querySelectorAll('#dots .on').length,0);
- fill();e.wait.login.resolve({token:'fixture',user:{name:'ทดสอบ'}});await tick();assert.match(e.document.querySelector('#login-wait-phase').textContent,/กำลังโหลดข้อมูล/);assert.ok(e.document.querySelector('#kp button').disabled);
+ fill();e.wait.login.resolve({token:'fixture',user:{name:'ทดสอบ'}});await tick();assert.match(e.document.querySelector('#login-wait-phase').textContent,/PIN ถูกต้อง/);assert.ok(e.document.querySelector('#kp button').disabled);
+ e.animation.splice(0).forEach(f=>f());await tick();assert.match(e.document.querySelector('#login-wait-phase').textContent,/กำลังโหลดข้อมูล/);assert.ok(e.document.querySelector('#kp button').disabled);
  assert.deepEqual(e.calls.slice(-2).map(x=>x.action),['me','catalog']);e.wait.me.resolve({});e.wait.catalog.resolve({});await tick();assert.ok(e.document.querySelector('#done'));
 });
 test('forced PIN change and session reauthentication keep authentication controls',async()=>{

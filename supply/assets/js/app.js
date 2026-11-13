@@ -161,14 +161,16 @@ const App = (function () {
   async function logout() {
     const n = Object.keys(S.cart).length;
     const pend = Outbox.pending().length;
-    if (n || pend) {
+    const stockPending = API.pendingWrite && (API.pendingWrite('receive') || API.pendingWrite('importOpenings'));
+    if (n || pend || stockPending) {
       const ok = await U.confirm('ออกจากระบบ', (n ? 'ร่างคำขอ ' + n + ' รายการ' : '') + (n && pend ? ' และ' : '') +
-        (pend ? 'คำขอที่ยังส่งไม่สำเร็จ ' + pend + ' ใบ' : '') + ' จะถูกลบจากเครื่องนี้ ต้องการออกจากระบบหรือไม่', 'ออกจากระบบ', true);
+        (pend ? 'คำขอที่ยังส่งไม่สำเร็จ ' + pend + ' ใบ' : '') + ' จะถูกลบจากเครื่องนี้' +
+        (stockPending ? '<br><b>มีรายการรับเข้าหรือยอดยกมาที่ยังไม่ทราบผล</b> ควรกลับไปตรวจสอบผลรายการเดิมก่อน หากออกจากระบบจะล้างข้อมูลติดตามจากเครื่องนี้ ต้องตรวจเลขเอกสารเดิมก่อนเริ่มบันทึกใหม่' : '') + ' ต้องการออกจากระบบหรือไม่', 'ออกจากระบบ', true);
       if (!ok) return;
     }
     try { await API.call('logout'); } catch (e) { /* หมดเวลาอยู่แล้ว */ }
-    await Store.clearUser(S.user.code);
     API.setToken('');
+    await Store.clearUser(S.user.code);
     location.hash = '';
     location.reload();
   }

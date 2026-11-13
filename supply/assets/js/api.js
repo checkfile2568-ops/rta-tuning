@@ -16,6 +16,46 @@ const API = (function () {
   let lastCatVer = null;
   let realEpoch = '', workspaceChanged = false;
   const listeners = { session: [], catalog: [], workspace: [] };
+  const writing = {};
+
+  function userCode() { return typeof App !== 'undefined' && App.S.user ? App.S.user.code : ''; }
+  function pendingWrite(action) {
+    const code = userCode();
+    return code ? (Store.ls.get('write:' + code, {}) || {})[action] || null : null;
+  }
+  function canonical(v) {
+    if (v === null || typeof v !== 'object') return JSON.stringify(v);
+    if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
+    return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + canonical(v[k]); }).join(',') + '}';
+  }
+  function durableWrite(action, data) {
+    if (!training && workspaceChanged) return Promise.reject(new ApiError('REAL_WORKSPACE_CHANGED', 'รอบข้อมูลเปลี่ยนแล้ว กรุณารีเฟรชก่อนบันทึก'));
+    const code = userCode(), scope = training, epoch = realEpoch, writeToken = token;
+    if (!code) return Promise.reject(new ApiError('SESSION_EXPIRED', 'กรุณาเข้าสู่ระบบ'));
+    const key = 'write:' + code, records = Store.ls.get(key, {}) || {};
+    const payload = JSON.parse(JSON.stringify(data || {}));
+    let entry = records[action];
+    if (entry && canonical(entry.data) !== canonical(payload)) return Promise.reject(new ApiError('WRITE_UNRESOLVED', 'รายการเดิมยังไม่ทราบผลบันทึก กรุณาตรวจสอบผลรายการเดิมก่อนแก้ไขหรือสร้างรายการใหม่'));
+    if (!entry) {
+      entry = { uuid: U.uuid(), data: payload, at: new Date().toISOString() };
+      records[action] = entry;
+      if (!Store.ls.set(key, records)) return Promise.reject(new ApiError('STORAGE_UNAVAILABLE', 'เก็บรหัสป้องกันบันทึกซ้ำไม่ได้ กรุณาเปิดให้เว็บจัดเก็บข้อมูลแล้วลองใหม่'));
+    }
+    const id = [code, scope, epoch, action].join('|');
+    if (writing[id]) return writing[id];
+    const clear = function () {
+      if (training !== scope || realEpoch !== epoch || token !== writeToken) return;
+      const current = Store.ls.get(key, {}) || {};
+      if (current[action] && current[action].uuid === entry.uuid) { delete current[action]; Store.ls.set(key, current); }
+    };
+    writing[id] = call(action, entry.data, { write: true, uuid: entry.uuid }).then(function (result) { clear(); return result; }).catch(function (e) {
+      // Only release a new draft after a known validation rejection. Unknown outcomes keep the same UUID.
+      if (!entry.uncertain && /^(BAD_QTY|BAD_DATE|BAD_UNIT|NEED_PRICE|NEED_SOURCE|EMPTY|TOO_MANY|COST_METHOD_UNSET|INACTIVE|NOT_FOUND|IMPORT_INVALID|ITEM_ERRORS)$/.test(e.code)) clear();
+      else if (training === scope && realEpoch === epoch && token === writeToken) { entry.uncertain = true; const current = Store.ls.get(key, {}) || {}; current[action] = entry; Store.ls.set(key, current); }
+      throw e;
+    }).finally(function () { delete writing[id]; });
+    return writing[id];
+  }
 
   async function call(action, data, opt) {
     opt = opt || {};
@@ -67,7 +107,8 @@ const API = (function () {
       if (g && !/^[a-f0-9-]{36}$/i.test(g)) throw new Error('ชุดฝึกไม่ถูกต้อง');
       Store.training.set(g || ''); training = g || ''; Store.setScope(training); lastCatVer = null;
     },
-    write: function (action, data, uuid) { return call(action, data, { write: true, uuid: uuid }); },
+    write: function (action, data, uuid) { return /^(receive|importOpenings)$/.test(action) && !uuid ? durableWrite(action, data) : call(action, data, { write: true, uuid: uuid }); },
+    pendingWrite: pendingWrite,
     setToken: function (t) { token = t || ''; if (t) Store.token.set(t); else Store.token.del(); },
     token: function () { return token; },
     setCatalogVersion: function (v) { lastCatVer = v; },

@@ -2,16 +2,18 @@
 'use strict';
 const Admin = (function () {
   async function home(el) {
+    el.classList.add('bento-surface');
     const c = App.S.me.counts || {};
     el.innerHTML = '<div class="page-h"><h1>ภาพรวมระบบ</h1><p>' + U.thDate(new Date()) + ' · ปีงบประมาณ ' + U.fy() + '</p></div>' +
       (c.repairs ? '<div class="notice err">' + ICON('wrench') + '<div><b>มีรายการบันทึกไม่ครบ ' + c.repairs + ' รายการ</b>วัสดุที่เกี่ยวข้องถูกระงับไว้ <a href="#/reconcile">ไปตรวจซ่อม</a></div></div>' : '') +
       (App.S.cfg.demo_accounts ? '<div class="notice warn"><div><b>ใช้บัญชีทดสอบอยู่</b>ยังไม่ได้ตั้ง PRINTHUB_DB_ID — ข้อมูลผู้ใช้เป็นข้อมูลสมมติ</div></div>' : '') +
       (!App.S.cfg.cost_method ? '<div class="notice warn"><div><b>ยังไม่ได้เลือกวิธีคิดมูลค่าวัสดุ</b><a href="#/settings">ตั้งค่า</a></div></div>' : '') +
-      '<div class="kpis" id="k"><div class="skel"></div></div>' +
-      '<div class="cards"><a class="card" href="#/real-trial" style="text-decoration:none"><h3>ทดสอบบนฐานข้อมูลจริง</h3><p class="muted small">เริ่มจากยอด 0 เติมตัวอย่าง เบิก–จ่ายจริง และล้างกลับจุดเริ่มต้นพร้อมสำเนากู้คืน</p></a><a class="card" href="#/training" style="text-decoration:none"><h3>ทดลองใช้งาน</h3><p class="muted small">สร้างหรือล้างชุดฝึกวัสดุ 10 รายการ แยกจากคลังจริง</p></a><a class="card" href="#/users" style="text-decoration:none">' + ICON('users', 'ic') + '<h3>ผู้ใช้และสิทธิ์</h3><p class="muted small">กำหนดผู้ขอเบิก หัวหน้าส่วน เจ้าหน้าที่พัสดุ ผู้ดูแลระบบ รายบัญชี</p></a>' +
+      '<section class="bento-welcome"><div><span class="bento-eyebrow">ศาลจังหวัดลพบุรี · ผู้ดูแลระบบ</span><h2>ทุกข้อมูล เชื่อมถึงคลัง</h2><p>ติดตามภาพรวม จัดการสิทธิ์ และตรวจความถูกต้องของระบบ</p></div><nav class="bento-actions" aria-label="งานผู้ดูแลที่ใช้บ่อย"><a class="btn gold" href="#/stock">' + ICON('box') + 'ดูคลังวัสดุ</a><a class="btn" href="#/monthly">' + ICON('doc') + 'รายงานประจำเดือน</a></nav></section>' +
+      '<div class="kpis tint bento-metrics" id="k"><div class="skel"></div></div>' +
+      '<nav class="cards bento-grid bento-menu" aria-label="เครื่องมือผู้ดูแล"><a class="card" href="#/real-trial" style="text-decoration:none">' + ICON('db', 'ic') + '<h3>ทดสอบบนฐานข้อมูลจริง</h3><p class="muted small">เริ่มจากยอด 0 เติมตัวอย่าง เบิก–จ่ายจริง และล้างกลับจุดเริ่มต้นพร้อมสำเนากู้คืน</p><span class="bento-open">เปิดเมนู →</span></a><a class="card" href="#/training" style="text-decoration:none">' + ICON('clip', 'ic') + '<h3>ทดลองใช้งาน</h3><p class="muted small">สร้างหรือล้างชุดฝึกวัสดุ 10 รายการ แยกจากคลังจริง</p><span class="bento-open">เปิดเมนู →</span></a><a class="card" href="#/users" style="text-decoration:none">' + ICON('users', 'ic') + '<h3>ผู้ใช้และสิทธิ์</h3><p class="muted small">กำหนดผู้ขอเบิก หัวหน้าส่วน เจ้าหน้าที่พัสดุ ผู้ดูแลระบบ รายบัญชี</p><span class="bento-open">จัดการสิทธิ์ →</span></a>' +
       '<a class="card" href="#/settings" style="text-decoration:none"><h3>ตั้งค่าระบบ</h3><p class="muted small">วิธีคิดมูลค่า กฎกันคำขอซ้ำ การแสดงยอด เลขเอกสาร ระยะขอบพิมพ์</p></a>' +
       '<a class="card" href="#/backup" style="text-decoration:none"><h3>สำรองข้อมูล</h3><p class="muted small">สำรองทันที และตรวจสำเนาเทียบข้อมูลจริง</p></a>' +
-      '<a class="card" href="#/reconcile" style="text-decoration:none"><h3>กระทบยอด</h3><p class="muted small">ตรวจยอดคงเหลือ ยอดจอง มูลค่า กับ ledger</p></a></div>';
+      '<a class="card" href="#/reconcile" style="text-decoration:none"><h3>กระทบยอด</h3><p class="muted small">ตรวจยอดคงเหลือ ยอดจอง มูลค่า กับ ledger</p></a></nav>';
     try {
       const d = await API.call('dashboard', { dept_id: 'ALL' });
       U.$('#k').innerHTML = kpi('ใบเบิกปีงบนี้', U.n(d.kpi.req_count), 'ใบ') + kpi('รายการที่จ่าย', U.n(d.kpi.lines_issued), 'รายการ') +

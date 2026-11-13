@@ -113,7 +113,7 @@ const RcvImport = (function () {
     if (!t) return { unit_id: Officer.defaultUnit(m), flag: '' };
     const u = Officer.unitFromText(t);
     const ok = u && (u.unit_id === m.unit_id || (S.catalog.material_units || []).some(function (x) { return x.mat_id === m.mat_id && x.unit_id === u.unit_id; }));
-    return ok ? { unit_id: u.unit_id, flag: '' } : { unit_id: Officer.defaultUnit(m), flag: 'หน่วย "' + t + '" ไม่ตรงกับหน่วยของวัสดุนี้ — ตรวจหน่วย' };
+    return ok ? { unit_id: u.unit_id, flag: '' } : { unit_id: '', flag: 'หน่วย "' + t + '" ยังไม่มีอัตราแปลงสำหรับวัสดุนี้ — เลือกหน่วยที่ถูกต้องก่อน และตรวจจำนวนกับราคาอีกครั้ง' };
   }
   function setMat(r, m) {
     r.mat_id = m ? m.mat_id : '';
@@ -152,7 +152,10 @@ const RcvImport = (function () {
   }
   function ready(r) {
     if (r.status === 'skip') return true;
-    return !!r.mat_id && (r.status === 'ok' || r.confirmed) && Number(r.qty) > 0 && r.price !== '' && Number(r.price) >= 0;
+    const m = S.idx[r.mat_id];
+    const validUnit = m && r.unit_id && !r.unitFlag && (r.unit_id === m.unit_id || (S.catalog.material_units || []).some(function (x) { return x.mat_id === m.mat_id && x.unit_id === r.unit_id && Number(x.factor) > 0; }));
+    const base = validUnit ? Number(r.qty) * Officer.factorOf(m, r.unit_id) : NaN;
+    return !!validUnit && (r.status === 'ok' || r.confirmed) && Number.isFinite(base) && base > 0 && Math.abs(base - Math.round(base)) < 1e-8 && r.price !== '' && Number.isFinite(Number(r.price)) && Number(r.price) >= 0;
   }
 
   /* ------------------------------------------------------------ หน้าตรวจผลนำเข้า */
@@ -183,10 +186,15 @@ const RcvImport = (function () {
       '<td>' + badge(r) + (r.status === 'near' && !r.confirmed ? ' <button type="button" class="btn sm" data-a="ok">ยืนยัน</button>' : '') +
       (skip ? ' <button type="button" class="btn sm ghost" data-a="unskip">นำกลับ</button>' : '<div style="margin-top:6px">' + matSelect(r) + '</div>') +
       (r.notes.length ? '<small class="ri-note">' + r.notes.map(U.esc).join(' · ') + '</small>' : '') + '</td>' +
-      '<td>' + (m && !skip ? '<select class="input" data-k="unit_id">' + Officer.unitOptions(m, r.unit_id) + '</select>' + (r.unitFlag ? '<small class="ri-note">' + U.esc(r.unitFlag) + '</small>' : '') : '') + '</td>' +
+      '<td>' + (m && !skip ? '<select class="input" data-k="unit_id">' + (!r.unit_id ? '<option value="" selected disabled>— กรุณาเลือกหน่วย —</option>' : '') + Officer.unitOptions(m, r.unit_id) + '</select>' + (r.unitFlag ? '<small class="ri-note">' + U.esc(r.unitFlag) + '</small>' : '') +
+        '<small class="muted" data-conversion>' + U.esc(conversionText(r)) + '</small>' : '') + '</td>' +
       '<td class="num">' + (skip ? '' : '<input class="input num" type="number" min="0" step="any" data-k="qty" value="' + U.esc(r.qty) + '">') + '</td>' +
       '<td class="num">' + (skip ? '' : '<input class="input num" type="number" min="0" step="0.01" data-k="price" value="' + U.esc(r.price) + '">' + (r.priceFlag ? '<small class="ri-note">' + U.esc(r.priceFlag) + '</small>' : '')) + '</td>' +
       '<td>' + (learn ? '<label class="check small"><input type="checkbox" data-k="remember"' + (r.remember ? ' checked' : '') + '> จำชื่อนี้</label>' : '') + '</td></tr>';
+  }
+  function conversionText(r) {
+    const m = S.idx[r.mat_id];
+    return m && r.unit_id ? U.n(Number(r.qty) * Officer.factorOf(m, r.unit_id)) + ' ' + m.unit_name + ' · รวม ' + U.money(Number(r.qty) * Number(r.price)) + ' บาท' : '';
   }
   function draw() {
     const I = ctx.F.imp;
@@ -303,6 +311,8 @@ const RcvImport = (function () {
       const k = e.target.dataset.k; if (k !== 'qty' && k !== 'price') return;
       const r = I.rows[Number(e.target.closest('tr').dataset.i)];
       r[k] = e.target.value;
+      const conversion = e.target.closest('tr').querySelector('[data-conversion]');
+      if (conversion) conversion.textContent = conversionText(r);
       if (k === 'price') r.priceFlag = '';
       const done = I.rows.filter(function (x) { return !ready(x); }).length;
       const apply = U.$('#ri-apply');

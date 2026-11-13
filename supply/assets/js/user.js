@@ -82,10 +82,12 @@ App.view('home', {
     const S = App.S, u = S.user, c = S.me.counts || {};
     if (u.role === 'OFFICER') return Officer.home(el);
     if (u.role === 'ADMIN') return Admin.home(el);
+    el.classList.add('bento-surface');
     const nDraft = Req.cartCount();
     const freq = (S.me.frequent || []).map(function (id) { return S.idx[id]; }).filter(Boolean);
-    el.innerHTML = '<div class="hero"><h2>สวัสดี ' + U.esc(u.name) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p>' +
-      '<a class="btn gold lg" href="#/req">' + ICON('box') + 'เบิกวัสดุ</a></div>' +
+    el.innerHTML = '<section class="bento-welcome"><div><span class="bento-eyebrow">พื้นที่ทำงานของคุณ</span><h2>สวัสดี ' + U.esc(u.name) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p></div>' +
+      '<a class="btn gold lg" href="#/req">' + ICON('box') + 'เบิกวัสดุ</a></section>' +
+      '<nav class="bento-grid bento-menu bento-user-menu" aria-label="งานของฉัน"><a class="card" href="#/my">' + ICON('doc', 'ic') + '<h3>คำขอของฉัน</h3><p>ติดตามการจัดเตรียมและการส่งมอบ</p></a><a class="card" href="#/dash">' + ICON('chart', 'ic') + '<h3>ประวัติการเบิก</h3><p>ตรวจรายการและสถิติตามสิทธิ์</p></a><a class="card" href="#/profile">' + ICON('user', 'ic') + '<h3>ข้อมูลของฉัน</h3><p>ตรวจส่วนงาน ตำแหน่ง และ PIN</p></a></nav>' +
       (c.myReady ? '<div class="notice info">' + ICON('truck') + '<div><b>มีของพร้อมรับ ' + c.myReady + ' ใบ</b>ติดต่อรับที่งานพัสดุ <a href="#/my">ดูรายการ</a></div></div>' : '') +
       (u.role === 'HEAD' && S.cfg.approval_enabled && c.approvals ? '<div class="notice warn">' + ICON('check') + '<div><b>มีคำขอรออนุมัติ ' + c.approvals + ' ใบ</b><a href="#/approve">ไปอนุมัติ</a></div></div>' : '') +
       (nDraft ? '<div class="notice ok">' + ICON('cart') + '<div><b>มีร่างคำขอ ' + nDraft + ' รายการ</b>ยังไม่ได้ส่ง <a href="#/cart">ทำต่อ</a></div></div>' : '') +

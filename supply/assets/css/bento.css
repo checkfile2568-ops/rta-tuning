@@ -1,0 +1,58 @@
+/* 1.8.2 · Responsive Bento layout from the supplied video. Only home/statistics surfaces. */
+.bento-surface { container-type: inline-size; }
+.bento-grid, .bento-metrics { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.bento-grid { margin-bottom: 20px; }
+.bento-grid > *, .bento-metrics > * { min-width: 0; }
+.bento-full, .bento-wide { grid-column: 1 / -1; }
+.bento-grid > .card, .bento-grid > .kpis { margin-bottom: 0; }
+.bento-grid .card, .bento-metrics .kpi { border-radius: 22px; box-shadow: 0 5px 20px #0e2a4d08; }
+.bento-metrics .kpi { padding: clamp(18px, 2.4cqi, 26px); min-height: 145px; display: flex; flex-direction: column; gap: 8px; }
+.bento-metrics .kpi b { font-size: clamp(1.85rem, 3.1cqi, 2.5rem); overflow-wrap: anywhere; }
+.bento-metrics .kpi span { margin-top: auto; }
+.bento-welcome { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: clamp(24px, 3cqi, 36px); border-radius: 24px; background: linear-gradient(120deg, #0e2a4d, #1d4679); color: #fff; margin-bottom: 20px; overflow: hidden; }
+.bento-grid > .bento-welcome { margin-bottom: 0; }
+.bento-welcome h2 { color: #fff; font-size: clamp(1.5rem, 3.1cqi, 2rem); margin: 8px 0; }
+.bento-welcome p { color: #e2eafb; margin: 0; }
+.bento-eyebrow { display: block; font-size: .8rem; font-weight: 600; letter-spacing: .025em; color: var(--muted); margin-bottom: 7px; }
+.bento-welcome .bento-eyebrow { color: #ead6a2; }
+.bento-actions { display: flex; flex-wrap: wrap; gap: 10px; max-width: 100%; }
+.bento-welcome .btn { white-space: normal; text-align: center; }
+.bento-welcome .btn:not(.gold) { background: #ffffff12; color: #fff; border-color: #ffffff4d; }
+.bento-welcome .btn.gold { background: #e4c474; color: #142c4c; border-color: #e4c474; }
+.bento-menu .card { display: flex; flex-direction: column; align-items: flex-start; padding: 24px; min-height: 190px; color: var(--ink); text-decoration: none; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.bento-menu .card > .ic { width: 38px; height: 38px; color: var(--navy-2); background: #eef3fa; border-radius: 12px; padding: 8px; margin-bottom: 16px; }
+.bento-menu .card h3 { color: var(--navy-ink); margin-bottom: 9px; }
+.bento-menu .card p { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+.bento-open { display: block; margin-top: auto; padding-top: 20px; font-size: .85rem; color: var(--navy-2); font-weight: 600; }
+.bento-grid a:focus-visible, .bento-metrics a:focus-visible, .bento-welcome a:focus-visible { outline: 3px solid #b88a2e; outline-offset: 4px; }
+.bento-grid .today-chart-card { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+.bento-grid .today-chart { width: 100%; height: 230px; }
+.bento-queue h3 { margin: 0; }
+.bento-charts .chartbox { height: 290px; }
+.bento-surface #dp, .bento-surface #fy { max-width: 100%; min-width: 0 !important; }
+#stock-write-status[hidden] { display: none; }
+@container (min-width: 480px) {
+  .bento-grid, .bento-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (min-width: 768px) {
+  .bento-grid, .bento-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bento-user-menu { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container (min-width: 1024px) {
+  .bento-grid, .bento-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .bento-wide { grid-column: span 2; }
+  .bento-menu > a[href='#/users'], .bento-menu > a[href='#/settings'] { grid-column: span 2; }
+  .bento-user-menu { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (hover: hover) {
+  .bento-menu .card:hover { transform: translateY(-3px); border-color: #b5c4d8; box-shadow: 0 12px 26px #0e2a4d12; }
+}
+@media (max-width: 479px) {
+  .bento-actions { width: 100%; }
+  .bento-actions .btn { width: 100%; }
+  .bento-welcome { gap: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bento-menu .card { transition: none; }
+  .bento-menu .card:hover { transform: none; }
+}

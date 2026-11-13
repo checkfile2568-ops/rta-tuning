@@ -4,6 +4,7 @@
 App.view('dash', {
   title: 'ประวัติและสถิติ',
   render: async function (el) {
+    el.classList.add('bento-surface');
     const S = App.S;
     const F = S.forms.dash = S.forms.dash || { dept: S.user.dept_id || 'ALL', fy: U.fy(), tab: 'hist', q: '' };
     F.open = F.open || {};
@@ -15,6 +16,11 @@ App.view('dash', {
       '<span class="spacer"></span><div class="seg" id="tab"><button data-t="hist">ประวัติการเบิก</button><button data-t="stat">สรุปสถิติ</button></div></div><div id="body"><div class="skel"></div><div class="skel"></div></div>';
     if (F.dept === 'ALL') U.$('#dp').value = 'ALL';
     let d = null;
+    const historyExpected = function () {
+      return Math.max((d.history || []).length, Number(d.history_total) || 0, Number(d.kpi && d.kpi.lines_issued) || 0,
+        (d.summary || []).reduce(function (n, x) { return n + (Number(x.times) || 0); }, 0));
+    };
+    const summarySheet = function () { return { name: 'สรุปต่อวัสดุ', head: ['วัสดุ', 'รวมที่ได้รับ', 'หน่วย', 'จำนวนครั้ง', 'เบิกล่าสุด'], rows: d.summary.map(function (s) { return [s.name, s.qty, s.unit, s.times, U.thShort(s.last)]; }) }; };
     const charts = [];
     // สรุปต่อวัสดุ: ส่วนงานที่เบิก + รายใบ (ผู้เบิก เลขที่ใบเบิก จำนวน วันที่) จากประวัติการรับ
     const matRow = function (s) {
@@ -36,35 +42,39 @@ App.view('dash', {
       const rows = d.history.filter(function (h) { return !F.q || U.match(h.name + ' ' + h.req_no + ' ' + h.requester, F.q); });
       const sum = d.summary.filter(function (s) { return !F.q || U.match(s.name, F.q); });
       U.$('#body').innerHTML = '<div class="search">' + ICON('search') + '<input id="hq" type="search" placeholder="ค้นหาชื่อวัสดุ เลขใบ หรือผู้เบิก" value="' + U.esc(F.q) + '"></div>' +
-        '<div class="card"><div class="row"><h3 style="margin:0">สรุปต่อวัสดุ · ' + U.esc(d.dept_name) + ' · ปีงบประมาณ ' + d.fy + '</h3><span class="spacer"></span><button class="btn sm" id="xl">' + ICON('download') + 'Excel</button></div>' +
+        '<div class="card"><div class="row"><h3 style="margin:0">สรุปต่อวัสดุ · ' + U.esc(d.dept_name) + ' · ปีงบประมาณ ' + d.fy + '</h3><span class="spacer"></span><button class="btn sm" id="xl"' + (historyExpected() > d.history.length ? ' disabled' : '') + '>' + ICON('download') + 'Excel พร้อมรายละเอียด</button>' +
+        (historyExpected() > d.history.length ? '<button class="btn sm" id="xl-summary">Excel เฉพาะสรุป</button>' : '') + '</div>' +
         (sum.length ? '<div class="ms-list">' + (F.sumAll ? sum : sum.slice(0, 5)).map(matRow).join('') + '</div>' +
           (sum.length > 5 ? '<button class="btn ghost sm" id="ms-more">' + (F.sumAll ? 'ซ่อนรายการ (แสดง 5 รายการ)' : 'แสดงทั้งหมด (' + sum.length + ' รายการ)') + '</button>' : '') +
-          (d.history_total > d.history.length ? '<p class="small muted">รายชื่อผู้เบิกอ้างอิง ' + d.history.length + ' รายการล่าสุด — ส่งออก Excel เพื่อดูทั้งหมด</p>' : '')
+          (historyExpected() > d.history.length ? '<p class="small muted">รายชื่อผู้เบิกอ้างอิงเฉพาะ ' + d.history.length + ' รายการที่โหลดมา</p>' : '')
           : '<p class="muted">ยังไม่มีการเบิกในช่วงนี้</p>') + '</div>' +
         '<div class="card"><h3>รายการที่ได้รับ (ล่าสุดก่อน)</h3>' + (rows.length ? '<div class="tablewrap"><table class="t"><thead><tr><th>วันที่</th><th>เลขที่ใบเบิก</th>' + (d.dept_id === 'ALL' ? '<th>ส่วนงาน</th>' : '') + '<th>ผู้เบิก</th><th>วัสดุ</th><th class="num">จำนวนที่ได้รับ</th></tr></thead><tbody>' +
           rows.map(function (h) { return '<tr><td>' + U.thShort(h.ts) + '</td><td>' + U.esc(h.req_no) + '</td>' + (d.dept_id === 'ALL' ? '<td>' + U.esc(h.dept_name) + '</td>' : '') + '<td>' + (h.requester ? U.esc(h.requester) : '<span class="muted">—</span>') + '</td><td>' + U.esc(h.name) + '</td>' +
             '<td class="num">' + U.n(h.qty) + ' ' + U.esc(h.unit) + (h.returned ? ' <small class="muted">(คืน ' + h.returned + ')</small>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' +
-          (d.history_total > d.history.length ? '<p class="small muted">แสดง ' + d.history.length + ' จาก ' + d.history_total + ' รายการ — ส่งออก Excel เพื่อดูทั้งหมด</p>' : '') : '<p class="muted">ไม่มีรายการ</p>') +
+          (historyExpected() > d.history.length ? '<p class="notice warn" role="status">โหลดรายละเอียด ' + d.history.length + ' จากอย่างน้อย ' + historyExpected() + ' รายการ จึงยังส่งออกไฟล์รายละเอียดครบไม่ได้ ใช้ “Excel เฉพาะสรุป” ได้ หรือแจ้งผู้ดูแลให้เปิดการส่งออกครบจากเซิร์ฟเวอร์</p>' : '') : '<p class="muted">ไม่มีรายการ</p>') +
         (d.dept_id !== d.my_dept_id && !d.can_value ? '<p class="small muted">ชื่อผู้เบิกแสดงเฉพาะส่วนงานของคุณ</p>' : '') + '</div>';
       if (U.$('#ms-more')) U.$('#ms-more').onclick = function () { F.sumAll = !F.sumAll; drawHist(); };
       U.$$('[data-ms]').forEach(function (b) { b.onclick = function () { F.open[b.dataset.ms] = !F.open[b.dataset.ms]; drawHist(); }; });
       U.$('#hq').oninput = U.debounce(function () { F.q = this.value; drawHist(); const i = U.$('#hq'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 250);
       U.$('#xl').onclick = function () {
+        if (historyExpected() !== d.history.length) { U.toast('รายละเอียดไม่ครบ จึงไม่สร้างไฟล์ที่อาจทำให้เข้าใจว่ายอดครบทั้งหมด', 'warn', 6000); return; }
         U.exportXlsx('ประวัติการเบิก ' + d.dept_name + ' ปีงบ ' + d.fy, [
-          { name: 'สรุปต่อวัสดุ', head: ['วัสดุ', 'รวมที่ได้รับ', 'หน่วย', 'จำนวนครั้ง', 'เบิกล่าสุด'], rows: d.summary.map(function (s) { return [s.name, s.qty, s.unit, s.times, U.thShort(s.last)]; }) },
+          summarySheet(),
           { name: 'รายการ', head: ['วันที่', 'เลขที่ใบเบิก', 'ส่วนงาน', 'ผู้เบิก', 'วัสดุ', 'จำนวน', 'หน่วย', 'คืน'], rows: d.history.map(function (h) { return [U.thShort(h.ts), h.req_no, h.dept_name, h.requester, h.name, h.qty, h.unit, h.returned || '']; }) }]);
       };
+      const summaryButton = U.$('#xl-summary');
+      if (summaryButton) summaryButton.onclick = function () { U.exportXlsx('สรุปการเบิก ' + d.dept_name + ' ปีงบ ' + d.fy + ' (ไม่มีรายละเอียดรายใบ)', [summarySheet()]); };
     };
     const drawStat = async function () {
       const k = d.kpi;
       const st = k.by_status || {};
-      U.$('#body').innerHTML = '<div class="kpis tint">' + Admin.kpi('จำนวนใบเบิก', U.n(k.req_count), 'รอจัดเตรียม ' + (st.PENDING_PREP || 0) + ' · พร้อมรับ ' + (st.READY || 0) + ' · จ่ายแล้ว ' + (st.ISSUED || 0) + ' · ยกเลิก ' + (st.CANCELLED || 0)) +
+      U.$('#body').innerHTML = '<div class="kpis tint bento-metrics">' + Admin.kpi('จำนวนใบเบิก', U.n(k.req_count), 'รอจัดเตรียม ' + (st.PENDING_PREP || 0) + ' · พร้อมรับ ' + (st.READY || 0) + ' · จ่ายแล้ว ' + (st.ISSUED || 0) + ' · ยกเลิก ' + (st.CANCELLED || 0)) +
         Admin.kpi('รายการที่จ่าย', U.n(k.lines_issued), U.n(k.materials_used) + ' ชนิดวัสดุ') +
         Admin.kpi('เวลาเฉลี่ยยื่นถึงส่งมอบ', k.avg_lead_days === null ? '—' : k.avg_lead_days + ' วัน', 'วันทำการ · มัธยฐาน ' + (k.median_lead_days === null ? '—' : k.median_lead_days) + ' · ค้างเกิน ' + k.lead_alert_days + ' วัน ' + k.open_over_days + ' ใบ') +
         (d.can_value ? Admin.kpi('มูลค่าเบิกจ่าย', U.money(k.value_issued), 'บาท') + Admin.kpi('มูลค่าคงคลัง ณ วันนี้', U.money(k.inventory_value), 'บาท · ' + U.n(k.inventory_items) + ' รายการมียอด') +
           Admin.kpi('ถึงจุดสั่งซื้อ ณ วันนี้', U.n(k.reorder_now), 'หมดคลัง ' + k.out_now + ' รายการ') : '') + '</div>' +
-        '<div class="grid2"><div class="card"><h3>แนวโน้มรายเดือน (ต.ค.–ก.ย.)</h3><div class="chartbox"><canvas id="c1"></canvas></div></div>' +
-        '<div class="card"><h3>Top 10 วัสดุ (จำนวนครั้งที่เบิก)</h3><div class="chartbox"><canvas id="c2"></canvas></div></div></div>' +
+        '<div class="bento-grid bento-charts"><div class="card bento-wide"><h3>แนวโน้มรายเดือน (ต.ค.–ก.ย.)</h3><div class="chartbox"><canvas id="c1"></canvas></div></div>' +
+        '<div class="card bento-wide"><h3>Top 10 วัสดุ (จำนวนครั้งที่เบิก)</h3><div class="chartbox"><canvas id="c2"></canvas></div></div></div>' +
         (d.dept_id === 'ALL' ? '<div class="card"><h3>การเบิกตามส่วนงาน</h3><div class="chartbox"><canvas id="c3"></canvas></div></div>' : '') +
         (d.can_value && d.by_cat && d.by_cat.length ? '<div class="card"><h3>มูลค่าเบิกจ่ายตามหมวด (บาท)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div>' : '') +
         '<p class="small muted">ตัวเลขทั้งหมดคำนวณจากบัญชีความเคลื่อนไหวและใบเบิก ไม่มีการกรอกยอดสรุปเอง · แดชบอร์ดเต็ม (ABC ผู้จำหน่าย ส่งออก PDF) อยู่ในเฟส 3</p>';
