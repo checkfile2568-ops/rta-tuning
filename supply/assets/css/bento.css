@@ -1,4 +1,4 @@
-/* 1.8.2 · Responsive Bento layout from the supplied video. Only home/statistics surfaces. */
+/* 1.8.3 · Responsive Bento layout from the supplied video. Only home/statistics surfaces. */
 .bento-surface { container-type: inline-size; }
 .bento-grid, .bento-metrics { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .bento-grid { margin-bottom: 20px; }

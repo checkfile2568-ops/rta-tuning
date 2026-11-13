@@ -525,8 +525,10 @@ App.view('receive', {
       const btn = this; btn.classList.add('busy'); btn.disabled = true;
       const sup = sups.find(function (s) { return s.name === F.sup.trim(); });
       try {
-        const r = await API.write('receive', retry ? retry.data : { sup_id: sup ? sup.sup_id : '', sup_name: sup ? '' : F.sup.trim(), rcv_date: F.date, invoice_no: F.inv, note: F.note,
+        const operation = API.write('receive', retry ? retry.data : { sup_id: sup ? sup.sup_id : '', sup_name: sup ? '' : F.sup.trim(), rcv_date: F.date, invoice_no: F.inv, note: F.note,
           items: F.lines.map(function (l) { return { mat_id: l.mat_id, unit_id: l.unit_id, qty: Number(l.qty), unit_price: Number(l.price) }; }) });
+        syncStockPending(el, 'receive');
+        const r = await operation;
         completed = true;
         U.toast('บันทึกรับเข้า ' + r.rcv_no + ' แล้ว รวม ' + U.money(r.total) + ' บาท', 'ok', 5000);
         S.forms.receive = null;
@@ -867,7 +869,9 @@ App.view('opening', {
         sent += batch.length;
         U.$('#res').innerHTML = '<p>กำลังนำเข้า ' + sent + '/' + todo.length + ' …</p>';
         try {
-          const r = await API.write('importOpenings', { source: F.source, rows: batch.map(function (x) { const o = Object.assign({}, x); delete o._err; delete o._note; delete o._g; return o; }) });
+          const operation = API.write('importOpenings', { source: F.source, rows: batch.map(function (x) { const o = Object.assign({}, x); delete o._err; delete o._note; delete o._g; return o; }) });
+          syncStockPending(el, 'importOpenings');
+          const r = await operation;
           batch.forEach(function (x) { F.done[x.line] = r.batch_no; });
           out.push(r.batch_no + ': สร้างวัสดุใหม่ ' + r.created + (r.updated ? ' · ปรับรายการเดิม ' + r.updated : '') + ' · ลงยอดยกมา ' + r.opened + ' ล็อต');
         } catch (er) {

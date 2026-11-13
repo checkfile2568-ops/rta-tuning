@@ -1,4 +1,4 @@
-# Supply frontend 1.8.2 — scoped audit fixes and responsive Bento layout
+# Supply frontend 1.8.3 — scoped audit fixes and responsive Bento layout
 
 Changes apply only to `supply/` and its related development tests. No Apps Script, database, PIN, role or API URL changes.
 
@@ -9,7 +9,7 @@ Changes apply only to `supply/` and its related development tests. No Apps Scrip
 - An unrecognized purchase unit has no selected fallback. Import Apply remains disabled, including its handler guard, until the operator explicitly chooses a supported unit. The preview shows base quantity and total, and rejects non-finite values or fractional base units.
 - Full-detail Excel export requires the loaded history to match the largest available count (`history_total`, issue-line KPI, summary issue counts). A truncated response offers a clearly labelled summary-only workbook. The existing API has no verified pagination/export-all contract available to this change: this release prevents incomplete exports but does **not** add server-side full-history export.
 - Home and statistics use a scoped Bento stylesheet inspired by the supplied responsive-grid video. Card grids use the content container width: below 480px = 1 column, 480px = 2, 768px = 3, 1024px = 4. Wide chart panels span two columns on large content areas. Admin, officer and requester destinations retain existing permissions. The login and print templates retain their design.
-- Versioned asset URLs and the service-worker cache advance to 1.8.2.
+- Versioned asset URLs and the service-worker cache advance to 1.8.3.
 
 ## Checks
 

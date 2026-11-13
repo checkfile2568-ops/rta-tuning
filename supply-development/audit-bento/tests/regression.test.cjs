@@ -106,3 +106,11 @@ test('requester Bento shortcuts do not introduce management destinations',async(
  for(const route of ['my','dash','profile','req'])assert.ok(e.document.querySelector('a[href="#/'+route+'"]'));
  for(const route of ['users','settings','receive','reconcile'])assert.equal(e.document.querySelector('a[href="#/'+route+'"]'),null);
 });
+test('receipt fields are locked while the immutable request is in flight',async()=>{
+ const e=ui();let pending=null,resolve;e.S.forms.receive={sup:'ร้านจำลอง',date:'2026-11-13',inv:'I1',note:'',lines:[{mat_id:'M1',unit_id:'PEN',qty:2,price:10}]};
+ e.ctx.API.call=async a=>a==='masters'?{suppliers:[]}:[];e.ctx.API.pendingWrite=()=>pending;
+ e.ctx.API.write=(a,d)=>{pending={uuid:'synthetic',data:d};return new Promise(r=>resolve=x=>{pending=null;r(x)})};
+ await e.views.receive.render(e.document.querySelector('#v'));const operation=e.document.querySelector('#save').onclick();await new Promise(setImmediate);
+ assert.equal(e.document.querySelector('#inv').disabled,true);assert.equal(e.document.querySelector('#pick').disabled,true);
+ resolve({rcv_no:'R1',total:20});await operation;
+});
