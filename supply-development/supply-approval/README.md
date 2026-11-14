@@ -1,4 +1,4 @@
-# Supply approval 1.6.0 / web 1.9.0
+# Supply approval 1.6.0 / web 1.9.1
 
 Scoped update: supply-head workspace and approval, per-document reduced quantities, issued quantity separation, immutable approval actor/time on slips, officer-equivalent operational permissions, two-line names, Bangkok time artwork, pending counts, pale cards and inventory login wording.
 

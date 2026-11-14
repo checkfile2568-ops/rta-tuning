@@ -102,3 +102,6 @@
   .bento-menu .card:hover { transform: none; }
   .period-art, .period-rays, .period-star { animation: none !important; }
 }
+/* ให้ปุ่มอนุมัติและคำทักทายอยู่ในจอแรก ก่อนตัวเลขคิว */
+.bento-officer > .bento-welcome { grid-row: 1; }
+.bento-officer > .bento-metrics { grid-row: 2; }
