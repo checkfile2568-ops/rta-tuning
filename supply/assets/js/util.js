@@ -29,6 +29,51 @@ const U = (function () {
     fy: function (v) { const x = d(v) || new Date(); return x.getFullYear() + 543 + (x.getMonth() >= 9 ? 1 : 0); },
     n: function (v) { return v === null || v === undefined || v === '' ? '—' : nf.format(Number(v)); },
     money: function (v) { return v === null || v === undefined || v === '' ? '—' : mf.format(Number(v)); },
+    nameHtml: function (user) {
+      user = user || {};
+      const words = String(user.name || '').trim().split(/\s+/);
+      const first = user.first_name || words.shift() || '';
+      const last = user.last_name || (user.first_name ? '' : words.join(' '));
+      return '<span class="person-name"><span data-fit-name>' + U.esc(first) + '</span>' +
+        (last ? '<span data-fit-name>' + U.esc(last) + '</span>' : '') + '</span>';
+    },
+    fitNames: function (root) {
+      root = root || document;
+      const fit = function () {
+        U.$$('[data-fit-name]', root).forEach(function (el) {
+          el.style.fontSize = '';
+          if (!el.clientWidth) return;
+          let size = parseFloat(getComputedStyle(el).fontSize);
+          while (el.scrollWidth > el.clientWidth + 1 && size > 10) { size -= .5; el.style.fontSize = size + 'px'; }
+        });
+      };
+      if (window.requestAnimationFrame) requestAnimationFrame(fit); else fit();
+      if (window.ResizeObserver && root.nodeType === 1) {
+        if (U._nameObserver) U._nameObserver.disconnect();
+        let width = -1;
+        U._nameObserver = new ResizeObserver(function (entries) {
+          const next = entries[0].contentRect.width;
+          if (next !== width) { width = next; fit(); }
+        });
+        U._nameObserver.observe(root);
+      }
+    },
+    periodArt: function (at) {
+      const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', hourCycle: 'h23' }).format(at || new Date()));
+      const period = hour >= 5 && hour < 12 ? 'morning' : hour >= 12 && hour < 18 ? 'afternoon' : 'evening';
+      const label = { morning: 'ช่วงเช้า', afternoon: 'ช่วงบ่าย', evening: 'ช่วงค่ำ' }[period];
+      return '<div class="period-art period-' + period + '" role="img" aria-label="' + label + '"><span class="period-rays"></span><span class="period-orb"></span><span class="period-cloud"></span><span class="period-star star-one"></span><span class="period-star star-two"></span></div>';
+    },
+    quantityTotals: function (items, key) {
+      const units = {};
+      (items || []).forEach(function (item) {
+        const raw = item[key];
+        if (raw === null || raw === undefined || raw === '') return;
+        const unit = item.unit_name || 'หน่วย';
+        units[unit] = (units[unit] || 0) + Number(raw) - (key === 'qty_issued' ? Number(item.qty_returned || 0) : 0);
+      });
+      return Object.keys(units).map(function (unit) { return U.n(units[unit]) + ' ' + U.esc(unit); }).join(' · ') || 'ยังไม่จ่าย';
+    },
     uuid: function () {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
       const b = new Uint8Array(16); crypto.getRandomValues(b);

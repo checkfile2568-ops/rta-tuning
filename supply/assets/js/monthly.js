@@ -25,7 +25,7 @@ const Monthly = (function () {
   function signer(rep) {
     if (rep.confirmed_name) return rep.confirmed_name;
     if (rep.created_name && rep.created_name !== 'ระบบอัตโนมัติ') return rep.created_name;
-    return App.S.user.role === 'OFFICER' ? App.S.user.name : '';
+    return (App.S.user.role === 'OFFICER' || App.S.user.role === 'SUPPLY_HEAD') ? App.S.user.name : '';
   }
 
   /* ------------------------------------------------------------ ตารางบนหน้าจอ */
@@ -100,10 +100,10 @@ const Monthly = (function () {
 })();
 
 App.view('monthly', {
-  title: 'รายงานประจำเดือน', roles: ['OFFICER', 'ADMIN'],
+  title: 'รายงานประจำเดือน', roles: ['OFFICER', 'SUPPLY_HEAD', 'ADMIN'],
   render: async function (el, params) {
     const S = App.S;
-    const officer = S.user.role === 'OFFICER';
+    const officer = App.S.user.role === 'OFFICER' || App.S.user.role === 'SUPPLY_HEAD';
     const F = S.forms.monthly = S.forms.monthly || {};
     el.innerHTML = '<div class="page-h"><h1>รายงานวัสดุคงเหลือประจำเดือน</h1><p>ยอดยกมา รับ จ่าย ปรับยอด และคงเหลือ จากบัญชีรับ-จ่ายวัสดุ · จัดทำได้เมื่อสิ้นเดือน · ยืนยันแล้วตัวเลขถูกล็อก</p></div>' +
       '<div id="mr-months" class="mr-months"><div class="skel"></div></div><div id="mr-one"></div>';

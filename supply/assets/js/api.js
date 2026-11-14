@@ -50,7 +50,7 @@ const API = (function () {
     };
     writing[id] = call(action, entry.data, { write: true, uuid: entry.uuid }).then(function (result) { clear(); return result; }).catch(function (e) {
       // Only release a new draft after a known validation rejection. Unknown outcomes keep the same UUID.
-      if (!entry.uncertain && /^(BAD_QTY|BAD_DATE|BAD_UNIT|NEED_PRICE|NEED_SOURCE|EMPTY|TOO_MANY|COST_METHOD_UNSET|INACTIVE|NOT_FOUND|IMPORT_INVALID|ITEM_ERRORS)$/.test(e.code)) clear();
+      if (!entry.uncertain && /^(BAD_QTY|BAD_DATE|BAD_UNIT|NEED_PRICE|NEED_SOURCE|NEED_REASON|NEED_RECEIVER|EMPTY|ALL_ZERO|TOO_MANY|COST_METHOD_UNSET|INACTIVE|NOT_FOUND|IMPORT_INVALID|ITEM_ERRORS|BAD_STATUS|APPROVAL_REQUIRED|STALE_REQUEST|FORBIDDEN|MONTH_LOCKED|NOT_ENOUGH_STOCK)$/.test(e.code)) clear();
       else if (training === scope && realEpoch === epoch && token === writeToken) { entry.uncertain = true; const current = Store.ls.get(key, {}) || {}; current[action] = entry; Store.ls.set(key, current); }
       throw e;
     }).finally(function () { delete writing[id]; });
@@ -107,7 +107,7 @@ const API = (function () {
       if (g && !/^[a-f0-9-]{36}$/i.test(g)) throw new Error('ชุดฝึกไม่ถูกต้อง');
       Store.training.set(g || ''); training = g || ''; Store.setScope(training); lastCatVer = null;
     },
-    write: function (action, data, uuid) { return /^(receive|importOpenings)$/.test(action) && !uuid ? durableWrite(action, data) : call(action, data, { write: true, uuid: uuid }); },
+    write: function (action, data, uuid) { return /^(receive|importOpenings|approveRequest|rejectRequest|prepareRequest|issueRequest|issueEdit)$/.test(action) && !uuid ? durableWrite(action, data) : call(action, data, { write: true, uuid: uuid }); },
     pendingWrite: pendingWrite,
     setToken: function (t) { token = t || ''; if (t) Store.token.set(t); else Store.token.del(); },
     token: function () { return token; },

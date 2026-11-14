@@ -19,7 +19,7 @@ const Training = (function () {
 })();
 
 App.view('training', {
-  title: 'ทดลองใช้งาน', roles: ['ADMIN','OFFICER'],
+  title: 'ทดลองใช้งาน', roles: ['ADMIN','OFFICER','SUPPLY_HEAD'],
   render: async function (el) {
     const isAdmin = App.S.user.role === 'ADMIN';
     el.innerHTML = '<div class="page-h"><h1>ทดลองใช้งานระบบวัสดุ</h1><p>ชุดตัวอย่างจากใบเสนอราคา QT-2026/1107 · เจ้าหน้าที่ทดลองรับเข้า เบิก จัดเตรียม ส่งมอบ รับคืน และดูรายงาน</p></div><div id="training-body"><div class="skel"></div></div>';

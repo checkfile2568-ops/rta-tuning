@@ -94,6 +94,8 @@ function createEnv(opts) {
     }
     getLastColumn() { return this.data.reduce(function (m, r) { return Math.max(m, r ? r.length : 0); }, 0); }
     getMaxRows() { return Math.max(this.maxRows, this.data.length); }
+    getMaxColumns() { return Math.max(this.maxColumns || 26, this.getLastColumn()); }
+    insertColumnsAfter(after, count) { this.maxColumns = this.getMaxColumns() + count; return this; }
     getRange(r, c, nr, nc) { return new Range(this, r, c, nr || 1, nc || 1); }
     appendRow(arr) { this.getRange(this.getLastRow() + 1, 1, 1, arr.length).setValues([arr]); return this; }
     deleteRow(i) { this.data.splice(i - 1, 1); return this; }

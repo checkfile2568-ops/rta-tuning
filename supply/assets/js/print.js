@@ -45,6 +45,18 @@ const PrintDoc = (function () {
   function slipMargins() { const t = pkTpl('supply.req'); return t && t.page && t.page.margins ? t.page.margins.map(Number) : OFFICIAL; }
   function pkReq(r, qr, tpl) {
     const data = PrintKitSupply.reqData(r, App.S.cfg, U.APP_NAME);
+    // Adapt only this system's copy of the document; never edit the shared template.
+    tpl = JSON.parse(JSON.stringify(tpl));
+    (tpl.blocks || []).forEach(function (block) {
+      if (block.type === 'table' && block.source === 'รายการ' && !block.columns.some(function (c) { return c.key === 'จำนวนอนุมัติ'; })) {
+        const before = block.columns.findIndex(function (c) { return c.key === 'จำนวนจ่าย'; });
+        if (before >= 0) block.columns.splice(before, 0, { key: 'จำนวนอนุมัติ', label: 'อนุมัติ', width: 11, align: 'c' });
+      }
+      if (block.type === 'sign') (block.cols || []).forEach(function (col) {
+        if (col.role === 'หัวหน้าส่วน') { col.role = 'ผู้อนุมัติจ่ายวัสดุ'; col.name = '{{ผู้อนุมัติจ่ายวัสดุ|dots}}'; col.sub = '{{ตำแหน่งผู้อนุมัติ}}'; }
+      });
+    });
+    tpl.blocks.push({ id: 'supply-approval-record', type: 'text', if: 'บันทึกอนุมัติ', text: '{{บันทึกอนุมัติ}}', style: { size: 14, before: 8 } });
     data['ป้ายเตือน'] = API.scope() ? 'ข้อมูลตัวอย่างสำหรับฝึกใช้งาน — ห้ามใช้เป็นเอกสารเบิกจ่ายจริง'
       : (App.S.me && App.S.me.realTrial && App.S.me.realTrial.active ? 'รอบทดสอบบนฐานข้อมูลจริง' : '');
     const out = PrintKit.render(tpl, data, {
@@ -64,10 +76,10 @@ const PrintDoc = (function () {
     const tpl = pkTpl('supply.req');
     if (tpl) { try { return pkReq(r, qr, tpl); } catch (e) { /* แม่แบบมีปัญหา → ใช้แบบเดิม */ } }
     const rows = r.items.map(function (i, n) {
-      return '<tr><td class="c">' + (n + 1) + '</td><td>' + U.esc(i.name) + '</td><td class="c">' + U.esc(i.unit_name) + '</td><td class="c">' + U.n(i.qty_approved !== null ? i.qty_approved : i.qty_req) + '</td>' +
-        '<td class="c">' + (i.qty_issued !== null ? U.n(i.qty_issued - (i.qty_returned || 0)) : '') + '</td><td>' + (i.qty_returned ? 'จ่าย ' + U.n(i.qty_issued) + ' คืน/แก้ ' + U.n(i.qty_returned) : '') + '</td></tr>';
+      return '<tr><td class="c">' + (n + 1) + '</td><td>' + U.esc(i.name) + '</td><td class="c">' + U.esc(i.unit_name) + '</td><td class="c">' + U.n(i.qty_req) + '</td><td class="c">' + (i.qty_approved !== null && i.qty_approved !== undefined ? U.n(i.qty_approved) : '') + '</td>' +
+        '<td class="c">' + (i.qty_issued !== null && i.qty_issued !== undefined ? U.n(i.qty_issued - (i.qty_returned || 0)) : '') + '</td><td>' + (i.qty_returned ? 'จ่าย ' + U.n(i.qty_issued) + ' คืน/แก้ ' + U.n(i.qty_returned) : '') + '</td></tr>';
     });
-    while (rows.length < 8) rows.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
+    while (rows.length < 8) rows.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>');
     return '<div class="sheet req">' +
       (API.scope() ? '<div style="border:2px solid #a66b00;text-align:center;font-weight:bold;padding:6px">ข้อมูลตัวอย่างสำหรับฝึกใช้งาน — ห้ามใช้เป็นเอกสารเบิกจ่ายจริง</div>' : '') +
       (!API.scope() && App.S.me && App.S.me.realTrial && App.S.me.realTrial.active ? '<div style="border:2px solid #bf6230;text-align:center;font-weight:bold;padding:6px">รอบทดสอบบนฐานข้อมูลจริง</div>' : '') +
@@ -77,11 +89,12 @@ const PrintDoc = (function () {
       '<div class="meta"><span></span><span>วันที่ ' + U.thDate(r.created_at) + '</span></div>' +
       '<p class="indent">ข้าพเจ้า ' + U.esc(r.requester_name) + ' ตำแหน่ง ' + U.esc(r.requester_position || '-') + ' ' +
       'มีความประสงค์ขอเบิกวัสดุตามรายการต่อไปนี้ เพื่อ' + U.esc(r.purpose || 'ใช้ในราชการ') + '</p>' +
-      '<table><thead><tr><th style="width:9%">ลำดับ</th><th>รายการ</th><th style="width:13%">หน่วยนับ</th><th style="width:13%">จำนวนที่<br>เบิก</th><th style="width:13%">จำนวนที่<br>จ่าย</th><th style="width:15%">หมายเหตุ</th></tr></thead>' +
+      '<table><thead><tr><th style="width:7%">ลำดับ</th><th>รายการ</th><th style="width:10%">หน่วยนับ</th><th style="width:10%">จำนวน<br>ที่ขอ</th><th style="width:10%">จำนวน<br>อนุมัติ</th><th style="width:10%">จำนวน<br>จ่ายจริง</th><th style="width:13%">หมายเหตุ</th></tr></thead>' +
       '<tbody>' + rows.join('') + '</tbody></table>' +
+      '<p style="font-size:14pt">รวมจ่ายจริงตามหน่วย: ' + U.quantityTotals(r.items, 'qty_issued') + '</p>' +
       '<div class="sign">' +
       '<div>ลงชื่อ' + dots + '<br>ผู้ขอเบิก<br>(' + U.esc(r.requester_name) + ')<small class="fit">' + U.esc(r.requester_position || '') + '</small><small>วันที่ ' + d(r.created_at) + '</small></div>' +
-      '<div>ลงชื่อ' + dots + '<br>หัวหน้าส่วน<br>(' + (r.head_name ? U.esc(r.head_name) : dots) + ')<small class="fit">' + U.esc(r.dept_name || '') + '</small><small>วันที่ ' + d(r.approved_at) + '</small></div>' +
+      '<div>' + (r.approval_valid ? 'อนุมัติผ่านระบบ' : 'ลงชื่อ' + dots) + '<br>ผู้อนุมัติจ่ายวัสดุ<br>(' + (r.approval_valid ? U.esc(r.approved_by_name) : dots) + ')<small class="fit">' + U.esc(r.approval_valid ? r.approved_position || '' : '') + '</small><small>' + (r.approval_valid ? U.thDateTime(r.approved_at) : 'ยังไม่อนุมัติ') + '</small></div>' +
       '<div>ลงชื่อ' + dots + '<br>เจ้าหน้าที่พัสดุ<br>(' + (r.issuer_name ? U.esc(r.issuer_name) : dots) + ')<small>&nbsp;</small><small>วันที่ ' + d(r.issued_at) + '</small></div></div>' +
       '<div class="recv"><div>ได้รับวัสดุตามรายการข้างต้นถูกต้องครบถ้วนแล้ว</div><div>ลงชื่อ' + dots + 'ผู้รับวัสดุ</div>' +
       '<div>(' + (r.receiver_name ? U.esc(r.receiver_name) : dots) + ')</div><div>วันที่ ' + d(r.issued_at) + '</div></div>' +

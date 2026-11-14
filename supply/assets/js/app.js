@@ -47,18 +47,18 @@ const App = (function () {
   const S = { user: null, me: null, cfg: {}, catalog: null, idx: {}, cart: {}, purpose: '', views: {}, forms: {}, depts: [], catAt: null };
   const views = S.views;
   const $ = U.$;
-  const ROLE_TH = { USER: 'ผู้ขอเบิก', HEAD: 'หัวหน้าส่วน', OFFICER: 'เจ้าหน้าที่พัสดุ', ADMIN: 'ผู้ดูแลระบบ' };
+  const ROLE_TH = { USER: 'ผู้ขอเบิก', HEAD: 'หัวหน้าส่วน', OFFICER: 'เจ้าหน้าที่พัสดุ', SUPPLY_HEAD: 'หัวหน้าเจ้าหน้าที่พัสดุ', ADMIN: 'ผู้ดูแลระบบ' };
 
   /* ---------------------------------------------------------- เมนูตามบทบาท */
   function navFor(u) {
     const c = (S.me && S.me.counts) || {};
     const appr = S.cfg.approval_enabled;
-    const mine = [['req', 'เบิกวัสดุ', 'box'], ['my', 'คำขอของฉัน', 'doc', c.myReady]];
-    if (u.role === 'OFFICER') {
+    const mine = [['req', 'เบิกวัสดุ', 'box'], ['my', 'คำขอของฉัน', 'doc', (c.myPending || 0) + (c.myReady || 0)]];
+    if (u.role === 'OFFICER' || u.role === 'SUPPLY_HEAD') {
       return [['home', 'หน้าแรก', 'home'], ['queue', 'คิวจ่ายวัสดุ', 'truck', (c.queuePrep || 0) + (c.queueReady || 0)],
         ['stock', 'คลังวัสดุ', 'box'], ['receive', 'รับเข้า', 'inbox'], ['count', 'ตรวจนับ/ปรับยอด', 'clip'],
         ['reorder', 'จุดสั่งซื้อ', 'alert', c.reorder], ['monthly', 'รายงานประจำเดือน', 'doc', c.monthly], ['dash', 'สถิติ/ประวัติ', 'chart']]
-        .concat(appr ? [['approve', 'อนุมัติคำขอ', 'check', c.approvals]] : [])
+        .concat(u.role === 'SUPPLY_HEAD' ? [['approve', 'อนุมัติเบิกจ่ายวัสดุ', 'check', c.approvals]] : [])
         .concat([['-', 'งานของฉัน']]).concat(mine)
         .concat([['-', 'ข้อมูล'], ['suppliers', 'ผู้จำหน่าย', 'store'], ['opening', 'ยอดยกมา', 'upload'],
           ['reconcile', 'กระทบยอด', 'scale'], ['audit', 'ประวัติการใช้งาน', 'log'], ['training', 'ทดลองใช้งาน', 'clip'], ['real-trial', 'รอบทดสอบฐานจริง', 'db']]);
@@ -71,11 +71,11 @@ const App = (function () {
         ['-', 'งานของฉัน']].concat(mine);
     }
     const base = [['home', 'หน้าแรก', 'home']].concat(mine).concat([['dash', 'ประวัติ', 'clock']]);
-    if (u.role === 'HEAD' && appr) base.splice(1, 0, ['approve', 'อนุมัติคำขอ', 'check', c.approvals]);
     return base;
   }
   function bottomFor(u) {
     const n = navFor(u).filter(function (x) { return x[0] !== '-'; });
+    if (u.role === 'SUPPLY_HEAD') return [n[0], n.find(function (x) { return x[0] === 'approve'; }), n[1], ['more', 'เมนู', 'menu']];
     if (u.role === 'OFFICER') return [n[0], n[1], n[2], ['more', 'เมนู', 'menu']];
     if (u.role === 'ADMIN') return [n[0], n[1], n[2], ['more', 'เมนู', 'menu']];
     const four = ['home', 'req', 'my', 'dash'];
@@ -101,10 +101,10 @@ const App = (function () {
       '<div class="shell' + cartCls + '">' +
       '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><img class="brand-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
       '<nav class="nav" id="nav">' + navHtml(navFor(u), route) + '</nav>' +
-      '<div class="side-foot"><b>' + U.esc(u.name) + '</b>' + U.esc(ROLE_TH[u.role] || '') + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</div></aside>' +
+      '<div class="side-foot"><b>' + U.nameHtml(u) + '</b>' + U.esc(ROLE_TH[u.role] || '') + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</div></aside>' +
       '<div class="main"><header class="mhead"><img class="mhead-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><div><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
       '<button class="userbtn" data-act="usermenu" aria-label="เมนูผู้ใช้">' + ICON('user') + ICON('chev') + '</button></header>' +
-      '<div class="topbar"><span>' + today + '</span><button class="userbtn" data-act="usermenu"><span class="avatar">' + U.esc(init) + '</span>' + U.esc(u.name) + '</button></div>' +
+      '<div class="topbar"><span>' + today + '</span><button class="userbtn" data-act="usermenu"><span class="avatar">' + U.esc(init) + '</span>' + U.nameHtml(u) + '</button></div>' +
       (v.cart ? '<div class="with-cart"><main class="content" id="view"></main><aside class="cart-panel" id="cartpanel" aria-label="ตะกร้า"></aside></div>'
               : '<main class="content" id="view"></main>') +
       '</div>' +
@@ -128,6 +128,7 @@ const App = (function () {
     try { await v.render(el, parts.slice(1)); }
     catch (e) { el.innerHTML = errorBox(e); }
     if (v.cart && typeof Req !== 'undefined') Req.renderCart();
+    U.fitNames(ROOT());
     window.scrollTo(0, 0);
   }
   function errorBox(e) {
@@ -141,7 +142,7 @@ const App = (function () {
     const u = S.user;
     const more = window.matchMedia('(max-width: 760px), (max-height: 520px) and (orientation: landscape)').matches;
     const items = navFor(u);
-    const html = '<div class="who"><span class="avatar">' + U.esc(u.name.charAt(0)) + '</span><div><b>' + U.esc(u.name) + '</b><span class="muted small">' +
+    const html = '<div class="who"><span class="avatar">' + U.esc(u.name.charAt(0)) + '</span><div><b>' + U.nameHtml(u) + '</b><span class="muted small">' +
       U.esc(ROLE_TH[u.role]) + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</span></div></div>' +
       '<div class="menu-sheet"><nav class="nav">' + (more ? navHtml(items, S.route) : '') +
       (API.scope() ? '' : '<a href="#/profile">' + ICON('user') + '<span>โปรไฟล์และ PIN</span></a>') +
@@ -150,6 +151,7 @@ const App = (function () {
     wrap.className = 'modal-wrap';
     wrap.innerHTML = '<div class="modal user-menu-modal" role="dialog" aria-label="เมนูผู้ใช้">' + html + '<div class="modal-actions"><button class="btn" data-x>ปิด</button></div></div>';
     document.body.appendChild(wrap);
+    U.fitNames(wrap);
     wrap.addEventListener('click', function (e) {
       const a = e.target.closest('a,[data-x]');
       if (e.target === wrap || (a && a.hasAttribute('data-x'))) { wrap.remove(); return; }
@@ -260,7 +262,7 @@ const App = (function () {
       Store.set('catalog:' + S.user.code, { data: initialCatalog, at: S.catAt, role: S.user.role });
     } else await loadCatalog().catch(function () { return null; });
     render();
-    if (S.user.role === 'OFFICER' && typeof Officer !== 'undefined') Officer.watch();
+    if ((S.user.role === 'OFFICER' || S.user.role === 'SUPPLY_HEAD') && typeof Officer !== 'undefined') Officer.watch();
     if ((S.user.role === 'USER' || S.user.role === 'HEAD') && typeof Track !== 'undefined') Track.watch();
     Outbox.resumeAll().then(function (r) {
       if (r.some(function (x) { return x; })) { U.toast('ส่งคำขอที่ค้างไว้เรียบร้อย', 'ok'); refreshMe(); }
@@ -272,6 +274,14 @@ const App = (function () {
       S.me = me; S.user = me.user; S.cfg = me.cfg; S.depts = me.departments;
       const nav = $('#nav');
       if (nav) nav.innerHTML = navHtml(navFor(S.user), S.route);
+      bottomFor(S.user).forEach(function (x) {
+        const a = document.querySelector('.bnav a[href="#/' + x[0] + '"]');
+        if (!a) return;
+        const dot = a.querySelector('.dot');
+        if (dot) dot.remove();
+        if (x[3]) a.insertAdjacentHTML('beforeend', '<span class="dot">' + Number(x[3]) + '</span>');
+      });
+      if (S.route === 'home' && views.home) { await views.home.render($('#view')); U.fitNames(ROOT()); }
       return me;
     } catch (e) { return null; }
   }
@@ -360,7 +370,7 @@ const Login = (function () {
       '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย"></div>' +
       '<p class="err err-name" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>' +
       '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="link-refresh" id="acct-refresh">' + ICON('refresh') + 'ค้นหาใหม่</button></div>' +
-      '<p class="clay-help">ไม่พบชื่อ หรือยังไม่ได้ตั้ง PIN ติดต่อผู้ดูแลระบบ<br>ใช้ PIN เดียวกับปริ้นฮับ</p>', 1);
+      '<p class="clay-help">ไม่พบชื่อ หรือยังไม่ได้ตั้ง PIN ติดต่อผู้ดูแลระบบ</p>', 1);
     const q = $('#q');
     q.focus();
     q.addEventListener('input', U.debounce(function () { search(false); }, 180));
@@ -420,7 +430,7 @@ const Login = (function () {
   }
   function pinStep(msg) {
     pin = ''; busy = false;
-    const html = (overlayFor ? '<h2>ใส่ PIN</h2>' : '<h2 class="sr-only">ใส่ PIN</h2>') + '<div class="who"><span class="avatar">' + U.esc(acct.name.charAt(0)) + '</span><div><b>' + U.esc(acct.name) + '</b>' +
+    const html = (overlayFor ? '<h2>ใส่ PIN</h2>' : '<h2 class="sr-only">ใส่ PIN</h2>') + '<div class="who"><span class="avatar">' + U.esc(acct.name.charAt(0)) + '</span><div><b>' + U.nameHtml(acct) + '</b>' +
       '<span class="muted small">' + U.esc(acct.dept || '') + '</span></div>' +
       (overlayFor ? '' : '<button class="btn sm ghost" id="chg" style="margin-left:auto">เปลี่ยนชื่อ</button>') + '</div>' +
       (msg ? '<div class="notice warn"><div>' + U.esc(msg) + '</div></div>' : '') +
@@ -433,9 +443,10 @@ const Login = (function () {
       '<div class="wait-symbol" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M12 22 20 10h24l8 12v30H12Z"/><path d="M12 22h40M27 10v22l5-3 5 3V10M36 41h9M36 46h9"/></svg></div>' +
       '<h3>กำลังเข้าสู่ระบบ</h3><p class="wait-phase" id="login-wait-phase">กำลังตรวจสอบ PIN</p><p class="wait-hint" id="login-wait-hint">กรุณารอสักครู่</p>' +
       '<div class="wait-shimmer" aria-hidden="true"><i></i></div></div></div></div>' +
-      (overlayFor ? '' : '<p class="clay-help">ลืม PIN? ติดต่อผู้ดูแลระบบ · ใช้ PIN เดียวกับปริ้นฮับ</p>');
+      (overlayFor ? '' : '<p class="clay-help">ลืม PIN? ติดต่อผู้ดูแลระบบ</p>');
     if (overlayFor) { $('#reauth .box').innerHTML = html; }
     else mountLogin(html, 2);
+    U.fitNames(ROOT());
     const inp = $('#pinin');
     if (!('ontouchstart' in window)) inp.focus();
     inp.addEventListener('input', function () { if (busy) { inp.value = pin; return; } pin = inp.value.replace(/\D/g, '').slice(0, 4); dots(); if (pin.length === 4) submit(); });
@@ -594,7 +605,7 @@ const Login = (function () {
     return new Promise(function (resolve) {
       overlayResolve = resolve;
       overlayFor = user;
-      acct = { code: user.code, name: user.name, dept: user.dept_name };
+      acct = { code: user.code, name: user.name, first_name: user.first_name, last_name: user.last_name, dept: user.dept_name };
       const w = document.createElement('div');
       w.id = 'reauth';
       w.className = 'modal-wrap';

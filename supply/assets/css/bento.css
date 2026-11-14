@@ -31,6 +31,46 @@
 .bento-charts .chartbox { height: 290px; }
 .bento-surface #dp, .bento-surface #fy { max-width: 100%; min-width: 0 !important; }
 #stock-write-status[hidden] { display: none; }
+/* Role workspaces 1.9.0. Names keep their first-name/surname boundaries. */
+.person-name { display: block; min-width: 0; max-width: 100%; }
+.person-name > span { display: block; max-width: 100%; white-space: nowrap; overflow-wrap: normal; word-break: normal; line-height: 1.3; }
+.welcome-copy { min-width: 0; flex: 1 1 230px; padding-right: 94px; }
+.welcome-greeting { display: block; font-size: .95rem; color: #f4e6bd; }
+.bento-welcome .person-name { width: min(100%, 540px); }
+.bento-welcome h2 { margin-top: 4px; font-size: clamp(1.15rem, 3cqi, 1.9rem); }
+.bento-welcome .bento-actions { flex: 1 0 100%; }
+.topbar .userbtn .person-name { max-width: 230px; text-align: left; font-size: .8rem; }
+.who > div { min-width: 0; flex: 1; }
+.who .person-name { font-size: .95rem; }
+.bento-menu .card { position: relative; }
+.bento-menu .card:nth-child(3n+1), .bento-queue { background: #f0f5fc; }
+.bento-menu .card:nth-child(3n+2), .today-chart-card { background: #edf8f3; }
+.bento-menu .card:nth-child(3n), .flow-card { background: #fff9eb; }
+.task-count { position: absolute; top: 20px; right: 20px; display: grid; place-items: center; min-width: 30px; min-height: 30px; padding: 3px 8px; border-radius: 100px; background: #173e6b; color: white; font-weight: 700; font-size: .85rem; }
+.approval-card { background: #f5f2fb; border-color: #ded7ed; }
+.approval-card .approval-total { padding: 12px 0; color: #3c3163; }
+.approval-card input { min-width: 76px; }
+.approval-card .issued-value { color: #46645a; white-space: nowrap; }
+.approval-footnote { font-size: .85rem; color: var(--muted); }
+.approval-recovery { margin-bottom: 18px; }
+.period-art { width: 84px; height: 84px; position: absolute; right: 25px; top: 24px; isolation: isolate; filter: drop-shadow(0 12px 10px #04193355); animation: period-float 6s ease-in-out infinite; }
+.period-orb { position: absolute; width: 54px; height: 54px; left: 16px; top: 13px; border-radius: 50%; background: radial-gradient(circle at 30% 25%, #fffce6, #ffe594 32%, #efb74f 67%, #cd8d2a); box-shadow: inset 4px 4px 8px #fff9, inset -5px -6px 8px #a4612638, 0 6px 0 #b97d2b70; }
+.period-rays { position: absolute; inset: 3px; border-radius: 50%; background: repeating-conic-gradient(from 8deg, #f9d777 0deg 8deg, transparent 8deg 45deg); -webkit-mask: radial-gradient(circle, transparent 56%, #000 58% 70%, transparent 72%); mask: radial-gradient(circle, transparent 56%, #000 58% 70%, transparent 72%); animation: period-turn 35s linear infinite; }
+.period-cloud, .period-star { display: none; }
+.period-afternoon .period-orb { width: 46px; height: 46px; top: 8px; left: 29px; }
+.period-afternoon .period-rays { inset: 0 0 22px 22px; }
+.period-afternoon .period-cloud { display: block; position: absolute; width: 71px; height: 30px; border-radius: 30px; left: 2px; bottom: 11px; background: linear-gradient(155deg, #fff, #e6f3ff 65%, #a9cee8); box-shadow: inset 0 -5px 7px #89b3d34d, 0 5px 0 #6497c44d; }
+.period-afternoon .period-cloud:before, .period-afternoon .period-cloud:after { content: ''; position: absolute; background: linear-gradient(140deg, #fff, #e6f3ff); border-radius: 50%; }
+.period-afternoon .period-cloud:before { width: 35px; height: 35px; left: 12px; top: -17px; }
+.period-afternoon .period-cloud:after { width: 26px; height: 26px; right: 9px; top: -9px; }
+.period-evening .period-rays { display: none; }
+.period-evening .period-orb { width: 58px; height: 58px; left: 13px; top: 13px; -webkit-mask: radial-gradient(circle at 76% 24%, transparent 0 26px, #000 27px); mask: radial-gradient(circle at 76% 24%, transparent 0 26px, #000 27px); }
+.period-evening .period-star { display: block; position: absolute; background: #fff3b3; width: 12px; height: 12px; clip-path: polygon(50% 0, 64% 36%, 100% 50%, 64% 64%, 50% 100%, 36% 64%, 0 50%, 36% 36%); filter: drop-shadow(0 0 4px #fff7b5); animation: period-glow 4s ease-in-out infinite; }
+.star-one { right: 7px; top: 14px; }
+.period-evening .star-two { width: 8px; height: 8px; right: 15px; bottom: 11px; animation-delay: 1.8s; }
+@keyframes period-float { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-5px) rotate(3deg); } }
+@keyframes period-turn { to { transform: rotate(360deg); } }
+@keyframes period-glow { 0%,100% { opacity: .6; transform: scale(.88); } 50% { opacity: 1; transform: scale(1.06); } }
 @container (min-width: 480px) {
   .bento-grid, .bento-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -51,8 +91,14 @@
   .bento-actions { width: 100%; }
   .bento-actions .btn { width: 100%; }
   .bento-welcome { gap: 20px; }
+  .period-art { right: 16px; top: 21px; width: 76px; height: 76px; }
+  .welcome-copy { padding-right: 78px; }
+  .bento-welcome h2 { font-size: 1.3rem; }
+  .bento-welcome .welcome-copy { flex-basis: 100%; }
+  .approval-card .t { min-width: 510px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .bento-menu .card { transition: none; }
   .bento-menu .card:hover { transform: none; }
+  .period-art, .period-rays, .period-star { animation: none !important; }
 }

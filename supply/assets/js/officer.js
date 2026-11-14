@@ -1,7 +1,7 @@
 /* ระบบบริหารวัสดุสำนักงาน · officer.js — งานเจ้าหน้าที่พัสดุ: คิวจ่าย · คลังวัสดุ/บัญชีวัสดุรายตัว · รับเข้า · ตรวจนับ ·
  * จุดสั่งซื้อ · ผู้จำหน่าย · ยอดยกมา · กระทบยอด/ตรวจซ่อม · ประวัติการใช้งาน */
 'use strict';
-const OA = ['OFFICER', 'ADMIN'];
+const OA = ['OFFICER', 'SUPPLY_HEAD', 'ADMIN'];
 function pendingStockWrite(action) { return API.pendingWrite ? API.pendingWrite(action) : null; }
 function syncStockPending(el, action) {
   const pending = pendingStockWrite(action), save = el.querySelector(action === 'receive' ? '#save' : '#go');
@@ -15,7 +15,7 @@ function syncStockPending(el, action) {
 }
 const Officer = (function () {
   const S = App.S;
-  function isOfficer() { return S.user.role === 'OFFICER'; }
+  function isOfficer() { return S.user.role === 'OFFICER' || S.user.role === 'SUPPLY_HEAD'; }
   function unitOptions(m, sel) {
     const opts = [{ unit_id: m.unit_id, name: m.unit_name + ' (หน่วยหลัก)', factor: 1 }].concat(
       (S.catalog.material_units || []).filter(function (x) { return x.mat_id === m.mat_id; })
@@ -49,8 +49,9 @@ const Officer = (function () {
   async function home(el) {
     el.classList.add('bento-surface');
     const c = S.me.counts || {};
+    const head = S.user.role === 'SUPPLY_HEAD';
     const mp = S.me.monthly;
-    el.innerHTML = '<div class="page-h"><h1>งานวันนี้</h1><p>' + U.thDate(new Date()) + ' · ' + U.esc(S.user.name) + '</p></div>' +
+    el.innerHTML = '<div class="page-h"><h1>' + (head ? 'งานหัวหน้าเจ้าหน้าที่พัสดุ' : 'งานวันนี้') + '</h1><p>' + U.thDate(new Date()) + '</p></div>' +
       (mp ? '<div class="notice warn">' + ICON('doc') + '<div><b>รายงานวัสดุคงเหลือเดือน ' + U.esc(mp.label) + (mp.status === 'DRAFT' ? ' รอยืนยัน' : ' ยังไม่ได้จัดทำ') + '</b>' +
         (mp.status === 'DRAFT' ? (mp.mode === 'AUTO' ? 'ระบบจัดทำร่างให้แล้ว' : 'มีร่างรายงานแล้ว') + ' <a href="#/monthly/' + U.esc(mp.ym) + '">ตรวจและยืนยัน</a>'
           : (mp.mode === 'AUTO' ? 'ระบบจะจัดทำร่างให้ในคืนนี้ หรือ' : '') + ' <a href="#/monthly/' + U.esc(mp.ym) + '">จัดทำรายงาน</a>') + '</div></div>' : '') +
@@ -58,8 +59,8 @@ const Officer = (function () {
       '<div class="bento-grid bento-officer"><div class="kpis today-kpis bento-metrics bento-full"><a class="kpi task-prep" href="#/queue" style="text-decoration:none"><small>รอจัดเตรียม</small><b>' + U.n(c.queuePrep || 0) + '</b><span>ใบ</span></a>' +
       '<a class="kpi task-ready" href="#/queue" style="text-decoration:none"><small>พร้อมรับ (รอส่งมอบ)</small><b>' + U.n(c.queueReady || 0) + '</b><span>ใบ</span></a>' +
       '<a class="kpi task-reorder" href="#/reorder" style="text-decoration:none"><small>ถึงจุดสั่งซื้อ</small><b>' + U.n(c.reorder || 0) + '</b><span>รายการ</span></a>' +
-      (S.cfg.approval_enabled ? '<a class="kpi task-approval" href="#/approve" style="text-decoration:none"><small>รออนุมัติ</small><b>' + U.n(c.approvals || 0) + '</b><span>ใบ</span></a>' : '') + '</div>' +
-      '<section class="bento-welcome bento-full"><div><span class="bento-eyebrow">ศาลจังหวัดลพบุรี · งานพัสดุ</span><h2>จัดการวัสดุ พร้อมทุกงาน</h2><p>ตรวจคิว รับเข้า และส่งมอบ จากพื้นที่ทำงานเดียว</p></div><nav class="bento-actions" aria-label="งานพัสดุที่ใช้บ่อย"><a class="btn gold lg" href="#/queue">' + ICON('truck') + 'คิวจ่ายวัสดุ</a><a class="btn lg" href="#/receive">' + ICON('inbox') + 'รับเข้า</a>' +
+      (S.cfg.approval_enabled ? '<a class="kpi task-approval" href="#/' + (head ? 'approve' : 'queue') + '" style="text-decoration:none"><small>รอหัวหน้าอนุมัติ</small><b>' + U.n(c.pendingApproval || c.approvals || 0) + '</b><span>ใบ</span></a>' : '') + '</div>' +
+      '<section class="bento-welcome bento-full"><div class="welcome-copy"><span class="bento-eyebrow">ศาลจังหวัดลพบุรี · ' + (head ? 'ผู้สั่งจ่ายวัสดุ' : 'งานพัสดุ') + '</span><span class="welcome-greeting">สวัสดี</span><h2>' + U.nameHtml(S.user) + '</h2><p>' + U.esc(S.user.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[S.user.role]) + '</p></div>' + U.periodArt() + '<nav class="bento-actions" aria-label="งานพัสดุที่ใช้บ่อย"><a class="btn gold lg" href="#/' + (head ? 'approve' : 'queue') + '">' + ICON(head ? 'check' : 'truck') + (head ? 'อนุมัติเบิกจ่ายวัสดุ' : 'คิวจ่ายวัสดุ') + '</a><a class="btn lg" href="#/receive">' + ICON('inbox') + 'รับเข้า</a>' +
       '<a class="btn lg" href="#/count">' + ICON('clip') + 'ตรวจนับ</a><a class="btn lg" href="#/req">' + ICON('box') + 'เบิกของตนเอง</a></nav></section>' +
       '<div class="card today-chart-card bento-wide"><div><span class="bento-eyebrow">ภาพรวมคิว</span><h3>สถานะคิวคำขอปัจจุบัน</h3><p class="small muted">จำนวนใบที่ยังรอดำเนินการ ณ เวลาที่โหลดข้อมูล</p><div id="today-legend"></div></div><div class="today-chart" id="today-chart"><canvas id="today-canvas" role="img" aria-label="กราฟสถานะคิวคำขอปัจจุบัน"></canvas></div></div>' +
       '<div class="card bento-wide bento-queue"><div class="row"><h3>คิวคำขอเบิกพัสดุ</h3><span class="spacer"></span><a class="small" href="#/queue">ดูทั้งหมด →</a></div><div id="q5"><div class="skel"></div></div></div></div>' +
@@ -81,7 +82,7 @@ const Officer = (function () {
     const entries = [
       {label:'รอจัดเตรียม',value:Number(c.queuePrep)||0,color:'#C58A21'},
       {label:'พร้อมรับ',value:Number(c.queueReady)||0,color:'#23836A'}
-    ].concat(S.cfg.approval_enabled ? [{label:'รออนุมัติ',value:Number(c.approvals)||0,color:'#7662B7'}] : []);
+    ].concat(S.cfg.approval_enabled ? [{label:'รออนุมัติ',value:Number(c.pendingApproval || c.approvals)||0,color:'#7662B7'}] : []);
     el.querySelector('#today-legend').innerHTML = entries.map(function(x) { return '<p class="today-legend-row"><i style="background:' + x.color + '" aria-hidden="true"></i><span>' + x.label + '</span><b>' + U.n(x.value) + ' ใบ</b></p>'; }).join('');
     const holder = el.querySelector('#today-chart');
     if (!entries.some(function(x) { return x.value > 0; })) { holder.innerHTML = '<div class="today-chart-empty">' + ICON('check') + '<b>ไม่มีคำขอค้าง</b><span>ทุกสถานะเป็น 0 ใบ</span></div>'; return; }
@@ -99,16 +100,17 @@ const Officer = (function () {
   function watch() {
     if (watching) return;
     watching = true;
-    let last = (S.me.counts || {}).queuePrep || 0;
+    const count = function (c) { return S.user.role === 'SUPPLY_HEAD' ? c.approvals || 0 : c.queuePrep || 0; };
+    let last = count(S.me.counts || {});
     const title = function (n) { document.title = (n ? '(' + n + ') ' : '') + document.title.replace(/^\(\d+\) /, ''); };
     title(last);
     setInterval(async function () {
       if (document.hidden || document.querySelector('.modal-wrap')) return;
       const me = await App.refreshMe();
       if (!me) return;
-      const n = me.counts.queuePrep || 0;
+      const n = count(me.counts);
       if (n > last) {
-        U.toast('มีคำขอเบิกใหม่ ' + (n - last) + ' ใบ · รอจัดเตรียมทั้งหมด ' + n + ' ใบ', 'info', 7000);
+        U.toast('มีคำขอเบิกใหม่ ' + (n - last) + ' ใบ · ' + (S.user.role === 'SUPPLY_HEAD' ? 'รออนุมัติ' : 'รอจัดเตรียม') + 'ทั้งหมด ' + n + ' ใบ', 'info', 7000);
         try { if (window.Notification && Notification.permission === 'granted') new Notification(U.APP_NAME, { body: 'มีคำขอเบิกใหม่ ' + (n - last) + ' ใบ' }); } catch (e) { /**/ }
       }
       last = n;
@@ -131,11 +133,23 @@ App.view('queue', {
     const focus = p0 === 'issued' ? '' : p0;
     el.innerHTML = '<div class="page-h row"><div><h1>คิวจ่ายวัสดุ</h1><p>เรียงจากยื่นก่อน · เตรียมของแล้วแตะ "เตรียมพร้อมรับ" · ส่งของจริงแล้วแตะ "ยืนยันส่งมอบ" · สแกน QR บนใบเบิกเพื่อเปิดใบนั้นทันที</p></div><span class="spacer"></span>' +
       '<button class="btn" id="pp">' + ICON('print') + 'พิมพ์ใบเตรียมของ</button><button class="btn" id="rf">' + ICON('refresh') + 'รีเฟรช</button></div>' +
-      '<div id="focusbar"></div><div class="seg" id="tab"></div><div id="list" style="margin-top:16px"><div class="skel"></div><div class="skel"></div></div>';
+      '<div id="queue-recovery"></div><div id="focusbar"></div><div class="seg" id="tab"></div><div id="list" style="margin-top:16px"><div class="skel"></div><div class="skel"></div></div>';
+    const pendingActions = function () { return ['prepareRequest', 'issueRequest', 'issueEdit'].filter(function (a) { return API.pendingWrite && API.pendingWrite(a); }); };
+    const recovery = function () {
+      U.$('#queue-recovery').innerHTML = pendingActions().map(function (a) { return '<div class="notice warn"><div>รายการเดิมยังไม่ทราบผลบันทึก <button class="btn" data-recover="' + a + '">ตรวจสอบผลรายการเดิม</button></div></div>'; }).join('');
+    };
+    recovery();
+    U.$('#queue-recovery').onclick = async function (e) {
+      const b = e.target.closest('[data-recover]'); if (!b || b.disabled) return;
+      const p = API.pendingWrite(b.dataset.recover); if (!p) return;
+      b.disabled = true;
+      try { await API.write(b.dataset.recover, p.data); await App.refreshMe(); await App.refreshCatalog(); App.render(); }
+      catch (er) { b.disabled = false; U.toast(er.message, 'err'); }
+    };
     let focusInfo = null;
     let rows = [], issued = [];
-    const officer = S.user.role === 'OFFICER';
-    const lim = function (i) { return i.qty_approved !== null ? i.qty_approved : i.qty_req; };
+    const officer = Officer.isOfficer();
+    const lim = function (i) { return i.qty_approved !== null && i.qty_approved !== undefined ? i.qty_approved : i.qty_req; };
     const net = function (i) { return (i.qty_issued || 0) - (i.qty_returned || 0); };
     // ใบที่ส่งมอบแล้ว: แก้จำนวนได้จนกว่าจะยืนยันรายงานประจำเดือนของเดือนที่ส่งมอบ
     const issuedCard = function (r) {
@@ -220,11 +234,14 @@ App.view('queue', {
     };
     U.$('#tab').onclick = function (e) { const b = e.target.closest('[data-t]'); if (b) { F.tab = b.dataset.t; draw(); } };
     U.$('#rf').onclick = load;
+    let queueBusy = false;
     U.$('#list').onclick = async function (e) {
       const b = e.target.closest('[data-a]'); if (!b) return;
+      if (queueBusy || pendingActions().length) { recovery(); return; }
       const card = b.closest('.card');
       const r = rows.concat(issued, focusInfo ? [focusInfo] : []).find(function (x) { return x.req_id === card.dataset.id; });
       const a = b.dataset.a;
+      queueBusy = true; b.disabled = true;
       try {
         if (a === 'edit') {
           const v = await U.modal({
@@ -232,15 +249,15 @@ App.view('queue', {
             html: '<p class="small muted">ใส่จำนวนที่ส่งมอบจริง — ส่งเกิน ระบบลง "รับคืน" เข้าคลัง · ส่งขาด ระบบลง "จ่ายเพิ่ม" ตัดคลัง · ไม่ลบรายการเดิมในบัญชี</p>' +
               '<div class="tablewrap"><table class="t"><thead><tr><th>วัสดุ</th><th class="num">ขอ</th><th class="num">บันทึกไว้</th><th class="num">ที่ถูกต้อง</th></tr></thead><tbody>' + r.items.map(function (i) {
                 return '<tr><td>' + U.esc(i.name) + '</td><td class="num">' + U.n(i.qty_req) + '</td><td class="num">' + U.n(net(i)) + '</td>' +
-                  '<td class="num"><input class="input num" type="number" min="0" max="' + i.qty_req + '" name="q_' + U.esc(i.item_id) + '" value="' + net(i) + '"></td></tr>';
+                  '<td class="num"><input class="input num" type="number" min="0" max="' + lim(i) + '" name="q_' + U.esc(i.item_id) + '" value="' + net(i) + '"></td></tr>';
               }).join('') + '</tbody></table></div>' +
               '<label class="field"><span>เหตุผลการแก้ไข *</span><textarea class="input" name="reason" required placeholder="เช่น นับของผิดตอนส่งมอบ ผู้รับแจ้งได้ไม่ครบ"></textarea></label>',
             validate: function (x) {
               if (!x.reason || !x.reason.trim()) return 'กรุณาระบุเหตุผลการแก้ไข';
               const ch = r.items.filter(function (i) { return Number(x['q_' + i.item_id]) !== net(i); });
               if (!ch.length) return 'จำนวนยังเหมือนเดิม — แก้ช่อง "ที่ถูกต้อง" ก่อน';
-              const bad = ch.find(function (i) { const q = Number(x['q_' + i.item_id]); return !(q >= 0) || q > i.qty_req || Math.floor(q) !== q; });
-              return bad ? 'จำนวนของ ' + bad.name + ' ต้องเป็น 0 ถึง ' + bad.qty_req : '';
+              const bad = ch.find(function (i) { const q = Number(x['q_' + i.item_id]); return !(q >= 0) || q > lim(i) || Math.floor(q) !== q; });
+              return bad ? 'จำนวนของ ' + bad.name + ' ต้องเป็น 0 ถึง ' + lim(bad) + ' ตามจำนวนที่อนุมัติ' : '';
             }
           });
           if (!v) return;
@@ -282,6 +299,7 @@ App.view('queue', {
         App.refreshMe(); App.refreshCatalog().catch(function () {});
         await load();
       } catch (er) { b.classList.remove('busy'); U.toast(er.message, 'err', 5000); }
+      finally { queueBusy = false; b.disabled = false; recovery(); }
     };
     await load();
     const timer = setInterval(function () { if (!document.body.contains(U.$('#list'))) clearInterval(timer); else if (!document.querySelector('.modal-wrap')) load(); }, 60000);
@@ -424,7 +442,7 @@ App.view('mat', {
 
 /* ---------------------------------------------------------------- รับเข้า (ไม่มี PO) */
 App.view('receive', {
-  title: 'รับเข้า', roles: ['OFFICER'],
+  title: 'รับเข้า', roles: ['OFFICER', 'SUPPLY_HEAD'],
   render: async function (el) {
     const S = App.S;
     await Officer.needCatalog();
@@ -549,7 +567,7 @@ App.view('receive', {
 
 /* ---------------------------------------------------------------- ตรวจนับ / ปรับยอด */
 App.view('count', {
-  title: 'ตรวจนับ', roles: ['OFFICER'],
+  title: 'ตรวจนับ', roles: ['OFFICER', 'SUPPLY_HEAD'],
   render: async function (el) {
     const S = App.S;
     await Officer.needCatalog();

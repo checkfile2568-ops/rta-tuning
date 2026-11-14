@@ -18,18 +18,22 @@
       'ผู้ขอเบิก': r.requester_name || '',
       'ตำแหน่ง': r.requester_position || '',
       'วัตถุประสงค์': r.purpose || 'ใช้ในราชการ',
-      'หัวหน้าส่วน': r.head_name || '',
+      'หัวหน้าส่วน': r.approval_valid ? (r.approved_by_name || '') : '',
+      'ผู้อนุมัติจ่ายวัสดุ': r.approval_valid ? (r.approved_by_name || '') : '',
+      'ตำแหน่งผู้อนุมัติ': r.approval_valid ? (r.approved_position || '') : '',
+      'บันทึกอนุมัติ': r.approval_valid ? 'อนุมัติผ่านระบบโดย ' + (r.approved_by_name || '') + ' เมื่อ ' + K.thDateTime(r.approved_at) : '',
       'เจ้าหน้าที่พัสดุ': r.issuer_name || '',
       'ผู้รับวัสดุ': r.receiver_name || '',
       'วันที่ยื่น': short(r.created_at),
       'วันที่อนุมัติ': short(r.approved_at),
       'วันที่จ่าย': short(r.issued_at),
       'รายการ': (r.items || []).map(function (i) {
-        const req = i.qty_approved !== null && i.qty_approved !== undefined ? i.qty_approved : i.qty_req;
+        const req = i.qty_req;
         return {
           'รายการ': i.name,
           'หน่วยนับ': i.unit_name,
           'จำนวนเบิก': n(req),
+          'จำนวนอนุมัติ': n(i.qty_approved),
           'จำนวนจ่าย': i.qty_issued !== null && i.qty_issued !== undefined ? n(i.qty_issued - (i.qty_returned || 0)) : '',
           'หมายเหตุ': i.qty_returned ? 'จ่าย ' + n(i.qty_issued) + ' คืน/แก้ ' + n(i.qty_returned) : ''
         };

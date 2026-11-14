@@ -80,16 +80,16 @@ App.view('home', {
   title: 'หน้าแรก',
   render: async function (el) {
     const S = App.S, u = S.user, c = S.me.counts || {};
-    if (u.role === 'OFFICER') return Officer.home(el);
+    if (u.role === 'OFFICER' || u.role === 'SUPPLY_HEAD') return Officer.home(el);
     if (u.role === 'ADMIN') return Admin.home(el);
     el.classList.add('bento-surface');
     const nDraft = Req.cartCount();
     const freq = (S.me.frequent || []).map(function (id) { return S.idx[id]; }).filter(Boolean);
-    el.innerHTML = '<section class="bento-welcome"><div><span class="bento-eyebrow">พื้นที่ทำงานของคุณ</span><h2>สวัสดี ' + U.esc(u.name) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p></div>' +
+    const pending = (c.myPending || 0) + (c.myReady || 0);
+    el.innerHTML = '<section class="bento-welcome"><div class="welcome-copy"><span class="bento-eyebrow">พื้นที่ทำงานของคุณ</span><span class="welcome-greeting">สวัสดี</span><h2>' + U.nameHtml(u) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p></div>' + U.periodArt() +
       '<a class="btn gold lg" href="#/req">' + ICON('box') + 'เบิกวัสดุ</a></section>' +
-      '<nav class="bento-grid bento-menu bento-user-menu" aria-label="งานของฉัน"><a class="card" href="#/my">' + ICON('doc', 'ic') + '<h3>คำขอของฉัน</h3><p>ติดตามการจัดเตรียมและการส่งมอบ</p></a><a class="card" href="#/dash">' + ICON('chart', 'ic') + '<h3>ประวัติการเบิก</h3><p>ตรวจรายการและสถิติตามสิทธิ์</p></a><a class="card" href="#/profile">' + ICON('user', 'ic') + '<h3>ข้อมูลของฉัน</h3><p>ตรวจส่วนงาน ตำแหน่ง และ PIN</p></a></nav>' +
+      '<nav class="bento-grid bento-menu bento-user-menu" aria-label="งานของฉัน"><a class="card" href="#/my">' + ICON('doc', 'ic') + (pending ? '<span class="task-count" aria-label="มีคำขอค้าง ' + pending + ' ใบ">' + U.n(pending) + '</span>' : '') + '<h3>คำขอของฉัน</h3><p>ติดตามการจัดเตรียมและการส่งมอบ</p></a><a class="card" href="#/dash">' + ICON('chart', 'ic') + '<h3>ประวัติการเบิก</h3><p>ตรวจรายการและสถิติตามสิทธิ์</p></a><a class="card" href="#/profile">' + ICON('user', 'ic') + '<h3>ข้อมูลของฉัน</h3><p>ตรวจส่วนงาน ตำแหน่ง และ PIN</p></a></nav>' +
       (c.myReady ? '<div class="notice info">' + ICON('truck') + '<div><b>มีของพร้อมรับ ' + c.myReady + ' ใบ</b>ติดต่อรับที่งานพัสดุ <a href="#/my">ดูรายการ</a></div></div>' : '') +
-      (u.role === 'HEAD' && S.cfg.approval_enabled && c.approvals ? '<div class="notice warn">' + ICON('check') + '<div><b>มีคำขอรออนุมัติ ' + c.approvals + ' ใบ</b><a href="#/approve">ไปอนุมัติ</a></div></div>' : '') +
       (nDraft ? '<div class="notice ok">' + ICON('cart') + '<div><b>มีร่างคำขอ ' + nDraft + ' รายการ</b>ยังไม่ได้ส่ง <a href="#/cart">ทำต่อ</a></div></div>' : '') +
       (freq.length ? '<div class="card"><h3>ใช้บ่อย</h3><div class="chips" id="freq">' + freq.map(function (m) {
         return '<button class="chip" data-id="' + U.esc(m.mat_id) + '">+ ' + U.esc(m.name) + '</button>';
@@ -356,7 +356,7 @@ App.view('scan', {
   render: async function (el, params) {
     const id = params && params[0] ? decodeURIComponent(params[0]) : '';
     if (!id) { location.replace('#/home'); return; }
-    if (App.S.user.role === 'OFFICER' || App.S.user.role === 'ADMIN') { location.replace('#/queue/' + encodeURIComponent(id)); return; }
+    if (App.S.user.role === 'OFFICER' || App.S.user.role === 'SUPPLY_HEAD' || App.S.user.role === 'ADMIN') { location.replace('#/queue/' + encodeURIComponent(id)); return; }
     el.innerHTML = '<div class="page-h"><h1>ใบเบิก</h1><p>สถานะล่าสุดของใบที่สแกน</p></div><div id="one"><div class="skel"></div></div>';
     try {
       const r = await API.call('getRequest', { req_id: id });
@@ -416,28 +416,59 @@ App.view('my', {
 
 /* ---------------------------------------------------------------- อนุมัติคำขอ (เมื่อเปิดขั้นอนุมัติ) */
 App.view('approve', {
-  title: 'อนุมัติคำขอ', roles: ['HEAD', 'OFFICER'],
+  title: 'อนุมัติเบิกจ่ายวัสดุ', roles: ['SUPPLY_HEAD'],
   render: async function (el) {
-    el.innerHTML = '<div class="page-h"><h1>อนุมัติคำขอ</h1><p>อนุมัติทั้งใบ ปรับจำนวน หรือไม่อนุมัติพร้อมเหตุผล</p></div><div id="list"><div class="skel"></div></div>';
-    if (!App.S.cfg.approval_enabled) { U.$('#list').innerHTML = '<div class="notice info"><div>ระบบไม่ได้เปิดขั้นอนุมัติ — หัวหน้าส่วนลงนามบนใบเบิกที่พิมพ์</div></div>'; return; }
+    el.innerHTML = '<div class="page-h"><h1>อนุมัติเบิกจ่ายวัสดุ</h1><p>คำขอจากทุกส่วนงานและทุกประเภทวัสดุ ปรับลดจำนวนแล้วอนุมัติและลงนามได้ทั้งใบ</p></div><div id="approval-recovery"></div><div id="list"><div class="skel"></div></div>';
+    const recover = function () {
+      const actions = ['approveRequest', 'rejectRequest'].filter(function (a) { return API.pendingWrite && API.pendingWrite(a); });
+      U.$('#approval-recovery').innerHTML = actions.map(function (a) { return '<div class="notice warn approval-recovery"><div>รายการเดิมยังไม่ทราบผลบันทึก กรุณาตรวจสอบด้วยรหัสเดิมก่อนทำรายการต่อ <button class="btn" data-recover="' + a + '">ตรวจสอบผลรายการเดิม</button></div></div>'; }).join('');
+      return actions.length > 0;
+    };
+    recover();
+    U.$('#approval-recovery').onclick = async function (e) {
+      const b = e.target.closest('[data-recover]'); if (!b || b.disabled) return;
+      const pending = API.pendingWrite(b.dataset.recover); if (!pending) return;
+      b.disabled = true;
+      try { await API.write(b.dataset.recover, pending.data); await App.refreshMe(); App.render(); }
+      catch (er) { b.disabled = false; U.toast(er.message, 'err'); }
+    };
+    if (!App.S.cfg.approval_enabled) { U.$('#list').innerHTML = '<div class="notice info"><div>ยังไม่เปิดขั้นอนุมัติในพื้นที่นี้</div></div>'; return; }
     const rows = await API.call('approvals');
     U.$('#list').innerHTML = rows.length ? rows.map(function (r) {
-      return '<div class="card req-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) + ' · ' + U.thDateTime(r.created_at) + '</span></div></div>' +
+      return '<div class="card req-card approval-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) + ' · ' + U.thDateTime(r.created_at) + '</span></div></div>' +
         (r.purpose ? '<p class="small">วัตถุประสงค์: ' + U.esc(r.purpose) + '</p>' : '') +
-        '<div class="tablewrap"><table class="t"><thead><tr><th>วัสดุ</th><th class="num">ขอ</th><th class="num">อนุมัติ</th></tr></thead><tbody>' + r.items.map(function (i) {
-          return '<tr><td>' + U.esc(i.name) + '</td><td class="num">' + U.n(i.qty_req) + ' ' + U.esc(i.unit_name) + '</td><td class="num"><input class="input num" type="number" min="0" max="' + i.qty_req + '" value="' + i.qty_req + '" data-item="' + U.esc(i.item_id) + '"></td></tr>';
-        }).join('') + '</tbody></table></div><div class="acts"><button class="btn primary" data-ok>อนุมัติ</button><button class="btn" data-no>ไม่อนุมัติ</button></div></div>';
+        '<div class="tablewrap"><table class="t"><thead><tr><th>วัสดุ</th><th class="num">จำนวนที่ขอ</th><th class="num">อนุมัติจ่าย</th><th class="num">จ่ายจริง</th></tr></thead><tbody>' + r.items.map(function (i) {
+          return '<tr><td>' + U.esc(i.name) + '<small class="muted"> ' + U.esc(i.unit_name) + '</small></td><td class="num">' + U.n(i.qty_req) + '</td><td class="num"><input class="input num" type="number" inputmode="numeric" min="0" max="' + i.qty_req + '" value="' + i.qty_req + '" data-item="' + U.esc(i.item_id) + '" aria-label="อนุมัติ ' + U.esc(i.name) + '"></td><td class="num issued-value">' + (i.qty_issued === null || i.qty_issued === undefined ? 'ยังไม่จ่าย' : U.n(i.qty_issued - (i.qty_returned || 0))) + '</td></tr>';
+        }).join('') + '</tbody></table></div><p class="approval-total" data-total></p><p class="approval-footnote">การอนุมัติบันทึกชื่อและเวลาของผู้อนุมัติลงใบเบิก ยังไม่ตัดสต็อก จำนวนจ่ายจริงจะบันทึกเมื่อเจ้าหน้าที่ส่งมอบ</p><div class="acts"><button class="btn primary" data-ok>อนุมัติและลงนามทั้งใบ</button><button class="btn" data-no>ไม่อนุมัติ</button></div></div>';
     }).join('') : '<div class="empty">' + ICON('check') + '<p>ไม่มีคำขอรออนุมัติ</p></div>';
+    const totals = function (card) {
+      const request = rows.find(function (r) { return r.req_id === card.dataset.id; });
+      const quantities = {};
+      U.$$('input[data-item]', card).forEach(function (i) { quantities[i.dataset.item] = Number(i.value); });
+      card.querySelector('[data-total]').innerHTML = 'รวมจำนวนอนุมัติตามหน่วย ' + U.quantityTotals(request.items.map(function (i) { return Object.assign({}, i, { qty_approved: quantities[i.item_id] }); }), 'qty_approved');
+    };
+    U.$$('.approval-card').forEach(totals);
+    U.$('#list').oninput = function (e) { const card = e.target.closest('.approval-card'); if (card) totals(card); };
+    let busy = false;
     U.$('#list').onclick = async function (e) {
+      if (busy || recover()) return;
       const c = e.target.closest('.card'); if (!c) return;
       const id = c.dataset.id;
+      const request = rows.find(function (r) { return r.req_id === id; });
       if (e.target.closest('[data-ok]')) {
         const items = U.$$('input[data-item]', c).map(function (i) { return { item_id: i.dataset.item, qty_approved: Number(i.value) }; });
-        try { await API.write('approveRequest', { req_id: id, items: items }); U.toast('อนุมัติแล้ว', 'ok'); App.refreshMe(); App.render(); } catch (er) { U.toast(er.message, 'err'); }
+        const bad = items.find(function (i) { return !Number.isInteger(i.qty_approved) || i.qty_approved < 0 || i.qty_approved > request.items.find(function (x) { return x.item_id === i.item_id; }).qty_req; });
+        if (bad) { U.toast('จำนวนอนุมัติต้องเป็นจำนวนเต็มตั้งแต่ 0 และไม่เกินจำนวนที่ขอ', 'err'); return; }
+        if (!items.some(function (i) { return i.qty_approved > 0; })) { U.toast('ถ้าไม่จ่ายทุกรายการ ให้กดไม่อนุมัติพร้อมเหตุผล', 'err'); return; }
+        busy = true; U.$$('button,input', c).forEach(function (x) { x.disabled = true; });
+        try { await API.write('approveRequest', { req_id: id, items: items, expected_updated_at: request.updated_at }); U.toast('อนุมัติและบันทึกผู้ลงนามแล้ว', 'ok'); await App.refreshMe(); App.render(); }
+        catch (er) { busy = false; U.$$('button,input', c).forEach(function (x) { x.disabled = false; }); recover(); U.toast(er.message, 'err'); }
       } else if (e.target.closest('[data-no]')) {
         const v = await U.modal({ title: 'ไม่อนุมัติคำขอ', html: '<label class="field"><span>เหตุผล</span><textarea class="input" name="reason" required></textarea></label>', ok: 'ไม่อนุมัติ', danger: true });
         if (!v) return;
-        try { await API.write('rejectRequest', { req_id: id, reason: v.reason }); U.toast('บันทึกแล้ว', 'ok'); App.refreshMe(); App.render(); } catch (er) { U.toast(er.message, 'err'); }
+        busy = true;
+        try { await API.write('rejectRequest', { req_id: id, reason: v.reason, expected_updated_at: request.updated_at }); U.toast('บันทึกแล้ว', 'ok'); await App.refreshMe(); App.render(); }
+        catch (er) { busy = false; recover(); U.toast(er.message, 'err'); }
       }
     };
   }

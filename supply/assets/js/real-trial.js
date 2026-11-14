@@ -4,7 +4,7 @@ const RealTrial=(function(){
  return {banner:banner};
 })();
 App.view('real-trial',{
- title:'ทดสอบฐานจริง / ล้างกลับยอด 0',roles:['ADMIN','OFFICER'],
+ title:'ทดสอบฐานจริง / ล้างกลับยอด 0',roles:['ADMIN','OFFICER','SUPPLY_HEAD'],
  render:async function(el){
   el.innerHTML='<div class="page-h"><h1>ทดสอบบนฐานข้อมูลจริง</h1><p>ใช้หน้าเบิก–รับเข้า–จ่ายและสถิติปกติของระบบ ยอดและเอกสารมีผลในฐานจริง</p></div>';
   if(API.scope()){el.innerHTML+='<div class="notice warn"><div><b>ขณะนี้อยู่ในพื้นที่จำลอง</b>กรุณากลับคลังจริงก่อนจัดการรอบทดสอบจริง</div></div><button class="btn" data-act="training-leave">กลับคลังจริง</button>';return;}
