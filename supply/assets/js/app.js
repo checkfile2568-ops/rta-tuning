@@ -101,7 +101,7 @@ const App = (function () {
       '<div class="shell' + cartCls + '">' +
       '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><img class="brand-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
       '<nav class="nav" id="nav">' + navHtml(navFor(u), route) + '</nav>' +
-      '<div class="side-foot"><b>' + U.nameHtml(u) + '</b>' + U.esc(ROLE_TH[u.role] || '') + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</div></aside>' +
+      '<div class="side-foot"><b>' + U.nameHtml(u) + '</b>' + U.roleHtml(ROLE_TH[u.role]) + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</div></aside>' +
       '<div class="main"><header class="mhead"><img class="mhead-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><div><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
       '<button class="userbtn" data-act="usermenu" aria-label="เมนูผู้ใช้">' + ICON('user') + ICON('chev') + '</button></header>' +
       '<div class="topbar"><span>' + today + '</span><button class="userbtn" data-act="usermenu"><span class="avatar">' + U.esc(init) + '</span>' + U.nameHtml(u) + '</button></div>' +
@@ -143,7 +143,7 @@ const App = (function () {
     const more = window.matchMedia('(max-width: 760px), (max-height: 520px) and (orientation: landscape)').matches;
     const items = navFor(u);
     const html = '<div class="who"><span class="avatar">' + U.esc(u.name.charAt(0)) + '</span><div><b>' + U.nameHtml(u) + '</b><span class="muted small">' +
-      U.esc(ROLE_TH[u.role]) + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</span></div></div>' +
+      U.roleHtml(ROLE_TH[u.role]) + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</span></div></div>' +
       '<div class="menu-sheet"><nav class="nav">' + (more ? navHtml(items, S.route) : '') +
       (API.scope() ? '' : '<a href="#/profile">' + ICON('user') + '<span>โปรไฟล์และ PIN</span></a>') +
       '<a href="#" data-act="logout">' + ICON('logout') + '<span>ออกจากระบบ</span></a></nav></div>';

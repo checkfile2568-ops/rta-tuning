@@ -483,7 +483,7 @@ App.view('profile', {
     try { positions = (await API.call('masters')).positions || []; } catch (e) { /**/ }
     el.innerHTML = '<div class="page-h"><h1>โปรไฟล์และ PIN</h1><p>ชื่อ-สกุลและส่วนงานแก้ไขโดยผู้ดูแลระบบ</p></div>' +
       '<div class="card"><div class="grid3"><div><span class="muted small">ชื่อ-สกุล</span><br><b>' + U.esc(u.name) + '</b></div><div><span class="muted small">ส่วนงาน</span><br><b>' + U.esc(u.dept_name || '-') + '</b></div>' +
-      '<div><span class="muted small">สิทธิ์</span><br><b>' + U.esc(App.ROLE_TH[u.role]) + '</b></div></div>' +
+      '<div><span class="muted small">สิทธิ์</span><br><b>' + U.roleHtml(App.ROLE_TH[u.role]) + '</b></div></div>' +
       '<form id="pf" style="margin-top:14px"><label class="field"><span>ตำแหน่ง (พิมพ์บนใบเบิก)</span><input class="input" name="position" list="pl" value="' + U.esc(u.position || '') + '"><datalist id="pl">' +
       positions.map(function (p) { return '<option value="' + U.esc(p) + '">'; }).join('') + '</datalist></label><button class="btn primary">บันทึกตำแหน่ง</button></form></div>' +
       '<div class="card"><h3>PIN</h3><p>ระบบนี้ใช้บัญชีและ PIN เดียวกับบัญชีกลางของศาล — เปลี่ยน PIN ให้ทำที่หน้าตั้ง PIN แล้วใช้ PIN ใหม่เข้าระบบนี้ได้ทันที · ลืม PIN ติดต่อผู้ดูแลระบบ</p>' +

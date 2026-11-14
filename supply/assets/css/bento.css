@@ -105,3 +105,11 @@
 /* ให้ปุ่มอนุมัติและคำทักทายอยู่ในจอแรก ก่อนตัวเลขคิว */
 .bento-officer > .bento-welcome { grid-row: 1; }
 .bento-officer > .bento-metrics { grid-row: 2; }
+
+/* ชื่อตำแหน่งหนึ่งบรรทัด และเลขแจ้งเตือนสีแดงสำหรับทุกบทบาท */
+.role-single-line { display: inline-block; max-width: 100%; white-space: nowrap; vertical-align: top; }
+.nav .cnt, .nav a.on .cnt, .bnav .dot, .task-count,
+.user-menu-modal .menu-sheet .nav .cnt {
+  color: #b42318; background: #fff1f0; border: 1px solid #f0b9b3;
+  font-weight: 800;
+}

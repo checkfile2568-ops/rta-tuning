@@ -37,6 +37,9 @@ const U = (function () {
       return '<span class="person-name"><span data-fit-name>' + U.esc(first) + '</span>' +
         (last ? '<span data-fit-name>' + U.esc(last) + '</span>' : '') + '</span>';
     },
+    roleHtml: function (label) {
+      return '<span class="role-single-line" data-fit-name>' + U.esc(label || '') + '</span>';
+    },
     fitNames: function (root) {
       root = root || document;
       const fit = function () {
