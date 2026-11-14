@@ -21,7 +21,7 @@ def integrate(source):
         if count != 1:
             raise ValueError('Missing function ' + name)
 
-    change("const API_VERSION = '1.5.2';", "const API_VERSION = '1.6.0';")
+    change("const API_VERSION = '1.5.2';", "const API_VERSION = '1.6.1';")
     change("const ROLES = ['NONE', 'USER', 'HEAD', 'OFFICER', 'ADMIN'];", "const ROLES = ['NONE', 'USER', 'HEAD', 'OFFICER', 'SUPPLY_HEAD', 'ADMIN'];")
     change("HEAD: 'หัวหน้าส่วน', OFFICER: 'เจ้าหน้าที่พัสดุ'", "HEAD: 'หัวหน้าส่วน', SUPPLY_HEAD: 'หัวหน้าเจ้าหน้าที่พัสดุ', OFFICER: 'เจ้าหน้าที่พัสดุ'")
     change("(u.role === 'OFFICER' || u.role === 'ADMIN')", "(isSupplyOfficer_(u) || u.role === 'ADMIN')")
@@ -66,8 +66,10 @@ def integrate(source):
     if (!(q >= 0) || q > num_(it.qty_req)) throw appErr_('BAD_QTY', 'จำนวนอนุมัติของ ' + it.mat_name_snapshot + ' ต้องอยู่ระหว่าง 0 ถึง ' + it.qty_req);
     const m = find_('MATERIALS', it.mat_id);
     if (!m) throw appErr_('NOT_FOUND', 'ไม่พบวัสดุในคลัง');
+    const diff = q - reserveQty_(it);
+    if (diff > 0 && diff > avail_(m)) throw appErr_('NOT_ENOUGH_STOCK', m.name + ' มีของพร้อมเบิกไม่พอสำหรับจำนวนอนุมัติ กรุณาลดจำนวน');
     sum += q;
-    return { it: it, m: m, qty: q, diff: q - reserveQty_(it) };
+    return { it: it, m: m, qty: q, diff: diff };
   });
   if (!sum) throw appErr_('ALL_ZERO', 'อนุมัติเป็น 0 ทุกรายการ ให้ใช้ไม่อนุมัติพร้อมเหตุผล');
   const ts = now_();
@@ -103,4 +105,4 @@ if __name__ == '__main__':
     original = Path(sys.argv[1]).read_text()
     output = integrate(original)
     Path(sys.argv[2]).write_text(output)
-    print('Patched API 1.6.0; baseline SHA256 ' + hashlib.sha256(original.encode()).hexdigest())
+    print('Patched API 1.6.1; baseline SHA256 ' + hashlib.sha256(original.encode()).hexdigest())

@@ -1,4 +1,4 @@
-/** Supply approval 1.6.0. Helpers only; no public maintenance routes. */
+/** Supply approval 1.6.1. Helpers only; no public maintenance routes. */
 function isSupplyHead_(user) { return !!user && user.role === 'SUPPLY_HEAD'; }
 function isSupplyOfficer_(user) { return !!user && (user.role === 'OFFICER' || isSupplyHead_(user)); }
 function supplyApprovalEnabled_() { return !TRAINING_SCOPE_ || cfgBool_('approval_enabled', false); }
