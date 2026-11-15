@@ -61,11 +61,26 @@ const U = (function () {
         U._nameObserver.observe(root);
       }
     },
-    periodArt: function (at) {
+    periodInfo: function (at) {
       const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', hourCycle: 'h23' }).format(at || new Date()));
       const period = hour >= 5 && hour < 12 ? 'morning' : hour >= 12 && hour < 18 ? 'afternoon' : 'evening';
-      const label = { morning: 'ช่วงเช้า', afternoon: 'ช่วงบ่าย', evening: 'ช่วงค่ำ' }[period];
-      return '<div class="period-art period-' + period + '" role="img" aria-label="' + label + '"><span class="period-rays"></span><span class="period-orb"></span><span class="period-cloud"></span><span class="period-star star-one"></span><span class="period-star star-two"></span></div>';
+      return { period: period, label: { morning: 'ช่วงเช้า', afternoon: 'ช่วงบ่าย', evening: 'ช่วงกลางคืน' }[period],
+        greeting: { morning: 'สวัสดีตอนเช้า', afternoon: 'สวัสดีตอนบ่าย', evening: 'สวัสดีตอนกลางคืน' }[period] };
+    },
+    greetingHtml: function (at) { const info = U.periodInfo(at); return '<span class="welcome-greeting" data-greeting-period="' + info.period + '">' + info.greeting + '</span>'; },
+    periodArt: function (at) {
+      const info = U.periodInfo(at);
+      return '<div class="period-art period-' + info.period + '" role="img" aria-label="' + info.label + '"><span class="period-rays"></span><span class="period-orb"></span><span class="period-cloud"></span><span class="period-star star-one"></span><span class="period-star star-two"></span></div>';
+    },
+    refreshGreeting: function (root, at) {
+      root = root || document; at = at || new Date();
+      const info = U.periodInfo(at);
+      U.$$('[data-greeting-period]', root).forEach(function (el) {
+        el.textContent = info.greeting; el.dataset.greetingPeriod = info.period;
+      });
+      U.$$('.period-art', root).forEach(function (el) {
+        if (!el.classList.contains('period-' + info.period)) el.outerHTML = U.periodArt(at);
+      });
     },
     quantityTotals: function (items, key) {
       const units = {};

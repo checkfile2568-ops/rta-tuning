@@ -128,6 +128,7 @@ const App = (function () {
     try { await v.render(el, parts.slice(1)); }
     catch (e) { el.innerHTML = errorBox(e); }
     if (v.cart && typeof Req !== 'undefined') Req.renderCart();
+    U.refreshGreeting(ROOT());
     U.fitNames(ROOT());
     window.scrollTo(0, 0);
   }
@@ -314,6 +315,8 @@ const App = (function () {
     if (a === 'usermenu' || a === 'more') { e.preventDefault(); userMenu(); }
     else if (a === 'gocart') { e.preventDefault(); location.hash = '#/cart'; }
   });
+  setInterval(function () { if (!document.hidden) U.refreshGreeting(ROOT()); }, 30000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) U.refreshGreeting(ROOT()); });
   window.addEventListener('hashchange', function () { if (S.user && S.me && !S.me.needDept && $('#view')) render(); });
 
   return {

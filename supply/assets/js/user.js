@@ -86,7 +86,7 @@ App.view('home', {
     const nDraft = Req.cartCount();
     const freq = (S.me.frequent || []).map(function (id) { return S.idx[id]; }).filter(Boolean);
     const pending = (c.myPending || 0) + (c.myReady || 0);
-    el.innerHTML = '<section class="bento-welcome"><div class="welcome-copy"><span class="bento-eyebrow">พื้นที่ทำงานของคุณ</span><span class="welcome-greeting">สวัสดี</span><h2>' + U.nameHtml(u) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p></div>' + U.periodArt() +
+    el.innerHTML = '<section class="bento-welcome"><div class="welcome-copy"><span class="bento-eyebrow">พื้นที่ทำงานของคุณ</span>' + U.greetingHtml() + '<h2>' + U.nameHtml(u) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p></div>' + U.periodArt() +
       '<a class="btn gold lg" href="#/req">' + ICON('box') + 'เบิกวัสดุ</a></section>' +
       '<nav class="bento-grid bento-menu bento-user-menu" aria-label="งานของฉัน"><a class="card" href="#/my">' + ICON('doc', 'ic') + (pending ? '<span class="task-count" aria-label="มีคำขอค้าง ' + pending + ' ใบ">' + U.n(pending) + '</span>' : '') + '<h3>คำขอของฉัน</h3><p>ติดตามการจัดเตรียมและการส่งมอบ</p></a><a class="card" href="#/dash">' + ICON('chart', 'ic') + '<h3>ประวัติการเบิก</h3><p>ตรวจรายการและสถิติตามสิทธิ์</p></a><a class="card" href="#/profile">' + ICON('user', 'ic') + '<h3>ข้อมูลของฉัน</h3><p>ตรวจส่วนงาน ตำแหน่ง และ PIN</p></a></nav>' +
       (c.myReady ? '<div class="notice info">' + ICON('truck') + '<div><b>มีของพร้อมรับ ' + c.myReady + ' ใบ</b>ติดต่อรับที่งานพัสดุ <a href="#/my">ดูรายการ</a></div></div>' : '') +
@@ -418,7 +418,7 @@ App.view('my', {
 App.view('approve', {
   title: 'อนุมัติเบิกจ่ายวัสดุ', roles: ['SUPPLY_HEAD'],
   render: async function (el) {
-    el.innerHTML = '<div class="page-h"><h1>อนุมัติเบิกจ่ายวัสดุ</h1><p>คำขอจากทุกส่วนงานและทุกประเภทวัสดุ ปรับลดจำนวนแล้วอนุมัติและลงนามได้ทั้งใบ</p></div><div id="approval-recovery"></div><div id="list"><div class="skel"></div></div>';
+    el.innerHTML = '<div class="page-h"><h1>อนุมัติเบิกจ่ายวัสดุ</h1><p>คำขอจากทุกส่วนงานและทุกประเภทวัสดุ ปรับลดจำนวนแล้วอนุมัติและลงนามได้ทั้งใบ</p></div><div class="approval-stock-tools"><span class="small muted" id="approval-checked" role="status"></span><button class="btn sm" id="approval-refresh">อัปเดตยอดวัสดุ</button></div><div id="approval-recovery"></div><div id="list"><div class="skel"></div></div>';
     const recover = function () {
       const actions = ['approveRequest', 'rejectRequest'].filter(function (a) { return API.pendingWrite && API.pendingWrite(a); });
       U.$('#approval-recovery').innerHTML = actions.map(function (a) { return '<div class="notice warn approval-recovery"><div>รายการเดิมยังไม่ทราบผลบันทึก กรุณาตรวจสอบด้วยรหัสเดิมก่อนทำรายการต่อ <button class="btn" data-recover="' + a + '">ตรวจสอบผลรายการเดิม</button></div></div>'; }).join('');
@@ -433,44 +433,98 @@ App.view('approve', {
       catch (er) { b.disabled = false; U.toast(er.message, 'err'); }
     };
     if (!App.S.cfg.approval_enabled) { U.$('#list').innerHTML = '<div class="notice info"><div>ยังไม่เปิดขั้นอนุมัติในพื้นที่นี้</div></div>'; return; }
+    let busy = false, refreshing = false, stockFresh = true;
     const rows = await API.call('approvals');
+    if (!el.isConnected) return;
+    const knownStock = function (i) { const s = i.stock; return !!s && s.valid === true && typeof s.balance === 'number' && Number.isFinite(s.balance) && typeof s.reserved_other === 'number' && Number.isFinite(s.reserved_other) && typeof s.available_for_request === 'number' && Number.isFinite(s.available_for_request) && s.available_for_request >= 0; };
+    const maximum = function (i) { return knownStock(i) ? Math.max(0, Math.min(i.qty_req, i.stock.available_for_request)) : 0; };
+    const stockHtml = function (i) {
+      if (!knownStock(i)) return '<p class="approval-stock-error">ยังตรวจสอบยอดวัสดุไม่ได้ กรุณาอัปเดตยอดก่อนอนุมัติ</p>';
+      const s = i.stock;
+      return '<dl class="approval-stock"><div><dt>คงคลังจริง</dt><dd>' + U.n(s.balance) + ' ' + U.esc(i.unit_name) + '</dd></div><div><dt>กันไว้ให้คำขออื่น</dt><dd>' + U.n(s.reserved_other) + ' ' + U.esc(i.unit_name) + '</dd></div><div class="approval-stock-ready"><dt>พร้อมอนุมัติสำหรับใบนี้</dt><dd>' + U.n(s.available_for_request) + ' ' + U.esc(i.unit_name) + '</dd></div></dl>';
+    };
     U.$('#list').innerHTML = rows.length ? rows.map(function (r) {
       return '<div class="card req-card approval-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) + ' · ' + U.thDateTime(r.created_at) + '</span></div></div>' +
         (r.purpose ? '<p class="small">วัตถุประสงค์: ' + U.esc(r.purpose) + '</p>' : '') +
-        '<div class="tablewrap"><table class="t"><thead><tr><th>วัสดุ</th><th class="num">จำนวนที่ขอ</th><th class="num">อนุมัติจ่าย</th><th class="num">จ่ายจริง</th></tr></thead><tbody>' + r.items.map(function (i) {
-          return '<tr><td>' + U.esc(i.name) + '<small class="muted"> ' + U.esc(i.unit_name) + '</small></td><td class="num">' + U.n(i.qty_req) + '</td><td class="num"><input class="input num" type="number" inputmode="numeric" min="0" max="' + i.qty_req + '" value="' + i.qty_req + '" data-item="' + U.esc(i.item_id) + '" aria-label="อนุมัติ ' + U.esc(i.name) + '"></td><td class="num issued-value">' + (i.qty_issued === null || i.qty_issued === undefined ? 'ยังไม่จ่าย' : U.n(i.qty_issued - (i.qty_returned || 0))) + '</td></tr>';
-        }).join('') + '</tbody></table></div><p class="approval-total" data-total></p><p class="approval-footnote">การอนุมัติบันทึกชื่อและเวลาของผู้อนุมัติลงใบเบิก ยังไม่ตัดสต็อก จำนวนจ่ายจริงจะบันทึกเมื่อเจ้าหน้าที่ส่งมอบ</p><div class="acts"><button class="btn primary" data-ok>อนุมัติและลงนามทั้งใบ</button><button class="btn" data-no>ไม่อนุมัติ</button></div></div>';
+        '<p class="approval-guide">กรุณาพิจารณาจำนวนอนุมัติจ่ายตามยอดวัสดุที่พร้อมอนุมัติ สามารถปรับลดจำนวนก่อนกดอนุมัติทั้งใบได้</p>' +
+        '<div class="tablewrap"><table class="t approval-items"><thead><tr><th>วัสดุและยอดคงเหลือ</th><th class="num">จำนวนที่ขอ</th><th class="num">อนุมัติจ่าย</th><th class="num">จ่ายจริง</th></tr></thead><tbody>' + r.items.map(function (i) {
+          return '<tr><td><b>' + U.esc(i.name) + '</b><small class="muted"> ' + U.esc(i.unit_name) + '</small><div data-stock-item="' + U.esc(i.item_id) + '">' + stockHtml(i) + '</div><small class="approval-after" data-after-item="' + U.esc(i.item_id) + '"></small></td><td class="num" data-label="จำนวนที่ขอ">' + U.n(i.qty_req) + '</td><td class="num" data-label="อนุมัติจ่าย"><input class="input num" type="number" inputmode="numeric" min="0" max="' + maximum(i) + '" value="' + maximum(i) + '" data-item="' + U.esc(i.item_id) + '" aria-label="อนุมัติ ' + U.esc(i.name) + '"></td><td class="num issued-value" data-label="จ่ายจริง">' + (i.qty_issued === null || i.qty_issued === undefined ? 'ยังไม่จ่าย' : U.n(i.qty_issued - (i.qty_returned || 0))) + '</td></tr>';
+        }).join('') + '</tbody></table></div><p class="approval-total" data-total></p><p class="approval-footnote">เมื่ออนุมัติ ระบบกันจำนวนไว้ให้ใบนี้และอัปเดตยอดสำหรับคำขออื่น ตัดคงคลังจริงเมื่อเจ้าหน้าที่ส่งมอบ โดยไม่หักซ้ำ</p><p class="approval-stock-error" data-request-state role="status"></p><div class="acts"><button class="btn primary" data-ok>อนุมัติและลงนามทั้งใบ</button><button class="btn" data-no>ไม่อนุมัติ</button></div></div>';
     }).join('') : '<div class="empty">' + ICON('check') + '<p>ไม่มีคำขอรออนุมัติ</p></div>';
     const totals = function (card) {
       const request = rows.find(function (r) { return r.req_id === card.dataset.id; });
-      const quantities = {};
-      U.$$('input[data-item]', card).forEach(function (i) { quantities[i.dataset.item] = Number(i.value); });
+      const quantities = {}; let valid = stockFresh && !request.stock_stale;
+      U.$$('input[data-item]', card).forEach(function (input) {
+        const item = request.items.find(function (i) { return i.item_id === input.dataset.item; });
+        const qty = Number(input.value), max = maximum(item);
+        quantities[item.item_id] = qty; input.max = max;
+        const ok = input.value !== '' && Number.isInteger(qty) && qty >= 0 && qty <= max && knownStock(item);
+        input.setAttribute('aria-invalid', ok ? 'false' : 'true'); valid = valid && ok;
+        const after = card.querySelector('[data-after-item="' + item.item_id + '"]');
+        after.textContent = !knownStock(item) ? '' : ok ? 'เมื่ออนุมัติใบนี้ จะเหลือพร้อมใช้สำหรับคำขอใหม่ ' + U.n(item.stock.available_for_request - qty) + ' ' + item.unit_name : 'อนุมัติได้ไม่เกิน ' + U.n(max) + ' ' + item.unit_name;
+      });
       card.querySelector('[data-total]').innerHTML = 'รวมจำนวนอนุมัติตามหน่วย ' + U.quantityTotals(request.items.map(function (i) { return Object.assign({}, i, { qty_approved: quantities[i.item_id] }); }), 'qty_approved');
+      card.querySelector('[data-ok]').disabled = busy || !valid || !Object.keys(quantities).some(function (id) { return quantities[id] > 0; });
+      card.querySelector('[data-no]').disabled = busy || !!request.stock_stale;
     };
-    U.$$('.approval-card').forEach(totals);
+    const checked = function () { U.$('#approval-checked').textContent = 'ยอดล่าสุด ' + new Intl.DateTimeFormat('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).format(new Date()) + ' · อัปเดตอัตโนมัติทุก 30 วินาที'; };
+    checked(); U.$$('.approval-card', el).forEach(totals);
+    const refreshStock = async function () {
+      if (busy || refreshing || !el.isConnected) return;
+      refreshing = true; const button = el.querySelector('#approval-refresh'); button.disabled = true;
+      try {
+        const latest = await API.call('approvals');
+        if (!el.isConnected) return;
+        stockFresh = true;
+        U.$$('.approval-card', el).forEach(function (card) {
+          const request = rows.find(function (r) { return r.req_id === card.dataset.id; });
+          const fresh = latest.find(function (r) { return r.req_id === request.req_id; });
+          request.stock_stale = !fresh || fresh.updated_at !== request.updated_at;
+          card.querySelector('[data-request-state]').textContent = request.stock_stale ? 'คำขอนี้เปลี่ยนแล้ว กรุณาโหลดรายการล่าสุดก่อนดำเนินการ' : '';
+          request.items.forEach(function (item) {
+            const next = fresh && fresh.items.find(function (i) { return i.item_id === item.item_id; });
+            item.stock = next ? next.stock : null;
+            card.querySelector('[data-stock-item="' + item.item_id + '"]').innerHTML = stockHtml(item);
+          });
+          totals(card);
+        });
+        checked();
+      } catch (er) {
+        if (!el.isConnected) return;
+        stockFresh = false;
+        el.querySelector('#approval-checked').textContent = 'อัปเดตยอดไม่สำเร็จ กรุณากดอัปเดตยอดวัสดุก่อนอนุมัติ';
+        U.$$('.approval-card', el).forEach(totals);
+      } finally { refreshing = false; button.disabled = false; }
+    };
+    U.$('#approval-refresh').onclick = refreshStock;
     U.$('#list').oninput = function (e) { const card = e.target.closest('.approval-card'); if (card) totals(card); };
-    let busy = false;
     U.$('#list').onclick = async function (e) {
-      if (busy || recover()) return;
+      if (busy || refreshing || recover()) return;
       const c = e.target.closest('.card'); if (!c) return;
       const id = c.dataset.id;
       const request = rows.find(function (r) { return r.req_id === id; });
       if (e.target.closest('[data-ok]')) {
-        const items = U.$$('input[data-item]', c).map(function (i) { return { item_id: i.dataset.item, qty_approved: Number(i.value) }; });
-        const bad = items.find(function (i) { return !Number.isInteger(i.qty_approved) || i.qty_approved < 0 || i.qty_approved > request.items.find(function (x) { return x.item_id === i.item_id; }).qty_req; });
-        if (bad) { U.toast('จำนวนอนุมัติต้องเป็นจำนวนเต็มตั้งแต่ 0 และไม่เกินจำนวนที่ขอ', 'err'); return; }
+        const inputs = U.$$('input[data-item]', c);
+        const items = inputs.map(function (i) { return { item_id: i.dataset.item, qty_approved: Number(i.value) }; });
+        const bad = inputs.some(function (input) { const item = request.items.find(function (x) { return x.item_id === input.dataset.item; }); return input.value === '' || !knownStock(item) || !Number.isInteger(Number(input.value)) || Number(input.value) < 0 || Number(input.value) > maximum(item); });
+        if (request.stock_stale || !stockFresh || bad) { U.toast('กรุณาอัปเดตยอดและระบุจำนวนอนุมัติไม่เกินยอดพร้อมอนุมัติและจำนวนที่ขอ', 'err'); return; }
         if (!items.some(function (i) { return i.qty_approved > 0; })) { U.toast('ถ้าไม่จ่ายทุกรายการ ให้กดไม่อนุมัติพร้อมเหตุผล', 'err'); return; }
         busy = true; U.$$('button,input', c).forEach(function (x) { x.disabled = true; });
-        try { await API.write('approveRequest', { req_id: id, items: items, expected_updated_at: request.updated_at }); U.toast('อนุมัติและบันทึกผู้ลงนามแล้ว', 'ok'); await App.refreshMe(); App.render(); }
-        catch (er) { busy = false; U.$$('button,input', c).forEach(function (x) { x.disabled = false; }); recover(); U.toast(er.message, 'err'); }
+        try { await API.write('approveRequest', { req_id: id, items: items, expected_updated_at: request.updated_at }); U.toast('อนุมัติ กันจำนวนวัสดุ และบันทึกผู้ลงนามแล้ว', 'ok'); await App.refreshMe(); App.render(); }
+        catch (er) { busy = false; U.$$('button,input', c).forEach(function (x) { x.disabled = false; }); recover(); U.toast(er.message, 'err'); await refreshStock(); }
       } else if (e.target.closest('[data-no]')) {
+        if (request.stock_stale) return;
         const v = await U.modal({ title: 'ไม่อนุมัติคำขอ', html: '<label class="field"><span>เหตุผล</span><textarea class="input" name="reason" required></textarea></label>', ok: 'ไม่อนุมัติ', danger: true });
-        if (!v) return;
+        if (!v || busy) return;
         busy = true;
         try { await API.write('rejectRequest', { req_id: id, reason: v.reason, expected_updated_at: request.updated_at }); U.toast('บันทึกแล้ว', 'ok'); await App.refreshMe(); App.render(); }
-        catch (er) { busy = false; recover(); U.toast(er.message, 'err'); }
+        catch (er) { busy = false; recover(); U.toast(er.message, 'err'); await refreshStock(); }
       }
     };
+    const timer = setInterval(function () {
+      if (!el.isConnected || !App.S.user || App.S.user.role !== 'SUPPLY_HEAD' || (App.S.route && App.S.route !== 'approve')) { clearInterval(timer); return; }
+      if (!document.hidden && !document.querySelector('.modal-wrap')) refreshStock();
+    }, 30000);
   }
 });
 

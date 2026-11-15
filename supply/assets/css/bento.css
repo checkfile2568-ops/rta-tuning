@@ -113,3 +113,27 @@
   color: #b42318; background: #fff1f0; border: 1px solid #f0b9b3;
   font-weight: 800;
 }
+
+/* ยอดประกอบการพิจารณาอนุมัติ — จำกัดรูปแบบไว้ในหน้าอนุมัติ */
+.approval-stock-tools { display:flex; gap:12px; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+.approval-guide { background:#edf4ff; color:#23476d; border-radius:12px; padding:12px 14px; font-size:.88rem; }
+.approval-stock { margin:10px 0 4px; font-size:.82rem; min-width:190px; }
+.approval-stock > div { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:3px 0; }
+.approval-stock dt { color:#5d697b; }
+.approval-stock dd { margin:0; font-weight:600; white-space:nowrap; }
+.approval-stock-ready { color:#17654c; border-top:1px solid #c6ddd3; margin-top:4px; }
+.approval-stock-ready dt { color:inherit; font-weight:600; }
+.approval-after { color:#53677d; display:block; font-size:.76rem; margin-top:8px; }
+.approval-stock-error { color:#b42318; font-size:.82rem; }
+.approval-items input[aria-invalid="true"] { border-color:#b42318; background:#fff1f0; }
+@media (max-width:600px) {
+  .approval-card .tablewrap { overflow:visible; }
+  .approval-items, .approval-items tbody { display:block; width:100%; min-width:0; }
+  .approval-items thead { display:none; }
+  .approval-items tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; padding:14px 0; border-bottom:1px solid var(--line); }
+  .approval-items td { display:block; padding:0; border:0; min-width:0; text-align:left; }
+  .approval-items td:first-child { grid-column:1 / -1; }
+  .approval-items td[data-label]::before { content:attr(data-label); display:block; font-size:.78rem; color:var(--muted); margin-bottom:5px; }
+  .approval-items td input { width:100%; min-width:0; }
+  .approval-stock { min-width:0; }
+}
