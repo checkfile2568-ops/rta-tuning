@@ -2755,7 +2755,7 @@
   function stExec(c){
     FB.remoteCmd=true; if(c.ns==='st'||c.ns==='rm')FB.cmdNs=c.ns;
     appToast('🎮 คำสั่งจาก'+(c.from||'แผงควบคุม')+': '+(RM_NAME[c.op]||c.op));
-    if(c.op==='rec'){ if(['graph','pip','stack','camfull'].includes(c.mode))REC_V.mode=c.mode; if(['environment','user'].includes(c.face))REC_V.face=c.face; FB.recRemote=true; recStart(); return; }
+    if(c.op==='rec'){ if(['graph','pip','stack','camfull'].includes(c.mode))REC_V.mode=c.mode; if(['environment','user'].includes(c.face))REC_V.face=c.face; if(['hd','smooth'].includes(c.q))REC_V.q=c.q; FB.recRemote=true; recStart(); return; }
     if(c.op==='recstop'){ recStop(); return; }
     if(c.op==='p3cancel'){ if(measuring)cancelMeasurement(); p3Reset(); resetMeasurementButtons(); return; }
     if(c.op==='noise'){ if(c.band!=null)setNoiseBand(c.band); if(!!c.on!==noiseOn)toggleNoise(); autoPinkOn=false; return; }
@@ -3398,12 +3398,14 @@ function fmp4ToMp4(buf){
   for(const x of allChunks){ const s=tracks[x.id].samples; for(let i=x.c.first;i<x.c.first+x.c.count;i++){ out.set(u8.subarray(s[i].off,s[i].off+s[i].size),p); p+=s[i].size; } }
   return out;
 }
-const REC_V={phase:'idle',token:0,session:null,mr:null,timer:null,url:null,file:null,mode:'graph',face:'environment'};
-try{const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}');if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode;if(['environment','user'].includes(o.face))REC_V.face=o.face;}catch(_){}
+const REC_V={phase:'idle',token:0,session:null,mr:null,timer:null,url:null,file:null,mode:'graph',face:'environment',q:'hd'};
+try{const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}');if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode;if(['environment','user'].includes(o.face))REC_V.face=o.face;if(['hd','smooth'].includes(o.q))REC_V.q=o.q;}catch(_){}
+// hd: graph 1080 wide, camera modes 720 wide + 1280x720 camera; smooth: old light settings for slow phones
+const REC_Q={hd:{g:1080,c:720,camW:1280,camH:720,bg:4500000,bc:5000000,t:'ชัด'},smooth:{g:720,c:540,camW:640,camH:360,bg:1400000,bc:2200000,t:'ลื่น'}};
 function recMime(){if(!window.MediaRecorder)return null;for(const t of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm']){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(_){}}return '';}
 function recUI(phase,msg){const R=REC_V;R.phase=phase;const b=dq('gRec');b.disabled=phase==='processing';b.classList.toggle('on',phase==='recording');
   b.textContent=({idle:'🎬 อัดวิดีโอ',preparing:'✕ ยกเลิกการเตรียม',recording:'⏹ หยุดอัด',processing:'⏳ กำลังจัดไฟล์',ready:'🎬 อัดคลิปใหม่',error:'🎬 ลองอัดใหม่'})[phase];
-  dq('gRecStatus').textContent=msg||({idle:'พร้อมอัด',preparing:'กำลังเปิดไมค์ / กล้อง',recording:'กำลังอัด · โหมดลื่นไหล 24 fps · เสียงไมค์',processing:'กำลังจัดไฟล์ — กรุณารอ',ready:'พร้อมบันทึก — กดบันทึกลงเครื่อง',error:'อัดไม่สำเร็จ'})[phase];
+  dq('gRecStatus').textContent=msg||({idle:'พร้อมอัด',preparing:'กำลังเปิดไมค์ / กล้อง',recording:'กำลังอัด · '+((REC_Q[(REC_V.session&&REC_V.session.q)||REC_V.q]||REC_Q.hd).t)+' 24 fps · เสียงไมค์',processing:'กำลังจัดไฟล์ — กรุณารอ',ready:'พร้อมบันทึก — กดบันทึกลงเครื่อง',error:'อัดไม่สำเร็จ'})[phase];
   if(phase!=='recording')dq('gRecT').textContent='';
 }
 function recEl(S=REC_V.session){return S?(performance.now()-S.t0-S.pausedMs-(S.pausedAt?performance.now()-S.pausedAt:0))/1000:0;}
@@ -3447,35 +3449,36 @@ function recRelease(S){if(!S)return;S.released=true;clearInterval(S.timer);S.tim
 }
 function recAsk(){if(['preparing','recording','processing'].includes(REC_V.phase))return;const R=REC_V;
   const modes=[['graph','📈','กราฟอย่างเดียว','กราฟใหญ่ + เสียงไมค์'],['camfull','🎥','กล้องเต็มจอ','กราฟมุมขวาล่าง + เสียงไมค์'],['pip','🖼','กราฟ + กล้องมุมจอ','กราฟใหญ่ + ภาพกล้องเล็ก'],['stack','📱','กล้องบน · กราฟล่าง','เหมาะกับวิดีโอแนวตั้ง']];
-  openModal('<h3>🎬 บันทึกวิดีโอผลวัด</h3><p>โหมดลื่นไหล 24 fps · กราฟอย่างเดียว 720p · แบบมีกล้อง 540p (ลื่นกว่าบนมือถือ) · ภาพมีสัดส่วนคงที่ · เสียงจากไมค์ · สูงสุด 10 นาที</p><div class="stylegrid">'+modes.map(m=>'<button data-rv="mode" data-v="'+m[0]+'" class="'+(R.mode===m[0]?'sel':'')+'"><span class="e">'+m[1]+'</span><div><b>'+m[2]+'</b><span>'+m[3]+'</span></div></button>').join('')+'</div><div class="strength" id="rvFace" style="'+(R.mode==='graph'?'opacity:.4':'')+'">'+[['environment','📷 กล้องหลัง'],['user','🤳 กล้องหน้า']].map(c=>'<button data-rv="face" data-v="'+c[0]+'" class="'+(R.face===c[0]?'sel':'')+'">'+c[1]+'</button>').join('')+'</div><div class="dvmfoot"><button data-m="close">ยกเลิก</button><button class="primary" data-rv="go">⏺ เริ่มอัด</button></div>');
+  openModal('<h3>🎬 บันทึกวิดีโอผลวัด</h3><p>24 fps · เสียงจากไมค์ · สูงสุด 10 นาที · <b>ชัด</b> = กราฟ 1080p / กล้อง 720p · <b>ลื่น</b> = ไฟล์เล็ก ใช้กับมือถือรุ่นเก่าที่อัดแล้วกระตุก</p><div class="stylegrid">'+modes.map(m=>'<button data-rv="mode" data-v="'+m[0]+'" class="'+(R.mode===m[0]?'sel':'')+'"><span class="e">'+m[1]+'</span><div><b>'+m[2]+'</b><span>'+m[3]+'</span></div></button>').join('')+'</div><div class="strength" id="rvFace" style="'+(R.mode==='graph'?'opacity:.4':'')+'">'+[['environment','📷 กล้องหลัง'],['user','🤳 กล้องหน้า']].map(c=>'<button data-rv="face" data-v="'+c[0]+'" class="'+(R.face===c[0]?'sel':'')+'">'+c[1]+'</button>').join('')+'</div><div class="strength">'+[['hd','🔍 ชัด (แนะนำ)'],['smooth','⚡ ลื่น / ไฟล์เล็ก']].map(c=>'<button data-rv="q" data-v="'+c[0]+'" class="'+(R.q===c[0]?'sel':'')+'">'+c[1]+'</button>').join('')+'</div><div class="dvmfoot"><button data-m="close">ยกเลิก</button><button class="primary" data-rv="go">⏺ เริ่มอัด</button></div>');
 }
-dq('dvModal').addEventListener('click',e=>{const b=e.target.closest('[data-rv]');if(!b)return;const R=REC_V;if(b.dataset.rv==='go'){try{localStorage.setItem('rta_recopt',JSON.stringify({mode:R.mode,face:R.face}));}catch(_){}closeModal();recStart();return;}
+dq('dvModal').addEventListener('click',e=>{const b=e.target.closest('[data-rv]');if(!b)return;const R=REC_V;if(b.dataset.rv==='go'){try{localStorage.setItem('rta_recopt',JSON.stringify({mode:R.mode,face:R.face,q:R.q}));}catch(_){}closeModal();recStart();return;}
   R[b.dataset.rv]=b.dataset.v;dq('dvMbox').querySelectorAll('[data-rv="'+b.dataset.rv+'"]').forEach(x=>x.classList.toggle('sel',x===b));const f=dq('rvFace');if(f)f.style.opacity=R.mode==='graph'?'.4':'';
 });
 async function recStart(){const R=REC_V;if(['preparing','recording','processing'].includes(R.phase))return;
   if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){appToast('เบราว์เซอร์นี้อัดวิดีโอไม่ได้ — ลอง Chrome',true);return;}
-  if(SY.role==='remote'){rmSend({op:'rec',mode:R.mode,face:R.face});return;}
-  const S={id:++R.token,mode:R.mode,face:R.face,chunks:[],t0:0,pausedMs:0,pausedAt:0,range:[DB_TOP,DB_BOT],fps:RECORD_FPS,clock:{},raf:null,timer:null,mr:null,cam:null,camV:null,videoStream:null,released:false,finalized:false};R.session=S;recUI('preparing');
+  if(SY.role==='remote'){rmSend({op:'rec',mode:R.mode,face:R.face,q:R.q});return;}
+  const S={id:++R.token,mode:R.mode,face:R.face,q:REC_Q[R.q]?R.q:'hd',chunks:[],t0:0,pausedMs:0,pausedAt:0,range:[DB_TOP,DB_BOT],fps:RECORD_FPS,clock:{},raf:null,timer:null,mr:null,cam:null,camV:null,videoStream:null,released:false,finalized:false};R.session=S;recUI('preparing');
   const active=()=>R.session===S&&R.token===S.id&&R.phase==='preparing';
   try{
     if(!running)await startMic();if(!active())return;if(!running)throw new Error('เปิดไมค์ไม่ได้ — กรุณาอนุญาตไมค์แล้วลองใหม่');
     if(S.mode!=='graph'){
-      try{S.cam=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.face},width:{ideal:640},height:{ideal:360},frameRate:{ideal:24,max:30}},audio:false});}
+      try{S.cam=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.face},width:{ideal:REC_Q[S.q].camW},height:{ideal:REC_Q[S.q].camH},frameRate:{ideal:24,max:30}},audio:false});}
       catch(e){if(!active())return;S.mode='graph';appToast('เปิดกล้องไม่ได้ — อัดกราฟและเสียงไมค์แทน',true);}
       if(!active())return;
       if(S.cam){S.camV=recCamPreview(S,true);for(let i=0;i<30&&active()&&!S.camV.videoWidth;i++)await new Promise(r=>setTimeout(r,100));if(!active())return;if(!S.camV.videoWidth)throw new Error('กล้องยังไม่ส่งภาพ — ลองอัดใหม่');}
     }
     if(!active()||!running)throw new Error('ไมค์ถูกหยุดระหว่างเตรียมอัด');
-    // camera modes composite at 540 px wide: drawing camera frames is the main-thread bottleneck on phones
-    S.cv=document.createElement('canvas');S.cv.width=S.mode==='graph'?720:540;S.cv.height=S.mode==='stack'?960:540;
-    if(S.mode==='camfull')S.cv.height=S.camV.videoHeight>S.camV.videoWidth?960:304;
+    // hd: graph 1080 / camera 720 wide; smooth keeps 720 / 540 for slow phones (camera compositing is the main-thread bottleneck)
+    const Q=REC_Q[S.q],W=S.mode==='graph'?Q.g:(S.mode==='camfull'&&S.q==='hd'&&S.camV&&S.camV.videoWidth>=S.camV.videoHeight)?1280:Q.c,k=W/540,ev=n=>Math.round(n/2)*2;
+    S.cv=document.createElement('canvas');S.cv.width=W;S.cv.height=S.mode==='graph'?ev(W*.75):ev((S.mode==='stack'?960:540)*k);
+    if(S.mode==='camfull')S.cv.height=ev((S.camV.videoHeight>S.camV.videoWidth?960:304)*k);
     S.t0=performance.now();recFrame(S);
     if(!recDest&&audioCtx){recDest=audioCtx.createMediaStreamDestination();if(srcNode)srcNode.connect(recDest);}
     const tr=recDest?recDest.stream.getAudioTracks()[0]:micStream&&micStream.getAudioTracks()[0];if(!tr||tr.readyState==='ended')throw new Error('ไม่พบเสียงไมค์สำหรับวิดีโอ');
     S.videoStream=S.cv.captureStream(0);S.captureTrack=S.videoStream.getVideoTracks()[0];
     if(!S.captureTrack||typeof S.captureTrack.requestFrame!=='function'){S.videoStream.getVideoTracks().forEach(t=>t.stop());S.videoStream=S.cv.captureStream(S.fps);S.captureTrack=null;}
     const ms=new MediaStream([...S.videoStream.getVideoTracks(),tr]),mime=recMime();
-    try{S.mr=new MediaRecorder(ms,mime?{mimeType:mime,videoBitsPerSecond:S.mode==='graph'?1400000:2200000,audioBitsPerSecond:128000}:undefined);}catch(_){S.mr=new MediaRecorder(ms);}
+    try{S.mr=new MediaRecorder(ms,mime?{mimeType:mime,videoBitsPerSecond:S.mode==='graph'?REC_Q[S.q].bg:REC_Q[S.q].bc,audioBitsPerSecond:128000}:undefined);}catch(_){S.mr=new MediaRecorder(ms);}
     R.mr=S.mr;S.mr.ondataavailable=e=>{if(!S.finalized&&e.data&&e.data.size)S.chunks.push(e.data);};
     S.mr.onerror=e=>{S.error=(e.error&&e.error.message)||'ตัวบันทึกวิดีโอขัดข้อง';recStop(S.error);};
     S.mr.onstop=()=>{recRelease(S);recDone(S);};
