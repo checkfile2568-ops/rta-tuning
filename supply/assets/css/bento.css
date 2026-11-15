@@ -128,12 +128,12 @@
 .approval-items input[aria-invalid="true"] { border-color:#b42318; background:#fff1f0; }
 @media (max-width:600px) {
   .approval-card .tablewrap { overflow:visible; }
-  .approval-items, .approval-items tbody { display:block; width:100%; min-width:0; }
-  .approval-items thead { display:none; }
-  .approval-items tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; padding:14px 0; border-bottom:1px solid var(--line); }
-  .approval-items td { display:block; padding:0; border:0; min-width:0; text-align:left; }
-  .approval-items td:first-child { grid-column:1 / -1; }
-  .approval-items td[data-label]::before { content:attr(data-label); display:block; font-size:.78rem; color:var(--muted); margin-bottom:5px; }
-  .approval-items td input { width:100%; min-width:0; }
+  .approval-card table.approval-items, .approval-card table.approval-items tbody { display:block; width:100%; min-width:0; }
+  .approval-card table.approval-items thead { display:none; }
+  .approval-card table.approval-items tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; padding:14px 0; border-bottom:1px solid var(--line); }
+  .approval-card table.approval-items td { display:block; padding:0; border:0; min-width:0; text-align:left; }
+  .approval-card table.approval-items td:first-child { grid-column:1 / -1; }
+  .approval-card table.approval-items td[data-label]::before { content:attr(data-label); display:block; font-size:.78rem; color:var(--muted); margin-bottom:5px; }
+  .approval-card table.approval-items td .input.num { width:100%; min-width:0; }
   .approval-stock { min-width:0; }
 }

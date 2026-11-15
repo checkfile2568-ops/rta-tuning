@@ -1,6 +1,6 @@
 # Approval stock quantities and time greetings
 
-Web 1.10.0 / API 1.6.2. Baseline: web 1.9.2 commit 9218af96fd28429dd2c7e3ab81ea7317de89e1dd; API 1.6.1 deployment version 10.
+Web 1.10.1 / API 1.6.2. Baseline: web 1.9.2 commit 9218af96fd28429dd2c7e3ab81ea7317de89e1dd; API 1.6.1 deployment version 10.
 
 Only two changes:
 
