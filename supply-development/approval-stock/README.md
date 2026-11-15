@@ -19,3 +19,11 @@ GAS_TEST_DIR=/private/test-gas NODE_PATH=/path/to/test-dependencies/node_modules
 ```
 
 Rollback: redeploy Apps Script version 10 and restore the scoped frontend files from the baseline commit. Preserve production data; no database restore is needed for this upgrade.
+
+## Web 1.10.2 navigation fix
+
+A queue refresh timer looked up the global `#list` after navigation. Because the approval page also used that ID, the old queue loader attempted to draw its missing tab controls and wrote the resulting `Cannot set properties of null (setting 'innerHTML')` error into the new approval list. A regression test reproduced the exact visible error before the fix.
+
+Queue selectors and asynchronous results now stay with their originating view; the timer stops before fetching once that view is gone. Home queue previews use the same lifecycle guard. Approval uses its own `#approval-list`, scoped selectors, and a guard that also handles overlapping renders on the same root. API 1.6.2, permissions and production data are unchanged.
+
+Validation: 29 frontend/regression cases pass, including abandoned queue timers, late successful/failed queue responses, late home previews, overlapping approval renders and an approval refresh completing after navigation. The synthetic preview supports `race=1`: hold queue results, navigate to approval, then release the old results through the fixture controls. Rollback frontend baseline: 564e341a9a8faa21f0d2020a25a30ea24748d403.

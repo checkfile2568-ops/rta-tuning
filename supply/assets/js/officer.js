@@ -68,13 +68,15 @@ const Officer = (function () {
     drawTodayChart(el, c);
     const nt = U.$('#nt');
     if (nt) nt.onclick = function () { Notification.requestPermission().then(function () { nt.parentNode.remove(); }); };
+    const previewBox = el.querySelector('#q5');
     try {
       const q = (await API.call('queue')).filter(function (r) { return r.status !== 'PENDING_APPROVAL'; }).slice(0, 5);
-      U.$('#q5').innerHTML = q.length ? q.map(function (r) {
+      if (!el.isConnected || !el.contains(previewBox)) return;
+      previewBox.innerHTML = q.length ? q.map(function (r) {
         return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line-2)"><div><b>' + U.esc(r.req_no) + '</b> <span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) +
           ' · ' + r.items.length + ' รายการ · ' + (r.age_days || 0) + ' วันทำการ</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>';
       }).join('') : '<p class="muted">ไม่มีคิวค้าง</p>';
-    } catch (e) { U.$('#q5').innerHTML = App.errorBox(e); }
+    } catch (e) { if (el.isConnected && el.contains(previewBox)) previewBox.innerHTML = App.errorBox(e); }
   }
   let todayChart = null;
   async function drawTodayChart(el, c) {
@@ -126,6 +128,7 @@ App.view('queue', {
   title: 'คิวจ่ายวัสดุ', roles: OA,
   render: async function (el, params) {
     const S = App.S;
+    const $ = function (selector) { return el.querySelector(selector); };
     const F = S.forms.queue = S.forms.queue || { tab: 'PENDING_PREP' };
     // #/queue/<req_id> = เปิดจาก QR บนใบเบิก: แสดงเฉพาะใบนั้น
     const p0 = params && params[0] ? decodeURIComponent(params[0]) : '';
@@ -134,12 +137,15 @@ App.view('queue', {
     el.innerHTML = '<div class="page-h row"><div><h1>คิวจ่ายวัสดุ</h1><p>เรียงจากยื่นก่อน · เตรียมของแล้วแตะ "เตรียมพร้อมรับ" · ส่งของจริงแล้วแตะ "ยืนยันส่งมอบ" · สแกน QR บนใบเบิกเพื่อเปิดใบนั้นทันที</p></div><span class="spacer"></span>' +
       '<button class="btn" id="pp">' + ICON('print') + 'พิมพ์ใบเตรียมของ</button><button class="btn" id="rf">' + ICON('refresh') + 'รีเฟรช</button></div>' +
       '<div id="queue-recovery"></div><div id="focusbar"></div><div class="seg" id="tab"></div><div id="list" style="margin-top:16px"><div class="skel"></div><div class="skel"></div></div>';
+    const listBox = $('#list');
+    const active = function () { return el.isConnected && el.contains(listBox); };
     const pendingActions = function () { return ['prepareRequest', 'issueRequest', 'issueEdit'].filter(function (a) { return API.pendingWrite && API.pendingWrite(a); }); };
     const recovery = function () {
-      U.$('#queue-recovery').innerHTML = pendingActions().map(function (a) { return '<div class="notice warn"><div>รายการเดิมยังไม่ทราบผลบันทึก <button class="btn" data-recover="' + a + '">ตรวจสอบผลรายการเดิม</button></div></div>'; }).join('');
+      if (!active()) return;
+      $('#queue-recovery').innerHTML = pendingActions().map(function (a) { return '<div class="notice warn"><div>รายการเดิมยังไม่ทราบผลบันทึก <button class="btn" data-recover="' + a + '">ตรวจสอบผลรายการเดิม</button></div></div>'; }).join('');
     };
     recovery();
-    U.$('#queue-recovery').onclick = async function (e) {
+    $('#queue-recovery').onclick = async function (e) {
       const b = e.target.closest('[data-recover]'); if (!b || b.disabled) return;
       const p = API.pendingWrite(b.dataset.recover); if (!p) return;
       b.disabled = true;
@@ -163,29 +169,30 @@ App.view('queue', {
         (r.editable ? '<span class="small muted">แก้ได้จนกว่าจะยืนยันรายงานเดือน' + U.esc(r.month_label || '') + '</span>' : '') + '</div></div>';
     };
     const draw = function () {
+      if (!active()) return;
       const n = function (st) { return rows.filter(function (r) { return r.status === st; }).length; };
       const tabs = [['PENDING_PREP', 'รอจัดเตรียม'], ['READY', 'พร้อมรับ']];
       if (S.cfg.approval_enabled || n('PENDING_APPROVAL')) tabs.push(['PENDING_APPROVAL', 'รออนุมัติ']);
       tabs.push(['ISSUED', 'ส่งมอบแล้ว']);
-      U.$('#tab').innerHTML = tabs.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (F.tab === t[0] ? 'on' : '') + '">' + t[1] + ' (' + (t[0] === 'ISSUED' ? issued.length : n(t[0])) + ')</button>'; }).join('');
+      $('#tab').innerHTML = tabs.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (F.tab === t[0] ? 'on' : '') + '">' + t[1] + ' (' + (t[0] === 'ISSUED' ? issued.length : n(t[0])) + ')</button>'; }).join('');
       let list = F.tab === 'ISSUED' ? issued : rows.filter(function (r) { return r.status === F.tab; });
       if (focus) {
         const hit = rows.find(function (r) { return r.req_id === focus; });
-        U.$('#tab').style.display = 'none';
+        $('#tab').style.display = 'none';
         if (hit) {
           list = [hit];
-          U.$('#focusbar').innerHTML = '<div class="notice info"><div><b>เปิดจาก QR · ใบ ' + U.esc(hit.req_no) + '</b>' + U.esc(hit.status_th || '') + ' <a href="#/queue">แสดงทั้งคิว</a></div></div>';
+          $('#focusbar').innerHTML = '<div class="notice info"><div><b>เปิดจาก QR · ใบ ' + U.esc(hit.req_no) + '</b>' + U.esc(hit.status_th || '') + ' <a href="#/queue">แสดงทั้งคิว</a></div></div>';
         } else {
           const f = focusInfo;
-          U.$('#focusbar').innerHTML = '<div class="notice ' + (f && f.status === 'ISSUED' ? 'ok' : 'warn') + '"><div><b>' + (f ? 'ใบ ' + U.esc(f.req_no) + ' · ' + U.esc(f.status_th) : 'ไม่พบใบนี้ในคิว') + '</b>' +
+          $('#focusbar').innerHTML = '<div class="notice ' + (f && f.status === 'ISSUED' ? 'ok' : 'warn') + '"><div><b>' + (f ? 'ใบ ' + U.esc(f.req_no) + ' · ' + U.esc(f.status_th) : 'ไม่พบใบนี้ในคิว') + '</b>' +
             (f && f.status === 'ISSUED' ? 'ส่งมอบแล้วเมื่อ ' + U.thDateTime(f.issued_at) + (f.receiver_name ? ' · ผู้รับ ' + U.esc(f.receiver_name) : '') :
               f ? 'ใบนี้ไม่อยู่ในคิวจ่าย' + (f.reason ? ' · เหตุผล: ' + U.esc(f.reason) : '') : 'ใบนี้อาจถูกยกเลิกหรือส่งมอบไปแล้ว') +
             ' · ' + (f ? '<a href="#/print/' + U.esc(f.req_id) + '">พิมพ์ใบเบิก</a> · ' : '') + '<a href="#/queue">แสดงทั้งคิว</a></div></div>';
           list = f && f.status === 'ISSUED' && f.items ? [f] : [];
         }
-      } else { U.$('#tab').style.display = ''; U.$('#focusbar').innerHTML = ''; }
+      } else { $('#tab').style.display = ''; $('#focusbar').innerHTML = ''; }
       const alert = S.cfg.lead_alert_days || 3;
-      U.$('#list').innerHTML = list.length ? list.map(function (r) {
+      $('#list').innerHTML = list.length ? list.map(function (r) {
         if (r.status === 'ISSUED') return issuedCard(r);
         const prep = r.status === 'PENDING_PREP';
         return '<div class="card req-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.esc(r.requester_name) +
@@ -204,17 +211,19 @@ App.view('queue', {
       }).join('') : (focus ? '' : '<div class="empty">' + ICON('truck') + '<p>' + (F.tab === 'ISSUED' ? 'ไม่มีใบที่ส่งมอบแล้วและยังแก้ไขได้ (เดือนที่ยืนยันรายงานแล้วแก้ไม่ได้)' : 'ไม่มีคำขอในคิวนี้') + '</p></div>');
     };
     const load = async function () {
+      if (!active()) return;
       try {
         const got = await Promise.all([API.call('queue'), API.call('issuedList').catch(function () { return []; })]);
+        if (!active()) return;
         rows = got[0]; issued = got[1] || [];
         if (focus && !rows.some(function (r) { return r.req_id === focus; })) {
           try { focusInfo = await API.call('getRequest', { req_id: focus }); } catch (e) { focusInfo = null; }
         }
         draw();
-      } catch (e) { U.$('#list').innerHTML = App.errorBox(e); }
+      } catch (e) { if (active()) listBox.innerHTML = App.errorBox(e); }
     };
     // พิมพ์ใบเตรียมของ: เลือกใบในแท็บปัจจุบัน แล้วพิมพ์แบบรวม (ใบจัดเตรียม) หรือแยก (ใบเบิกทีละใบ)
-    U.$('#pp').onclick = async function () {
+    $('#pp').onclick = async function () {
       const st = focus ? null : F.tab;
       const pool = rows.filter(function (r) { return focus ? r.req_id === focus : r.status === st; });
       if (!pool.length) { U.toast('ไม่มีใบเบิกในแท็บนี้', 'warn'); return; }
@@ -232,10 +241,10 @@ App.view('queue', {
       S.forms.batchPrint = { mode: v.mode === 'each' ? 'each' : 'pick', rows: pool.filter(function (r) { return v['r_' + r.req_id]; }) };
       location.hash = '#/print/batch';
     };
-    U.$('#tab').onclick = function (e) { const b = e.target.closest('[data-t]'); if (b) { F.tab = b.dataset.t; draw(); } };
-    U.$('#rf').onclick = load;
+    $('#tab').onclick = function (e) { const b = e.target.closest('[data-t]'); if (b) { F.tab = b.dataset.t; draw(); } };
+    $('#rf').onclick = load;
     let queueBusy = false;
-    U.$('#list').onclick = async function (e) {
+    $('#list').onclick = async function (e) {
       const b = e.target.closest('[data-a]'); if (!b) return;
       if (queueBusy || pendingActions().length) { recovery(); return; }
       const card = b.closest('.card');
@@ -302,7 +311,8 @@ App.view('queue', {
       finally { queueBusy = false; b.disabled = false; recovery(); }
     };
     await load();
-    const timer = setInterval(function () { if (!document.body.contains(U.$('#list'))) clearInterval(timer); else if (!document.querySelector('.modal-wrap')) load(); }, 60000);
+    if (!active()) return;
+    const timer = setInterval(function () { if (!active()) clearInterval(timer); else if (!document.querySelector('.modal-wrap')) load(); }, 60000);
   }
 });
 

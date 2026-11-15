@@ -418,24 +418,28 @@ App.view('my', {
 App.view('approve', {
   title: 'อนุมัติเบิกจ่ายวัสดุ', roles: ['SUPPLY_HEAD'],
   render: async function (el) {
-    el.innerHTML = '<div class="page-h"><h1>อนุมัติเบิกจ่ายวัสดุ</h1><p>คำขอจากทุกส่วนงานและทุกประเภทวัสดุ ปรับลดจำนวนแล้วอนุมัติและลงนามได้ทั้งใบ</p></div><div class="approval-stock-tools"><span class="small muted" id="approval-checked" role="status"></span><button class="btn sm" id="approval-refresh">อัปเดตยอดวัสดุ</button></div><div id="approval-recovery"></div><div id="list"><div class="skel"></div></div>';
+    el.innerHTML = '<div class="page-h"><h1>อนุมัติเบิกจ่ายวัสดุ</h1><p>คำขอจากทุกส่วนงานและทุกประเภทวัสดุ ปรับลดจำนวนแล้วอนุมัติและลงนามได้ทั้งใบ</p></div><div class="approval-stock-tools"><span class="small muted" id="approval-checked" role="status"></span><button class="btn sm" id="approval-refresh">อัปเดตยอดวัสดุ</button></div><div id="approval-recovery"></div><div id="approval-list"><div class="skel"></div></div>';
+    const $ = function (selector) { return el.querySelector(selector); };
+    const listBox = $('#approval-list');
+    const active = function () { return el.isConnected && el.contains(listBox); };
     const recover = function () {
+      if (!active()) return false;
       const actions = ['approveRequest', 'rejectRequest'].filter(function (a) { return API.pendingWrite && API.pendingWrite(a); });
-      U.$('#approval-recovery').innerHTML = actions.map(function (a) { return '<div class="notice warn approval-recovery"><div>รายการเดิมยังไม่ทราบผลบันทึก กรุณาตรวจสอบด้วยรหัสเดิมก่อนทำรายการต่อ <button class="btn" data-recover="' + a + '">ตรวจสอบผลรายการเดิม</button></div></div>'; }).join('');
+      $('#approval-recovery').innerHTML = actions.map(function (a) { return '<div class="notice warn approval-recovery"><div>รายการเดิมยังไม่ทราบผลบันทึก กรุณาตรวจสอบด้วยรหัสเดิมก่อนทำรายการต่อ <button class="btn" data-recover="' + a + '">ตรวจสอบผลรายการเดิม</button></div></div>'; }).join('');
       return actions.length > 0;
     };
     recover();
-    U.$('#approval-recovery').onclick = async function (e) {
+    $('#approval-recovery').onclick = async function (e) {
       const b = e.target.closest('[data-recover]'); if (!b || b.disabled) return;
       const pending = API.pendingWrite(b.dataset.recover); if (!pending) return;
       b.disabled = true;
       try { await API.write(b.dataset.recover, pending.data); await App.refreshMe(); App.render(); }
       catch (er) { b.disabled = false; U.toast(er.message, 'err'); }
     };
-    if (!App.S.cfg.approval_enabled) { U.$('#list').innerHTML = '<div class="notice info"><div>ยังไม่เปิดขั้นอนุมัติในพื้นที่นี้</div></div>'; return; }
+    if (!App.S.cfg.approval_enabled) { $('#approval-list').innerHTML = '<div class="notice info"><div>ยังไม่เปิดขั้นอนุมัติในพื้นที่นี้</div></div>'; return; }
     let busy = false, refreshing = false, stockFresh = true;
     const rows = await API.call('approvals');
-    if (!el.isConnected) return;
+    if (!active()) return;
     const knownStock = function (i) { const s = i.stock; return !!s && s.valid === true && typeof s.balance === 'number' && Number.isFinite(s.balance) && typeof s.reserved_other === 'number' && Number.isFinite(s.reserved_other) && typeof s.available_for_request === 'number' && Number.isFinite(s.available_for_request) && s.available_for_request >= 0; };
     const maximum = function (i) { return knownStock(i) ? Math.max(0, Math.min(i.qty_req, i.stock.available_for_request)) : 0; };
     const stockHtml = function (i) {
@@ -443,7 +447,7 @@ App.view('approve', {
       const s = i.stock;
       return '<dl class="approval-stock"><div><dt>คงคลังจริง</dt><dd>' + U.n(s.balance) + ' ' + U.esc(i.unit_name) + '</dd></div><div><dt>กันไว้ให้คำขออื่น</dt><dd>' + U.n(s.reserved_other) + ' ' + U.esc(i.unit_name) + '</dd></div><div class="approval-stock-ready"><dt>พร้อมอนุมัติสำหรับใบนี้</dt><dd>' + U.n(s.available_for_request) + ' ' + U.esc(i.unit_name) + '</dd></div></dl>';
     };
-    U.$('#list').innerHTML = rows.length ? rows.map(function (r) {
+    $('#approval-list').innerHTML = rows.length ? rows.map(function (r) {
       return '<div class="card req-card approval-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) + ' · ' + U.thDateTime(r.created_at) + '</span></div></div>' +
         (r.purpose ? '<p class="small">วัตถุประสงค์: ' + U.esc(r.purpose) + '</p>' : '') +
         '<p class="approval-guide">กรุณาพิจารณาจำนวนอนุมัติจ่ายตามยอดวัสดุที่พร้อมอนุมัติ สามารถปรับลดจำนวนก่อนกดอนุมัติทั้งใบได้</p>' +
@@ -467,14 +471,14 @@ App.view('approve', {
       card.querySelector('[data-ok]').disabled = busy || !valid || !Object.keys(quantities).some(function (id) { return quantities[id] > 0; });
       card.querySelector('[data-no]').disabled = busy || !!request.stock_stale;
     };
-    const checked = function () { U.$('#approval-checked').textContent = 'ยอดล่าสุด ' + new Intl.DateTimeFormat('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).format(new Date()) + ' · อัปเดตอัตโนมัติทุก 30 วินาที'; };
+    const checked = function () { $('#approval-checked').textContent = 'ยอดล่าสุด ' + new Intl.DateTimeFormat('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).format(new Date()) + ' · อัปเดตอัตโนมัติทุก 30 วินาที'; };
     checked(); U.$$('.approval-card', el).forEach(totals);
     const refreshStock = async function () {
-      if (busy || refreshing || !el.isConnected) return;
+      if (busy || refreshing || !active()) return;
       refreshing = true; const button = el.querySelector('#approval-refresh'); button.disabled = true;
       try {
         const latest = await API.call('approvals');
-        if (!el.isConnected) return;
+        if (!active()) return;
         stockFresh = true;
         U.$$('.approval-card', el).forEach(function (card) {
           const request = rows.find(function (r) { return r.req_id === card.dataset.id; });
@@ -490,15 +494,15 @@ App.view('approve', {
         });
         checked();
       } catch (er) {
-        if (!el.isConnected) return;
+        if (!active()) return;
         stockFresh = false;
         el.querySelector('#approval-checked').textContent = 'อัปเดตยอดไม่สำเร็จ กรุณากดอัปเดตยอดวัสดุก่อนอนุมัติ';
         U.$$('.approval-card', el).forEach(totals);
       } finally { refreshing = false; button.disabled = false; }
     };
-    U.$('#approval-refresh').onclick = refreshStock;
-    U.$('#list').oninput = function (e) { const card = e.target.closest('.approval-card'); if (card) totals(card); };
-    U.$('#list').onclick = async function (e) {
+    $('#approval-refresh').onclick = refreshStock;
+    $('#approval-list').oninput = function (e) { const card = e.target.closest('.approval-card'); if (card) totals(card); };
+    $('#approval-list').onclick = async function (e) {
       if (busy || refreshing || recover()) return;
       const c = e.target.closest('.card'); if (!c) return;
       const id = c.dataset.id;
@@ -522,7 +526,7 @@ App.view('approve', {
       }
     };
     const timer = setInterval(function () {
-      if (!el.isConnected || !App.S.user || App.S.user.role !== 'SUPPLY_HEAD' || (App.S.route && App.S.route !== 'approve')) { clearInterval(timer); return; }
+      if (!active() || !App.S.user || App.S.user.role !== 'SUPPLY_HEAD' || (App.S.route && App.S.route !== 'approve')) { clearInterval(timer); return; }
       if (!document.hidden && !document.querySelector('.modal-wrap')) refreshStock();
     }, 30000);
   }
