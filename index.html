@@ -3519,9 +3519,9 @@ function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=S.ctx||(S
   const now=performance.now(),elapsed=recEl(S),second=Math.floor(elapsed),theme=!!p.bg;
   if(!S.headerCanvas||now-(S.headerAt||0)>=250||S.headerSecond!==second||S.headerTheme!==theme){
     const head=S.headerCanvas||(S.headerCanvas=document.createElement('canvas'));head.width=rc.width;head.height=Math.ceil(HD*scale);const hc=head.getContext('2d');hc.setTransform(scale,0,0,scale,0,0);const a=graphStats();
-  hc.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':p.bg?'#f0f5fa':'#111f31';hc.fillRect(0,0,w,HD);
-  const fg=S.mode==='camfull'||!p.bg?'#e8f4ff':'#142d44',mu=S.mode==='camfull'||!p.bg?'#9fb3c9':'#50667b';
-  hc.textBaseline='top';hc.textAlign='left';recTitle(hc,a.mode,!(S.mode==='camfull'||!p.bg),S.mode==='camfull'||!p.bg);
+  hc.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':'#111f31';  // header always uses the dark style (user's choice)hc.fillRect(0,0,w,HD);
+  const fg='#e8f4ff',mu='#9fb3c9';
+  hc.textBaseline='top';hc.textAlign='left';recTitle(hc,a.mode,false,true);
   hc.font='25px '+MONO();hc.fillStyle=mu;hc.fillText('พีค '+(a.peak?niceLabel(a.peak.f)+' Hz':'—')+'   เทียบเป้า '+(a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB'),24,72,w-48);
   hc.font='21px '+MONO();hc.fillText('กราฟ dB อ้างอิง · เสียงไมค์ dBFS · ไม่ใช่ dB SPL',24,116,w-48);
   const t=elapsed;hc.textAlign='right';hc.fillStyle='#ff7b83';hc.font='800 30px Orbitron, '+MONO();hc.fillText('● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),w-24,20);hc.textAlign='left';
