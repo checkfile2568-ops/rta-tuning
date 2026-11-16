@@ -3452,6 +3452,7 @@ function fmp4ToMp4(buf){
   for(const x of allChunks){ const s=tracks[x.id].samples; for(let i=x.c.first;i<x.c.first+x.c.count;i++){ out.set(u8.subarray(s[i].off,s[i].off+s[i].size),p); p+=s[i].size; } }
   return out;
 }
+const REC_MODEL='DigitClass D-STACK (M5)'; // DSP model shown in the video header
 const REC_V={phase:'idle',token:0,session:null,mr:null,timer:null,url:null,file:null,mode:'graph',face:'environment',q:'hd',a:'clean'};
 try{const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}');if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode;if(['environment','user'].includes(o.face))REC_V.face=o.face;if(['hd','smooth'].includes(o.q))REC_V.q=o.q;if(['clean','raw'].includes(o.a))REC_V.a=o.a;}catch(_){}
 // hd: graph 1080 wide, camera modes 720 wide + 1280x720 camera; smooth: old light settings for slow phones
@@ -3497,7 +3498,7 @@ function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=S.ctx||(S
     const head=S.headerCanvas||(S.headerCanvas=document.createElement('canvas'));head.width=rc.width;head.height=Math.ceil(HD*scale);const hc=head.getContext('2d');hc.setTransform(scale,0,0,scale,0,0);const a=graphStats();
   hc.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':p.bg?'#f0f5fa':'#111f31';hc.fillRect(0,0,w,HD);
   const fg=S.mode==='camfull'||!p.bg?'#e8f4ff':'#142d44',mu=S.mode==='camfull'||!p.bg?'#9fb3c9':'#50667b';
-  hc.textBaseline='top';hc.textAlign='left';hc.font='bold 36px '+MONO();hc.fillStyle=fg;hc.fillText('RTA · '+a.mode,24,18,w-240);
+  hc.textBaseline='top';hc.textAlign='left';hc.font='bold 36px '+MONO();hc.fillStyle=fg;hc.fillText('RTA · '+a.mode+' · '+REC_MODEL,24,18,w-240);
   hc.font='25px '+MONO();hc.fillStyle=mu;hc.fillText('พีค '+(a.peak?niceLabel(a.peak.f)+' Hz':'—')+'   เทียบเป้า '+(a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB'),24,72,w-48);
   hc.font='21px '+MONO();hc.fillText('กราฟ dB อ้างอิง · เสียงไมค์ dBFS · ไม่ใช่ dB SPL',24,116,w-48);
   const t=elapsed;hc.textAlign='right';hc.fillStyle='#ff7b83';hc.font='bold 32px '+MONO();hc.fillText('● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),w-24,20);hc.textAlign='left';
