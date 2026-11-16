@@ -3452,7 +3452,7 @@ function fmp4ToMp4(buf){
   for(const x of allChunks){ const s=tracks[x.id].samples; for(let i=x.c.first;i<x.c.first+x.c.count;i++){ out.set(u8.subarray(s[i].off,s[i].off+s[i].size),p); p+=s[i].size; } }
   return out;
 }
-const REC_MODEL='DigitClass D-STACK (M5)'; // DSP model shown in the video header
+const REC_MODEL='DigitClass D-STACK BlueArt'; // DSP model shown in the video header
 const REC_V={phase:'idle',token:0,session:null,mr:null,timer:null,url:null,file:null,mode:'graph',face:'environment',q:'hd',a:'clean'};
 try{const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}');if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode;if(['environment','user'].includes(o.face))REC_V.face=o.face;if(['hd','smooth'].includes(o.q))REC_V.q=o.q;if(['clean','raw'].includes(o.a))REC_V.a=o.a;}catch(_){}
 // hd: graph 1080 wide, camera modes 720 wide + 1280x720 camera; smooth: old light settings for slow phones
