@@ -3453,6 +3453,29 @@ function fmp4ToMp4(buf){
   return out;
 }
 const REC_MODEL='DigitClass D-STACK BlueArt'; // DSP model shown in the video header
+// Video header title: English mode badge + 3D lettering (Orbitron / Rajdhani from Google Fonts, system fallback when offline)
+const REC_EN={'เสียงสด':['LIVE','#ff3b4f','#b3122a'],'ผลวัด':['RESULT','#27d3c1','#0a7f8c'],'กำลังวัด':['MEASURING','#ffb020','#b86b00'],'MMM · กำลังวัด':['MMM · MEASURING','#ffb020','#b86b00'],'พร้อมวัด':['READY','#6f9dff','#2a4fb5'],'A / B':['A / B','#b48cff','#6a3fc0'],'SWEEP':['SWEEP','#ff8a3a','#b44a0c'],'PHASE':['PHASE','#ffd24a','#a8800c']};
+const RF={t:'900 48px Orbitron, "Arial Black", sans-serif',b:'800 21px Orbitron, Arial, sans-serif',m:'700 29px Rajdhani, "Arial Narrow", Arial, sans-serif'};
+function recFontsReady(){ try{ if(!document.getElementById('recFonts')){ const l=document.createElement('link'); l.id='recFonts'; l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Rajdhani:wght@700&display=swap'; document.head.appendChild(l); }
+  const all=Promise.all(['900 48px Orbitron','800 21px Orbitron','700 29px Rajdhani'].map(f=>document.fonts.load(f).catch(()=>{}))); return Promise.race([all,new Promise(r=>setTimeout(r,1800))]); }catch(_){ return Promise.resolve(); } }
+function rec3D(c,txt,x,y,font,top,bot,side,depth,h){ c.save(); c.font=font; c.textBaseline='top'; c.textAlign='left';
+  for(let i=depth;i>0;i--){ c.fillStyle=side; c.fillText(txt,x+i*.7,y+i); }
+  const w=c.measureText(txt).width, g=c.createLinearGradient(0,y,0,y+h); g.addColorStop(0,top); g.addColorStop(1,bot); c.fillStyle=g; c.fillText(txt,x,y);
+  c.save(); c.beginPath(); c.rect(x-2,y,w+4,h*.42); c.clip(); c.globalAlpha=.32; c.fillStyle='#fff'; c.fillText(txt,x,y); c.restore();
+  c.restore(); return w; }
+function recTitle(c,mode,light,dark){ const x0=24,y0=12, e=REC_EN[mode]||[mode,'#6f9dff','#2a4fb5'];
+  let x=x0+rec3D(c,'RTA',x0,y0,RF.t,light?'#1fc2d6':'#9ff7ff',light?'#075f6e':'#18b6c9',light?'#a9c4d3':'#06343c',6,48)+22;
+  // badge
+  c.save(); c.font=RF.b; const live=e[0]==='LIVE', tw=c.measureText(e[0]).width, bw=tw+(live?52:32), by=y0+6, bh=40, r=bh/2;
+  c.fillStyle=e[2]; c.beginPath(); c.roundRect(x+2,by+4,bw,bh,r); c.fill();
+  const g=c.createLinearGradient(0,by,0,by+bh); g.addColorStop(0,e[1]); g.addColorStop(1,e[2]); c.fillStyle=g; c.beginPath(); c.roundRect(x,by,bw,bh,r); c.fill();
+  c.fillStyle='rgba(255,255,255,.28)'; c.beginPath(); c.roundRect(x+4,by+3,bw-8,bh*.42,r*.8); c.fill();
+  if(live){ c.fillStyle='#fff'; c.beginPath(); c.arc(x+22,by+bh/2,7,0,Math.PI*2); c.fill(); }
+  c.fillStyle='#fff'; c.textBaseline='middle'; c.textAlign='left'; c.shadowColor='rgba(0,0,0,.35)'; c.shadowOffsetY=2; c.fillText(e[0],x+(live?38:16),by+bh/2+1); c.restore();
+  x+=bw+20;
+  // model name: silver (dark header) / steel blue (light header), small extrusion, letter-spaced
+  c.save(); try{ c.letterSpacing='2px'; }catch(_){}
+  rec3D(c,REC_MODEL.toUpperCase(),x,y0+10,RF.m,dark?'#ffffff':'#2c5577',dark?'#9fb6cc':'#123049',dark?'rgba(0,0,0,.55)':'rgba(120,150,180,.55)',2,30); c.restore(); }
 const REC_V={phase:'idle',token:0,session:null,mr:null,timer:null,url:null,file:null,mode:'graph',face:'environment',q:'hd',a:'clean'};
 try{const o=JSON.parse(localStorage.getItem('rta_recopt')||'{}');if(['graph','pip','stack','camfull'].includes(o.mode))REC_V.mode=o.mode;if(['environment','user'].includes(o.face))REC_V.face=o.face;if(['hd','smooth'].includes(o.q))REC_V.q=o.q;if(['clean','raw'].includes(o.a))REC_V.a=o.a;}catch(_){}
 // hd: graph 1080 wide, camera modes 720 wide + 1280x720 camera; smooth: old light settings for slow phones
@@ -3498,10 +3521,10 @@ function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=S.ctx||(S
     const head=S.headerCanvas||(S.headerCanvas=document.createElement('canvas'));head.width=rc.width;head.height=Math.ceil(HD*scale);const hc=head.getContext('2d');hc.setTransform(scale,0,0,scale,0,0);const a=graphStats();
   hc.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':p.bg?'#f0f5fa':'#111f31';hc.fillRect(0,0,w,HD);
   const fg=S.mode==='camfull'||!p.bg?'#e8f4ff':'#142d44',mu=S.mode==='camfull'||!p.bg?'#9fb3c9':'#50667b';
-  hc.textBaseline='top';hc.textAlign='left';hc.font='bold 36px '+MONO();hc.fillStyle=fg;hc.fillText('RTA · '+a.mode+' · '+REC_MODEL,24,18,w-240);
+  hc.textBaseline='top';hc.textAlign='left';recTitle(hc,a.mode,!(S.mode==='camfull'||!p.bg),S.mode==='camfull'||!p.bg);
   hc.font='25px '+MONO();hc.fillStyle=mu;hc.fillText('พีค '+(a.peak?niceLabel(a.peak.f)+' Hz':'—')+'   เทียบเป้า '+(a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB'),24,72,w-48);
   hc.font='21px '+MONO();hc.fillText('กราฟ dB อ้างอิง · เสียงไมค์ dBFS · ไม่ใช่ dB SPL',24,116,w-48);
-  const t=elapsed;hc.textAlign='right';hc.fillStyle='#ff7b83';hc.font='bold 32px '+MONO();hc.fillText('● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),w-24,20);hc.textAlign='left';
+  const t=elapsed;hc.textAlign='right';hc.fillStyle='#ff7b83';hc.font='800 30px Orbitron, '+MONO();hc.fillText('● '+Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),w-24,20);hc.textAlign='left';
     S.headerAt=now;S.headerSecond=second;S.headerTheme=theme;
   }
   x.drawImage(S.headerCanvas,0,0,S.headerCanvas.width,S.headerCanvas.height,0,0,w,HD);
@@ -3533,6 +3556,7 @@ async function recStart(){const R=REC_V;if(['preparing','recording','processing'
       if(!active())return;
       if(S.cam){S.camV=recCamPreview(S,true);for(let i=0;i<30&&active()&&!S.camV.videoWidth;i++)await new Promise(r=>setTimeout(r,100));if(!active())return;if(!S.camV.videoWidth)throw new Error('กล้องยังไม่ส่งภาพ — ลองอัดใหม่');}
     }
+    await recFontsReady(); if(!active())return;
     if(!active()||!running)throw new Error('ไมค์ถูกหยุดระหว่างเตรียมอัด');
     // hd: graph 1080 / camera 720 wide; smooth keeps 720 / 540 for slow phones (camera compositing is the main-thread bottleneck)
     const Q=REC_Q[S.q],W=S.mode==='graph'?Q.g:(S.mode==='camfull'&&S.q==='hd'&&S.camV&&S.camV.videoWidth>=S.camV.videoHeight)?1280:Q.c,k=W/540,ev=n=>Math.round(n/2)*2;
