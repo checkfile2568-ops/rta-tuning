@@ -3519,7 +3519,7 @@ function recFrame(S=REC_V.session){if(!S||!S.cv)return;const rc=S.cv,x=S.ctx||(S
   const now=performance.now(),elapsed=recEl(S),second=Math.floor(elapsed),theme=!!p.bg;
   if(!S.headerCanvas||now-(S.headerAt||0)>=250||S.headerSecond!==second||S.headerTheme!==theme){
     const head=S.headerCanvas||(S.headerCanvas=document.createElement('canvas'));head.width=rc.width;head.height=Math.ceil(HD*scale);const hc=head.getContext('2d');hc.setTransform(scale,0,0,scale,0,0);const a=graphStats();
-  hc.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':'#111f31';  // header always uses the dark style (user's choice)hc.fillRect(0,0,w,HD);
+  hc.fillStyle=S.mode==='camfull'?'rgba(5,13,24,.86)':'#111f31';hc.fillRect(0,0,w,HD);  // header always uses the dark style (user's choice)
   const fg='#e8f4ff',mu='#9fb3c9';
   hc.textBaseline='top';hc.textAlign='left';recTitle(hc,a.mode,false,true);
   hc.font='25px '+MONO();hc.fillStyle=mu;hc.fillText('พีค '+(a.peak?niceLabel(a.peak.f)+' Hz':'—')+'   เทียบเป้า '+(a.delta==null?'—':'±'+a.delta.toFixed(1)+' dB'),24,72,w-48);
