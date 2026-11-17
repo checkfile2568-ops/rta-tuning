@@ -485,7 +485,7 @@
   .pchk span.ok{color:var(--spectrum)}
   .rmbar .rmns{flex:1 1 100%;display:flex;align-items:center;gap:6px;flex-wrap:wrap} .rmbar .rmns small{color:var(--muted)}
   .rmsug{white-space:pre-line;text-align:left} .rmsug b{display:block;margin-bottom:6px;color:var(--text)}
-  .usesec{margin:12px 0 6px;font-size:13px;color:var(--muted)} .qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px 0} .qrbox img{width:min(280px,72vw);height:auto;image-rendering:pixelated;background:#fff;padding:8px;border-radius:10px} .qrbox small{color:var(--muted);text-align:center}
+  .rmnshint{flex-basis:100%;font-size:12px;color:var(--muted);margin-top:4px} .usesec{margin:12px 0 6px;font-size:13px;color:var(--muted)} .qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px 0} .qrbox img{width:min(280px,72vw);height:auto;image-rendering:pixelated;background:#fff;padding:8px;border-radius:10px} .qrbox small{color:var(--muted);text-align:center}
   .usegrid button .usehint{font-weight:600;font-size:11px;color:#ff9b4a;margin-left:4px} .usewarn{color:#ff9b6b;font-size:13px}
   .rmseg{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap} .rmseg button{flex:0 0 auto;min-height:32px;font-size:12px;padding:4px 10px;border-radius:9px}
   .rmseg button.sel{background:rgba(90,209,255,.18);border-color:#5ad1ff;color:var(--text)}
@@ -2783,8 +2783,20 @@
   const RM_NAME={song:'วัดด้วยเพลง',p3:'วางนิ่ง 3 จุด',p3cancel:'ยกเลิก 3 จุด',mic:'ไมค์',quick:'เช็กเร็ว 10 วิ',measure:'มาตรฐาน 20 วิ',mmm:'MMM 35 วิ',sweep:'Sweep',phase:'เช็กเฟส',clear:'ล้าง',noise:'Pink Noise',rec:'เริ่มอัดวิดีโอ',recstop:'หยุดอัดวิดีโอ'};
   if(SY.ns!=='st'&&SY.ns!=='rm')SY.ns='rm'; if(!SY.nsv){ SY.ns='rm'; SY.nsv=2; }   // who plays the test signal: st = เครื่องวัด (Bluetooth into the rig) · rm = แผงควบคุม (AUX cable)
   FB.cmdNs='st'; FB.recRemote=false;
-  let rmAutoNoise=false, rmSawMeas=false;
+  let rmAutoNoise=false, rmSawMeas=false, stPending=null;
+  function stAudioOk(){ return !!(audioCtx&&audioCtx.state==='running'); }
+  function stUnlockShow(c){ if(c)stPending=c; let o=dq('stUnlock');
+    if(!o){ o=document.createElement('button'); o.id='stUnlock'; o.type='button';
+      o.style.cssText='position:fixed;inset:0;z-index:99999;border:0;background:rgba(4,12,22,.92);color:#fff;font:700 22px/1.5 inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center';
+      o.innerHTML='<span style="font-size:64px">👆</span><span>แตะจอ 1 ครั้ง<br>เพื่อเปิดเสียงและไมค์ของเครื่องวัด</span><small style="font-weight:400;font-size:14px;opacity:.75">เบราว์เซอร์ไม่ยอมให้เล่นเสียงจนกว่าจะมีคนแตะหน้าเว็บ — แตะครั้งเดียวต่อการเปิดหน้า</small>';
+      o.addEventListener('click',async()=>{ try{ if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); await audioCtx.resume(); }catch(_){}
+        o.remove(); try{ wakeOn(); }catch(_){} if(!running)dq('btnMic').click(); stPublish&&setTimeout(()=>{ FB.pub=0; stPublish(); },300);
+        const c2=stPending; stPending=null; if(c2)setTimeout(()=>stExec(c2),running?50:1700); });
+      document.body.appendChild(o); }
+  }
+  setTimeout(()=>{ if(SY.role==='station'&&!stAudioOk())stUnlockShow(); },1500);   // station page just opened → ask for the one tap up front
   function stExec(c){
+    if(!stAudioOk()&&(c.op==='noise'||c.op==='song'||c.op==='sweep'||c.op==='phase'||(c.ns==='st'&&/^(quick|measure|mmm|p3)$/.test(c.op)))){ stUnlockShow(c); appToast('👆 แตะจอเครื่องวัด 1 ครั้งก่อน — เสียงยังถูกเบราว์เซอร์ล็อกอยู่',true); return; }
     FB.remoteCmd=true; if(c.ns==='st'||c.ns==='rm')FB.cmdNs=c.ns;
     appToast('🎮 คำสั่งจาก'+(c.from||'แผงควบคุม')+': '+(RM_NAME[c.op]||c.op));
     if(c.op==='rec'){ if(['graph','pip','stack','camfull'].includes(c.mode))REC_V.mode=c.mode; if(['environment','user'].includes(c.face))REC_V.face=c.face; if(['hd','smooth'].includes(c.q))REC_V.q=c.q; if(['clean','raw'].includes(c.a))REC_V.a=c.a; FB.recRemote=true; recStart(); return; }
@@ -2801,7 +2813,7 @@
     if(!running&&!recBusy&&now-FB.pub<3000)return; if((running||recBusy)&&now-FB.pub<120)return; FB.pub=now;
     const data=measured||lastLive, pick=id=>{ const b=dq(id); return b?{t:b.textContent.replace(/\s+/g,' ').trim(),d:b.disabled,on:b.classList.contains('on')}:null; };
     FB.root.child('live/station').set({name:SY.name,at:now,running,measuring:!!(measuring||preparing),sweeping:!!sweeping,perOct,lv:{s:LV.state,r:Math.round(LV.rms)},noise:!!noiseOn,nb:NOISE_BAND,
-      vis:document.visibilityState==='visible',p3:{a:P3.active,pt:P3.pt,ph:P3.ph},rec:{ph:REC_V.phase,t:Math.floor(recEl()),m:REC_V.mode},
+      au:!!(audioCtx&&audioCtx.state==='running'),vis:document.visibilityState==='visible',p3:{a:P3.active,pt:P3.pt,ph:P3.ph},rec:{ph:REC_V.phase,t:Math.floor(recEl()),m:REC_V.mode},
       s:data&&data.length===bandF.length?data.map(v=>Math.round(v*2)/2).join(','):'',m:!!measured,
       b:{mic:pick('btnMic'),quick:pick('btnQuick'),measure:pick('btnMeasure'),mmm:pick('btnMMM'),p3:pick('btnP3'),sweep:pick('btnSweep'),phase:pick('btnPhase'),noise:pick('btnNoise')}}).catch(()=>{});
   }
@@ -2876,9 +2888,9 @@
     if(!syOn()){ put('<b>📱+💻 ใช้คู่กับอีกเครื่อง</b><span>'+(R!=='off'?'⚠ เลือกแบบใช้คู่ไว้แล้ว แต่ยังไม่ได้ตั้งค่าซิงก์ Firebase — ตั้งค่าก่อน (ใส่เหมือนกันทั้งสองเครื่อง)':'มือถือวางวัดที่จุดฟัง + คอมกดสั่งวัดและดูคำแนะนำ (ต้องตั้งค่าซิงก์ Firebase ก่อน)')+'</span><button data-sy="open">ตั้งค่า</button>'+mode,'rmbar'+(R!=='off'?' on':'')); return; }
     put('<b>📱+💻 ใช้คู่</b><div class="rmseg"><button data-rm="off" class="'+(R==='off'?'sel':'')+'">เครื่องเดียว</button><button data-rm="station" class="'+(R==='station'?'sel':'')+'">📍 เครื่องวัด</button><button data-rm="remote" class="'+(R==='remote'?'sel':'')+'">🎮 แผงควบคุม</button></div>'+mode+
       '<span>'+(R==='station'?'📍 วางเครื่องนี้ที่จุดฟัง · เปิดจอค้างไว้ · รอคำสั่งจากแผงควบคุม · กราฟส่งสดไปอีกเครื่อง · '+(running?'🟢 ไมค์ทำงาน':'⚪ ไมค์ปิด (แผงควบคุมสั่งเปิดได้)')+(FB.cmdNs!=='rm'?' · 📻 Noise ออกจากเครื่องนี้ (ต่อบลูทูธเข้าเครื่องเสียง)':' · 📻 เสียงทดสอบเล่นจากแผงควบคุม'):
-        R==='remote'?(live?'🟢 เชื่อมกับ <b>'+esc(st.name)+'</b> · '+(st.running?'ไมค์ทำงาน':'ไมค์ปิด')+(st.vis===false?' · <b style="color:#ff9b6b">⚠ จอเครื่องวัดไม่ได้อยู่หน้าแอป — ไมค์อาจหยุด</b>':'')+' · ปุ่มวัด / Noise / อัดวิดีโอ จะสั่งเครื่องนั้น':'🟠 ยังไม่เจอเครื่องวัด — เปิดแอปบนมือถือ เลือก “📍 เครื่องวัด”'):
+        R==='remote'?(live?'🟢 เชื่อมกับ <b>'+esc(st.name)+'</b> · '+(st.running?'ไมค์ทำงาน':'ไมค์ปิด')+(st.vis===false?' · <b style="color:#ff9b6b">⚠ จอเครื่องวัดไม่ได้อยู่หน้าแอป — ไมค์อาจหยุด</b>':'')+(st.au===false?' · <b style="color:#ff9b6b">⚠ เสียงเครื่องวัดยังล็อก — แตะจอเครื่องวัด 1 ครั้ง</b>':'')+' · ปุ่มวัด / Noise / อัดวิดีโอ จะสั่งเครื่องนั้น':'🟠 ยังไม่เจอเครื่องวัด — เปิดแอปบนมือถือ เลือก “📍 เครื่องวัด”'):
         'เลือกบทบาทของเครื่องนี้')+'</span>'+(R!=='off'?'<button data-pqr="1" title="ให้อีกเครื่องสแกนเพื่อเชื่อมต่อ">📲 QR เชื่อมต่อ</button>':'')+
-      (R==='remote'?'<div class="rmseg rmns"><small>📻 เสียงทดสอบออกจาก</small><button data-ns="st" class="'+(SY.ns!=='rm'?'sel':'')+'">📍 เครื่องวัด (บลูทูธ)</button><button data-ns="rm" class="'+(SY.ns==='rm'?'sel':'')+'">🎮 เครื่องนี้ (บลูทูธ/สาย)</button></div>':''),'rmbar'+(R!=='off'?' on':''));
+      (R==='remote'?'<div class="rmseg rmns"><small>📻 เสียงทดสอบออกจาก</small><button data-ns="st" class="'+(SY.ns!=='rm'?'sel':'')+'">📍 เครื่องวัด (บลูทูธ)</button><button data-ns="rm" class="'+(SY.ns==='rm'?'sel':'')+'">🎮 เครื่องนี้ (บลูทูธ/สาย)</button><small class="rmnshint">'+(SY.ns==='rm'?'🔊 เสียงเล่นจาก<b>เครื่องนี้</b> — เครื่องนี้ต้องต่อบลูทูธ D-Stack (หรือสาย AUX) ไม่งั้นเสียงออกลำโพงมือถือตัวเอง':'🔊 เสียงเล่นจาก<b>เครื่องวัด</b> — มือถือที่วางวัดต้องต่อบลูทูธ D-Stack · บาง Android ตัดบลูทูธเป็นโหมดโทรตอนเปิดไมค์ ถ้าเสียงไม่ออกให้สลับมาเล่นจากเครื่องนี้')+'</small></div>':''),'rmbar'+(R!=='off'?' on':''));
   }
   dq('rmBar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
     if(b.dataset.sy==='open'){ openSync(); return; }
