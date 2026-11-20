@@ -58,7 +58,7 @@
 <div class="overlay" id="viewerModal" role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
   <div class="modal"><h2 id="viewerTitle">🌿 เข้าดูข้อมูลหมาย 14 วัน</h2>
   <p class="viewer-info">ข้อมูลแสดงร่วมกันจากฐานข้อมูลกลาง และจำกัดการเข้าถึงเฉพาะเจ้าหน้าที่ที่ได้รับรหัสจากผู้ดูแลระบบ</p>
-  <form id="viewerForm"><label for="viewerCode" style="font-size:12px;font-weight:750">รหัสสำหรับเข้าดูข้อมูล</label><input class="field viewer-code" id="viewerCode" type="password" autocomplete="off" placeholder="กรอกรหัสที่ได้รับ" required>
+  <form id="viewerForm"><label for="viewerCode" style="font-size:12px;font-weight:750">รหัสสำหรับเข้าดูข้อมูล</label><input class="field viewer-code" id="viewerCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="••••" required aria-label="รหัสเจ้าหน้าที่ 4 หลัก">
   <div id="viewerError" class="error" hidden></div><button class="btn" id="viewerEnter" type="submit" style="width:100%;margin-top:12px">ดูข้อมูลล่าสุด</button></form>
   <p class="admin-note">รหัสสำหรับเข้าดูใช้กับทุกเครื่อง ส่วนรหัส PIN ผู้ดูแลใช้เฉพาะการนำเข้า Excel และไม่ต้องแจ้งให้ผู้ใช้งานทั่วไปทราบ</p></div>
 </div>
@@ -83,7 +83,7 @@
 <script>
 (()=>{'use strict';
  const API='https://hwzadnpaxiacucvjxmor.supabase.co/functions/v1/notice14-sync';
- const ACCESS_KEY='writ14_access_code_v2';
+ const ACCESS_KEY='writ14_access_code_v3';
  let viewerCode='', adminPin='';
  const MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
  const shortMonths=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -174,7 +174,7 @@
  document.addEventListener('drop',e=>{if(!e.dataTransfer?.files?.length)return;e.preventDefault();if(!$('adminModal').hidden&&!$('uploadView').classList.contains('hidden'))handleFile(e.dataTransfer.files[0])});
  $('saveImport').addEventListener('click',async()=>{if(!pending||!adminPin)return;let btn=$('saveImport');btn.disabled=true;$('fileError').hidden=true;try{const result=await remote('upload',{pin:adminPin,records:pending.items});pending=null;collapsed.clear();activeStatus='all';senderFilter='';searchText='';$('search').value='';$('fileInput').value='';$('fileSelection').textContent='ยังไม่ได้เลือกไฟล์';hideModal();await refresh();window.scrollTo({top:0,behavior:'smooth'});}catch(e){$('fileError').textContent=e.message||'ไม่สามารถบันทึกข้อมูลส่วนกลางได้';$('fileError').hidden=false;}finally{btn.disabled=false}});
  $('search').addEventListener('input',e=>{searchText=String(e.target.value).trim().toLowerCase();render()});$('senderSelect').addEventListener('change',e=>{senderFilter=e.target.value;render()});$('tabbar').addEventListener('click',e=>{let btn=e.target.closest('button[data-status]');if(!btn)return;activeStatus=btn.dataset.status;render()});
- $('viewerForm').addEventListener('submit',async e=>{e.preventDefault();viewerCode=$('viewerCode').value.trim();$('viewerEnter').disabled=true;$('viewerError').hidden=true;try{const data=await remote('read');try{localStorage.setItem(ACCESS_KEY,viewerCode)}catch(e){};state={records:data.records||[],importedAt:(data.records||[]).length?(data.imported_at||0):0};$('viewerModal').hidden=true;$('syncHint').textContent='● ข้อมูลกลางเชื่อมต่อแล้ว · อัปเดตอัตโนมัติทุก 60 วินาที';render();}catch(ex){viewerCode='';$('viewerError').textContent=ex.message;$('viewerError').hidden=false;}finally{$('viewerEnter').disabled=false;}});
+ $('viewerForm').addEventListener('submit',async e=>{e.preventDefault();viewerCode=$('viewerCode').value.replace(/[๐-๙]/g,c=>String(c.charCodeAt(0)-0x0e50)).replace(/[０-９]/g,c=>String(c.charCodeAt(0)-0xff10)).trim();$('viewerEnter').disabled=true;$('viewerError').hidden=true;try{const data=await remote('read');try{localStorage.setItem(ACCESS_KEY,viewerCode)}catch(e){};state={records:data.records||[],importedAt:(data.records||[]).length?(data.imported_at||0):0};$('viewerModal').hidden=true;$('syncHint').textContent='● ข้อมูลกลางเชื่อมต่อแล้ว · อัปเดตอัตโนมัติทุก 60 วินาที';render();}catch(ex){viewerCode='';$('viewerError').textContent=ex.message;$('viewerError').hidden=false;$('viewerCode').select();}finally{$('viewerEnter').disabled=false;}});
  $('changeAccess').addEventListener('click',()=>{viewerCode='';try{localStorage.removeItem(ACCESS_KEY)}catch(e){};$('viewerCode').value='';$('viewerError').hidden=true;state={records:[],importedAt:0};render();$('viewerModal').hidden=false;});
  render();try{viewerCode=localStorage.getItem(ACCESS_KEY)||''}catch(e){viewerCode=''};if(viewerCode)refresh();else $('viewerModal').hidden=false;
  setInterval(()=>{if(viewerCode)refresh();else if(todayBangkok()!==todayDay)render()},60000);
