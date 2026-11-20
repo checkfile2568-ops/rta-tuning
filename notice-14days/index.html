@@ -20,6 +20,26 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
 
 .sync-hint{font-size:11px;color:#406e51;margin-top:10px;line-height:1.7}.sync-hint.error{color:#b43a43}.admin-guide{background:linear-gradient(145deg,#effdec,#f9fff6);border:1px solid #d4edd0;border-radius:13px;padding:13px 15px;font-size:12px;line-height:1.95;color:#3a6848;margin:12px 0}.access-support{margin-top:16px;border:0;background:transparent;color:#47815d;text-decoration:underline;font-size:11px;cursor:pointer}.viewer-code{letter-spacing:.4px}.viewer-info{line-height:1.8;color:#6d846f;font-size:12px;margin:10px 0 14px}.loading-btn{opacity:.6;pointer-events:none}
+
+/* Interactive 3D statistic cards; do not alter other controls. */
+.kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;align-items:stretch}
+.kpi-card{appearance:none;position:relative;width:100%;min-height:130px;overflow:hidden;text-align:left;display:flex;justify-content:flex-start;align-items:center;gap:16px;border-radius:25px;padding:19px 20px;isolation:isolate;transform:translateY(0) perspective(700px) rotateX(0);transform-origin:center bottom;transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s,border-color .24s,background .24s;box-shadow:0 13px 28px rgba(29,92,51,.12),inset 0 2px rgba(255,255,255,.95),inset 0 -5px 13px rgba(135,184,145,.13)}
+.kpi-card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.72),transparent 52%);pointer-events:none;z-index:-1}
+.kpi-card:hover,.kpi-card:focus-visible{transform:translateY(-6px) perspective(700px) rotateX(3deg);border-color:#80c997;box-shadow:0 22px 36px rgba(29,92,51,.2),inset 0 2px rgba(255,255,255,.96),inset 0 -6px 14px rgba(135,184,145,.13)}
+.kpi-card:active{transform:translateY(1px) scale(.985);box-shadow:0 7px 15px rgba(29,92,51,.13),inset 0 4px 9px rgba(86,143,101,.2)}
+.kpi-card.active{border-color:#57ad76;background:linear-gradient(160deg,#f9fff9,#e8f7ea);box-shadow:0 15px 30px rgba(43,132,73,.2),inset 0 2px rgba(255,255,255,.94)}
+.kpi-card .kpi-icon{width:56px;height:56px;border-radius:18px;font-size:25px;box-shadow:inset 0 2px 2px #fff9,inset 0 -5px 10px #9ac6a659,5px 7px 13px #2f6b4330}
+.kpi-card .kpi-text{display:flex;flex-direction:column;align-items:flex-start;min-width:0;gap:3px}
+.kpi-card .kpi-label{font-size:clamp(12px,1.25vw,15px);line-height:1.35;font-weight:800;color:#41634f}
+.kpi-card .kpi-val{margin:0;font-size:clamp(30px,3vw,43px);font-weight:900;line-height:1.1;letter-spacing:-1px;color:#26784f}
+.kpi-card .kpi-sub{font-size:11px;line-height:1.35;color:#718c78}
+.kpi-card.due .kpi-val{color:#cd8119}.kpi-card.due .kpi-icon{background:linear-gradient(145deg,#fff6e9,#ffdfb8)}
+.kpi-card.success .kpi-val{color:#4c994d}.kpi-card.success .kpi-icon{background:linear-gradient(145deg,#f6fff2,#c9edc3)}
+.kpi-card.warning .kpi-val{color:#b78d13}.kpi-card.advance .kpi-val{color:#177f95}
+@media(max-width:1020px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:670px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.kpi-card{min-height:124px;padding:13px 12px;gap:9px;flex-direction:column;align-items:flex-start;border-radius:19px}.kpi-card .kpi-icon{width:37px;height:37px;font-size:19px;border-radius:12px}.kpi-card .kpi-val{font-size:34px}.kpi-card .kpi-label{font-size:12px}.kpi-card .kpi-sub{font-size:10px}.kpi-card:last-child{grid-column:auto}}
+@media(max-width:350px){.kpis{grid-template-columns:1fr}.kpi-card{flex-direction:row;min-height:94px}}
+@media(prefers-reduced-motion:reduce){.kpi-card{transition:none!important;transform:none!important}}
 </style>
 </head>
 <body>
@@ -32,12 +52,13 @@
     <div class="hero-copy"><span class="eyebrow">✦ ระบบติดตามระยะเวลาส่งหมาย</span><h1 id="heroTitle">ติดตามหมาย<br>ครบกำหนด 14 วัน</h1><p>ติดตามรายบุคคลอย่างเป็นระบบ ดูวันจ่ายหมายและระยะเวลาที่ผ่านมา พร้อมแจ้งเตือนเมื่อเกินกำหนดอัตโนมัติ</p></div>
     <div class="hero-figure" aria-hidden="true"><div class="orbit"></div><div class="float-card"><div class="page-lines"><span></span><span></span><span></span></div></div><div class="float-mini">14<span style="font-size:11px;margin-left:3px">วัน</span></div></div>
   </section>
-  <section class="kpis" aria-label="สถิติการติดตาม">
-    <div class="kpi"><div><div class="kpi-label">รายการหมายทั้งหมด</div><div class="kpi-val" id="statTotal">0</div><div class="kpi-sub">จากข้อมูลล่าสุดที่นำเข้า</div></div><div class="kpi-icon">📋</div></div>
-    <div class="kpi danger"><div><div class="kpi-label">เกิน 14 วัน</div><div class="kpi-val" id="statOver">0</div><div class="kpi-sub">ต้องติดตามเร่งด่วน</div></div><div class="kpi-icon">⚠️</div></div>
-    <div class="kpi warning"><div><div class="kpi-label">ครบกำหนด / ใกล้ครบ</div><div class="kpi-val" id="statSoon">0</div><div class="kpi-sub">เหลือ 0–3 วัน</div></div><div class="kpi-icon">⏳</div></div>
-    <div class="kpi advance"><div><div class="kpi-label">เตรียมติดตามล่วงหน้า</div><div class="kpi-val" id="statMid">0</div><div class="kpi-sub">เหลือ 4–7 วัน</div></div><div class="kpi-icon">🗓️</div></div>
-    <div class="kpi"><div><div class="kpi-label">ผู้ส่งหมาย</div><div class="kpi-val" id="statPeople">0</div><div class="kpi-sub">แยกตามรายชื่อ</div></div><div class="kpi-icon">👤</div></div>
+  <section class="kpis" aria-label="สถิติการติดตาม เลือกกล่องเพื่อกรองรายการ">
+    <button type="button" class="kpi kpi-card  active" data-kpi-status="all" aria-pressed="true" aria-label="ทั้งหมด กรองรายการ"><span class="kpi-icon" aria-hidden="true">📋</span><span class="kpi-text"><span class="kpi-label">ทั้งหมด</span><span class="kpi-val" data-target="0" id="statTotal">0</span><span class="kpi-sub">รายการหมายทั้งหมด</span></span></button>
+    <button type="button" class="kpi kpi-card danger" data-kpi-status="over" aria-pressed="false" aria-label="เกิน 14 วัน กรองรายการ"><span class="kpi-icon" aria-hidden="true">🔴</span><span class="kpi-text"><span class="kpi-label">เกิน 14 วัน</span><span class="kpi-val" data-target="0" id="statOver">0</span><span class="kpi-sub">ติดตามเร่งด่วน</span></span></button>
+    <button type="button" class="kpi kpi-card due" data-kpi-status="due" aria-pressed="false" aria-label="ครบกำหนดวันนี้ กรองรายการ"><span class="kpi-icon" aria-hidden="true">🟠</span><span class="kpi-text"><span class="kpi-label">ครบกำหนดวันนี้</span><span class="kpi-val" data-target="0" id="statDue">0</span><span class="kpi-sub">ครบกำหนดวันนี้พอดี</span></span></button>
+    <button type="button" class="kpi kpi-card warning" data-kpi-status="soon" aria-pressed="false" aria-label="เหลือ 1–3 วัน กรองรายการ"><span class="kpi-icon" aria-hidden="true">🟡</span><span class="kpi-text"><span class="kpi-label">เหลือ 1–3 วัน</span><span class="kpi-val" data-target="0" id="statSoon">0</span><span class="kpi-sub">ใกล้ครบกำหนด</span></span></button>
+    <button type="button" class="kpi kpi-card advance" data-kpi-status="mid" aria-pressed="false" aria-label="เหลือ 4–7 วัน กรองรายการ"><span class="kpi-icon" aria-hidden="true">🔵</span><span class="kpi-text"><span class="kpi-label">เหลือ 4–7 วัน</span><span class="kpi-val" data-target="0" id="statMid">0</span><span class="kpi-sub">ติดตามล่วงหน้า</span></span></button>
+    <button type="button" class="kpi kpi-card success" data-kpi-status="ok" aria-pressed="false" aria-label="ยังไม่ครบกำหนด กรองรายการ"><span class="kpi-icon" aria-hidden="true">🟢</span><span class="kpi-text"><span class="kpi-label">ยังไม่ครบกำหนด</span><span class="kpi-val" data-target="0" id="statOk">0</span><span class="kpi-sub">รวมรายการที่ไม่ค้างติดตาม</span></span></button>
   </section>
   <main class="panel">
     <div class="tools-top"><div><h2 class="panel-heading">รายการติดตามแยกตามผู้ส่งหมาย</h2><p class="panel-hint">เลขคดีและบ้านเลขที่แสดงในแถวเดียวกับวันที่จ่ายหมาย · สีแดงเมื่อ <strong>เกิน 14 วัน</strong> นับจากวันที่จ่ายหมาย</p></div><div class="source-info" id="sourceInfo">ยังไม่มีข้อมูลนำเข้า<br><strong>ใช้เมนูผู้ดูแลมุมขวาล่าง</strong></div></div>
@@ -134,13 +155,26 @@
  }catch(e){$('syncHint').textContent='● ไม่สามารถซิงก์ข้อมูลกลาง: '+e.message;$('syncHint').classList.add('error');
    if(/รหัสสำหรับดูข้อมูลไม่ถูกต้อง|ลองใหม่หลัง 15 นาที/.test(e.message)){viewerCode='';try{localStorage.removeItem(ACCESS_KEY)}catch(e){};$('viewerModal').hidden=false;$('viewerError').textContent=e.message;$('viewerError').hidden=false;}
  }finally{refreshing=false;}}
+
+ const statAnimations=new WeakMap(),reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
+ function animateStat(id,value,replay=false){
+   const el=$(id);if(!el)return;
+   const target=Math.max(0,Number(value)||0),prior=Number(el.dataset.target||0);
+   if(!replay&&el.dataset.ready==='1'&&prior===target)return;
+   el.dataset.target=String(target);el.dataset.ready='1';
+   const previousFrame=statAnimations.get(el);if(previousFrame)cancelAnimationFrame(previousFrame);
+   if(reducedMotion.matches||document.visibilityState==='hidden'||target===0){el.textContent=fmt.format(target);return}
+   const started=performance.now(),duration=1500;
+   const frame=now=>{const t=Math.min(1,(now-started)/duration),eased=1-Math.pow(1-t,3);el.textContent=fmt.format(Math.round(target*eased));if(t<1)statAnimations.set(el,requestAnimationFrame(frame));else statAnimations.delete(el)};
+   el.textContent='0';statAnimations.set(el,requestAnimationFrame(frame));
+ }
  function render(){todayDay=todayBangkok();$('todayText').textContent='วันนี้ '+prettyLongDate(todayDay);let total=state.records.length;let enriched=state.records.map((r,i)=>({...r,_i:i,_info:info(r)}));let statuses={all:total,over:0,due:0,soon:0,mid:0,ok:0,future:0,reported:0};for(let r of enriched)statuses[r._info.status]++;
-  let senders=[...new Set(state.records.map(r=>r.sender))].sort((a,b)=>a.localeCompare(b,'th')); $('statTotal').textContent=fmt.format(total);$('statOver').textContent=fmt.format(statuses.over);$('statSoon').textContent=fmt.format(statuses.due+statuses.soon);$('statMid').textContent=fmt.format(statuses.mid);$('statPeople').textContent=fmt.format(senders.length);
+  let senders=[...new Set(state.records.map(r=>r.sender))].sort((a,b)=>a.localeCompare(b,'th')); animateStat('statTotal',total);animateStat('statOver',statuses.over);animateStat('statDue',statuses.due);animateStat('statSoon',statuses.soon);animateStat('statMid',statuses.mid);animateStat('statOk',statuses.ok+statuses.future+statuses.reported);
   for(let [id,key] of [['countAll','all'],['countOver','over'],['countDue','due'],['countSoon','soon'],['countMid','mid']])$(id).textContent=fmt.format(statuses[key]);$('countOk').textContent=fmt.format(statuses.ok+statuses.future+statuses.reported);
   $('sourceInfo').innerHTML=state.importedAt?`ข้อมูลนำเข้าล่าสุด<br><strong>${esc(new Intl.DateTimeFormat('th-TH',{timeZone:'Asia/Bangkok',dateStyle:'medium',timeStyle:'short'}).format(new Date(state.importedAt)))}</strong>`:'ยังไม่มีข้อมูลนำเข้า<br><strong>ใช้เมนูผู้ดูแลมุมขวาล่าง</strong>';
   let select=$('senderSelect');let selected=senderFilter;select.innerHTML='<option value="">ผู้ส่งหมายทุกคน</option>'+senders.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');select.value=senders.includes(selected)?selected:'';if(!senders.includes(selected))senderFilter='';
   let active=enriched.filter(r=>(!senderFilter||r.sender===senderFilter)&&(!searchText||[r.sender,r.case_no,r.house].some(x=>x.toLowerCase().includes(searchText)))&&(activeStatus==='all'||(activeStatus==='ok'?['ok','future','reported'].includes(r._info.status):r._info.status===activeStatus)));
-  $('tabbar').querySelectorAll('.tab').forEach(t=>{t.classList.toggle('active',t.dataset.status===activeStatus);t.setAttribute('aria-pressed',String(t.dataset.status===activeStatus))});
+  $('tabbar').querySelectorAll('.tab').forEach(t=>{t.classList.toggle('active',t.dataset.status===activeStatus);t.setAttribute('aria-pressed',String(t.dataset.status===activeStatus))});document.querySelectorAll('.kpi-card').forEach(card=>{const selected=card.dataset.kpiStatus===activeStatus;card.classList.toggle('active',selected);card.setAttribute('aria-pressed',String(selected))});
   if(!total){$('results').innerHTML='<div class="empty"><div class="empty-icon">📄</div><strong>ยังไม่มีรายการหมายในระบบ</strong><p>ผู้ดูแลระบบสามารถนำเข้าไฟล์ .xlsx จากรายงานหมายที่ยังไม่ได้รายงาน<br>โดยเปิดปุ่มผู้ดูแลขนาดเล็กบริเวณมุมขวาล่าง</p></div>';return}
   if(!active.length){$('results').innerHTML='<div class="empty"><div class="empty-icon">🔎</div><strong>ไม่พบข้อมูลตรงกับเงื่อนไข</strong><p>ลองเปลี่ยนสถานะ ผู้ส่งหมาย หรือคำค้นหา</p></div>';return}
   let grouped=new Map();for(let r of active){if(!grouped.has(r.sender))grouped.set(r.sender,[]);grouped.get(r.sender).push(r)}let groupEntries=[...grouped].sort((a,b)=>{let count=xs=>xs.filter(r=>r._info.status==='over').length;return count(b[1])-count(a[1])||a[0].localeCompare(b[0],'th')});
@@ -177,7 +211,8 @@
  document.addEventListener('drop',e=>{if(!e.dataTransfer?.files?.length)return;e.preventDefault();if(!$('adminModal').hidden&&!$('uploadView').classList.contains('hidden'))handleFile(e.dataTransfer.files[0])});
  $('saveImport').addEventListener('click',async()=>{if(!pending||!adminPin)return;let btn=$('saveImport');btn.disabled=true;$('fileError').hidden=true;try{const result=await remote('upload',{pin:adminPin,records:pending.items});pending=null;collapsed.clear();activeStatus='all';senderFilter='';searchText='';$('search').value='';$('fileInput').value='';$('fileSelection').textContent='ยังไม่ได้เลือกไฟล์';hideModal();await refresh();window.scrollTo({top:0,behavior:'smooth'});}catch(e){$('fileError').textContent=e.message||'ไม่สามารถบันทึกข้อมูลส่วนกลางได้';$('fileError').hidden=false;}finally{btn.disabled=false}});
  $('search').addEventListener('input',e=>{searchText=String(e.target.value).trim().toLowerCase();render()});$('senderSelect').addEventListener('change',e=>{senderFilter=e.target.value;render()});$('tabbar').addEventListener('click',e=>{let btn=e.target.closest('button[data-status]');if(!btn)return;activeStatus=btn.dataset.status;render()});
- $('viewerCode').addEventListener('input',()=>{let f=$('viewerCode');f.value=f.value.replace(/[๐-๙]/g,c=>String(c.charCodeAt(0)-0x0e50)).replace(/[０-９]/g,c=>String(c.charCodeAt(0)-0xff10)).replace(/[^0-9]/g,'').slice(0,4);$('viewerError').hidden=true;});
+ document.querySelectorAll('.kpi-card').forEach(card=>{const replay=()=>{const el=card.querySelector('.kpi-val');if(el)animateStat(el.id,Number(el.dataset.target||0),true)};card.addEventListener('mouseenter',replay);card.addEventListener('focus',replay);card.addEventListener('click',()=>{activeStatus=card.dataset.kpiStatus||'all';replay();render();$('results').scrollIntoView({behavior:reducedMotion.matches?'auto':'smooth',block:'start'})})});
+  $('viewerCode').addEventListener('input',()=>{let f=$('viewerCode');f.value=f.value.replace(/[๐-๙]/g,c=>String(c.charCodeAt(0)-0x0e50)).replace(/[０-９]/g,c=>String(c.charCodeAt(0)-0xff10)).replace(/[^0-9]/g,'').slice(0,4);$('viewerError').hidden=true;});
  $('viewerForm').addEventListener('submit',async e=>{e.preventDefault();viewerCode=$('viewerCode').value.replace(/[๐-๙]/g,c=>String(c.charCodeAt(0)-0x0e50)).replace(/[０-９]/g,c=>String(c.charCodeAt(0)-0xff10)).trim();$('viewerEnter').disabled=true;$('viewerError').hidden=true;try{const data=await remote('read');try{localStorage.setItem(ACCESS_KEY,viewerCode)}catch(e){};state={records:data.records||[],importedAt:(data.records||[]).length?(data.imported_at||0):0};$('viewerModal').hidden=true;$('syncHint').textContent='● ข้อมูลกลางเชื่อมต่อแล้ว · อัปเดตอัตโนมัติทุก 60 วินาที';render();}catch(ex){viewerCode='';$('viewerError').textContent=ex.message;$('viewerError').hidden=false;$('viewerCode').select();}finally{$('viewerEnter').disabled=false;}});
  $('changeAccess').addEventListener('click',()=>{viewerCode='';try{localStorage.removeItem(ACCESS_KEY)}catch(e){};$('viewerCode').value='';$('viewerError').hidden=true;state={records:[],importedAt:0};render();$('viewerModal').hidden=false;});
  render();try{viewerCode=localStorage.getItem(ACCESS_KEY)||''}catch(e){viewerCode=''};if(viewerCode)refresh();else $('viewerModal').hidden=false;
