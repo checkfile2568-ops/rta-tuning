@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-21",
+  "source": "User-supplied screenshot images 2714.jpg–2721.jpg",
+  "verified": [
+    {
+      "videoId": "BTqJBhkS_Zs",
+      "title": "เพลงฮิต TikTok เอาไว้เปิดปีใหม่ 2026 — DJ JR Remix",
+      "category": "แดนซ์จากภาพ",
+      "sourceUrl": "https://www.youtube.com/watch?v=BTqJBhkS_Zs"
+    },
+    {
+      "videoId": "puWTsV5LePw",
+      "title": "เพลงแดนซ์ต้อนรับสงกรานต์ 2026 — Pao Remix",
+      "category": "แดนซ์จากภาพ",
+      "sourceUrl": "https://www.youtube.com/watch?v=puWTsV5LePw"
+    },
+    {
+      "videoId": "9cMvppzO1G8",
+      "title": "GOOD BOY PARTY MIX 2025 — Air Remixer",
+      "category": "แดนซ์จากภาพ",
+      "sourceUrl": "https://www.youtube.com/watch?v=9cMvppzO1G8"
+    }
+  ],
+  "pending": [
+    "จังหวะตื๊ดๆ 2022 — Man Remix (พบชื่อใกล้เคียงปี 2024 แต่ยังไม่ยืนยัน)",
+    "เพลงแดนซ์โคตรมันส์ 2021 Vol.58 — DJ OAT REMIX",
+    "เพลงแดนซ์เปิดดัง ๆ ต้อนรับสงกรานต์ 2025 — DJ Lawee Remix",
+    "เพลงแดนซ์ TikTok สายย่อ — ดีน เอ็กซ์ รีมิกซ์",
+    "เพลงเปิดร้านเหล้า ยุค 90 — Thai 90s Classics (มีรายการ mirror แต่ยังไม่ยืนยันต้นฉบับ)"
+  ],
+  "caveat": "Starter content is public and shared in source. User modifications are local-browser only until a safe cloud backend is configured."
+}
