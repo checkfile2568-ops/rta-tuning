@@ -29,12 +29,27 @@
       "verificationLevel": "probable"
     }
   ],
-  "pending": [
-    "จังหวะตื๊ดๆ 2022 — Man Remix (พบชื่อใกล้เคียงปี 2024 แต่ยังไม่ยืนยัน)",
-    "เพลงแดนซ์โคตรมันส์ 2021 Vol.58 — DJ OAT REMIX",
-    "เพลงแดนซ์เปิดดัง ๆ ต้อนรับสงกรานต์ 2025 — DJ Lawee Remix",
-    "เพลงแดนซ์ TikTok สายย่อ — ดีน เอ็กซ์ รีมิกซ์"
-  ],
+  "pending": [],
   "caveat": "Starter content is public and shared in source. User modifications are local-browser only until a safe cloud backend is configured.",
-  "notes": "Original screenshots show phone clock and relative publication age, not complete YouTube clip duration. Other four candidate matches remain unresolved due inconsistent publication age/title or absence of verified original links."
+  "notes": "User approved all three proposed close alternatives and requested removal of unresolved-items UI. Removed from page, preserved prior songs/playlists. No automatic third-party video matching remaining.",
+  "approvedAlternatives": [
+    {
+      "videoId": "KRKyvicZVvs",
+      "title": "Music 808 — Djpee FT OAT.ReMix Vol.58 (2021)",
+      "status": "added as close match"
+    },
+    {
+      "videoId": "K9IEdUOAZvA",
+      "title": "DJ LAWEE REMIX — สงกรานต์ 2025",
+      "status": "added as close match"
+    },
+    {
+      "videoId": "uWSpQSrzNdE",
+      "title": "DJ AEKLEE REMIX OFFICIAL — สายย่อ 2025",
+      "status": "added as close match"
+    }
+  ],
+  "omitted": [
+    "Man ReMix 2022 — ไม่พบคลิปต้นฉบับที่ยืนยันได้ (เวอร์ชัน 2024 ยังคงอยู่ในคลัง)"
+  ]
 }
