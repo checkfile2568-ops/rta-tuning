@@ -196,7 +196,9 @@ function loadYTApi(force=false){
 }
 $('retryYouTube').onclick=()=>{
  stopYTWatchdogs();if(player&&typeof player.destroy==='function')try{player.destroy()}catch{}
- player=null;ready=false;ytRetry++;const node=$('player');if(node&&node.tagName==='IFRAME'){const div=document.createElement('div');div.id='player';node.replaceWith(div)}
+ player=null;ready=false;ytRetry++;
+ const old=$('player');if(old)old.remove();
+ const mount=document.createElement('div');mount.id='player';$('playerProblem').before(mount);
  if(window.YT&&typeof window.YT.Player==='function')beginYTPlayer();else loadYTApi(true);
 };
 $('openYouTubeDirect').onclick=()=>{const id=selected||window.pendingYoutubeSong;if(valid(id))window.open(url(id),'_blank','noopener');else window.open('https://www.youtube.com/','_blank','noopener')};
