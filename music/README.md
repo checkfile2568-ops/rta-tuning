@@ -18,3 +18,18 @@ The player uses the official YouTube IFrame API. Controls: play/pause, skip, see
 ## Release caveats
 
 This is a deployed web prototype, not a verified cross-device Firebase setup. Check iOS Safari/Android Chrome and Firestore rules in actual use before relying on synchronization. Do not assume the links shown in a screenshot are complete or verified.
+
+## Passkey / biometric login (UI added, backend not yet deployed)
+
+- The login dialog now shows Passkey sign-in and registration controls styled to match the Glassy 3D theme.
+- `passkey-config.js` ships with `enabled: false`. The buttons must remain disabled until a trusted WebAuthn relying-party backend is configured. NEVER claim that a local biometric prompt alone grants access.
+- Backend contract expected by the frontend:
+  - POST `/webauthn/register/options` with Firebase ID token -> `{requestId,options}`
+  - POST `/webauthn/register/verify` with Firebase ID token and `{requestId,credential}` -> verify and store credential public key against authenticated UID
+  - POST `/webauthn/login/options` with `{email}` -> `{requestId,options}`
+  - POST `/webauthn/login/verify` with `{requestId,credential}` -> verify signature, challenge, origin, RP ID, UV, counter; return short-lived `firebaseCustomToken` for the matched UID
+- Use an audited server-side WebAuthn library and enforce replay protection, rate limits, credential uniqueness, account binding, trusted origins, and session expiry. Configure CORS specifically for `https://checkfile2568-ops.github.io`.
+- WebAuthn lets a device use biometric verification, face recognition, PIN, or other local methods; it does NOT prove that a particular fingerprint was scanned. Do not promise fingerprint-only authentication.
+- GitHub Pages is static hosting; it cannot perform server-side WebAuthn verification on its own. A backend is required even if Firebase is not used.
+- Existing `court-media-controller` Realtime Database is used by a separate game application. Reusing its Firebase project is technically possible, but only after verifying project ownership, authentication providers, Firestore enablement and security rules; do not copy permissive legacy Realtime Database rules.
+- For this app, use Firebase Authentication + Firestore or a different secured API/data store. Keeping the URL in GitHub Pages does not require Firebase Hosting.
