@@ -44,7 +44,7 @@ async function takeChallenge(id,type){
 }
 const makeRequestId=()=>crypto.randomBytes(24).toString('base64url');
 async function dispatch(req,res){
-  const path=req.path.replace(/\\/+$/,'');
+  const path=req.path.endsWith('/')?req.path.slice(0,-1):req.path;
   if(!ownerUid)return failure(res,503,'OWNER_UID not configured');
   if(req.method!=='POST')return failure(res,405,'POST required');
   if(req.headers.origin!==origin)return failure(res,403,'Untrusted origin');
