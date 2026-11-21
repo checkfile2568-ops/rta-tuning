@@ -1,9 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId}/songs/{songId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Replace REPLACE_WITH_OWNER_UID before deployment.
+    // All other authenticated identities remain denied.
+    function isOwner() {
+      return request.auth != null
+        && request.auth.uid == 'REPLACE_WITH_OWNER_UID';
     }
+    match /users/{userId}/songs/{songId} {
+      allow read: if isOwner() && userId == request.auth.uid;
+      allow create, update: if isOwner()
+        && userId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['id', 'title', 'category', 'channel'])
+        && request.resource.data.id == songId
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 250
+        && request.resource.data.category is string
+        && request.resource.data.category.size() <= 80;
+      allow delete: if isOwner() && userId == request.auth.uid;
+    }
+    // Server uses Admin SDK and bypasses rules. Clients cannot access Passkey material.
     match /{document=**} {
       allow read, write: if false;
     }
