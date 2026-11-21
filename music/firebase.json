@@ -2,8 +2,5 @@
   "functions": {
     "source": "functions",
     "codebase": "music-passkeys"
-  },
-  "firestore": {
-    "rules": "firestore.rules"
   }
 }
