@@ -33,3 +33,11 @@ This is a deployed web prototype, not a verified cross-device Firebase setup. Ch
 - GitHub Pages is static hosting; it cannot perform server-side WebAuthn verification on its own. A backend is required even if Firebase is not used.
 - Existing `court-media-controller` Realtime Database is used by a separate game application. Reusing its Firebase project is technically possible, but only after verifying project ownership, authentication providers, Firestore enablement and security rules; do not copy permissive legacy Realtime Database rules.
 - For this app, use Firebase Authentication + Firestore or a different secured API/data store. Keeping the URL in GitHub Pages does not require Firebase Hosting.
+
+## YouTube-only / screen-awake update
+
+- Continue using official YouTube embedded player only. No audio downloads, re-encoding, hidden audio extraction, or bypass of locked-screen/background playback restrictions.
+- Screen Wake Lock is optional and only attempts to keep the screen on while this page is visible. It can be denied/released by the browser or OS. Reacquires on visibility return if the toggle was left enabled.
+- Touch seeking, previous/next, shuffle avoidance of immediate repeats, repeat-on-end, and queued selection before player readiness have been updated.
+- Local six-digit PIN remains a browser-only screen gate, not secure cross-device authentication. Cloud playlists and Passkey remain unconfigured.
+- Test on real iOS Safari, Android Chrome, tablet orientation changes and desktop before treating behavior as verified.
