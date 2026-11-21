@@ -19,14 +19,22 @@
       "title": "GOOD BOY PARTY MIX 2025 — Air Remixer",
       "category": "แดนซ์จากภาพ",
       "sourceUrl": "https://www.youtube.com/watch?v=9cMvppzO1G8"
+    },
+    {
+      "videoId": "c4wzkFmgZCQ",
+      "title": "เพลงเปิดร้านเหล้า เศร้าใจ ยุค90 ไม่มีโฆษณา | เพลงเพราะๆในร้านเหล้า 2026 — Thai 90s Classics",
+      "category": "เพลงเก่า / ร้านเหล้า",
+      "sourceUrl": "https://www.youtube.com/watch?v=c4wzkFmgZCQ",
+      "matchEvidence": "Matching title, channel and approximately 2 months since upload; verified through third-party YouTube mirror, direct YouTube metadata/duration not independently confirmed",
+      "verificationLevel": "probable"
     }
   ],
   "pending": [
     "จังหวะตื๊ดๆ 2022 — Man Remix (พบชื่อใกล้เคียงปี 2024 แต่ยังไม่ยืนยัน)",
     "เพลงแดนซ์โคตรมันส์ 2021 Vol.58 — DJ OAT REMIX",
     "เพลงแดนซ์เปิดดัง ๆ ต้อนรับสงกรานต์ 2025 — DJ Lawee Remix",
-    "เพลงแดนซ์ TikTok สายย่อ — ดีน เอ็กซ์ รีมิกซ์",
-    "เพลงเปิดร้านเหล้า ยุค 90 — Thai 90s Classics (มีรายการ mirror แต่ยังไม่ยืนยันต้นฉบับ)"
+    "เพลงแดนซ์ TikTok สายย่อ — ดีน เอ็กซ์ รีมิกซ์"
   ],
-  "caveat": "Starter content is public and shared in source. User modifications are local-browser only until a safe cloud backend is configured."
+  "caveat": "Starter content is public and shared in source. User modifications are local-browser only until a safe cloud backend is configured.",
+  "notes": "Original screenshots show phone clock and relative publication age, not complete YouTube clip duration. Other four candidate matches remain unresolved due inconsistent publication age/title or absence of verified original links."
 }
