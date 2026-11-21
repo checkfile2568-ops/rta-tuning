@@ -41,3 +41,11 @@ This is a deployed web prototype, not a verified cross-device Firebase setup. Ch
 - Touch seeking, previous/next, shuffle avoidance of immediate repeats, repeat-on-end, and queued selection before player readiness have been updated.
 - Local six-digit PIN remains a browser-only screen gate, not secure cross-device authentication. Cloud playlists and Passkey remain unconfigured.
 - Test on real iOS Safari, Android Chrome, tablet orientation changes and desktop before treating behavior as verified.
+
+## Playlist Manager (2026-11-21)
+
+The GitHub Pages website now has a local Playlist Manager: create, select, rename and delete multiple playlists; add an existing library video to a selected playlist; paste a new YouTube URL directly into the selected playlist; edit a library song title/category; remove a song from only its playlist or delete from the entire local library. Playlist ordering follows addition order and the Next/Previous player buttons use the currently selected playlist.
+
+The collapsed YouTube addition panel includes a keyword search button that opens YouTube search results in a new tab. This is **not** in-app YouTube search API integration: YouTube Data API credentials and quota handling are required for native search results inside the dashboard. Search terms cannot provide verified video IDs by themselves. Select a video in YouTube and paste its share link back into the app.
+
+Playlists are stored in browser localStorage under `my-music-playlists-v1`. Song records continue using the prior `my-music-library-v2-web` key, so prior data is preserved. JSON export now includes `songs` plus `playlists`; importing prior songs-only arrays remains supported. The local PIN is browser-scoped. Cross-device playlist synchronization **is not yet active**, because no secured cloud backend is connected. Do not confuse GitHub source deployment with persistent cloud writes.
