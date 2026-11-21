@@ -1,4 +1,4 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10152c"><title>My Music Library</title><link rel="manifest" href="manifest.webmanifest"><style>
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10152c"><title>My Music Library</title><link rel="manifest" href="manifest.webmanifest"><script>document.documentElement.classList.add("pin-locked")</script><style>
 :root{font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;color:#f2f4ff;background:#0b1021}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 90% 0,#282452,#0b1021 55%);min-height:100vh}button,input,select{font:inherit}button{border:0;cursor:pointer}header{padding:20px max(16px,calc((100vw - 1150px)/2));display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;border-bottom:1px solid #ffffff15}h1{font-size:22px;margin:0}small,.muted{color:#a7aec8}main{max-width:1150px;margin:auto;padding:20px 16px 80px}.panel{background:#171d35;border:1px solid #ffffff19;border-radius:20px;padding:17px;box-shadow:0 12px 40px #0002}.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,1fr);gap:18px}.player{aspect-ratio:16/9;background:#050912;border-radius:14px;overflow:hidden}#player{width:100%;height:100%}input,select{background:#10172c;border:1px solid #38425d;border-radius:12px;color:#fff;padding:12px;min-width:0}input{width:100%}button{padding:11px 14px;border-radius:12px;background:#303957;color:#fff}.primary{background:#8575eb;color:#fff;font-weight:650}.action{background:#27304c}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex-shrink:0}.stretch{flex:1!important;min-width:0}.song{display:flex;gap:12px;align-items:center;padding:9px 6px;border-bottom:1px solid #ffffff16}.song img{width:70px;aspect-ratio:16/9;object-fit:cover;border-radius:9px}.song .details{flex:1;min-width:0}.song strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.song small{display:block}.pill{padding:5px 9px;border-radius:100px;background:#25304b;font-size:12px}h2{font-size:17px;margin:0 0 14px}.controls{margin:12px 0}.controls button{min-width:43px}.time{width:100%;accent-color:#998aff}#now{margin-top:12px;font-size:16px}#status{color:#b1b9dd;font-size:12px;min-height:18px}#authBox{display:none;position:fixed;inset:0;z-index:10;background:#000a;align-items:center;justify-content:center;padding:16px}#authBox>.panel{width:min(420px,100%)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}#notice{color:#e8bc74;font-size:12px}footer{max-width:1150px;margin:auto;padding:24px 16px;color:#9ca3b8;font-size:12px}button:disabled{opacity:.5}button:focus-visible,input:focus-visible{outline:2px solid #a9a0fb}@media(max-width:780px){.layout{grid-template-columns:1fr}header{padding:14px}main{padding:12px}.panel{padding:12px}.song img{width:60px}.controls button{padding:10px 12px}}
 
 /* Glassy 3D responsive edition v2.1 */
@@ -48,6 +48,20 @@ input[type=range]{accent-color:#c5a3fc;cursor:pointer}
 .bio-add{margin-top:10px;background:rgba(249,228,255,.12);border:1px solid #e0d0fb6c}
 .bio-login:disabled,.bio-add:disabled{cursor:not-allowed;opacity:.5}
 .bio-note{min-height:25px;margin:10px 0 2px;color:#dcccea;text-align:center;font-size:12px;line-height:1.5}
+
+/* Local PIN screen gate. This is not server authentication. */
+html.pin-locked main,html.pin-locked footer{visibility:hidden!important}
+#pinScreen{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 15% 10%,#8765ba,#21133f 50%,#0c0922);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+#pinScreen[hidden]{display:none!important}
+.pin-panel{position:relative;width:min(430px,100%);padding:26px 22px;border:1px solid #ffffff68;border-radius:28px;background:linear-gradient(145deg,rgba(243,218,255,.27),rgba(96,61,153,.4));box-shadow:0 30px 80px #02000d9a,inset 0 2px 2px #fff5;backdrop-filter:blur(22px);text-align:center}
+.pin-symbol{font-size:45px;margin:8px 0 6px}.pin-panel h2{font-size:23px;margin:4px 0 8px}.pin-panel p{line-height:1.6;color:#e7d5fa;font-size:13px}
+.pin-panel input{width:100%;text-align:center;font-size:23px;letter-spacing:7px;margin:12px 0;min-height:54px;border-radius:15px}
+.pin-panel label{display:block;text-align:left;font-size:12px;color:#d4bfeb;margin:6px 0}
+#pinSubmit{width:100%;background:linear-gradient(140deg,#d2b1ff,#7653c8);min-height:48px;font-weight:700;margin-top:8px}
+#pinMessage{min-height:25px;color:#ffe0b1}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px auto;max-width:280px}
+.pin-keypad button{font-size:22px;font-weight:700;min-height:52px;background:linear-gradient(140deg,#77649d,#44315f)}
+#pinReset{font-size:12px;background:transparent;box-shadow:none;border:0;min-height:30px;color:#eadbf7}
 </style></head><body><header><div><h1>♫ My Music Library</h1><small>ฟังเพลงจาก YouTube • จัดคลังเพลงส่วนตัว</small></div><div class="row"><span id="status">โหมดเครื่องนี้</span><button id="wakeBtn" title="ขอให้หน้าจอเปิดอยู่">☀ เปิดจอค้าง</button><button id="authBtn">เข้าสู่ระบบ Cloud</button><button id="managePasskey" hidden>◎ จัดการ Passkey</button><button id="outBtn" hidden>ออกจากระบบ</button></div></header><main><div class="layout"><section class="panel"><div class="player"><div id="player"></div></div><div id="now">เลือกเพลงเพื่อเริ่มเล่น</div><div class="row controls"><button id="prev" aria-label="ก่อนหน้า">⏮</button><button id="play" class="primary" aria-label="เล่นหรือพัก">▶ / ❚❚</button><button id="next" aria-label="ถัดไป">⏭</button><button id="shuffle" title="สุ่ม">🔀</button><button id="repeat" title="เล่นวน">🔁</button><button id="yt" title="เปิดบน YouTube">YouTube ↗</button></div><div class="row"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" value="0" class="time stretch" aria-label="เลื่อนตำแหน่งเพลง"><span id="duration">0:00</span></div><div class="row"><small>เสียง</small><input id="volume" type="range" min="0" max="100" value="90" class="stretch" aria-label="ระดับเสียง"></div><small id="wakeState" aria-live="polite">จอตามการตั้งค่าของเครื่อง</small><small id="notice">วิดีโอบางรายการอาจปิดการเล่นแบบฝังในเว็บ; หากไม่เล่นให้กด YouTube ↗</small></section><section class="panel"><h2>เพิ่มเพลง YouTube</h2><div class="row"><input id="url" placeholder="วางลิงก์ youtube.com หรือ youtu.be" class="stretch"><button class="primary" id="add">+ เพิ่มเพลง</button></div><div style="margin-top:9px"><input id="title" placeholder="ชื่อเพลง (แก้ไขได้)"></div><div class="row" style="margin-top:9px"><select id="category" class="stretch"><option>เพลงโปรด</option><option>Country</option><option>Acoustic</option><option>EDM</option><option>เพลงไทย</option><option>ดนตรีสด</option></select><button id="newCat">+ หมวดใหม่</button></div><hr style="border:0;border-top:1px solid #ffffff18;margin:16px 0"><h2>คลังเพลงและ Playlist</h2><input id="filter" placeholder="ค้นหาชื่อเพลงหรือช่อง"><div class="tabs" id="cats"></div><div id="list"></div><div class="row" style="margin-top:15px"><button id="export">สำรอง JSON</button><button id="import">นำเข้า JSON</button><input id="file" type="file" accept=".json,application/json" hidden></div><p class="muted" style="font-size:12px">เมื่อเปิด Cloud ข้อมูลเพลงจะถูกเก็บเฉพาะในบัญชีเจ้าของ ไม่แสดงคลังส่วนตัวก่อนยืนยันตัวตน</p></section></div></main><footer>เสียง/วิดีโอเล่นโดยตัวเล่น YouTube อย่างเป็นทางการ ไม่ดาวน์โหลดหรือแปลงเสียง ระบบอาจไม่เล่นต่อเมื่อปิดหน้าจอมือถือ</footer><div id="authBox"><div class="panel"><div class="row" style="justify-content:space-between"><h2>เข้าสู่ระบบคลังเพลง Cloud</h2><button id="closeAuth">✕</button></div><p class="muted">ใช้บัญชีเดียวกันบน iPhone, Android และคอมพิวเตอร์</p><input id="email" type="email" autocomplete="email" placeholder="อีเมล"><input id="password" type="password" autocomplete="current-password" placeholder="รหัสผ่าน อย่างน้อย 6 ตัว" style="margin:8px 0"><div class="row"><button class="primary" id="signIn">เข้าสู่ระบบ</button><button id="signUp">สมัครบัญชี</button></div><p id="authError" class="muted"></p><div class="bio-divider"><span>หรือใช้ Passkey</span></div>
 <button type="button" class="bio-login" id="biometricLogin" disabled><span aria-hidden="true">◎</span>เข้าสู่ระบบด้วยลายนิ้วมือ / Passkey</button>
 <button type="button" class="bio-add" id="addBiometric" disabled>＋ เพิ่ม Passkey ให้บัญชีนี้</button>
@@ -128,5 +142,65 @@ if(!credential)throw Error('ไม่สามารถสร้าง Passkey')
 await post('/webauthn/register/verify',{requestId:request.requestId,credential:serialize(credential,true)},idToken);
 say('ผูก Passkey กับบัญชีเรียบร้อยแล้ว');
 }catch(e){say(e.name==='NotAllowedError'?'ยกเลิกการบันทึก Passkey':e.message||'ลงทะเบียนไม่สำเร็จ')}finally{add.disabled=false}});
+})();
+</script>
+<section id="pinScreen" aria-label="รหัสคลังเพลง" role="dialog" aria-modal="true">
+  <div class="pin-panel">
+    <div class="pin-symbol" aria-hidden="true">🔐</div>
+    <h2 id="pinHeading">ตั้งรหัสคลังเพลง</h2>
+    <p id="pinDescription">สร้าง PIN 6 หลักเพื่อเปิดคลังเพลงบนเครื่องนี้ รหัสไม่ถูกส่งไปที่เซิร์ฟเวอร์</p>
+    <label for="pinCode">รหัส PIN 6 หลัก</label>
+    <input id="pinCode" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="6" type="password" placeholder="● ● ● ● ● ●">
+    <div id="pinConfirmWrap"><label for="pinConfirm">ยืนยันรหัสอีกครั้ง</label>
+    <input id="pinConfirm" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="6" type="password" placeholder="● ● ● ● ● ●"></div>
+    <div id="pinMessage" role="status"></div>
+    <button id="pinSubmit" type="button">ตั้งรหัสและเข้าคลังเพลง</button>
+    <p style="font-size:11px">รหัสนี้ล็อกหน้าจอบนเบราว์เซอร์เครื่องนี้เท่านั้น ไม่ได้เข้ารหัสรายการเพลงหรือแทนบัญชี Cloud</p>
+  </div>
+</section>
+<script>
+(()=>{'use strict';
+const key='my-music-pin-v1',root=document.documentElement,$=id=>document.getElementById(id);
+const screen=$('pinScreen'),code=$('pinCode'),confirm=$('pinConfirm'),wrap=$('pinConfirmWrap'),heading=$('pinHeading'),desc=$('pinDescription'),submit=$('pinSubmit'),message=$('pinMessage');
+let record=null,failures=0,blockedUntil=0;
+try{record=JSON.parse(localStorage.getItem(key)||'null')}catch{}
+const secure=!!window.isSecureContext&&!!crypto?.subtle;
+if(!secure){message.textContent='อุปกรณ์นี้ไม่รองรับการตั้งรหัสอย่างปลอดภัย';submit.disabled=true;return}
+if(record){heading.textContent='ปลดล็อกคลังเพลง';desc.textContent='กรอกรหัส PIN 6 หลักที่ตั้งไว้บนเครื่องนี้';wrap.hidden=true;submit.textContent='เข้าสู่คลังเพลง'}
+async function derive(pin,salt){
+ const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+ const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},k,256);
+ return new Uint8Array(bits);
+}
+const bytesToString=a=>Array.from(a).map(x=>x.toString(16).padStart(2,'0')).join('');
+const stringToBytes=str=>new Uint8Array(str.match(/.{2}/g).map(h=>parseInt(h,16)));
+const equal=(a,b)=>{if(a.length!==b.length)return false;let v=0;for(let i=0;i<a.length;i++)v|=a[i]^b[i];return v===0};
+function unlock(){root.classList.remove('pin-locked');screen.hidden=true;code.value='';confirm.value=''}
+submit.addEventListener('click',async()=>{
+ const pin=code.value;
+ if(!/^\d{6}$/.test(pin)){message.textContent='กรุณากรอกตัวเลข 6 หลัก';return}
+ if(Date.now()<blockedUntil){message.textContent='กรุณารอแล้วลองอีกครั้ง';return}
+ submit.disabled=true;
+ try{
+  if(!record){
+   if(pin!==confirm.value){message.textContent='รหัสทั้งสองช่องไม่ตรงกัน';return}
+   if(/^([0-9])\1{5}$/.test(pin)||['123456','654321','000000'].includes(pin)){message.textContent='รหัสนี้เดาง่ายเกินไป กรุณาเลือกใหม่';return}
+   const salt=crypto.getRandomValues(new Uint8Array(16));
+   const hash=await derive(pin,salt);
+   record={salt:bytesToString(salt),hash:bytesToString(hash),version:1};
+   localStorage.setItem(key,JSON.stringify(record));
+   unlock();
+  }else{
+   const actual=await derive(pin,stringToBytes(record.salt)),expected=stringToBytes(record.hash);
+   if(equal(actual,expected)){failures=0;unlock()}else{
+    failures++;code.value='';message.textContent='รหัสไม่ถูกต้อง';
+    if(failures%5===0){blockedUntil=Date.now()+30000;message.textContent='ลองผิดหลายครั้ง กรุณารอ 30 วินาที'}
+   }
+  }
+ }catch(e){message.textContent='ไม่สามารถตรวจสอบ PIN ได้'}
+ finally{submit.disabled=false}
+});
+[code,confirm].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')submit.click()}));
+window.addEventListener('pageshow',()=>{if(screen.hidden){screen.hidden=false;root.classList.add('pin-locked')}}); 
 })();
 </script></body></html>
