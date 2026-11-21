@@ -111,11 +111,11 @@ html.pin-locked main,html.pin-locked footer{visibility:hidden!important}
  <div class="playlist-dialog-shade"></div>
  <section class="playlist-dialog-card" role="dialog" aria-modal="true" aria-labelledby="playlistDialogTitle" aria-describedby="playlistDialogDesc" tabindex="-1">
   <div class="playlist-dialog-top"><div class="playlist-dialog-mark" aria-hidden="true">♫</div><button type="button" id="playlistDialogClose" class="playlist-dialog-close" aria-label="ปิดหน้าต่าง">✕</button></div>
-  <h2 id="playlistDialogTitle">จัดการเพลลิส</h2>
-  <p id="playlistDialogDesc">กรอกข้อมูลเพลลิส</p>
-  <label id="playlistDialogLabel" for="playlistDialogInput">ชื่อเพลลิส</label>
-  <input id="playlistDialogInput" maxlength="100" autocomplete="off" placeholder="ชื่อเพลลิส" />
-  <select id="playlistDialogSelect" aria-label="เลือกเพลลิส" hidden></select>
+  <h2 id="playlistDialogTitle">จัดการPlaylist</h2>
+  <p id="playlistDialogDesc">กรอกข้อมูลPlaylist</p>
+  <label id="playlistDialogLabel" for="playlistDialogInput">ชื่อPlaylist</label>
+  <input id="playlistDialogInput" maxlength="100" autocomplete="off" placeholder="ชื่อPlaylist" />
+  <select id="playlistDialogSelect" aria-label="เลือกPlaylist" hidden></select>
   <p id="playlistDialogError" role="status" aria-live="polite"></p>
   <div class="playlist-dialog-actions"><button type="button" id="playlistDialogCancel">ยกเลิก</button><button type="button" id="playlistDialogOK" class="primary">บันทึก</button></div>
  </section>
@@ -162,19 +162,19 @@ function savePlaylists(){localStorage.setItem(PLAYLIST_KEY,JSON.stringify(playli
 function selectedPlaylist(){return playlists.find(p=>p.id===activePlaylistId)||null}
 const cleanPlaylistName=name=>String(name||'').trim().replace(/\s+/g,' ').slice(0,100);
 const existingName=(name,except='')=>playlists.some(p=>p.id!==except&&cleanPlaylistName(p.name).toLocaleLowerCase()===name.toLocaleLowerCase());
-const uniquePlaylistName=(name,reserved=new Set())=>{const base=cleanPlaylistName(name)||'เพลลิสที่นำเข้า';let candidate=base;let index=2;while(existingName(candidate)||reserved.has(candidate.toLocaleLowerCase())){candidate=base.slice(0,90)+' ('+(index++)+')'}reserved.add(candidate.toLocaleLowerCase());return candidate};
+const uniquePlaylistName=(name,reserved=new Set())=>{const base=cleanPlaylistName(name)||'Playlistที่นำเข้า';let candidate=base;let index=2;while(existingName(candidate)||reserved.has(candidate.toLocaleLowerCase())){candidate=base.slice(0,90)+' ('+(index++)+')'}reserved.add(candidate.toLocaleLowerCase());return candidate};
 const makePlaylistId=()=>('pl-'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)));
 let dialogDone=null,previousDialogFocus=null,dialogValidator=null;
 const dialog=$('playlistDialog'),dlgInput=$('playlistDialogInput'),dlgSelect=$('playlistDialogSelect'),dlgLabel=$('playlistDialogLabel'),dlgError=$('playlistDialogError');
 function openPlaylistDialog(opts={}){
  if(dialogDone)return Promise.resolve(null);
  previousDialogFocus=document.activeElement;dialogValidator=opts.validate||null;
- $('playlistDialogTitle').textContent=opts.title||'จัดการเพลลิส';
+ $('playlistDialogTitle').textContent=opts.title||'จัดการPlaylist';
  $('playlistDialogDesc').textContent=opts.description||'';
  dlgInput.hidden=opts.type!=='input';dlgLabel.hidden=opts.type!=='input';
  dlgSelect.hidden=opts.type!=='select';
  dlgInput.value=opts.value||'';dlgInput.maxLength=opts.maxLength||100;
- dlgLabel.textContent=opts.label||'ชื่อเพลลิส';dlgInput.placeholder=opts.placeholder||'กรอกชื่อเพลลิส';
+ dlgLabel.textContent=opts.label||'ชื่อPlaylist';dlgInput.placeholder=opts.placeholder||'กรอกชื่อPlaylist';
  if(opts.type==='select'){dlgSelect.replaceChildren();for(const opt of opts.options||[]){const el=document.createElement('option');el.value=opt.value;el.textContent=opt.label;dlgSelect.appendChild(el)}}
  dlgError.textContent='';$('playlistDialogOK').textContent=opts.okText||'บันทึก';
  $('playlistDialogCancel').hidden=opts.type==='notice';
@@ -206,13 +206,13 @@ dialog.addEventListener('keydown',e=>{
 const playlistNotice=(title,description)=>openPlaylistDialog({type:'notice',title,description,okText:'รับทราบ'});
 async function addToPlaylist(songId){
  if(!songs.some(s=>s.id===songId))return;
- if(!playlists.length){await playlistNotice('ยังไม่มีเพลลิส','กรุณาสร้างเพลลิสก่อนเพิ่มเพลง');return}
+ if(!playlists.length){await playlistNotice('ยังไม่มีPlaylist','กรุณาสร้างPlaylistก่อนเพิ่มเพลง');return}
  let target=selectedPlaylist();
  if(!target){
-  const result=await openPlaylistDialog({type:'select',title:'เพิ่มเพลงลงเพลลิส',description:'เลือกเพลลิสที่ต้องการเพิ่มเพลง',okText:'เพิ่มเพลง',options:playlists.map(p=>({value:p.id,label:p.name}))});
+  const result=await openPlaylistDialog({type:'select',title:'เพิ่มเพลงลงPlaylist',description:'เลือกPlaylistที่ต้องการเพิ่มเพลง',okText:'เพิ่มเพลง',options:playlists.map(p=>({value:p.id,label:p.name}))});
   if(result===null)return;target=playlists.find(p=>p.id===result);if(!target)return
  }
- if(target.songIds.includes(songId)){await playlistNotice('มีเพลงนี้แล้ว','เพลงอยู่ในเพลลิสที่เลือกแล้ว');return}
+ if(target.songIds.includes(songId)){await playlistNotice('มีเพลงนี้แล้ว','เพลงอยู่ในPlaylistที่เลือกแล้ว');return}
  target.songIds.push(songId);savePlaylists();
 }
 async function editSong(songId){
@@ -228,19 +228,19 @@ function setupPlaylistUI(){
  $('youtubeQuery').addEventListener('keydown',e=>{if(e.key==='Enter')$('youtubeSearch').click()});
  $('activePlaylist').onchange=e=>{activePlaylistId=e.target.value;category='ทั้งหมด';visibleCount=60;render()};
  $('createPlaylist').onclick=async()=>{
-  const name=await openPlaylistDialog({type:'input',title:'สร้างเพลลิสใหม่',description:'ตั้งชื่อเพลลิสเพื่อจัดเพลงที่คุณชอบ',label:'ชื่อเพลลิส',okText:'สร้างเพลลิส',validate:v=>{const n=cleanPlaylistName(v);return !n?'กรุณากรอกชื่อเพลลิส':existingName(n)?'มีเพลลิสชื่อนี้แล้ว':''}});
+  const name=await openPlaylistDialog({type:'input',title:'สร้างPlaylistใหม่',description:'ตั้งชื่อPlaylistเพื่อจัดเพลงที่คุณชอบ',label:'ชื่อPlaylist',okText:'สร้างPlaylist',validate:v=>{const n=cleanPlaylistName(v);return !n?'กรุณากรอกชื่อPlaylist':existingName(n)?'มีPlaylistชื่อนี้แล้ว':''}});
   if(name===null)return;const n=cleanPlaylistName(name);if(!n||existingName(n))return;
   const id=makePlaylistId();playlists.push({id,name:n,songIds:[]});activePlaylistId=id;savePlaylists();
  };
  $('renamePlaylist').onclick=async()=>{
   const p=selectedPlaylist();if(!p)return;
-  const name=await openPlaylistDialog({type:'input',title:'เปลี่ยนชื่อเพลลิส',description:'แก้ไขชื่อโดยเพลงทั้งหมดจะยังอยู่เหมือนเดิม',value:p.name,okText:'บันทึกชื่อ',validate:v=>{const n=cleanPlaylistName(v);return !n?'กรุณากรอกชื่อเพลลิส':existingName(n,p.id)?'มีเพลลิสชื่อนี้แล้ว':''}});
+  const name=await openPlaylistDialog({type:'input',title:'เปลี่ยนชื่อPlaylist',description:'แก้ไขชื่อโดยเพลงทั้งหมดจะยังอยู่เหมือนเดิม',value:p.name,okText:'บันทึกชื่อ',validate:v=>{const n=cleanPlaylistName(v);return !n?'กรุณากรอกชื่อPlaylist':existingName(n,p.id)?'มีPlaylistชื่อนี้แล้ว':''}});
   if(name===null)return;const n=cleanPlaylistName(name);if(!n||existingName(n,p.id))return;
   p.name=n;savePlaylists();
  };
  $('deletePlaylist').onclick=async()=>{
   const p=selectedPlaylist();if(!p)return;
-  const approved=await openPlaylistDialog({type:'confirm',title:'ยืนยันการลบเพลลิส',description:'ต้องการลบเพลลิส “'+p.name+'” หรือไม่?\nเพลงในคลังหลักจะยังคงอยู่',okText:'ลบเพลลิส'});
+  const approved=await openPlaylistDialog({type:'confirm',title:'ยืนยันการลบPlaylist',description:'ต้องการลบPlaylist “'+p.name+'” หรือไม่?\nเพลงในคลังหลักจะยังคงอยู่',okText:'ลบPlaylist'});
   if(!approved)return;
   playlists=playlists.filter(item=>item.id!==p.id);activePlaylistId='';savePlaylists();
  };
@@ -312,7 +312,7 @@ $('file').onchange=async e=>{
   const source=JSON.parse(await file.text());
   const incomingSongs=Array.isArray(source)?source:source?.songs;
   if(!Array.isArray(incomingSongs))throw Error('รูปแบบไฟล์ข้อมูลเพลงไม่ถูกต้อง');
-  if(source?.playlists!==undefined&&!Array.isArray(source.playlists))throw Error('รูปแบบข้อมูลเพลลิสไม่ถูกต้อง');
+  if(source?.playlists!==undefined&&!Array.isArray(source.playlists))throw Error('รูปแบบข้อมูลPlaylistไม่ถูกต้อง');
   // Validate everything first. Do not mutate current data before a full successful read.
   const mergedSongs=new Map(songs.filter(item=>valid(item.id)).map(item=>[item.id,{...item}]));
   let freshSongs=0;
@@ -327,13 +327,13 @@ $('file').onchange=async e=>{
   let freshLists=0;
   const nameUsed=new Set(mergedPlaylists.map(p=>cleanPlaylistName(p.name).toLocaleLowerCase()));
   const importUnique=raw=>{
-   const base=cleanPlaylistName(raw)||'เพลลิสที่นำเข้า';let name=base,n=2;
+   const base=cleanPlaylistName(raw)||'Playlistที่นำเข้า';let name=base,n=2;
    while(nameUsed.has(name.toLocaleLowerCase()))name=base.slice(0,85)+' ('+(n++)+')';
    nameUsed.add(name.toLocaleLowerCase());return name
   };
   if(Array.isArray(source?.playlists)){
    for(const raw of source.playlists){
-    if(!raw||typeof raw.name!=='string'||!Array.isArray(raw.songIds))throw Error('พบข้อมูลเพลลิสไม่ถูกต้องในไฟล์');
+    if(!raw||typeof raw.name!=='string'||!Array.isArray(raw.songIds))throw Error('พบข้อมูลPlaylistไม่ถูกต้องในไฟล์');
     const filtered=[...new Set(raw.songIds.filter(id=>typeof id==='string'&&allowed.has(id)))];
     const id=typeof raw.id==='string'?raw.id:'';
     const old=id&&mergedPlaylists.find(p=>p.id===id);
@@ -341,7 +341,7 @@ $('file').onchange=async e=>{
     mergedPlaylists.push({id:makePlaylistId(),name:importUnique(raw.name),songIds:filtered});freshLists++;
    }
   }
-  const proceed=await openPlaylistDialog({type:'confirm',title:'ยืนยันนำเข้าคลังเพลง',description:'เพิ่มเพลงใหม่ '+freshSongs+' เพลง\nเพิ่มเพลลิสใหม่ '+freshLists+' ชุด\nรายการเพลงเดิมและเพลลิสเดิมจะไม่ถูกลบ',okText:'ยืนยันนำเข้า'});
+  const proceed=await openPlaylistDialog({type:'confirm',title:'ยืนยันนำเข้าคลังเพลง',description:'เพิ่มเพลงใหม่ '+freshSongs+' เพลง\nเพิ่มPlaylistใหม่ '+freshLists+' ชุด\nรายการเพลงเดิมและPlaylistเดิมจะไม่ถูกลบ',okText:'ยืนยันนำเข้า'});
   if(!proceed)return;
   const beforeSongs=songs,beforeLists=playlists;
   try{
@@ -354,7 +354,7 @@ $('file').onchange=async e=>{
    try{localStorage.setItem(KEY,JSON.stringify(beforeSongs));localStorage.setItem(PLAYLIST_KEY,JSON.stringify(beforeLists))}catch{}
    throw err
   }
-  await playlistNotice('นำเข้าข้อมูลสำเร็จ','เพิ่มเพลง '+freshSongs+' เพลง และเพิ่มเพลลิส '+freshLists+' ชุด');
+  await playlistNotice('นำเข้าข้อมูลสำเร็จ','เพิ่มเพลง '+freshSongs+' เพลง และเพิ่มPlaylist '+freshLists+' ชุด');
  }catch(err){await playlistNotice('นำเข้าข้อมูลไม่สำเร็จ',err?.message||'กรุณาตรวจสอบไฟล์อีกครั้ง')}
  finally{e.target.value=''}
 };async function sync(){if(!user||!db||!cloudLoaded)return;const col=db.collection('users').doc(user.uid).collection('songs');try{const snapshot=await col.get(),existing=new Set(snapshot.docs.map(d=>d.id));for(let i=0;i<songs.length;i+=300){const batch=db.batch();songs.slice(i,i+300).forEach(s=>{if(valid(s.id))batch.set(col.doc(s.id),s)});await batch.commit()}const current=new Set(songs.map(s=>s.id));const removed=[...existing].filter(id=>!current.has(id));for(let i=0;i<removed.length;i+=300){const batch=db.batch();removed.slice(i,i+300).forEach(id=>batch.delete(col.doc(id)));await batch.commit()}status('Cloud ซิงก์แล้ว')}catch(err){status('ซิงก์ไม่สำเร็จ · '+err.code)}}function cloudLogin(u){
