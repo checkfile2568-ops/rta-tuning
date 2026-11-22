@@ -49,11 +49,28 @@ const App = (function () {
   const $ = U.$;
   const ROLE_TH = { USER: 'ผู้ขอเบิก', HEAD: 'หัวหน้าส่วน', OFFICER: 'เจ้าหน้าที่พัสดุ', SUPPLY_HEAD: 'หัวหน้าเจ้าหน้าที่พัสดุ', ADMIN: 'ผู้ดูแลระบบ' };
 
+  /* ---------------------------------------------------------- ป้ายจำนวนบนเมนู (อัปเดตทุกครั้งที่ดึงข้อมูลผู้ใช้ใหม่ ไม่ต้องรีเฟรชหน้า) */
+  function syncBadges() {
+    if (!S.user) return;
+    const items = navFor(S.user);
+    items.forEach(function (x) {
+      if (x[0] === '-') return;
+      document.querySelectorAll('a[data-nav="' + x[0] + '"]').forEach(function (a) {
+        let c = a.querySelector('.cnt');
+        if (x[3]) { if (!c) { c = document.createElement('span'); c.className = 'cnt'; a.appendChild(c); } c.textContent = x[3]; }
+        else if (c) c.remove();
+      });
+    });
+    const k = S.user.role === 'SUPPLY_HEAD' ? 'approvals' : null;
+    const n = k ? Number(((S.me && S.me.counts) || {})[k] || 0) : 0;
+    try { if (k && navigator.setAppBadge) { if (n) navigator.setAppBadge(n); else navigator.clearAppBadge(); } } catch (e) { /* ไม่รองรับก็ข้าม */ }
+  }
+
   /* ---------------------------------------------------------- เมนูตามบทบาท */
   function navFor(u) {
     const c = (S.me && S.me.counts) || {};
     const appr = S.cfg.approval_enabled;
-    const mine = [['req', 'เบิกวัสดุ', 'box'], ['my', 'คำขอของฉัน', 'doc', (c.myPending || 0) + (c.myReady || 0)]];
+    const mine = [['req', 'เบิกวัสดุ', 'box'], ['my', 'คำขอของฉัน', 'doc', (c.myPending || 0) + (c.myReady || 0) + (c.myReturned || 0)]];
     if (u.role === 'OFFICER' || u.role === 'SUPPLY_HEAD') {
       return [['home', 'หน้าแรก', 'home'], ['queue', 'คิวจ่ายวัสดุ', 'truck', (c.queuePrep || 0) + (c.queueReady || 0)],
         ['stock', 'คลังวัสดุ', 'box'], ['receive', 'รับเข้า', 'inbox'], ['count', 'ตรวจนับ/ปรับยอด', 'clip'],
@@ -85,7 +102,7 @@ const App = (function () {
     return items.map(function (x) {
       if (x[0] === '-') return '<div class="sep">' + U.esc(x[1]) + '</div>';
       const cnt = x[3] ? '<span class="cnt">' + x[3] + '</span>' : '';
-      return '<a href="#/' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '">' + ICON(x[2]) + '<span>' + U.esc(x[1]) + '</span>' + cnt + '</a>';
+      return '<a href="#/' + x[0] + '" data-nav="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '">' + ICON(x[2]) + '<span>' + U.esc(x[1]) + '</span>' + cnt + '</a>';
     }).join('');
   }
 
@@ -225,10 +242,12 @@ const App = (function () {
   function loadCart() {
     S.cart = Store.ls.get('cart:' + S.user.code, {}) || {};
     S.purpose = Store.ls.get('purpose:' + S.user.code, '') || '';
+    S.editReq = Store.ls.get('editreq:' + S.user.code, null) || null;
   }
   function saveCart() {
     Store.ls.set('cart:' + S.user.code, S.cart);
     Store.ls.set('purpose:' + S.user.code, S.purpose || '');
+    if (S.editReq) Store.ls.set('editreq:' + S.user.code, S.editReq); else Store.ls.del('editreq:' + S.user.code);
     document.dispatchEvent(new CustomEvent('cart'));
   }
 
@@ -273,6 +292,7 @@ const App = (function () {
     try {
       const me = await API.call('me');
       S.me = me; S.user = me.user; S.cfg = me.cfg; S.depts = me.departments;
+      syncBadges();
       const nav = $('#nav');
       if (nav) nav.innerHTML = navHtml(navFor(S.user), S.route);
       bottomFor(S.user).forEach(function (x) {
@@ -435,7 +455,7 @@ const Login = (function () {
     pin = ''; busy = false;
     const html = (overlayFor ? '<h2>ใส่ PIN</h2>' : '<h2 class="sr-only">ใส่ PIN</h2>') + '<div class="who"><span class="avatar">' + U.esc(acct.name.charAt(0)) + '</span><div><b>' + U.nameHtml(acct) + '</b>' +
       '<span class="muted small">' + U.esc(acct.dept || '') + '</span></div>' +
-      (overlayFor ? '' : '<button class="btn sm ghost" id="chg" style="margin-left:auto">เปลี่ยนชื่อ</button>') + '</div>' +
+      (overlayFor ? '' : '<button class="btn sm switch-user" id="chg" aria-label="เปลี่ยนผู้ใช้ กลับไปเลือกชื่อของคุณ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3l4 4-4 4"/><path d="M20 7H9a4 4 0 0 0-4 4v1"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h11a4 4 0 0 0 4-4v-1"/></svg>เปลี่ยนผู้ใช้</button>') + '</div>' +
       (msg ? '<div class="notice warn"><div>' + U.esc(msg) + '</div></div>' : '') +
       '<div class="pin-stage" id="pin-stage"><div class="pin-dots" id="dots"><i></i><i></i><i></i><i></i></div><p class="err" id="err" role="alert"></p>' +
       '<input id="pinin" class="pin-input" inputmode="numeric" autocomplete="one-time-code" maxlength="4" aria-label="PIN 4 หลัก">' +
