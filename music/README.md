@@ -65,3 +65,12 @@ Playlists are stored in browser localStorage under `my-music-playlists-v1`. Song
 ## Themes (2026-11-22)
 
 🎨 button in the header opens a theme picker (saved per browser in `music-theme-v1`) with 4 themes: **สว่าง ฟ้า-ขาว (default)**, กรมท่า-ทอง, ฟ้าครามกระจก, ดำล้วน (OLED, no blur). A browser with no saved theme — or with an old/removed theme value — opens in the white/blue default, including the PIN screen. Themes only override colours via `--t-*` variables on `html[data-theme=…]`. To add a theme: one variable block in the CSS theme layer + its id in the head script list + one entry in `THEMES`.
+
+## Search placement and car key reuse (2026-11-22)
+
+- Main library: YouTube search stays visible above the player. Selecting a search result opens the existing add-song form; library filtering stays separate.
+- Car page: search appears directly above the video results, with a clear key-setup status.
+- Both pages reuse `music-youtube-search-api-v1` on the same origin and browser. Existing car keys migrate on first use. Empty shared values deliberately disable the key rather than restoring an older car key. Different devices and browser profiles require separate setup.
+- No live YouTube API credential is included. Create a key in the owner's Google Cloud project, enable YouTube Data API v3, restrict the key to that API and the website referrer `https://checkfile2568-ops.github.io/*`, then enter it using the page's settings. A global cross-device credential requires a separately configured backend; local browser storage does not provide cross-device synchronization.
+- Validation: inline JavaScript syntax and DOM simulation passed for search placement, mocked API parameters/results, result selection, shared-key save/read/clear, legacy migration, no-key fallback and unique element IDs. Live Google search and rendered car/mobile layouts were not tested. Headless Chromium could not start in this execution environment.
+- Rollback: restore only `music/index.html`, `music/car.html` and this README from commit `be153715bc6301620793f5e155edc1d938a3cce2`; leave stored music and playlists intact.
