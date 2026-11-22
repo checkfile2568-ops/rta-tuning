@@ -64,4 +64,4 @@ Playlists are stored in browser localStorage under `my-music-playlists-v1`. Song
 
 ## Themes (2026-11-22)
 
-🎨 button in the header opens a theme picker (saved per browser in `music-theme-v1`): ม่วงกระจก (original, default), กรมท่า-ทอง, ฟ้าครามกระจก, มรกตกลางคืน, นีออนปาร์ตี้, ดำล้วน (OLED, no blur), สว่าง ฟ้า-ขาว (outdoor). The default theme uses the original CSS unchanged; other themes only override colours via `--t-*` variables on `html[data-theme=…]`. To add a theme: one variable block in the CSS theme layer + one entry in `THEMES` in the theme script.
+🎨 button in the header opens a theme picker (saved per browser in `music-theme-v1`) with 4 themes: **สว่าง ฟ้า-ขาว (default)**, กรมท่า-ทอง, ฟ้าครามกระจก, ดำล้วน (OLED, no blur). A browser with no saved theme — or with an old/removed theme value — opens in the white/blue default, including the PIN screen. Themes only override colours via `--t-*` variables on `html[data-theme=…]`. To add a theme: one variable block in the CSS theme layer + its id in the head script list + one entry in `THEMES`.
