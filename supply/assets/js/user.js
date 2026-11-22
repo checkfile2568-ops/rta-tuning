@@ -87,8 +87,8 @@ App.view('home', {
     const freq = (S.me.frequent || []).map(function (id) { return S.idx[id]; }).filter(Boolean);
     const pending = (c.myPending || 0) + (c.myReady || 0) + (c.myReturned || 0);
     const favs = (S.me.favorites || []).map(function (id) { return S.idx[id]; }).filter(Boolean);
-    el.innerHTML = '<section class="bento-welcome"><div class="welcome-copy"><span class="bento-eyebrow">พื้นที่ทำงานของคุณ</span>' + U.greetingHtml() + '<h2>' + U.nameHtml(u) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p></div>' + U.periodArt() +
-      '<a class="btn gold lg" href="#/req">' + ICON('box') + 'เบิกวัสดุ</a></section>' + RW.banner('home') +
+    el.innerHTML = '<section class="bento-welcome"><div class="welcome-copy"><span class="bento-eyebrow">พื้นที่ทำงานของคุณ</span>' + U.greetingHtml() + '<h2>' + U.nameHtml(u) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p></div><div class="welcome-side">' + U.periodArt() +
+      '<a class="btn gold lg" href="#/req">' + ICON('box') + 'เบิกวัสดุ</a></div></section>' + RW.banner('home') +
       '<nav class="bento-grid bento-menu bento-user-menu" aria-label="งานของฉัน"><a class="card" href="#/my">' + ICON('doc', 'ic') + (pending ? '<span class="task-count" aria-label="มีคำขอค้าง ' + pending + ' ใบ">' + U.n(pending) + '</span>' : '') + '<h3>คำขอของฉัน</h3><p>ติดตามการจัดเตรียมและการส่งมอบ</p></a><a class="card" href="#/dash">' + ICON('chart', 'ic') + '<h3>ประวัติการเบิก</h3><p>ตรวจรายการและสถิติตามสิทธิ์</p></a><a class="card" href="#/profile">' + ICON('user', 'ic') + '<h3>ข้อมูลของฉัน</h3><p>ตรวจส่วนงาน ตำแหน่ง และ PIN</p></a></nav>' +
       (c.myReturned ? '<div class="notice warn returned-notice">' + ICON('alert') + '<div><b>มีใบที่ส่งกลับแก้ไข ' + c.myReturned + ' ใบ</b>แก้ไขตามหมายเหตุแล้วยื่นใบเดิมอีกครั้ง <a href="#/my">แก้ไขใบเบิก</a></div></div>' : '') +
       (c.myReady ? '<div class="notice info">' + ICON('truck') + '<div><b>มีของพร้อมรับ ' + c.myReady + ' ใบ</b>ติดต่อรับที่งานพัสดุ <a href="#/my">ดูรายการ</a></div></div>' : '') +

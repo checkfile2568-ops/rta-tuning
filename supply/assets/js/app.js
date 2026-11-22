@@ -343,6 +343,7 @@ const App = (function () {
     else if (a === 'gocart') { e.preventDefault(); location.hash = '#/cart'; }
   });
   setInterval(function () { if (!document.hidden) U.refreshGreeting(ROOT()); }, 30000);
+  U.bindPeriodTilt();
   document.addEventListener('visibilitychange', function () { if (!document.hidden) U.refreshGreeting(ROOT()); });
   window.addEventListener('hashchange', function () { if (S.user && S.me && !S.me.needDept && $('#view')) render(); });
 
