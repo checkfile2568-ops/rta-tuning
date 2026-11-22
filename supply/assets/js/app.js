@@ -281,6 +281,13 @@ const App = (function () {
       API.setCatalogVersion(initialCatalog.version);
       Store.set('catalog:' + S.user.code, { data: initialCatalog, at: S.catAt, role: S.user.role });
     } else await loadCatalog().catch(function () { return null; });
+    // 1.11.1 เข้าสู่ระบบด้วย PIN ทุกครั้ง → เริ่มที่หน้าแรกเสมอ (ยกเว้นลิงก์สแกน QR ใบเบิก)
+    if (S.startHome) {
+      S.startHome = false;
+      if (!/^#\/scan\//.test(location.hash) && location.hash && location.hash !== '#/home') {
+        try { history.replaceState(null, '', location.pathname + location.search + '#/home'); } catch (e) { location.hash = '#/home'; }
+      }
+    }
     render();
     if ((S.user.role === 'OFFICER' || S.user.role === 'SUPPLY_HEAD') && typeof Officer !== 'undefined') Officer.watch();
     if ((S.user.role === 'USER' || S.user.role === 'HEAD') && typeof Track !== 'undefined') Track.watch();
@@ -565,6 +572,7 @@ const Login = (function () {
     waiting('กำลังโหลดข้อมูล');
     try {
       const results = await Promise.all([API.call('me'), API.call('catalog').catch(function () { return null; })]);
+      App.S.startHome = true;
       await App.afterLogin(results[0], results[1]);
     } catch (e) {
       if (e && /^SESSION_|PIN_CHANGE/.test(e.code)) { show(); return; }
