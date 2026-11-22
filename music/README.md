@@ -49,3 +49,15 @@ The GitHub Pages website now has a local Playlist Manager: create, select, renam
 The collapsed YouTube addition panel includes a keyword search button that opens YouTube search results in a new tab. This is **not** in-app YouTube search API integration: YouTube Data API credentials and quota handling are required for native search results inside the dashboard. Search terms cannot provide verified video IDs by themselves. Select a video in YouTube and paste its share link back into the app.
 
 Playlists are stored in browser localStorage under `my-music-playlists-v1`. Song records continue using the prior `my-music-library-v2-web` key, so prior data is preserved. JSON export now includes `songs` plus `playlists`; importing prior songs-only arrays remains supported. The local PIN is browser-scoped. Cross-device playlist synchronization **is not yet active**, because no secured cloud backend is connected. Do not confuse GitHub source deployment with persistent cloud writes.
+
+## Audit fixes (2026-11-22)
+
+- Seek bar no longer freezes on desktop after seeking (UI pauses only while dragging, not while the slider keeps focus).
+- "ลืมรหัส PIN?" on the unlock screen removes only the PIN record (`my-music-pin-v1`); songs, Playlists and other apps on this GitHub Pages origin are kept. The PIN remains a local screen gate, not security.
+- Firebase SDK is loaded on demand only when `firebase-config.js` contains a real config, so the page no longer downloads ~150 KB of unused scripts before showing the PIN screen.
+- Add-song checks duplicates first (no false "added" message); add/delete/new-category use the in-app dialogs instead of `alert/confirm/prompt`.
+- Next/Previous/Repeat follow the selected Playlist and category, ignoring the text search box; Repeat always replays the current song.
+- YouTube error 101/150 explains all common causes (embed off, region/age limits, sign-in check), not only "owner disabled embedding".
+- Failed in-page API search shows a tappable YouTube link instead of a popup that browsers block.
+- Links without `https://` are accepted; user categories are remembered (`music-custom-categories-v1`); the ＋ button lists only Playlists that do not contain the song yet; app icons added for home-screen install.
+- Not changed: Cloud mode still syncs songs only — Playlists stay in this browser until a cloud Playlist store is added.
