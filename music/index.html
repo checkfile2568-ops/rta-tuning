@@ -1,4 +1,4 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10152c"><title>My Music Library</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><script>document.documentElement.classList.add("pin-locked")</script><style>
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#eaf3ff"><title>My Music Library</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><script>document.documentElement.classList.add("pin-locked");var t="daylight";try{var s=localStorage.getItem("music-theme-v1");if(["daylight","navy","ocean","amoled"].indexOf(s)>=0)t=s}catch(e){}document.documentElement.dataset.theme=t</script><style>
 :root{font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;color:#f2f4ff;background:#0b1021}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 90% 0,#282452,#0b1021 55%);min-height:100vh}button,input,select{font:inherit}button{border:0;cursor:pointer}header{padding:20px max(16px,calc((100vw - 1150px)/2));display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;border-bottom:1px solid #ffffff15}h1{font-size:22px;margin:0}small,.muted{color:#a7aec8}main{max-width:1150px;margin:auto;padding:20px 16px 80px}.panel{background:#171d35;border:1px solid #ffffff19;border-radius:20px;padding:17px;box-shadow:0 12px 40px #0002}.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,1fr);gap:18px}.player{aspect-ratio:16/9;background:#050912;border-radius:14px;overflow:hidden}#player{width:100%;height:100%}input,select{background:#10172c;border:1px solid #38425d;border-radius:12px;color:#fff;padding:12px;min-width:0}input{width:100%}button{padding:11px 14px;border-radius:12px;background:#303957;color:#fff}.primary{background:#8575eb;color:#fff;font-weight:650}.action{background:#27304c}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex-shrink:0}.stretch{flex:1!important;min-width:0}.song{display:flex;gap:12px;align-items:center;padding:9px 6px;border-bottom:1px solid #ffffff16}.song img{width:70px;aspect-ratio:16/9;object-fit:cover;border-radius:9px}.song .details{flex:1;min-width:0}.song strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.song small{display:block}.pill{padding:5px 9px;border-radius:100px;background:#25304b;font-size:12px}h2{font-size:17px;margin:0 0 14px}.controls{margin:12px 0}.controls button{min-width:43px}.time{width:100%;accent-color:#998aff}#now{margin-top:12px;font-size:16px}#status{color:#b1b9dd;font-size:12px;min-height:18px}#authBox{display:none;position:fixed;inset:0;z-index:10;background:#000a;align-items:center;justify-content:center;padding:16px}#authBox>.panel{width:min(420px,100%)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}#notice{color:#e8bc74;font-size:12px}footer{max-width:1150px;margin:auto;padding:24px 16px;color:#9ca3b8;font-size:12px}button:disabled{opacity:.5}button:focus-visible,input:focus-visible{outline:2px solid #a9a0fb}@media(max-width:780px){.layout{grid-template-columns:1fr}header{padding:14px}main{padding:12px}.panel{padding:12px}.song img{width:60px}.controls button{padding:10px 12px}}
 
 /* Glassy 3D responsive edition v2.1 */
@@ -120,8 +120,57 @@ html.pin-locked main,html.pin-locked footer{visibility:hidden!important}
 .music-menu-pane .row{flex-wrap:wrap}
 .music-menu-pane .row input.stretch,.music-menu-pane .row select.stretch{flex:1 1 220px;min-width:0}
 .music-menu-pane .row button{flex:0 0 auto;max-width:100%}
+/* ===== Theme layer (2026-11-22) =====
+   4 themes: daylight (default, white/blue), navy, ocean, amoled. The theme is always set on html[data-theme=…]
+   and only overrides colours through the --t-* variables below; the base purple CSS above is the fallback.
+   ต่อยอด: add a new theme = one variable block here + one entry in THEMES (theme script). */
+html[data-theme="navy"]{--t-bg:radial-gradient(ellipse at 15% 0%,#2b4f8f 0%,transparent 40%),radial-gradient(ellipse at 90% 30%,#1b3466 0%,transparent 45%),linear-gradient(150deg,#0e1f45,#060f26 70%);--t-glow:radial-gradient(circle at 40% 70%,rgba(229,190,90,.08),transparent 45%);--t-header:linear-gradient(135deg,rgba(43,79,143,.45),rgba(12,28,64,.35));--t-panel:linear-gradient(145deg,rgba(58,96,168,.28),rgba(20,40,86,.35) 55%,rgba(6,15,38,.55));--t-border:rgba(229,190,90,.32);--t-shadow:0 20px 48px rgba(2,8,24,.5),inset 0 1px 1px rgba(255,255,255,.18);--t-sheen:linear-gradient(rgba(255,255,255,.06),transparent);--t-text:#f5f1e4;--t-muted:#c9c2a8;--t-btn:linear-gradient(155deg,#2c4a80,#16294f);--t-btn-text:#f5f1e4;--t-primary:linear-gradient(150deg,#f6dc8a,#d9a93c 65%,#b8841f);--t-primary-text:#1d1404;--t-primary-shadow:0 9px 22px rgba(217,169,60,.35),inset 0 2px 3px rgba(255,255,255,.55);--t-input:rgba(6,15,38,.6);--t-input-border:rgba(229,190,90,.35);--t-accent:#e5be5a;--t-accent2:#c99a2e;--t-track:rgba(255,255,255,.15);--t-thumb-border:#fff4d6;--t-tab:#1b3160;--t-pane:rgba(10,24,56,.6);--t-hover:rgba(229,190,90,.08);--t-warn:#ffd98a;--t-dialog:linear-gradient(145deg,rgba(43,79,143,.98),rgba(16,32,70,.98) 55%,rgba(6,15,38,.99));--t-pin-bg:radial-gradient(circle at 15% 10%,#2f5597,#0e1f45 50%,#050c1e)}
+html[data-theme="ocean"]{--t-bg:radial-gradient(ellipse at 10% 0%,#1fa5c9 0%,transparent 38%),radial-gradient(ellipse at 95% 25%,#1d5fae 0%,transparent 45%),linear-gradient(150deg,#0b2d52,#05162b 70%);--t-glow:radial-gradient(circle at 40% 75%,rgba(127,216,255,.1),transparent 45%);--t-header:linear-gradient(135deg,rgba(127,216,255,.2),rgba(29,95,174,.15));--t-panel:linear-gradient(145deg,rgba(150,225,255,.16),rgba(30,100,180,.14) 55%,rgba(5,22,43,.45));--t-border:rgba(160,228,255,.3);--t-shadow:0 20px 48px rgba(2,14,30,.45),inset 0 1px 1px rgba(255,255,255,.28);--t-sheen:linear-gradient(rgba(255,255,255,.08),transparent);--t-text:#effaff;--t-muted:#b5d6e8;--t-btn:linear-gradient(155deg,#3b6f99,#1c3d5e);--t-btn-text:#effaff;--t-primary:linear-gradient(150deg,#8fe3ff,#38a6f0 65%,#1f74d1);--t-primary-text:#03213a;--t-primary-shadow:0 9px 22px rgba(56,166,240,.4),inset 0 2px 3px rgba(255,255,255,.6);--t-input:rgba(4,22,44,.55);--t-input-border:rgba(160,228,255,.35);--t-accent:#7fd8ff;--t-accent2:#38a6f0;--t-track:rgba(255,255,255,.17);--t-thumb-border:#e9f9ff;--t-tab:#1e4569;--t-pane:rgba(6,30,58,.55);--t-hover:rgba(127,216,255,.09);--t-warn:#ffe2a8;--t-dialog:linear-gradient(145deg,rgba(40,140,200,.98),rgba(16,60,110,.98) 55%,rgba(5,22,43,.99));--t-pin-bg:radial-gradient(circle at 15% 10%,#2196c4,#0b2d52 50%,#04111f)}
+html[data-theme="amoled"]{--t-bg:#000;--t-glow:none;--t-header:#000;--t-panel:#0b0b0d;--t-border:rgba(255,255,255,.12);--t-shadow:none;--t-sheen:none;--t-text:#f2f2f2;--t-muted:#9a9aa3;--t-btn:#1a1a1f;--t-btn-text:#f2f2f2;--t-primary:#f2f2f2;--t-primary-text:#000;--t-primary-shadow:none;--t-input:#111114;--t-input-border:rgba(255,255,255,.18);--t-accent:#f2f2f2;--t-accent2:#bdbdbd;--t-track:rgba(255,255,255,.14);--t-thumb-border:#000;--t-tab:#141418;--t-pane:#070708;--t-hover:rgba(255,255,255,.05);--t-warn:#f5c86a;--t-dialog:#111114;--t-pin-bg:#000}
+html[data-theme="daylight"]{color-scheme:light;--t-bg:radial-gradient(ellipse at 10% 0%,#cfe4ff 0%,transparent 40%),radial-gradient(ellipse at 95% 20%,#dceeff 0%,transparent 45%),linear-gradient(160deg,#f4f8fd,#e6eef8 70%);--t-glow:none;--t-header:rgba(255,255,255,.75);--t-panel:rgba(255,255,255,.88);--t-border:rgba(31,79,140,.18);--t-shadow:0 12px 30px rgba(30,60,110,.12);--t-sheen:none;--t-text:#0f2742;--t-muted:#4a6280;--t-btn:linear-gradient(160deg,#ffffff,#e4edf8);--t-btn-text:#0f2742;--t-primary:linear-gradient(150deg,#3b8bff,#1f6feb 60%,#0b4fb3);--t-primary-text:#fff;--t-primary-shadow:0 8px 18px rgba(31,111,235,.3),inset 0 1px 2px rgba(255,255,255,.4);--t-input:#fff;--t-input-border:#b8c9de;--t-accent:#1f6feb;--t-accent2:#0b4fb3;--t-track:#d6e1ee;--t-thumb-border:#fff;--t-tab:#eaf1fa;--t-pane:#f5f9fe;--t-hover:rgba(31,111,235,.06);--t-warn:#9a5b00;--t-dialog:#ffffff;--t-pin-bg:linear-gradient(160deg,#eaf3ff,#d6e6fa)}
+html[data-theme] body{background:var(--t-bg);background-attachment:fixed;color:var(--t-text)}
+html[data-theme] body:before{background:var(--t-glow)}
+html[data-theme] header{background:var(--t-header);border-bottom-color:var(--t-border)}
+html[data-theme] header small,html[data-theme] small,html[data-theme] .muted,html[data-theme] #status,html[data-theme] #wakeState,html[data-theme] footer,html[data-theme] .yt-result-info small,html[data-theme] .bio-note,html[data-theme] #bioHelp{color:var(--t-muted)}
+html[data-theme] #now,html[data-theme] .volume-glass .volume-number{color:var(--t-text);text-shadow:none}
+html[data-theme] #notice,html[data-theme] .playlist-dialog #playlistDialogError,html[data-theme] #pinMessage{color:var(--t-warn)}
+html[data-theme] .panel{background:var(--t-panel);border-color:var(--t-border);box-shadow:var(--t-shadow)}
+html[data-theme] .panel:before{background:var(--t-sheen)}
+html[data-theme] button{background:var(--t-btn);color:var(--t-btn-text);border-color:var(--t-border)}
+html[data-theme] button.primary,html[data-theme] .primary,html[data-theme] #wakeBtn.on,html[data-theme] .music-menu-tab[aria-expanded="true"],html[data-theme] .playlist-dialog-actions .primary,html[data-theme] #pinSubmit,html[data-theme] .bio-login{background:var(--t-primary);color:var(--t-primary-text);box-shadow:var(--t-primary-shadow);border-color:transparent}
+html[data-theme] input:not([type=range]),html[data-theme] select,html[data-theme] .playlist-dialog input,html[data-theme] .playlist-dialog select{background:var(--t-input);border-color:var(--t-input-border);color:var(--t-text)}
+html[data-theme] input::placeholder{color:var(--t-muted)}
+html[data-theme] .playlist-dialog input:focus,html[data-theme] .playlist-dialog select:focus{border-color:var(--t-accent);box-shadow:0 0 0 3px var(--t-hover)}
+html[data-theme] input[type=range]{accent-color:var(--t-accent)}
+html[data-theme] button:focus-visible,html[data-theme] input:focus-visible{outline-color:var(--t-accent)}
+html[data-theme] .music-menu-tab{background:var(--t-tab);color:var(--t-btn-text);border-color:var(--t-border);box-shadow:none}
+html[data-theme] .music-menu-pane,html[data-theme] .volume-glass{background:var(--t-pane);border-color:var(--t-border)}
+html[data-theme] .song{border-bottom-color:var(--t-border)}html[data-theme] .song:hover{background:var(--t-hover)}
+html[data-theme] .volume-glass .volume-ico,html[data-theme] .playlist-dialog-mark{background:var(--t-primary);color:var(--t-primary-text)}
+html[data-theme] .volume-glass .volume-label{color:var(--t-muted)}
+html[data-theme] .volume-glass input[type=range]{background:linear-gradient(to right,var(--t-accent) 0%,var(--t-accent2) var(--vol-progress),var(--t-track) var(--vol-progress),var(--t-track) 100%);border-color:var(--t-border)}
+html[data-theme] .volume-glass input[type=range]::-webkit-slider-thumb{background:var(--t-primary);border-color:var(--t-thumb-border)}
+html[data-theme] .volume-glass input[type=range]::-moz-range-thumb{background:var(--t-accent);border-color:var(--t-thumb-border)}
+html[data-theme] .playlist-dialog-card,html[data-theme] .pin-panel{background:var(--t-dialog);border-color:var(--t-border);color:var(--t-text)}
+html[data-theme] .playlist-dialog p,html[data-theme] .playlist-dialog label,html[data-theme] .pin-panel h2{color:var(--t-text)}
+html[data-theme] .pin-panel p,html[data-theme] .pin-panel label,html[data-theme] #pinReset{color:var(--t-muted)}
+html[data-theme] #pinReset{background:transparent;box-shadow:none}
+html[data-theme] #pinScreen{background:var(--t-pin-bg)}
+html[data-theme] .playlist-dialog-close,html[data-theme] .bio-add{background:var(--t-btn);color:var(--t-btn-text)}
+html[data-theme="amoled"] header,html[data-theme="amoled"] .panel,html[data-theme="amoled"] .volume-glass,html[data-theme="amoled"] .pin-panel{backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-theme="daylight"] header h1{text-shadow:none}
+html[data-theme="daylight"] .playlist-dialog{background:rgba(15,39,66,.35)}
+/* Theme picker */
+#themeBtn{white-space:nowrap}@media(max-width:480px){#themeBtn .theme-btn-text{display:none}#themeBtn{min-width:44px;padding:10px}}
+.theme-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:4px 0 6px}
+.theme-card{display:flex;flex-direction:column;align-items:stretch;gap:7px;padding:8px;min-height:0;text-align:left;border-radius:16px}
+.theme-card .sw{height:54px;border-radius:11px;border:1px solid #ffffff40;position:relative;overflow:hidden}
+.theme-card .sw i{position:absolute;right:8px;bottom:8px;width:34px;height:14px;border-radius:99px}
+.theme-card b{font-size:13px;line-height:1.3}.theme-card small{font-size:11px;line-height:1.35;opacity:.85}
+.theme-card[aria-pressed="true"]{outline:3px solid var(--t-accent,#d6a7ff);outline-offset:1px}
+@media(max-width:380px){.theme-grid{grid-template-columns:1fr}}
 @media(max-width:480px){#musicWorkPanel{padding:11px}.music-menu-tabs{gap:6px;grid-template-columns:1fr 1.55fr .84fr}.music-menu-tab{padding:8px 5px;min-height:56px;font-size:12.5px;border-radius:11px}.music-menu-pane{padding:10px}.music-menu-pane .row{gap:8px}.music-menu-pane .row input.stretch,.music-menu-pane .row select.stretch{flex:1 1 100%;width:100%}.music-menu-pane .row button{flex:1 1 auto;min-height:44px}#toggleAdd{font-size:15px}}
-</style></head><body><header><div><h1>♫ My Music Library</h1><small>ฟังเพลงจาก YouTube • จัดคลังเพลงส่วนตัว</small></div><div class="row"><span id="status">โหมดเครื่องนี้</span><button id="wakeBtn" title="ขอให้หน้าจอเปิดอยู่">☀ เปิดจอค้าง</button><button id="authBtn">เข้าสู่ระบบ Cloud</button><button id="managePasskey" hidden>◎ จัดการ Passkey</button><button id="outBtn" hidden>ออกจากระบบ</button></div></header><main><div class="layout"><section class="panel"><div class="player"><div id="player"></div><div id="playerProblem" hidden role="status" aria-live="polite"><strong id="playerProblemTitle">เชื่อมต่อ YouTube ไม่สำเร็จ</strong><span id="playerProblemDescription">ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</span><div class="row" style="justify-content:center;gap:8px"><button type="button" id="retryYouTube" class="primary">↻ เชื่อมต่อใหม่</button><button type="button" id="openYouTubeDirect">เปิดเพลงใน YouTube ↗</button></div></div></div><div id="now">เลือกเพลงเพื่อเริ่มเล่น</div><div class="row controls"><button id="prev" aria-label="ก่อนหน้า">⏮</button><button id="play" class="primary" aria-label="เล่นหรือพัก">▶ / ❚❚</button><button id="next" aria-label="ถัดไป">⏭</button><button id="shuffle" title="สุ่ม">🔀</button><button id="repeat" title="เล่นวน">🔁</button><button id="yt" title="เปิดบน YouTube">YouTube ↗</button></div><div class="row"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" value="0" class="time stretch" aria-label="เลื่อนตำแหน่งเพลง"><span id="duration">0:00</span></div><div class="row volume-glass" role="group" aria-label="ปรับระดับเสียง YouTube"><span class="volume-ico" aria-hidden="true">♫</span><label for="volume" class="volume-label">VOLUME</label><input id="volume" type="range" min="0" max="100" step="1" value="90" class="stretch" aria-label="ระดับเสียง YouTube (เปอร์เซ็นต์)" aria-valuetext="90 เปอร์เซ็นต์"><output id="volumeValue" for="volume" class="volume-number" aria-live="off">90%</output></div><small id="volumeHelp" class="muted" aria-live="polite"></small><small id="wakeState" aria-live="polite">จอตามการตั้งค่าของเครื่อง</small><small id="notice">เล่นผ่าน YouTube Player โดยตรง · เล่นขณะล็อกหน้าจอไม่รองรับ · บางคลิปต้องเปิดบน YouTube ↗</small></section><section class="panel" id="musicWorkPanel">
+</style></head><body><header><div><h1>♫ My Music Library</h1><small>ฟังเพลงจาก YouTube • จัดคลังเพลงส่วนตัว</small></div><div class="row"><span id="status">โหมดเครื่องนี้</span><button id="themeBtn" type="button" title="เปลี่ยนธีม" aria-haspopup="dialog" aria-label="เปลี่ยนธีม">🎨<span class="theme-btn-text"> ธีม</span></button><button id="wakeBtn" title="ขอให้หน้าจอเปิดอยู่">☀ เปิดจอค้าง</button><button id="authBtn">เข้าสู่ระบบ Cloud</button><button id="managePasskey" hidden>◎ จัดการ Passkey</button><button id="outBtn" hidden>ออกจากระบบ</button></div></header><main><div class="layout"><section class="panel"><div class="player"><div id="player"></div><div id="playerProblem" hidden role="status" aria-live="polite"><strong id="playerProblemTitle">เชื่อมต่อ YouTube ไม่สำเร็จ</strong><span id="playerProblemDescription">ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</span><div class="row" style="justify-content:center;gap:8px"><button type="button" id="retryYouTube" class="primary">↻ เชื่อมต่อใหม่</button><button type="button" id="openYouTubeDirect">เปิดเพลงใน YouTube ↗</button></div></div></div><div id="now">เลือกเพลงเพื่อเริ่มเล่น</div><div class="row controls"><button id="prev" aria-label="ก่อนหน้า">⏮</button><button id="play" class="primary" aria-label="เล่นหรือพัก">▶ / ❚❚</button><button id="next" aria-label="ถัดไป">⏭</button><button id="shuffle" title="สุ่ม">🔀</button><button id="repeat" title="เล่นวน">🔁</button><button id="yt" title="เปิดบน YouTube">YouTube ↗</button></div><div class="row"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" value="0" class="time stretch" aria-label="เลื่อนตำแหน่งเพลง"><span id="duration">0:00</span></div><div class="row volume-glass" role="group" aria-label="ปรับระดับเสียง YouTube"><span class="volume-ico" aria-hidden="true">♫</span><label for="volume" class="volume-label">VOLUME</label><input id="volume" type="range" min="0" max="100" step="1" value="90" class="stretch" aria-label="ระดับเสียง YouTube (เปอร์เซ็นต์)" aria-valuetext="90 เปอร์เซ็นต์"><output id="volumeValue" for="volume" class="volume-number" aria-live="off">90%</output></div><small id="volumeHelp" class="muted" aria-live="polite"></small><small id="wakeState" aria-live="polite">จอตามการตั้งค่าของเครื่อง</small><small id="notice">เล่นผ่าน YouTube Player โดยตรง · เล่นขณะล็อกหน้าจอไม่รองรับ · บางคลิปต้องเปิดบน YouTube ↗</small></section><section class="panel" id="musicWorkPanel">
 <nav class="music-menu-tabs" aria-label="เมนูคลังเพลง">
 <button type="button" class="music-menu-tab" data-music-menu="add" aria-controls="musicAddPane" aria-expanded="false">＋ เพิ่มเพลง</button>
 <button type="button" class="music-menu-tab" data-music-menu="library" aria-controls="musicLibraryPane" aria-expanded="false">♫ คลังเพลง / Playlist</button>
@@ -146,6 +195,16 @@ html.pin-locked main,html.pin-locked footer{visibility:hidden!important}
   <select id="playlistDialogSelect" aria-label="เลือกPlaylist" hidden></select>
   <p id="playlistDialogError" role="status" aria-live="polite"></p>
   <div class="playlist-dialog-actions"><button type="button" id="playlistDialogCancel">ยกเลิก</button><button type="button" id="playlistDialogOK" class="primary">บันทึก</button></div>
+ </section>
+</div>
+<div id="themeDialog" class="playlist-dialog" hidden role="presentation">
+ <div class="playlist-dialog-shade" data-theme-close></div>
+ <section class="playlist-dialog-card" role="dialog" aria-modal="true" aria-labelledby="themeDialogTitle" tabindex="-1">
+  <div class="playlist-dialog-top"><div class="playlist-dialog-mark" aria-hidden="true">🎨</div><button type="button" class="playlist-dialog-close" data-theme-close aria-label="ปิดหน้าต่าง">✕</button></div>
+  <h2 id="themeDialogTitle">เลือกธีม</h2>
+  <p>แตะเพื่อดูทันที ระบบจำธีมไว้ในเครื่องนี้</p>
+  <div class="theme-grid" id="themeGrid"></div>
+  <div class="playlist-dialog-actions"><button type="button" class="primary" data-theme-close>เสร็จ</button></div>
  </section>
 </div>
 <div id="authBox"><div class="panel"><div class="row" style="justify-content:space-between"><h2>เข้าสู่ระบบคลังเพลง Cloud</h2><button id="closeAuth">✕</button></div><p class="muted">ใช้บัญชีเดียวกันบน iPhone, Android และคอมพิวเตอร์</p><input id="email" type="email" autocomplete="email" placeholder="อีเมล"><input id="password" type="password" autocomplete="current-password" placeholder="รหัสผ่าน อย่างน้อย 6 ตัว" style="margin:8px 0"><div class="row"><button class="primary" id="signIn">เข้าสู่ระบบ</button><button id="signUp">สมัครบัญชี</button></div><p id="authError" class="muted"></p><div class="bio-divider"><span>หรือใช้ Passkey</span></div>
@@ -276,9 +335,9 @@ async function addToPlaylist(songId){
 }
 async function editSong(songId){
  const item=songs.find(x=>x.id===songId);if(!item)return;
- const title=await openPlaylistDialog({type:'input',title:'แก้ไขชื่อเพลง',description:'ระบุชื่อเพลงที่ต้องการแสดง',value:item.title,maxLength:250,okText:'บันทึก',validate:v=>!String(v).trim()?'กรุณากรอกชื่อเพลง':''});
+ const title=await openPlaylistDialog({type:'input',title:'แก้ไขชื่อเพลง',description:'ระบุชื่อเพลงที่ต้องการแสดง',value:item.title,label:'ชื่อเพลง',placeholder:'ชื่อเพลง',maxLength:250,okText:'บันทึก',validate:v=>!String(v).trim()?'กรุณากรอกชื่อเพลง':''});
  if(title===null)return;
- const cat=await openPlaylistDialog({type:'input',title:'แก้ไขหมวดเพลง',description:'ระบุหมวดหมู่เพลง',value:item.category||'เพลงโปรด',maxLength:80,okText:'บันทึก',validate:v=>!String(v).trim()?'กรุณากรอกหมวดหมู่':''});
+ const cat=await openPlaylistDialog({type:'input',title:'แก้ไขหมวดเพลง',description:'ระบุหมวดหมู่เพลง',value:item.category||'เพลงโปรด',label:'หมวดเพลง',placeholder:'หมวดเพลง',maxLength:80,okText:'บันทึก',validate:v=>!String(v).trim()?'กรุณากรอกหมวดหมู่':''});
  if(cat===null)return;
  item.title=title.trim().slice(0,250);item.category=cat.trim().slice(0,80);persist();
 }
@@ -575,6 +634,40 @@ btn.addEventListener('click',async()=>{wanted=!wanted;if(wanted){await request()
 }});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&wanted&&!lock)request();else if(document.visibilityState==='hidden'&&wanted)label.textContent='สลับแอป: ระบบอาจปล่อยจอค้าง'});
 window.addEventListener('pageshow',()=>{if(wanted&&!lock)request()});update();
+})();
+</script>
+<script>
+/* Theme picker. Stored per browser in localStorage "music-theme-v1". Default: daylight (white/blue). */
+(()=>{'use strict';
+const KEY='music-theme-v1',root=document.documentElement,dlg=document.getElementById('themeDialog'),grid=document.getElementById('themeGrid'),btn=document.getElementById('themeBtn');
+const DEFAULT_THEME='daylight';
+const THEMES=[
+ {id:'daylight',name:'สว่าง ฟ้า-ขาว',note:'ค่าเริ่มต้น · อ่านชัดกลางแดด',sw:'linear-gradient(160deg,#ffffff,#d6e6fa)',pill:'linear-gradient(150deg,#3b8bff,#0b4fb3)',meta:'#eaf3ff'},
+ {id:'navy',name:'กรมท่า-ทอง',note:'ทางการ หรู เข้ากับงานราชการ',sw:'linear-gradient(145deg,#2b4f8f,#0e1f45 60%,#060f26)',pill:'linear-gradient(150deg,#f6dc8a,#b8841f)',meta:'#0e1f45'},
+ {id:'ocean',name:'ฟ้าครามกระจก',note:'สดชื่น อ่านง่าย',sw:'linear-gradient(145deg,#1fa5c9,#0b2d52 60%,#05162b)',pill:'linear-gradient(150deg,#8fe3ff,#1f74d1)',meta:'#0b2d52'},
+ {id:'amoled',name:'ดำล้วน',note:'ประหยัดแบตจอ OLED · ลื่นสุด',sw:'#000',pill:'#f2f2f2',meta:'#000000'}
+];
+let current=DEFAULT_THEME;try{const s=localStorage.getItem(KEY);if(THEMES.some(t=>t.id===s))current=s}catch{}
+function apply(id,save){
+ const t=THEMES.find(x=>x.id===id)||THEMES[0];current=t.id;
+ root.dataset.theme=t.id;
+ document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.meta);
+ if(save)try{localStorage.setItem(KEY,t.id)}catch{}
+ grid.querySelectorAll('.theme-card').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.id===t.id)));
+}
+for(const t of THEMES){
+ const b=document.createElement('button');b.type='button';b.className='theme-card';b.dataset.id=t.id;
+ const sw=document.createElement('span');sw.className='sw';sw.style.background=t.sw;const pill=document.createElement('i');pill.style.background=t.pill;sw.append(pill);
+ const n=document.createElement('b');n.textContent=t.name;const s=document.createElement('small');s.textContent=t.note;
+ b.append(sw,n,s);b.addEventListener('click',()=>apply(t.id,true));grid.append(b);
+}
+apply(current,false);
+let lastFocus=null;
+function open(){lastFocus=document.activeElement;dlg.hidden=false;requestAnimationFrame(()=>grid.querySelector('[aria-pressed="true"]')?.focus())}
+function close(){dlg.hidden=true;lastFocus?.focus?.()}
+btn.addEventListener('click',open);
+dlg.querySelectorAll('[data-theme-close]').forEach(el=>el.addEventListener('click',close));
+dlg.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();close()}});
 })();
 </script>
 <script src="passkey-config.js"></script>
