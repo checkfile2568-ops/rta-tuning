@@ -853,3 +853,41 @@ label.radio input, label.check input { width: 18px; height: 18px; flex: none; }
  .clay-login .keypad button { min-height:44px; font-size:1.25rem; border-radius:18px; }
 }
 @media (prefers-reduced-motion:reduce) { .clay-login .box.clay-in { animation:none; } .clay-login .keypad button { transition:none; } }
+
+/* ===== 1.11.0 — ส่งกลับแก้ไข · แถบติดตาม · รายการโปรด · เปลี่ยนผู้ใช้ ===== */
+.st-RETURNED { color: #9a4d00; background: #fff1de; }
+.returned-notice { border-left: 4px solid #e08a1e; }
+.returned-notice b { display: block; margin-bottom: 2px; }
+.tl.flow.track li { min-width: 70px; }
+.tl.flow.track .tl-at { display: block; font-size: .78rem; color: var(--muted); line-height: 1.3; margin-top: 2px; }
+.tl.flow.track li.now .tl-at { color: var(--gold-2); font-weight: 600; }
+.req-history { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.req-history summary { cursor: pointer; color: var(--navy); font-weight: 600; font-size: .9rem; }
+.req-history ol { list-style: none; margin: 8px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); display: grid; gap: 8px; }
+.req-history li { position: relative; font-size: .88rem; }
+.req-history li::before { content: ''; position: absolute; left: -20px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--line); border: 2px solid #fff; }
+.req-history li.ev-RETURN::before { background: #e08a1e; }
+.req-history li.ev-RESUBMIT::before, .req-history li.ev-SUBMIT::before { background: var(--navy); }
+.req-history li.ev-APPROVE::before, .req-history li.ev-ISSUE::before { background: var(--ok); }
+.req-history li.ev-REJECT::before, .req-history li.ev-CANCEL::before { background: var(--muted); }
+.req-history .ev-note { margin-top: 2px; padding: 6px 10px; border-radius: 8px; background: #fff7ec; color: #6b3d06; }
+.fav-btn { width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: #b8c0cc; font-size: 1.35rem; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.fav-btn:hover { background: var(--bg); color: var(--gold-2); }
+.fav-btn.on { color: #d79b1c; }
+.fav-btn:disabled { opacity: .6; }
+.mrow.has-fav { grid-template-columns: 36px minmax(0, 1fr) 92px 132px 146px; }
+.fav-empty-star { font-size: 30px; margin: 0; color: #d79b1c; }
+.chip.fav { border-color: #f0d79a; background: #fffaf0; }
+@media (max-width: 760px) {
+  .mrow.has-fav { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-areas: 'fav nm nm' '. st qty'; }
+  .mrow.has-fav .fav-btn { grid-area: fav; align-self: start; width: 32px; height: 32px; }
+}
+.clay-login .who #chg.switch-user { display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; color: #fff; background: linear-gradient(145deg, #2b5a93, #173a67); box-shadow: 0 6px 14px rgba(23,58,103,.25); }
+.clay-login .who #chg.switch-user svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.clay-login .who #chg.switch-user:disabled { opacity: .55; }
+.approval-dept { color: #6b4fa0; border-top: 1px dashed #d9cfee; margin-top: 4px; }
+.approval-dept dt { color: inherit; }
+.approval-acts { flex-wrap: wrap; gap: 8px; }
+.approval-acts .btn.primary.lg { flex: 1 1 200px; justify-content: center; }
+.danger-text { color: var(--out); }
+.btn-count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px; margin-left: 8px; border-radius: 999px; background: #b42318; color: #fff; font-size: .8rem; font-weight: 700; }
