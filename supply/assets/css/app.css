@@ -903,7 +903,7 @@ label.radio input, label.check input { width: 18px; height: 18px; flex: none; }
 .rw-hint { display: inline-flex; align-items: center; gap: 4px; color: #9a5b00 !important; }
 .rw-hint svg { width: 14px; height: 14px; }
 .badge.urgent { background: #fde7e4; color: #b3261e; border: 1px solid #f3b7ae; font-weight: 700; }
-.badge.urgent::before { content: "⚡"; margin-right: 2px; }
+.badge.urgent::before { content: "⚡"; width: auto; height: auto; border-radius: 0; background: none; }
 .urgent-reason { margin: 8px 0; padding: 8px 12px; border-left: 4px solid #d9483b; background: #fff4f2; border-radius: 8px; font-size: .9rem; }
 .urgent-box { border: 1px solid #f3b7ae; background: #fffaf9; margin-top: 12px; }
 .urgent-box textarea { min-height: 80px; }
