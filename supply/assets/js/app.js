@@ -77,12 +77,12 @@ const App = (function () {
         ['reorder', 'จุดสั่งซื้อ', 'alert', c.reorder], ['monthly', 'รายงานประจำเดือน', 'doc', c.monthly], ['dash', 'สถิติ/ประวัติ', 'chart']]
         .concat(u.role === 'SUPPLY_HEAD' ? [['approve', 'อนุมัติเบิกจ่ายวัสดุ', 'check', c.approvals]] : [])
         .concat([['-', 'งานของฉัน']]).concat(mine)
-        .concat([['-', 'ข้อมูล'], ['suppliers', 'ผู้จำหน่าย', 'store'], ['opening', 'ยอดยกมา', 'upload'],
+        .concat([['-', 'ข้อมูล'], ['rounds', 'รอบการเบิก', 'clock'], ['suppliers', 'ผู้จำหน่าย', 'store'], ['opening', 'ยอดยกมา', 'upload'],
           ['reconcile', 'กระทบยอด', 'scale'], ['audit', 'ประวัติการใช้งาน', 'log'], ['training', 'ทดลองใช้งาน', 'clip'], ['real-trial', 'รอบทดสอบฐานจริง', 'db']]);
     }
     if (u.role === 'ADMIN') {
       return [['home', 'ภาพรวม', 'home'], ['dash', 'สถิติ/ประวัติ', 'chart'], ['users', 'ผู้ใช้และสิทธิ์', 'users'],
-        ['depts', 'ส่วนงาน', 'building'], ['master', 'หมวด/หน่วย/วันหยุด', 'tag'], ['settings', 'ตั้งค่าระบบ', 'gear'],
+        ['depts', 'ส่วนงาน', 'building'], ['master', 'หมวด/หน่วย/วันหยุด', 'tag'], ['settings', 'ตั้งค่าระบบ', 'gear'], ['rounds', 'รอบการเบิก', 'clock'],
         ['training', 'ทดลองใช้งาน', 'clip'], ['real-trial', 'ทดสอบฐานจริง / ล้างยอด', 'db'], ['backup', 'สำรองข้อมูล', 'db'], ['reconcile', 'กระทบยอด/ตรวจซ่อม', 'wrench', c.repairs], ['audit', 'Audit log', 'log'],
         ['-', 'คลัง'], ['stock', 'คลังวัสดุ (ดู)', 'box'], ['monthly', 'รายงานประจำเดือน', 'doc', c.monthly], ['opening', 'ยอดยกมา', 'upload'],
         ['-', 'งานของฉัน']].concat(mine);
@@ -102,7 +102,7 @@ const App = (function () {
     return items.map(function (x) {
       if (x[0] === '-') return '<div class="sep">' + U.esc(x[1]) + '</div>';
       const cnt = x[3] ? '<span class="cnt">' + x[3] + '</span>' : '';
-      return '<a href="#/' + x[0] + '" data-nav="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '">' + ICON(x[2]) + '<span>' + U.esc(x[1]) + '</span>' + cnt + '</a>';
+      return '<a href="#/' + x[0] + '" data-nav="' + x[0] + '" class="' + (cur === x[0] ? 'on' : '') + '">' + ICON(x[2]) + '<span>' + U.brk(x[1]) + '</span>' + cnt + '</a>';
     }).join('');
   }
 
@@ -119,7 +119,7 @@ const App = (function () {
       '<aside class="side" aria-label="เมนูหลัก"><div class="brand"><img class="brand-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span><i></i></div>' +
       '<nav class="nav" id="nav">' + navHtml(navFor(u), route) + '</nav>' +
       '<div class="side-foot"><b>' + U.nameHtml(u) + '</b>' + U.roleHtml(ROLE_TH[u.role]) + (u.dept_name ? ' · ' + U.esc(u.dept_name) : '') + '</div></aside>' +
-      '<div class="main"><header class="mhead"><img class="mhead-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><div><b>' + U.esc(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
+      '<div class="main"><header class="mhead"><img class="mhead-seal" src="assets/img/court-seal.webp" alt="ตราศาลจังหวัดลพบุรี" width="172" height="240"><div><b>' + U.brk(U.APP_NAME) + '</b><span>' + U.esc(S.cfg.org_name || 'ศาลจังหวัดลพบุรี') + '</span></div>' +
       '<button class="userbtn" data-act="usermenu" aria-label="เมนูผู้ใช้">' + ICON('user') + ICON('chev') + '</button></header>' +
       '<div class="topbar"><span>' + today + '</span><button class="userbtn" data-act="usermenu"><span class="avatar">' + U.esc(init) + '</span>' + U.nameHtml(u) + '</button></div>' +
       (v.cart ? '<div class="with-cart"><main class="content" id="view"></main><aside class="cart-panel" id="cartpanel" aria-label="ตะกร้า"></aside></div>'
@@ -396,7 +396,7 @@ const Login = (function () {
     acct = Store.ls.get('last_acct', null);
     pin = '';
     if (acct) return pinStep();
-    mountLogin('<h2 class="sr-only">เข้าสู่ระบบ</h2><label class="login-lead" for="q">พิมพ์ชื่อหรือนามสกุลของคุณ แล้วแตะชื่อเพื่อใส่ PIN</label>' +
+    mountLogin('<h2 class="sr-only">เข้าสู่ระบบ</h2><label class="login-lead" for="q"><span class="nw">พิมพ์ชื่อหรือนามสกุลของคุณ</span> <span class="nw">แล้วแตะชื่อเพื่อใส่ PIN</span></label>' +
       '<div class="search"><span>' + ICON('search') + '</span><input id="q" autocomplete="off" placeholder="เช่น สมชาย"></div>' +
       '<p class="err err-name" id="err" role="alert"></p><ul class="acct-list hide" id="res" aria-live="polite"></ul>' +
       '<div class="row end login-refresh hide" id="acct-refresh-row"><button type="button" class="link-refresh" id="acct-refresh">' + ICON('refresh') + 'ค้นหาใหม่</button></div>' +
@@ -461,7 +461,7 @@ const Login = (function () {
   function pinStep(msg) {
     pin = ''; busy = false;
     const html = (overlayFor ? '<h2>ใส่ PIN</h2>' : '<h2 class="sr-only">ใส่ PIN</h2>') + '<div class="who"><span class="avatar">' + U.esc(acct.name.charAt(0)) + '</span><div><b>' + U.nameHtml(acct) + '</b>' +
-      '<span class="muted small">' + U.esc(acct.dept || '') + '</span></div>' +
+      '<span class="muted small who-dept">' + U.esc(acct.dept || '') + '</span></div>' +
       (overlayFor ? '' : '<button class="btn sm switch-user" id="chg" aria-label="เปลี่ยนผู้ใช้ กลับไปเลือกชื่อของคุณ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3l4 4-4 4"/><path d="M20 7H9a4 4 0 0 0-4 4v1"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h11a4 4 0 0 0 4-4v-1"/></svg>เปลี่ยนผู้ใช้</button>') + '</div>' +
       (msg ? '<div class="notice warn"><div>' + U.esc(msg) + '</div></div>' : '') +
       '<div class="pin-stage" id="pin-stage"><div class="pin-dots" id="dots"><i></i><i></i><i></i><i></i></div><p class="err" id="err" role="alert"></p>' +

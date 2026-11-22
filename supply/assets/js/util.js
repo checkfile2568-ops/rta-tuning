@@ -37,6 +37,16 @@ const U = (function () {
       return '<span class="person-name"><span data-fit-name>' + U.esc(first) + '</span>' +
         (last ? '<span data-fit-name>' + U.esc(last) + '</span>' : '') + '</span>';
     },
+    /** ป้ายข้อความไทย: ตัดบรรทัดได้เฉพาะหลัง "/" ช่องว่าง หรือ "ระบบบริหาร|" — ไม่ตัดกลางคำ */
+    brk: function (label) {
+      const s = String(label || '').replace(/^ระบบบริหาร(?=\S)/, 'ระบบบริหาร\u0001');
+      return s.split(/(\/|\s+|\u0001)/).map(function (p) {
+        if (p === '/') return '/<wbr>';
+        if (p === '\u0001') return '<wbr>';
+        if (/^\s+$/.test(p)) return ' ';
+        return p ? '<span class="nw">' + U.esc(p) + '</span>' : '';
+      }).join('');
+    },
     roleHtml: function (label) {
       return '<span class="role-single-line" data-fit-name>' + U.esc(label || '') + '</span>';
     },

@@ -63,7 +63,7 @@ const Officer = (function () {
       '<section class="bento-welcome bento-full"><div class="welcome-copy"><span class="bento-eyebrow">ศาลจังหวัดลพบุรี · ' + (head ? 'ผู้สั่งจ่ายวัสดุ' : 'งานพัสดุ') + '</span>' + U.greetingHtml() + '<h2>' + U.nameHtml(S.user) + '</h2><p>' + U.esc(S.user.dept_name || '') + (head ? '<br>' + U.roleHtml(App.ROLE_TH[S.user.role]) : ' · ' + U.esc(App.ROLE_TH[S.user.role])) + '</p></div>' + U.periodArt() + '<nav class="bento-actions" aria-label="งานพัสดุที่ใช้บ่อย"><a class="btn gold lg" href="#/' + (head ? 'approve' : 'queue') + '">' + ICON(head ? 'check' : 'truck') + (head ? 'อนุมัติเบิกจ่ายวัสดุ' : 'คิวจ่ายวัสดุ') + (head && c.approvals ? '<span class="btn-count" aria-label="รออนุมัติ ' + c.approvals + ' ใบ">' + U.n(c.approvals) + '</span>' : '') + '</a><a class="btn lg" href="#/receive">' + ICON('inbox') + 'รับเข้า</a>' +
       '<a class="btn lg" href="#/count">' + ICON('clip') + 'ตรวจนับ</a><a class="btn lg" href="#/req">' + ICON('box') + 'เบิกของตนเอง</a></nav></section>' +
       '<div class="card today-chart-card bento-wide"><div><span class="bento-eyebrow">ภาพรวมคิว</span><h3>สถานะคิวคำขอปัจจุบัน</h3><p class="small muted">จำนวนใบที่ยังรอดำเนินการ ณ เวลาที่โหลดข้อมูล</p><div id="today-legend"></div></div><div class="today-chart" id="today-chart"><canvas id="today-canvas" role="img" aria-label="กราฟสถานะคิวคำขอปัจจุบัน"></canvas></div></div>' +
-      '<div class="card bento-wide bento-queue"><div class="row"><h3>คิวคำขอเบิกพัสดุ</h3><span class="spacer"></span><a class="small" href="#/queue">ดูทั้งหมด →</a></div><div id="q5"><div class="skel"></div></div></div></div>' +
+      '<div class="card bento-wide bento-queue">' + RW.officerLine() + '<div class="row"><h3>คิวคำขอเบิกพัสดุ</h3><span class="spacer"></span><a class="small" href="#/queue">ดูทั้งหมด →</a></div><div id="q5"><div class="skel"></div></div></div></div>' +
       (window.Notification && Notification.permission === 'default' ? '<p class="small muted">ระบบตรวจคำขอใหม่ทุก 1 นาทีขณะเปิดหน้านี้ไว้ <button class="btn sm" id="nt">เปิดการแจ้งเตือนบนเครื่องนี้</button></p>' : '');
     drawTodayChart(el, c);
     const nt = U.$('#nt');
@@ -73,7 +73,7 @@ const Officer = (function () {
       const q = (await API.call('queue')).filter(function (r) { return r.status !== 'PENDING_APPROVAL'; }).slice(0, 5);
       if (!el.isConnected || !el.contains(previewBox)) return;
       previewBox.innerHTML = q.length ? q.map(function (r) {
-        return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line-2)"><div><b>' + U.esc(r.req_no) + '</b> <span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) +
+        return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line-2)"><div><b>' + U.esc(r.req_no) + '</b>' + RW.urgentBadge(r) + ' <span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) +
           ' · ' + r.items.length + ' รายการ · ' + (r.age_days || 0) + ' วันทำการ</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>';
       }).join('') : '<p class="muted">ไม่มีคิวค้าง</p>';
     } catch (e) { if (el.isConnected && el.contains(previewBox)) previewBox.innerHTML = App.errorBox(e); }
@@ -195,10 +195,10 @@ App.view('queue', {
       $('#list').innerHTML = list.length ? list.map(function (r) {
         if (r.status === 'ISSUED') return issuedCard(r);
         const prep = r.status === 'PENDING_PREP';
-        return '<div class="card req-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.esc(r.requester_name) +
+        return '<div class="card req-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + RW.urgentBadge(r) + '</h3><span class="muted small">' + U.esc(r.requester_name) +
           (r.requester_position ? ' (' + U.esc(r.requester_position) + ')' : '') + ' · ' + U.esc(r.dept_name) + ' · ยื่น ' + U.thDateTime(r.created_at) + '</span></div><span class="spacer"></span>' +
           (r.age_days > alert ? '<span class="badge out">ค้าง ' + r.age_days + ' วันทำการ</span>' : '<span class="badge gray nodot">' + (r.age_days || 0) + ' วันทำการ</span>') + stBadge(r.status) + '</div>' +
-          (r.purpose ? '<p class="small">วัตถุประสงค์: ' + U.esc(r.purpose) + '</p>' : '') +
+          RW.urgentReason(r) + (r.purpose ? '<p class="small">วัตถุประสงค์: ' + U.esc(r.purpose) + '</p>' : '') +
           '<div class="tablewrap" style="margin-top:10px"><table class="t"><thead><tr><th>วัสดุ</th><th class="num">ขอ</th><th class="num">คงเหลือ</th><th class="num">' + (prep ? 'เตรียม' : 'เตรียมไว้') + '</th></tr></thead><tbody>' +
           r.items.map(function (i) {
             const short = i.balance < lim(i);

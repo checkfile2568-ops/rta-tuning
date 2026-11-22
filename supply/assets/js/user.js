@@ -88,7 +88,7 @@ App.view('home', {
     const pending = (c.myPending || 0) + (c.myReady || 0) + (c.myReturned || 0);
     const favs = (S.me.favorites || []).map(function (id) { return S.idx[id]; }).filter(Boolean);
     el.innerHTML = '<section class="bento-welcome"><div class="welcome-copy"><span class="bento-eyebrow">พื้นที่ทำงานของคุณ</span>' + U.greetingHtml() + '<h2>' + U.nameHtml(u) + '</h2><p>' + U.esc(u.dept_name || '') + ' · ' + U.esc(App.ROLE_TH[u.role]) + '</p></div>' + U.periodArt() +
-      '<a class="btn gold lg" href="#/req">' + ICON('box') + 'เบิกวัสดุ</a></section>' +
+      '<a class="btn gold lg" href="#/req">' + ICON('box') + 'เบิกวัสดุ</a></section>' + RW.banner('home') +
       '<nav class="bento-grid bento-menu bento-user-menu" aria-label="งานของฉัน"><a class="card" href="#/my">' + ICON('doc', 'ic') + (pending ? '<span class="task-count" aria-label="มีคำขอค้าง ' + pending + ' ใบ">' + U.n(pending) + '</span>' : '') + '<h3>คำขอของฉัน</h3><p>ติดตามการจัดเตรียมและการส่งมอบ</p></a><a class="card" href="#/dash">' + ICON('chart', 'ic') + '<h3>ประวัติการเบิก</h3><p>ตรวจรายการและสถิติตามสิทธิ์</p></a><a class="card" href="#/profile">' + ICON('user', 'ic') + '<h3>ข้อมูลของฉัน</h3><p>ตรวจส่วนงาน ตำแหน่ง และ PIN</p></a></nav>' +
       (c.myReturned ? '<div class="notice warn returned-notice">' + ICON('alert') + '<div><b>มีใบที่ส่งกลับแก้ไข ' + c.myReturned + ' ใบ</b>แก้ไขตามหมายเหตุแล้วยื่นใบเดิมอีกครั้ง <a href="#/my">แก้ไขใบเบิก</a></div></div>' : '') +
       (c.myReady ? '<div class="notice info">' + ICON('truck') + '<div><b>มีของพร้อมรับ ' + c.myReady + ' ใบ</b>ติดต่อรับที่งานพัสดุ <a href="#/my">ดูรายการ</a></div></div>' : '') +
@@ -124,7 +124,7 @@ App.view('home', {
       if (b) My.fix(mine.find(function (x) { return x.req_id === b.dataset.fix; }));
     });
     U.$('#latest').innerHTML = mine.length ? mine.slice(0, 3).map(function (r) {
-      return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line-2)"><div><b>' + U.esc(r.req_no) + '</b> <span class="muted small">' + U.thShort(r.created_at) + ' · ' + r.items.length + ' รายการ</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>';
+      return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line-2)"><div><b>' + U.esc(r.req_no) + '</b>' + RW.urgentBadge(r) + ' <span class="muted small">' + U.thShort(r.created_at) + ' · ' + r.items.length + ' รายการ</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>';
     }).join('') + '<p><a href="#/my">ดูคำขอทั้งหมด</a></p>' : '<p class="muted">ยังไม่มีคำขอ</p>';
     U.$('#again').onclick = function () {
       const last = mine.find(function (r) { return r.status === 'ISSUED'; }) || mine.find(function (r) { return r.status !== 'RETURNED'; });
@@ -144,7 +144,7 @@ App.view('req', {
       el.innerHTML = '<h1>เบิกวัสดุ</h1><div class="notice warn"><div><b>ปิดรับคำขอชั่วคราว</b>กรุณาลองใหม่ภายหลัง</div></div>';
       return;
     }
-    el.innerHTML = '<div class="page-h"><h1>เบิกวัสดุ</h1><p>เลือกวัสดุที่ต้องการและระบุจำนวน จากนั้นตรวจสอบรายการในตะกร้าก่อนส่งคำขอเบิก</p></div>' +
+    el.innerHTML = '<div class="page-h"><h1>เบิกวัสดุ</h1><p>เลือกวัสดุที่ต้องการและระบุจำนวน จากนั้นตรวจสอบรายการในตะกร้าก่อนส่งคำขอเบิก</p></div>' + RW.banner('req') +
       '<div class="search">' + ICON('search') + '<input id="mq" type="search" placeholder="ค้นหาชื่อหรือรหัสวัสดุ" autocomplete="off" value="' + U.esc(F.q) + '" aria-label="ค้นหาวัสดุ"></div>' +
       '<div class="tabs" id="cats" role="tablist"></div><p class="stale" id="stale"></p><ul class="mlist boxed" id="mlist"></ul>';
     if (!S.catalog) { U.$('#mlist').innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>'; await App.loadCatalog(true); }
@@ -171,7 +171,8 @@ App.view('req', {
         const avail = '<small class="left">' + (typeof m.available === 'number' ? 'เหลือ ' + U.n(Math.max(0, m.available)) + ' ' : 'หน่วย ') + U.esc(m.unit_name) + '</small>';
         const fv = isFav(m.mat_id);
         return '<li class="mrow has-fav' + (m.lvl === 'out' ? ' out' : '') + '"><button class="fav-btn' + (fv ? ' on' : '') + '" data-fav="' + U.esc(m.mat_id) + '" aria-pressed="' + fv + '" aria-label="' + (fv ? 'นำออกจากรายการโปรด ' : 'เพิ่มในรายการโปรด ') + U.esc(m.name) + '" title="' + (fv ? 'นำออกจากรายการโปรด' : 'เพิ่มในรายการโปรด') + '">' + (fv ? '★' : '☆') + '</button><div class="nm"><b>' + U.esc(m.name) + '</b><small>' + U.esc(m.spec || '') + (m.spec ? ' · ' : '') + 'รหัส ' + U.esc(m.code) + '</small>' +
-          (m.max_per_request ? '<span class="hint">เบิกได้ไม่เกิน ' + m.max_per_request + ' ' + U.esc(m.unit_name) + '/ครั้ง</span>' : '') + '</div>' +
+          (m.max_per_request ? '<span class="hint">เบิกได้ไม่เกิน ' + m.max_per_request + ' ' + U.esc(m.unit_name) + '/ครั้ง</span>' : '') +
+          (RW.blocked(m) ? '<span class="hint rw-hint">' + ICON('clock') + 'นอกรอบการเบิก · ใส่ตะกร้าเป็นร่างได้</span>' : '') + '</div>' +
           '<div class="un"><small>หน่วย </small><b>' + U.esc(m.unit_name) + '</b></div><div class="st">' + U.badge(m.lvl) + avail + '</div>' +
           '<div class="qty">' + Req.stepper(m.mat_id, S.cart[m.mat_id] || 0, mx < 1) + '</div></li>';
       }).join('') + (more ? '<li class="muted small" style="padding:12px">แสดง 150 รายการแรก — พิมพ์ค้นหาเพื่อกรองให้แคบลง</li>' : '')
@@ -219,23 +220,30 @@ App.view('cart', {
       return;
     }
     const ed = S.editReq;
+    const rw = RW.state();
+    const outIds = ed ? [] : RW.blockedIds(S.cart);
+    const sendLabel = function () { return (outIds.length && S.urgent ? 'ส่งคำขอเร่งด่วน (' : 'ส่งคำขอ (') + ids.length + ' รายการ)'; };
     el.innerHTML = (ed ? '<div class="page-h"><h1>แก้ไขใบ ' + U.esc(ed.req_no) + '</h1><p>ปรับรายการตามหมายเหตุ แล้วกด "ยื่นใบเดิมอีกครั้ง" — เลขที่ใบเบิกคงเดิม</p></div>' +
         '<div class="notice warn returned-notice">' + ICON('alert') + '<div><b>ส่งกลับแก้ไข' + (ed.by ? ' โดย ' + U.esc(ed.by) : '') + '</b>' + U.esc(ed.note || '-') + '</div></div>'
-      : '<div class="page-h"><h1>ตรวจตะกร้า</h1><p>ตรวจจำนวนแล้วกด "ส่งคำขอ" — ระบบเติมชื่อ ส่วนงาน และวันที่ให้</p></div>') +
+      : '<div class="page-h"><h1>ตรวจตะกร้า</h1><p>ตรวจจำนวนแล้วกด "ส่งคำขอ" — ระบบเติมชื่อ ส่วนงาน และวันที่ให้</p></div>' + RW.banner('cart')) +
       (S.forms.cartMsg ? '<div class="notice err"><div><b>ส่งคำขอไม่สำเร็จ</b>' + U.esc(S.forms.cartMsg) + '</div></div>' : '') +
       '<div class="card flat"><div class="grid3"><div><span class="muted small">ผู้ขอเบิก</span><br><b>' + U.esc(u.name) + '</b></div>' +
       '<div><span class="muted small">ส่วนงาน</span><br><b>' + U.esc(u.dept_name || '-') + '</b></div><div><span class="muted small">วันที่</span><br><b>' + U.thDate(new Date()) + '</b></div></div></div>' +
       '<ul class="mlist boxed" id="clist">' + ids.map(function (id) {
         const m = S.idx[id];
         if (!m) return '<li class="mrow out"><div class="nm"><b>(วัสดุปิดใช้งานแล้ว)</b><small>จะถูกนำออก</small></div></li>';
-        const e = errs[id];
+        const e = errs[id] || (!ed && RW.blocked(m) ? 'นอกรอบการเบิก' : '');
         return '<li class="mrow"><div class="nm"><b>' + U.esc(m.name) + '</b><small>รหัส ' + U.esc(m.code) + '</small>' + (e ? '<span class="hint" style="color:var(--out)">' + U.esc(e) + '</span>' : '') + '</div>' +
           '<div class="un"><small>หน่วย </small><b>' + U.esc(m.unit_name) + '</b></div><div class="st"><button class="btn sm ghost" data-rm="' + U.esc(id) + '">' + ICON('x') + 'นำออก</button></div>' +
           '<div class="qty">' + Req.stepper(id, S.cart[id], false) + '</div></li>';
       }).join('') + '</ul>' +
       '<label class="field" style="margin-top:16px"><span>วัตถุประสงค์ (ถ้ามี)</span><textarea class="input" id="purpose" maxlength="300" placeholder="เช่น ใช้ในงานสารบรรณ">' + U.esc(S.purpose || '') + '</textarea></label>' +
+      (outIds.length ? (rw.w.urgent_enabled
+        ? '<div class="card urgent-box"><label class="check"><input type="checkbox" id="urg"' + (S.urgent ? ' checked' : '') + '> <span><b>ขอเบิกวัสดุเร่งด่วน</b><br><small class="muted">มี ' + outIds.length + ' รายการอยู่นอกรอบการเบิก — ระบุเหตุผลให้หัวหน้าเจ้าหน้าที่พัสดุพิจารณา</small></span></label>' +
+          '<label class="field" id="urg-f"' + (S.urgent ? '' : ' hidden') + '><span>เหตุผลที่ต้องใช้เร่งด่วน (จำเป็น)</span><textarea class="input" id="urg-r" maxlength="300" placeholder="เช่น หมึกพิมพ์หมด ต้องพิมพ์สำนวนส่งศาลอุทธรณ์ภายในวันนี้">' + U.esc(S.urgentReason || '') + '</textarea></label></div>'
+        : '<div class="notice warn"><div><b>ยังส่งไม่ได้: มี ' + outIds.length + ' รายการอยู่นอกรอบการเบิก</b>นำรายการที่มีป้าย “นอกรอบการเบิก” ออกเพื่อส่งส่วนที่เหลือ หรือเก็บไว้ในตะกร้าแล้วส่งเมื่อเปิดรอบ</div></div>') : '') +
       '<div class="row"><a class="btn" href="#/req">' + ICON('plus') + 'เลือกวัสดุเพิ่ม</a>' + (ed ? '<button class="btn ghost" id="stopedit">เลิกแก้ไข</button>' : '') + '<span class="spacer"></span>' +
-      '<button class="btn primary lg" id="send">' + (ed ? 'ยื่นใบเดิมอีกครั้ง (' + ids.length + ' รายการ)' : 'ส่งคำขอ (' + ids.length + ' รายการ)') + '</button></div>';
+      '<button class="btn primary lg" id="send"' + (outIds.length && !rw.w.urgent_enabled ? ' disabled' : '') + '>' + (ed ? 'ยื่นใบเดิมอีกครั้ง (' + ids.length + ' รายการ)' : sendLabel()) + '</button></div>';
     if (ed) U.$('#stopedit').onclick = async function () {
       if (!(await U.confirm('เลิกแก้ไขใบ ' + ed.req_no, 'ล้างรายการในตะกร้าที่ดึงมาจากใบนี้ ใบเดิมยังอยู่ในสถานะส่งกลับแก้ไข แก้ไขต่อได้ภายหลัง', 'เลิกแก้ไข'))) return;
       S.cart = {}; S.purpose = ''; S.editReq = null; App.saveCart(); location.hash = '#/my';
@@ -248,6 +256,10 @@ App.view('cart', {
       delete S.cart[b.dataset.rm]; App.saveCart(); App.render();
     });
     U.$('#purpose').addEventListener('input', function () { S.purpose = this.value; App.saveCart(); });
+    if (U.$('#urg')) {
+      U.$('#urg').onchange = function () { S.urgent = this.checked; U.$('#urg-f').hidden = !this.checked; U.$('#send').textContent = sendLabel(); if (this.checked) U.$('#urg-r').focus(); };
+      U.$('#urg-r').addEventListener('input', function () { S.urgentReason = this.value; });
+    }
     U.$('#send').onclick = async function () {
       const btn = this;
       const items = Object.keys(S.cart).map(function (id) { return { mat_id: id, qty: S.cart[id] }; });
@@ -269,21 +281,29 @@ App.view('cart', {
         }
         return;
       }
-      const it = Outbox.add({ items: items, purpose: S.purpose || '' });
+      const data = { items: items, purpose: S.purpose || '' };
+      if (outIds.length) {
+        if (!rw.w.urgent_enabled) { btn.classList.remove('busy'); btn.textContent = sendLabel(); return; }
+        if (!S.urgent) { btn.classList.remove('busy'); btn.textContent = sendLabel(); U.toast('มีรายการนอกรอบการเบิก — ติ๊ก "ขอเบิกวัสดุเร่งด่วน" พร้อมเหตุผล หรือนำรายการนั้นออก', 'warn', 5000); return; }
+        if (!String(S.urgentReason || '').trim()) { btn.classList.remove('busy'); btn.textContent = sendLabel(); U.toast('กรุณาระบุเหตุผลที่ขอเบิกวัสดุเร่งด่วน', 'err'); U.$('#urg-r').focus(); return; }
+        data.urgent = true; data.urgent_reason = String(S.urgentReason).trim();
+      }
+      const it = Outbox.add(data);
       try {
         const r = await Outbox.send(it);
         Outbox.remove(it.uuid);
-        S.cart = {}; S.purpose = ''; S.forms.cartErrors = {}; S.forms.cartMsg = '';
+        S.cart = {}; S.purpose = ''; S.urgent = false; S.urgentReason = ''; S.forms.cartErrors = {}; S.forms.cartMsg = '';
         App.saveCart();
         App.refreshMe(); App.refreshCatalog().catch(function () {});
         el.innerHTML = '<div class="card" style="text-align:center;padding:36px 18px"><div style="color:var(--ok)">' + ICON('check').replace('<svg', '<svg style="width:64px;height:64px"') + '</div>' +
           '<h2>ส่งคำขอเรียบร้อย</h2><p class="muted">เลขที่ <b style="color:var(--ink)">' + U.esc(r.req_no) + '</b> · สถานะ ' + stBadge(r.status) + '</p>' +
-          '<p class="muted small">ระบบจองของไว้ให้แล้ว เจ้าหน้าที่พัสดุจะจัดเตรียมและแจ้งเมื่อพร้อมรับ</p>' +
+          (r.urgent ? '<p><span class="badge urgent">เร่งด่วน</span></p><p class="muted small">ส่งเป็นคำขอเบิกวัสดุเร่งด่วนแล้ว รอหัวหน้าเจ้าหน้าที่พัสดุพิจารณา</p>' : '<p class="muted small">ระบบจองของไว้ให้แล้ว เจ้าหน้าที่พัสดุจะจัดเตรียมและแจ้งเมื่อพร้อมรับ</p>') +
           '<div class="row" style="justify-content:center;margin-top:16px"><a class="btn" href="#/print/' + U.esc(r.req_id) + '">' + ICON('print') + 'พิมพ์ใบเบิก</a>' +
           '<a class="btn primary" href="#/my">ดูคำขอของฉัน</a></div></div>';
       } catch (e) {
         if (it.status === 'rejected') {
           Outbox.remove(it.uuid);
+          if (/^(WINDOW_CLOSED|URGENT_OFF|NEED_URGENT_REASON)$/.test(e.code || '')) await App.refreshMe();
           S.forms.cartMsg = e.message;
           S.forms.cartErrors = {};
           if (e.details && e.details.items) e.details.items.forEach(function (x) { S.forms.cartErrors[x.mat_id] = x.message || x.reason; });
@@ -365,7 +385,7 @@ const My = (function () {
   }
   function card(r) {
     const open = ['PENDING_APPROVAL', 'PENDING_PREP', 'READY', 'RETURNED'].indexOf(r.status) >= 0;
-    return '<div class="card req-card"><div class="top"><div><h3>' + U.esc(r.req_no) + '</h3><span class="muted small">' + U.thDateTime(r.created_at) + '</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>' +
+    return '<div class="card req-card"><div class="top"><div><h3>' + U.esc(r.req_no) + RW.urgentBadge(r) + '</h3><span class="muted small">' + U.thDateTime(r.created_at) + '</span></div><span class="spacer"></span>' + stBadge(r.status) + '</div>' + RW.urgentReason(r) +
       '<ul class="items">' + r.items.map(function (i) {
         const got = i.qty_issued !== null && i.qty_issued !== undefined;
         return '<li><span>' + U.esc(i.name) + '</span><span class="muted">ขอ ' + U.n(i.qty_req) + (i.qty_approved !== null && i.qty_approved !== i.qty_req ? ' · อนุมัติ ' + U.n(i.qty_approved) : '') +
@@ -552,8 +572,8 @@ App.view('approve', {
         '<div class="approval-dept"><dt>ส่วนงานนี้เบิก' + (monthLabel ? 'เดือน' + U.esc(monthLabel.split(' ')[0]) : 'เดือนนี้') + '</dt><dd>' + U.n(i.dept_month || 0) + '</dd></div></dl>';
     };
     $('#approval-list').innerHTML = rows.length ? rows.map(function (r) {
-      return '<div class="card req-card approval-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + (r.return_count ? ' <span class="badge st-RETURNED">ยื่นใหม่ครั้งที่ ' + r.return_count + '</span>' : '') + '</h3><span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) + ' · ' + U.thDateTime(r.resubmitted_at || r.created_at) + '</span></div></div>' +
-        (r.purpose ? '<p class="small">วัตถุประสงค์: ' + U.esc(r.purpose) + '</p>' : '') +
+      return '<div class="card req-card approval-card" data-id="' + U.esc(r.req_id) + '"><div class="top"><div><h3>' + U.esc(r.req_no) + RW.urgentBadge(r) + (r.return_count ? ' <span class="badge st-RETURNED">ยื่นใหม่ครั้งที่ ' + r.return_count + '</span>' : '') + '</h3><span class="muted small">' + U.esc(r.requester_name) + ' · ' + U.esc(r.dept_name) + ' · ' + U.thDateTime(r.resubmitted_at || r.created_at) + '</span></div></div>' +
+        RW.urgentReason(r) + (r.purpose ? '<p class="small">วัตถุประสงค์: ' + U.esc(r.purpose) + '</p>' : '') +
         (r.events && r.events.length ? My.history(r, true) : '') +
         '<div class="tablewrap"><table class="t approval-items"><thead><tr><th>วัสดุและยอดคงเหลือ</th><th class="num">จำนวนที่ขอ</th><th class="num">อนุมัติจ่าย</th><th class="num">จ่ายจริง</th></tr></thead><tbody>' + r.items.map(function (i) {
           return '<tr><td><b>' + U.esc(i.name) + '</b><small class="muted"> ' + U.esc(i.unit_name) + '</small><div data-stock-item="' + U.esc(i.item_id) + '">' + stockHtml(i) + '</div><small class="approval-after" data-after-item="' + U.esc(i.item_id) + '"></small></td><td class="num" data-label="จำนวนที่ขอ">' + U.n(i.qty_req) + '</td><td class="num" data-label="อนุมัติจ่าย"><input class="input num" type="number" inputmode="numeric" min="0" max="' + maximum(i) + '" value="' + maximum(i) + '" data-item="' + U.esc(i.item_id) + '" aria-label="อนุมัติ ' + U.esc(i.name) + '"></td><td class="num issued-value" data-label="จ่ายจริง">' + (i.qty_issued === null || i.qty_issued === undefined ? 'ยังไม่จ่าย' : U.n(i.qty_issued - (i.qty_returned || 0))) + '</td></tr>';
