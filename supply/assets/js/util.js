@@ -80,7 +80,35 @@ const U = (function () {
     greetingHtml: function (at) { const info = U.periodInfo(at); return '<span class="welcome-greeting" data-greeting-period="' + info.period + '">' + info.greeting + '</span>'; },
     periodArt: function (at) {
       const info = U.periodInfo(at);
-      return '<div class="period-art period-' + info.period + '" role="img" aria-label="' + info.label + '"><span class="period-rays"></span><span class="period-orb"></span><span class="period-cloud"></span><span class="period-star star-one"></span><span class="period-star star-two"></span></div>';
+      return '<div class="period-art period-' + info.period + '" role="img" aria-label="' + info.label + ' เวลา ' + U.hhmm(at) + ' น."><div class="ps-tilt">' +
+        '<div class="ps-sky"><span class="ps-stars"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="ps-shoot"></span><span class="ps-hill h1"></span><span class="ps-hill h2"></span></div>' +
+        '<span class="ps-glow"></span><span class="ps-orb"><span class="ps-rays"></span><span class="cr cr1"></span><span class="cr cr2"></span><span class="cr cr3"></span></span>' +
+        '<span class="ps-cloud c2"></span><span class="ps-cloud c1"></span><span class="ps-shine"></span>' +
+        '<span class="ps-chip" aria-hidden="true">' + info.label + ' <time>' + U.hhmm(at) + '</time></span></div></div>';
+    },
+    hhmm: function (at) {
+      return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(at || new Date());
+    },
+    /** เอียงภาพ 3 มิติตามเมาส์ (เฉพาะอุปกรณ์ที่มีเมาส์ และไม่ได้ตั้งลดการเคลื่อนไหว) */
+    bindPeriodTilt: function () {
+      if (U._tiltBound || !window.matchMedia || !matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      U._tiltBound = true;
+      let raf = 0, last = null;
+      const reset = function (art) { if (art) { art.style.setProperty('--rx', '0deg'); art.style.setProperty('--ry', '0deg'); } };
+      document.addEventListener('pointermove', function (e) {
+        const sec = e.target && e.target.closest ? e.target.closest('.bento-welcome') : null;
+        const art = sec ? sec.querySelector('.period-art') : null;
+        if (last && last !== art) reset(last);
+        last = art;
+        if (!art || raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = 0;
+          const r = art.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+          const dx = Math.max(-1, Math.min(1, (e.clientX - cx) / 360)), dy = Math.max(-1, Math.min(1, (e.clientY - cy) / 220));
+          art.style.setProperty('--ry', (dx * 14).toFixed(2) + 'deg'); art.style.setProperty('--rx', (-dy * 10).toFixed(2) + 'deg');
+        });
+      }, { passive: true });
+      document.addEventListener('pointerleave', function () { reset(last); last = null; });
     },
     refreshGreeting: function (root, at) {
       root = root || document; at = at || new Date();
@@ -89,7 +117,9 @@ const U = (function () {
         el.textContent = info.greeting; el.dataset.greetingPeriod = info.period;
       });
       U.$$('.period-art', root).forEach(function (el) {
-        if (!el.classList.contains('period-' + info.period)) el.outerHTML = U.periodArt(at);
+        if (!el.classList.contains('period-' + info.period)) { el.outerHTML = U.periodArt(at); return; }
+        const t = el.querySelector('.ps-chip time'); if (t) t.textContent = U.hhmm(at);
+        el.setAttribute('aria-label', info.label + ' เวลา ' + U.hhmm(at) + ' น.');
       });
     },
     quantityTotals: function (items, key) {
