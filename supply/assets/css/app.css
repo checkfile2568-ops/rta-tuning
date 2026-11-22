@@ -891,3 +891,41 @@ label.radio input, label.check input { width: 18px; height: 18px; flex: none; }
 .approval-acts .btn.primary.lg { flex: 1 1 200px; justify-content: center; }
 .danger-text { color: var(--out); }
 .btn-count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px; margin-left: 8px; border-radius: 999px; background: #b42318; color: #fff; font-size: .8rem; font-weight: 700; }
+
+/* ---------- 1.12.0 — รอบการเบิก · ขอเบิกวัสดุเร่งด่วน · จัดบรรทัดข้อความไทย ---------- */
+.nw, .mhead b .nw, .brand .nw, .nav a .nw { display: inline !important; white-space: nowrap !important; font-size: inherit !important; opacity: 1 !important; margin: 0 !important; padding: 0 !important; background: none !important; width: auto !important; height: auto !important; border-radius: 0 !important; color: inherit; }
+.rw-banner > div { min-width: 0; }
+.rw-banner .rw-line { display: block; margin-top: 2px; }
+.rw-how { margin-top: 6px; font-size: .86rem; }
+.rw-how summary { cursor: pointer; color: var(--navy); font-weight: 600; }
+.rw-how ul { margin: 6px 0 0; padding-left: 18px; }
+.rw-how li { margin: 3px 0; }
+.rw-hint { display: inline-flex; align-items: center; gap: 4px; color: #9a5b00 !important; }
+.rw-hint svg { width: 14px; height: 14px; }
+.badge.urgent { background: #fde7e4; color: #b3261e; border: 1px solid #f3b7ae; font-weight: 700; }
+.badge.urgent::before { content: "⚡"; margin-right: 2px; }
+.urgent-reason { margin: 8px 0; padding: 8px 12px; border-left: 4px solid #d9483b; background: #fff4f2; border-radius: 8px; font-size: .9rem; }
+.urgent-box { border: 1px solid #f3b7ae; background: #fffaf9; margin-top: 12px; }
+.urgent-box textarea { min-height: 80px; }
+.rw-officer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; padding: 8px 12px; background: var(--bg); border-radius: 10px; }
+.rw-officer svg { width: 16px; height: 16px; flex: none; }
+.rw-form .field > span { display: block; font-weight: 600; margin-bottom: 6px; }
+.rw-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px; }
+.rw-urgent { align-items: flex-start !important; margin: 10px 0; }
+.rw-urgent input { margin-top: 3px; }
+/* หน้าใส่ PIN: ปุ่มเปลี่ยนผู้ใช้ลงแถวล่าง ชื่อ/ส่วนงานไม่ถูกบีบ */
+.who .who-dept { display: block; }
+@media (max-width: 520px) {
+  .who { flex-wrap: wrap; }
+  .who > div { flex: 1 1 0; min-width: 0; }
+  .who #chg { flex: 1 1 100%; justify-content: center; }
+}
+.login-lead { text-wrap: balance; }
+/* เมนูแบบการ์ด: ตัดบรรทัดเฉพาะหลัง / */
+.menu-sheet .nav a span, .nav a span { text-wrap: balance; }
+.mhead b { text-wrap: balance; }
+@media (max-width: 520px) {
+  .clay-login .who { flex-wrap: wrap; row-gap: 10px; }
+  .clay-login .who > div { flex: 1 1 0; min-width: 0; }
+  .clay-login .who #chg.switch-user { flex: 1 1 100%; justify-content: center; min-height: 40px; }
+}
