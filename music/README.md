@@ -61,3 +61,7 @@ Playlists are stored in browser localStorage under `my-music-playlists-v1`. Song
 - Failed in-page API search shows a tappable YouTube link instead of a popup that browsers block.
 - Links without `https://` are accepted; user categories are remembered (`music-custom-categories-v1`); the ＋ button lists only Playlists that do not contain the song yet; app icons added for home-screen install.
 - Not changed: Cloud mode still syncs songs only — Playlists stay in this browser until a cloud Playlist store is added.
+
+## Themes (2026-11-22)
+
+🎨 button in the header opens a theme picker (saved per browser in `music-theme-v1`): ม่วงกระจก (original, default), กรมท่า-ทอง, ฟ้าครามกระจก, มรกตกลางคืน, นีออนปาร์ตี้, ดำล้วน (OLED, no blur), สว่าง ฟ้า-ขาว (outdoor). The default theme uses the original CSS unchanged; other themes only override colours via `--t-*` variables on `html[data-theme=…]`. To add a theme: one variable block in the CSS theme layer + one entry in `THEMES` in the theme script.
