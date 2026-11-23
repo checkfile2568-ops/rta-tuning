@@ -10,7 +10,7 @@ function ui(){
  $('pinHeading').textContent=creating?'สร้างรหัสคลังใหม่':'เข้าสู่คลังเพลงส่วนตัว';
  $('pinDescription').textContent=creating?'รหัสใหม่เริ่มด้วยคลังว่าง แยกจากรหัสอื่น':'ใช้รหัส 6 หลักของคุณ เพื่อเปิดเฉพาะเพลงและ Playlist ของรหัสนี้';
  $('pinConfirmWrap').hidden=!creating;submit.textContent=creating?'สร้างรหัสและเข้าคลัง':'เข้าสู่คลังเพลง';modeButton.hidden=false;modeButton.textContent=creating?'มีรหัสแล้ว · เข้าสู่ระบบ':'สร้างรหัสใหม่ · เริ่มคลังว่าง';
- $('pinPrivacyNote').textContent='โควตารวม 10 เครื่อง · รหัสหลัก: มือถือ 3 + จอรถ 1 · รหัสอื่นรวม 6 เครื่อง · คลังเพลงแยกตามรหัส'+(legacyRecord&&!legacyOwner()?' · มีคลังเดิมบนเครื่องนี้ ให้กรอก PIN เดิมเพื่อย้ายเพลง':'');
+ $('pinPrivacyNote').textContent='สิทธิ์ใช้งานทั่วไปจำกัด 6 เครื่อง · คลังเพลงส่วนตัวแยกตามรหัส'+(legacyRecord&&!legacyOwner()?' · มีคลังเดิมบนเครื่องนี้ ให้กรอก PIN เดิมเพื่อย้ายเพลง':'');
 }
 function setLocked(){clearTimeout(timer);creating=false;session=null;revision=0;dirty=0;saved=0;conflict=false;app.clear();code.value='';confirm.value='';screen.hidden=false;document.documentElement.classList.add('pin-locked');$('outBtn').hidden=true;$('profileReload').hidden=true;$('profileRelease').hidden=true;status('กรุณาเข้าสู่ระบบด้วยรหัสส่วนตัว');ui()}
 async function deriveLegacy(pin,salt,usage='bits'){
