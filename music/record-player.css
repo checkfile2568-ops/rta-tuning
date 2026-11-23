@@ -1,0 +1,37 @@
+#classicRecord{margin:0 0 16px;border-radius:18px;overflow:hidden;background:linear-gradient(140deg,#1d2934,#0a131d);border:1px solid #bca27155;color:#eee5d5;box-shadow:0 12px 25px #06112033}
+.record-heading{display:flex;align-items:center;justify-content:space-between;padding:14px 17px 0;color:#d6bb87;font-size:10px;font-weight:650;letter-spacing:2px}
+.record-led{width:7px;height:7px;border-radius:50%;background:#6b5050;box-shadow:0 0 0 3px #ffffff08}
+#classicRecord[data-state=playing] .record-led{background:#6ceba0;box-shadow:0 0 10px #41df8366}
+.record-console{padding:16px 18px 8px;perspective:900px}
+.record-deck{position:relative;width:100%;aspect-ratio:2.05;min-height:155px;max-height:245px;border-radius:13px;border:1px solid #d2b1876b;background:repeating-linear-gradient(2deg,transparent 0 8px,#b8a0760b 9px 10px),linear-gradient(125deg,#71503a,#3a2c25 60%,#574032);box-shadow:inset 0 1px 3px #f8dca33d,inset 0 -8px 0 #1c151a55,0 10px 20px #0008;transform:rotateX(8deg)}
+.record-platter{position:absolute;left:9%;top:6%;height:85%;aspect-ratio:1;border-radius:50%;border:5px solid #a8a5a0;background:repeating-radial-gradient(circle,#171c24 0 2px,#30343b 3px,#0c1017 4px 6px);box-shadow:0 8px 15px #0009,inset 0 0 0 3px #060b13;animation:record-spin 9s linear infinite;animation-play-state:paused}
+.record-platter:after{content:"";position:absolute;inset:5%;border-radius:50%;background:conic-gradient(transparent,#ffffff20 65deg,transparent 100deg,transparent 230deg,#ffffff15 260deg,transparent 300deg)}
+#classicRecord[data-state=playing] .record-platter{animation-play-state:running}
+.record-centre{position:absolute;inset:33%;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 20%,#f3d6a2,#a47c43);color:#26313a;box-shadow:0 0 0 1px #171d24,0 0 0 4px #d8bd8a77;font:650 18px/1 system-ui;letter-spacing:2px}
+.record-centre i{position:absolute;top:48%;left:48%;width:5%;height:5%;border-radius:50%;background:#e5ebef;box-shadow:0 0 2px #000}
+.record-tonearm{position:absolute;right:14%;top:12%;height:66%;width:12px;transform-origin:50% 8%;transform:rotate(-18deg);transition:transform .7s;background:linear-gradient(90deg,#65717a,#f0eee8 40%,#78858b);border-radius:7px;box-shadow:4px 4px 7px #0008}
+.record-tonearm:before{content:"";position:absolute;left:-9px;top:-3px;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,#959da2 15%,#2b3541 20% 45%,#a6aeb1 48%,#38414b 70%);box-shadow:0 2px 5px #0008}
+.record-tonearm i{position:absolute;bottom:-6px;left:-4px;width:20px;height:32px;background:linear-gradient(90deg,#131a24,#7f8992,#131a24);border-radius:4px;transform:rotate(15deg);border-bottom:3px solid #bd9a60}
+#classicRecord[data-state=playing] .record-tonearm{transform:rotate(24deg)}
+.record-speed{position:absolute;bottom:11%;right:8%;font-size:9px;letter-spacing:2px;color:#ddcbb0}
+.record-switch{position:absolute;right:8%;bottom:28%;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 30% 20%,#ece2ca,#8d816d 60%,#25282c 65%);box-shadow:1px 3px 5px #0008}
+.record-caption{padding:14px 17px 10px}
+#recordSongTitle{display:block;font-size:16px;line-height:1.5;overflow-wrap:anywhere;color:#f1e9db}
+#playbackState{display:flex;gap:7px;align-items:center;font-size:13px;color:#a9b5bf;min-height:25px;margin-top:5px}
+#classicRecord[data-state=playing] #playbackState{color:#86e8ad}
+#classicRecord[data-state=paused] #playbackState,#classicRecord[data-state=stopped] #playbackState,#classicRecord[data-state=error] #playbackState{color:#ffaaa8}
+#classicRecord[data-state=loading] #playbackState:before,#classicRecord[data-state=buffering] #playbackState:before{content:"";width:13px;height:13px;border:2px solid #dfbf7866;border-top-color:#e5c78c;border-radius:50%;animation:record-spin .8s linear infinite}
+.record-options{padding:0 17px 15px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#classicRecord #toggleVideo{padding:8px 12px;min-height:40px;background:#ffffff0a;border:1px solid #d2bc9255;box-shadow:none;color:#e2d1b3;font-size:13px;border-radius:10px}
+#classicRecord .record-options small{font-size:11px;line-height:1.5;color:#9caeba}
+#videoArea{min-height:200px}
+#videoArea[hidden]{display:none!important}
+#player.player-idle{display:flex;align-items:center;justify-content:center;padding:24px;min-height:200px;color:#becbda;background:linear-gradient(145deg,#101d30,#060d18);font-size:15px;text-align:center}
+#play,#pauseSong,#stopSong{min-height:46px;min-width:70px;padding:10px 14px;font-size:15px;font-weight:650;border-radius:12px;box-shadow:0 5px 12px #06112022}
+#play{color:#fff;background:linear-gradient(145deg,#209d60,#12723f);border:1px solid #90e4b788}
+#pauseSong,#stopSong,#play[data-state=paused],#play[data-state=stopped]{color:#fff;background:linear-gradient(145deg,#dc555a,#a42b3d);border:1px solid #ffc1bf88}
+#play[data-state=loading],#play[data-state=buffering]{color:#fff6dc;background:linear-gradient(145deg,#a27826,#745316);border:1px solid #e8ca8c88;opacity:1}
+#pauseSong:disabled,#stopSong:disabled{opacity:.45}
+@keyframes record-spin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.record-console{padding:13px 13px 5px}.record-deck{aspect-ratio:1.8;min-height:155px}.record-centre{font-size:13px}.record-tonearm{width:9px}.record-tonearm:before{width:25px;height:25px;left:-8px}.record-speed{font-size:8px;right:5%;letter-spacing:1px}.record-switch{right:8%;width:17px;height:17px}#play,#pauseSong,#stopSong{min-width:65px;padding:10px 11px;font-size:14px}.record-options{padding:0 13px 13px}.record-caption{padding:12px 13px 9px}}
+@media(prefers-reduced-motion:reduce){.record-platter{animation:none}.record-tonearm{transition:none}#playbackState:before{animation:none!important}}
