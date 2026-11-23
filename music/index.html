@@ -172,7 +172,7 @@ html[data-theme="daylight"] .playlist-dialog{background:rgba(15,39,66,.35)}
 @media(max-width:480px){#topMusicSearch .row .stretch{flex-basis:100%}#topMusicSearch #youtubeSearch{width:100%}}
 @media(max-width:380px){.theme-grid{grid-template-columns:1fr}}
 @media(max-width:480px){#musicWorkPanel{padding:11px}.music-menu-tabs{gap:6px;grid-template-columns:1fr 1.55fr .84fr}.music-menu-tab{padding:8px 5px;min-height:56px;font-size:12.5px;border-radius:11px}.music-menu-pane{padding:10px}.music-menu-pane .row{gap:8px}.music-menu-pane .row input.stretch,.music-menu-pane .row select.stretch{flex:1 1 100%;width:100%}.music-menu-pane .row button{flex:1 1 auto;min-height:44px}#toggleAdd{font-size:15px}}
-</style></head><body><header><div><h1>♫ My Music Library</h1><small>ฟังเพลงจาก YouTube • จัดคลังเพลงส่วนตัว</small></div><div class="row"><span id="status">โหมดเครื่องนี้</span><button id="themeBtn" type="button" title="เปลี่ยนธีม" aria-haspopup="dialog" aria-label="เปลี่ยนธีม">🎨<span class="theme-btn-text"> ธีม</span></button><button id="wakeBtn" title="ขอให้หน้าจอเปิดอยู่">☀ เปิดจอค้าง</button><button id="authBtn">เข้าสู่ระบบ Cloud</button><button id="managePasskey" hidden>◎ จัดการ Passkey</button><button id="outBtn" hidden>ออกจากระบบ</button></div></header><main><section class="panel" id="topMusicSearch" aria-labelledby="topMusicSearchTitle" style="margin-bottom:16px"><h2 id="topMusicSearchTitle">ค้นหาเพลงบน YouTube</h2><div class="row" style="margin-bottom:10px"><input id="youtubeQuery" type="search" aria-label="ค้นหาเพลงบน YouTube" class="stretch" placeholder="ค้นหาชื่อเพลงหรือศิลปินบน YouTube"><button type="button" id="youtubeSearch" class="primary">🔎 ค้นหา</button></div><p class="muted" id="searchHelp" style="font-size:12px">พิมพ์ชื่อเพลงหรือศิลปิน แล้วเลือกผลค้นหาด้านล่างได้เลย</p>
+</style></head><body><header><div><h1>♫ My Music Library</h1><small>ฟังเพลงจาก YouTube • จัดคลังเพลงส่วนตัว</small></div><div class="row"><span id="status">โหมดเครื่องนี้</span><button id="themeBtn" type="button" title="เปลี่ยนธีม" aria-haspopup="dialog" aria-label="เปลี่ยนธีม">🎨<span class="theme-btn-text"> ธีม</span></button><button id="wakeBtn" title="ขอให้หน้าจอเปิดอยู่">☀ เปิดจอค้าง</button><button id="authBtn">เข้าสู่ระบบ Cloud</button><button id="managePasskey" hidden>◎ จัดการ Passkey</button><button id="profileReload" type="button" hidden>โหลดคลังล่าสุด</button><button id="profileRelease" type="button" hidden>ยกเลิกเครื่องนี้</button><button id="outBtn" hidden>ออกจากระบบ</button></div></header><main><section class="panel" id="topMusicSearch" aria-labelledby="topMusicSearchTitle" style="margin-bottom:16px"><h2 id="topMusicSearchTitle">ค้นหาเพลงบน YouTube</h2><div class="row" style="margin-bottom:10px"><input id="youtubeQuery" type="search" aria-label="ค้นหาเพลงบน YouTube" class="stretch" placeholder="ค้นหาชื่อเพลงหรือศิลปินบน YouTube"><button type="button" id="youtubeSearch" class="primary">🔎 ค้นหา</button></div><p class="muted" id="searchHelp" style="font-size:12px">พิมพ์ชื่อเพลงหรือศิลปิน แล้วเลือกผลค้นหาด้านล่างได้เลย</p>
 <div id="youtubeSearchResults" hidden aria-live="polite"></div>
 <div class="row" style="margin:9px 0"><button type="button" id="toggleSearchConfig">⚙ ตั้งค่าค้นหาในหน้าเว็บ</button><span class="muted" id="youtubeSearchStatus" role="status" style="font-size:12px"></span></div>
 <div id="youtubeSearchConfig" hidden><label for="youtubeApiKey" class="muted" style="font-size:12px">YouTube Data API Key (ไม่บังคับ)</label><div class="row"><input id="youtubeApiKey" type="password" autocomplete="off" placeholder="วาง API Key สำหรับค้นหาภายในเว็บ" class="stretch"><button type="button" id="saveYoutubeKey">ตรวจสอบและล็อกคีย์</button><button type="button" id="changeYoutubeKey" hidden>เปลี่ยนคีย์</button></div><small>หากไม่ได้ตั้งค่า ระบบจะใช้การค้นหาบน YouTube ตามปกติ · บันทึกครั้งเดียว ใช้ร่วมกับหน้าเล่นเพลงในรถบนเบราว์เซอร์นี้ · เครื่องอื่นต้องตั้งค่าแยก</small></div></section><div class="layout"><section class="panel"><div class="player"><div id="player"></div><div id="playerProblem" hidden role="status" aria-live="polite"><strong id="playerProblemTitle">เชื่อมต่อ YouTube ไม่สำเร็จ</strong><span id="playerProblemDescription">ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</span><div class="row" style="justify-content:center;gap:8px"><button type="button" id="retryYouTube" class="primary">↻ เชื่อมต่อใหม่</button><button type="button" id="openYouTubeDirect">เปิดเพลงใน YouTube ↗</button></div></div></div><div id="now">เลือกเพลงเพื่อเริ่มเล่น</div><div class="row controls"><button id="prev" aria-label="ก่อนหน้า">⏮</button><button id="play" class="primary" aria-label="เล่นหรือพัก">▶ / ❚❚</button><button id="next" aria-label="ถัดไป">⏭</button><button id="shuffle" title="สุ่ม">🔀</button><button id="repeat" title="เล่นวน">🔁</button><button id="yt" title="เปิดบน YouTube">YouTube ↗</button></div><div class="row"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" value="0" class="time stretch" aria-label="เลื่อนตำแหน่งเพลง"><span id="duration">0:00</span></div><div class="row volume-glass" role="group" aria-label="ปรับระดับเสียง YouTube"><span class="volume-ico" aria-hidden="true">♫</span><label for="volume" class="volume-label">VOLUME</label><input id="volume" type="range" min="0" max="100" step="1" value="90" class="stretch" aria-label="ระดับเสียง YouTube (เปอร์เซ็นต์)" aria-valuetext="90 เปอร์เซ็นต์"><output id="volumeValue" for="volume" class="volume-number" aria-live="off">90%</output></div><small id="volumeHelp" class="muted" aria-live="polite"></small><small id="wakeState" aria-live="polite">จอตามการตั้งค่าของเครื่อง</small><small id="notice">เล่นผ่าน YouTube Player โดยตรง · เล่นขณะล็อกหน้าจอไม่รองรับ · บางคลิปต้องเปิดบน YouTube ↗</small></section><section class="panel" id="musicWorkPanel">
@@ -186,7 +186,7 @@ html[data-theme="daylight"] .playlist-dialog{background:rgba(15,39,66,.35)}
 <div class="row" style="margin-bottom:12px"><button id="renamePlaylist" type="button">✎ เปลี่ยนชื่อ</button><button id="deletePlaylist" type="button">🗑 ลบ Playlist</button><span id="playlistInfo" class="muted" style="font-size:12px"></span></div>
 <input id="filter" placeholder="ค้นหาชื่อเพลงหรือช่อง"><div class="tabs" id="cats"></div><div id="list"></div><button type="button" id="loadMoreSongs" hidden style="width:100%;margin-top:12px" class="action">แสดงเพลงเพิ่มเติม</button>
 
-</div><div id="musicBackupPane" class="music-menu-pane" hidden><h2>สำรองและนำเข้าข้อมูล</h2><div class="row" style="margin-top:15px"><button id="export">สำรอง JSON</button><button id="import">นำเข้า JSON</button><input id="file" type="file" accept=".json,application/json" hidden></div><p class="muted" style="font-size:12px">เมื่อเปิด Cloud ข้อมูลเพลงจะถูกเก็บเฉพาะในบัญชีเจ้าของ ไม่แสดงคลังส่วนตัวก่อนยืนยันตัวตน</p></div></section></div></main><footer>เสียง/วิดีโอเล่นโดยตัวเล่น YouTube อย่างเป็นทางการ ไม่ดาวน์โหลดหรือแปลงเสียง ระบบอาจไม่เล่นต่อเมื่อปิดหน้าจอมือถือ</footer><div id="playlistDialog" class="playlist-dialog" hidden role="presentation">
+</div><div id="musicBackupPane" class="music-menu-pane" hidden><h2>สำรองและนำเข้าข้อมูล</h2><div class="row" style="margin-top:15px"><button id="export">สำรอง JSON</button><button id="import">นำเข้า JSON</button><input id="file" type="file" accept=".json,application/json" hidden></div><p class="muted" style="font-size:12px">เพลงและ Playlist บันทึกแยกตามรหัสของคุณ รหัสใหม่เริ่มด้วยคลังว่าง</p></div></section></div></main><footer>เสียง/วิดีโอเล่นโดยตัวเล่น YouTube อย่างเป็นทางการ ไม่ดาวน์โหลดหรือแปลงเสียง ระบบอาจไม่เล่นต่อเมื่อปิดหน้าจอมือถือ</footer><div id="playlistDialog" class="playlist-dialog" hidden role="presentation">
  <div class="playlist-dialog-shade"></div>
  <section class="playlist-dialog-card" role="dialog" aria-modal="true" aria-labelledby="playlistDialogTitle" aria-describedby="playlistDialogDesc" tabindex="-1">
   <div class="playlist-dialog-top"><div class="playlist-dialog-mark" aria-hidden="true">♫</div><button type="button" id="playlistDialogClose" class="playlist-dialog-close" aria-label="ปิดหน้าต่าง">✕</button></div>
@@ -213,62 +213,11 @@ html[data-theme="daylight"] .playlist-dialog{background:rgba(15,39,66,.35)}
 <button type="button" class="bio-login" id="biometricLogin" disabled><span aria-hidden="true">◎</span>เข้าสู่ระบบด้วยลายนิ้วมือ / Passkey</button>
 <button type="button" class="bio-add" id="addBiometric" disabled>＋ เพิ่ม Passkey ให้บัญชีนี้</button>
 <p class="bio-note" id="biometricMessage" role="status">กำลังตรวจสอบบริการ Passkey…</p><p id="bioHelp">การเข้าใช้ด้วยลายนิ้วมือ/Passkey ต้องติดตั้งการยืนยันฝั่งเซิร์ฟเวอร์ก่อน ขณะนี้ยังใช้บัญชี Firebase เมื่อเปิด Cloud เท่านั้น</p></div></div>
-<!-- Firebase SDK is loaded on demand only when firebase-config.js has a real config (see initCloud). --><script src="search-config.js?v=20261123"></script><script src="firebase-config.js"></script><script>
-(()=>{'use strict';const $=id=>document.getElementById(id), KEY='my-music-library-v2-web',BACKUP='my-music-before-cloud';const seeds=[{"id":"1B7ctdjEVOc","title":"เต้นไม่พัก 2026 NONSTOP — DJ PP THAILAND REMIX","category":"EDM"},{"id":"Ucs3gvlyN-w","title":"เพลงจีนโดนเส้น 2026 — DJ PP THAILAND REMIX","category":"EDM"},{"id":"BTqJBhkS_Zs","title":"เพลงฮิต TikTok เอาไว้เปิดปีใหม่ 2026 — DJ JR Remix","category":"แดนซ์จากภาพ"},{"id":"puWTsV5LePw","title":"เพลงแดนซ์ต้อนรับสงกรานต์ 2026 — Pao Remix","category":"แดนซ์จากภาพ"},{"id":"9cMvppzO1G8","title":"GOOD BOY PARTY MIX 2025 — Air Remixer","category":"แดนซ์จากภาพ"},{"id":"c4wzkFmgZCQ","title":"เพลงเปิดร้านเหล้า เศร้าใจ ยุค90 ไม่มีโฆษณา | เพลงเพราะๆในร้านเหล้า 2026 — Thai 90s Classics","category":"เพลงเก่า / ร้านเหล้า"},{"id":"h6tsgwFRs-0","title":"จังหวะตื๊ดๆ กำลังฮิตใน TikTok แดนซ์มันส์จัดไป — EDM 2024 Vol.2 Man ReMix","category":"EDM 2024"},{"id":"KRKyvicZVvs","title":"Vol.58 (2021) — Music 808 · Djpee FT OAT.ReMix","category":"EDM / รถแห่"},{"id":"K9IEdUOAZvA","title":"เพลงแดนซ์ต้อนรับสงกรานต์ 2025 — DJ LAWEE REMIX","category":"สงกรานต์ / แดนซ์"},{"id":"uWSpQSrzNdE","title":"เพลงแดนซ์ TikTok สายย่อ 2025 — DJ AEKLEE REMIX OFFICIAL","category":"EDM / สายย่อ"},{"id":"_qRWcQELqVg","title":"ความเข้มแข็งสุดท้าย - พงษ์สิทธิ์ คำภีร์ [High Quality Audio] — ฟังแล้ว ฟังอีก","category":"เพลงเพื่อชีวิต / เพลงไทย"},{"id":"R3ePkwuIoao","title":"พงษ์สิทธิ์ คำภีร์ - ใจบงการ【Official Audio】— Pu Pongsit Official","category":"เพลงเพื่อชีวิต / เพลงไทย"},{"id":"2cb7nmTHfJg","title":"กว่าจะรู้สึก — Hi-Rock","category":"เพลงร็อกไทย"},{"id":"pnXHtY10270","title":"MARIA DEEP - California Gold (Remix) [2026] — คลิปชื่อเดียวกัน","category":"เพลงสากล / Remix"},{"id":"pVVXqT9APlE","title":"Have You Ever Seen The Rain (Creedence Clearwater Revival) — Cover by The Hindley Street Country Club","category":"เพลงสากล / Cover"}];let songs=[],selected=null,player=null,ready=false,shuffle=false,repeat=false,category='ทั้งหมด',auth=null,db=null,user=null,unsub=null,cloudLoaded=false,writeTimer=null,refreshing=false;try{songs=JSON.parse(localStorage.getItem(KEY)||'null')||seeds}catch{songs=seeds.slice()}
-const newImageSongs=[{"id":"BTqJBhkS_Zs","title":"เพลงฮิต TikTok เอาไว้เปิดปีใหม่ 2026 — DJ JR Remix","category":"แดนซ์จากภาพ"},{"id":"puWTsV5LePw","title":"เพลงแดนซ์ต้อนรับสงกรานต์ 2026 — Pao Remix","category":"แดนซ์จากภาพ"},{"id":"9cMvppzO1G8","title":"GOOD BOY PARTY MIX 2025 — Air Remixer","category":"แดนซ์จากภาพ"}];
-if(!localStorage.getItem('music-photo-batch-20261121-v1')){
- const seen=new Set(songs.map(x=>x.id));
- for(const item of newImageSongs)if(!seen.has(item.id)){songs.push(item);seen.add(item.id)}
- localStorage.setItem(KEY,JSON.stringify(songs));
- localStorage.setItem('music-photo-batch-20261121-v1','1');
-}
-if(!localStorage.getItem('music-photo-reconciled-20261121-v2')){
- // One-time, idempotent migration: preserve all existing local songs and playlists.
- const known=new Set(songs.map(item=>item.id));
- const reconciled=[{"id":"c4wzkFmgZCQ","title":"เพลงเปิดร้านเหล้า เศร้าใจ ยุค90 ไม่มีโฆษณา | เพลงเพราะๆในร้านเหล้า 2026 — Thai 90s Classics","category":"เพลงเก่า / ร้านเหล้า"}];
- for(const item of reconciled)if(!known.has(item.id)){songs.push(item);known.add(item.id)}
- localStorage.setItem(KEY,JSON.stringify(songs));
- localStorage.setItem('music-photo-reconciled-20261121-v2','1');
-}
-if(!localStorage.getItem('music-man-remix-2024-v1')){
- const addition={"id":"h6tsgwFRs-0","title":"จังหวะตื๊ดๆ กำลังฮิตใน TikTok แดนซ์มันส์จัดไป — EDM 2024 Vol.2 Man ReMix","category":"EDM 2024"};
- if(!songs.some(item=>item.id===addition.id)){songs.push(addition);localStorage.setItem(KEY,JSON.stringify(songs))}
- localStorage.setItem('music-man-remix-2024-v1','1');
-}
-// One-time idempotent import of the three approved YouTube candidates.
-if(!localStorage.getItem('music-approved-candidates-20261121-v1')){
- const approved=[{"id":"KRKyvicZVvs","title":"Vol.58 (2021) — Music 808 · Djpee FT OAT.ReMix","category":"EDM / รถแห่"},{"id":"K9IEdUOAZvA","title":"เพลงแดนซ์ต้อนรับสงกรานต์ 2025 — DJ LAWEE REMIX","category":"สงกรานต์ / แดนซ์"},{"id":"uWSpQSrzNdE","title":"เพลงแดนซ์ TikTok สายย่อ 2025 — DJ AEKLEE REMIX OFFICIAL","category":"EDM / สายย่อ"}];
- const ids=new Set(songs.map(item=>item.id));let dirty=false;
- for(const item of approved)if(!ids.has(item.id)){songs.push(item);ids.add(item.id);dirty=true}
- if(dirty)localStorage.setItem(KEY,JSON.stringify(songs));
- localStorage.setItem('music-approved-candidates-20261121-v1','1');
-}
-// Import the screenshot-matched 2020 audio once; retain all existing user songs and Playlist records.
-if(!localStorage.getItem('music-pongsit-last-strength-20261121-v1')){
- const addition={"id":"_qRWcQELqVg","title":"ความเข้มแข็งสุดท้าย - พงษ์สิทธิ์ คำภีร์ [High Quality Audio] — ฟังแล้ว ฟังอีก","category":"เพลงเพื่อชีวิต / เพลงไทย"};
- if(!songs.some(x=>x.id===addition.id)){
-  songs.push(addition);
-  localStorage.setItem(KEY,JSON.stringify(songs));
- }
- localStorage.setItem('music-pongsit-last-strength-20261121-v1','1');
-}
-// Add only confirmed user-requested songs once; never replace local songs or playlists.
-if(!localStorage.getItem('music-added-request-20261121-v1')){
- const additions=[{"id":"R3ePkwuIoao","title":"พงษ์สิทธิ์ คำภีร์ - ใจบงการ【Official Audio】— Pu Pongsit Official","category":"เพลงเพื่อชีวิต / เพลงไทย"},{"id":"2cb7nmTHfJg","title":"กว่าจะรู้สึก — Hi-Rock","category":"เพลงร็อกไทย"},{"id":"pnXHtY10270","title":"MARIA DEEP - California Gold (Remix) [2026] — คลิปชื่อเดียวกัน","category":"เพลงสากล / Remix"}];
- const ids=new Set(songs.map(item=>item.id));let changed=false;
- for(const item of additions){if(!ids.has(item.id)){songs.push(item);ids.add(item.id);changed=true}}
- if(changed)localStorage.setItem(KEY,JSON.stringify(songs));
- localStorage.setItem('music-added-request-20261121-v1','1');
-}
-// One-time import of the video selected from the user's screenshot.
-if(!localStorage.getItem('music-hscc-rain-20261121-v1')){
- const addition={"id":"pVVXqT9APlE","title":"Have You Ever Seen The Rain (Creedence Clearwater Revival) — Cover by The Hindley Street Country Club","category":"เพลงสากล / Cover"};
- if(!songs.some(item=>item.id===addition.id)){songs.push(addition);localStorage.setItem(KEY,JSON.stringify(songs))}
- localStorage.setItem('music-hscc-rain-20261121-v1','1');
-}
+<!-- Firebase SDK is loaded on demand only when firebase-config.js has a real config (see initCloud). --><script src="search-config.js?v=20261123-profiles"></script><script src="device-client.js?v=20261123"></script><script src="firebase-config.js"></script><script>
+(()=>{'use strict';const $=id=>document.getElementById(id), KEY='my-music-library-v2-web',BACKUP='my-music-before-cloud';let songs=[],selected=null,player=null,ready=false,shuffle=false,repeat=false,category='ทั้งหมด',auth=null,db=null,user=null,unsub=null,cloudLoaded=false,writeTimer=null,refreshing=false;
 // Category choices for new songs: built-in list + user-created categories + categories already used in the library.
 const CAT_KEY='music-custom-categories-v1',DEFAULT_CATS=['เพลงโปรด','Country','Acoustic','EDM','เพลงไทย','ดนตรีสด'];
-let customCats=[];try{const saved=JSON.parse(localStorage.getItem(CAT_KEY)||'[]');if(Array.isArray(saved))customCats=saved.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim().slice(0,80))}catch{}
+let customCats=[];
 function refreshCategoryOptions(choose){
  const sel=document.getElementById('category');if(!sel)return;const keep=choose||sel.value||'เพลงโปรด';
  const all=[...new Set([...DEFAULT_CATS,...customCats,...songs.map(s=>s.category).filter(c=>typeof c==='string'&&c.trim())])];
@@ -277,9 +226,9 @@ function refreshCategoryOptions(choose){
 }
 const PLAYLIST_KEY='my-music-playlists-v1';
 let playlists=[],activePlaylistId='',visibleCount=60;
-try{const saved=JSON.parse(localStorage.getItem(PLAYLIST_KEY)||'[]');if(Array.isArray(saved))playlists=saved.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&Array.isArray(p.songIds)).map(p=>({id:p.id,name:p.name,songIds:[...new Set(p.songIds.filter(id=>typeof id==='string'))]}))}catch{}
 
-function savePlaylists(){localStorage.setItem(PLAYLIST_KEY,JSON.stringify(playlists));render()}
+
+function savePlaylists(){render();window.musicAccountSave?.()}
 function selectedPlaylist(){return playlists.find(p=>p.id===activePlaylistId)||null}
 const cleanPlaylistName=name=>String(name||'').trim().replace(/\s+/g,' ').slice(0,100);
 const existingName=(name,except='')=>playlists.some(p=>p.id!==except&&cleanPlaylistName(p.name).toLocaleLowerCase()===name.toLocaleLowerCase());
@@ -389,7 +338,7 @@ async function searchYouTubeByName(){
  showSearchStatus('กำลังค้นหา…');
  try{
   const c=new AbortController();const timeout=setTimeout(()=>c.abort(),15000);let response;
-  try{response=await fetch(SEARCH_API?SEARCH_API+'?'+new URLSearchParams({q}):'https://www.googleapis.com/youtube/v3/search?'+new URLSearchParams({part:'snippet',q,type:'video',maxResults:'12',videoEmbeddable:'true',key:ytSearchKey}),{signal:c.signal})}finally{clearTimeout(timeout)}
+  try{response=await (window.musicSearchFetch||fetch)(SEARCH_API?SEARCH_API+'?'+new URLSearchParams({q}):'https://www.googleapis.com/youtube/v3/search?'+new URLSearchParams({part:'snippet',q,type:'video',maxResults:'12',videoEmbeddable:'true',key:ytSearchKey}),{signal:c.signal})}finally{clearTimeout(timeout)}
   const json=await response.json();if(!response.ok)throw Error(json.error?.message||'YouTube ไม่ตอบสนอง');
   renderYouTubeResults(json);showSearchStatus('เลือกคลิปที่ต้องการเพื่อเติมลิงก์')
  }catch(e){
@@ -401,6 +350,7 @@ async function searchYouTubeByName(){
  }
 }
 async function inspectYoutubeUrl(){
+ const generation=window.musicProfileGeneration;
  const id=idOf($('url').value);
  if(!valid(id)){showLinkStatus('ลิงก์ไม่ถูกต้อง กรุณาใช้ลิงก์วิดีโอจาก YouTube');return false}
  showLinkStatus('กำลังตรวจสอบข้อมูลคลิป…');
@@ -409,9 +359,10 @@ async function inspectYoutubeUrl(){
   try{r=await fetch('https://www.youtube.com/oembed?url='+encodeURIComponent(url(id))+'&format=json',{signal:c.signal})}finally{clearTimeout(timeout)}
   if(!r.ok)throw Error('ไม่สามารถอ่านชื่อคลิปได้');
   const meta=await r.json();
+  if(generation!==window.musicProfileGeneration)return false;
   if(!$('title').value.trim())$('title').value=String(meta.title||'').slice(0,250);
   showLinkStatus('ตรวจพบวิดีโอ: '+(meta.title||id),true);return true
- }catch{showLinkStatus('Video ID ถูกต้อง แต่ตรวจข้อมูล YouTube ไม่สำเร็จ · อาจเป็นคลิปส่วนตัว/ถูกลบ/เครือข่ายจำกัด');return true}
+ }catch{if(generation!==window.musicProfileGeneration)return false;showLinkStatus('Video ID ถูกต้อง แต่ตรวจข้อมูล YouTube ไม่สำเร็จ · อาจเป็นคลิปส่วนตัว/ถูกลบ/เครือข่ายจำกัด');return true}
 }
 function setupPlaylistUI(){
  $('youtubeSearch').onclick=()=>searchYouTubeByName();
@@ -453,7 +404,7 @@ function setupPlaylistUI(){
   playlists=playlists.filter(item=>item.id!==p.id);activePlaylistId='';savePlaylists();
  };
 }
-const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const idOf=u=>{try{let raw=String(u||'').trim();if(raw&&!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw))raw='https://'+raw;const x=new URL(raw);const host=x.hostname.toLowerCase();if(host==='youtu.be'||host==='www.youtu.be')return x.pathname.split('/')[1];if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(host)){if(x.pathname==='/watch')return x.searchParams.get('v');if(x.pathname.startsWith('/shorts/')||x.pathname.startsWith('/embed/')||x.pathname.startsWith('/live/'))return x.pathname.split('/')[2]}}catch{}return null};const valid=id=>/^[a-zA-Z0-9_-]{11}$/.test(id||'');const url=id=>'https://www.youtube.com/watch?v='+encodeURIComponent(id);const thumb=id=>'https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/mqdefault.jpg';function persist(){if(auth){if(!user||!cloudLoaded){status('ต้องเข้าสู่ระบบก่อนแก้ไขเพลง');return}render();if(!refreshing){clearTimeout(writeTimer);writeTimer=setTimeout(()=>{writeTimer=null;sync()},500)}}else{localStorage.setItem(KEY,JSON.stringify(songs));render()}}function setupAddToggle(){
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const idOf=u=>{try{let raw=String(u||'').trim();if(raw&&!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw))raw='https://'+raw;const x=new URL(raw);const host=x.hostname.toLowerCase();if(host==='youtu.be'||host==='www.youtu.be')return x.pathname.split('/')[1];if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(host)){if(x.pathname==='/watch')return x.searchParams.get('v');if(x.pathname.startsWith('/shorts/')||x.pathname.startsWith('/embed/')||x.pathname.startsWith('/live/'))return x.pathname.split('/')[2]}}catch{}return null};const valid=id=>/^[a-zA-Z0-9_-]{11}$/.test(id||'');const url=id=>'https://www.youtube.com/watch?v='+encodeURIComponent(id);const thumb=id=>'https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/mqdefault.jpg';function persist(){if(window.MUSIC_PROFILE_MODE){render();window.musicAccountSave?.();return}if(auth){if(!user||!cloudLoaded){status('ต้องเข้าสู่ระบบก่อนแก้ไขเพลง');return}render();if(!refreshing){clearTimeout(writeTimer);writeTimer=setTimeout(()=>{writeTimer=null;sync()},500)}}else{localStorage.setItem(KEY,JSON.stringify(songs));render()}}function setupAddToggle(){
  const btn=document.getElementById('toggleAdd'),body=document.getElementById('addSongBody'),ico=document.getElementById('addToggleIcon');
  btn.onclick=()=>{body.hidden=!body.hidden;const opened=!body.hidden;btn.setAttribute('aria-expanded',String(opened));ico.textContent=opened?'⌃':'⌄';btn.firstChild.textContent=opened?'− ปิดเพิ่มเพลง YouTube ':'＋ เพิ่มเพลง YouTube '};
 }
@@ -544,20 +495,21 @@ $('volume').addEventListener('change',e=>{setVolumeUI(e.target.value);if(/Androi
 setVolumeUI($('volume').value);let draggingSeek=false,seekPreviewUntil=0;
 // Pause UI updates only while the user is actively dragging/previewing, not merely because the slider kept keyboard focus.
 $('seek').addEventListener('pointerdown',()=>draggingSeek=true);$('seek').addEventListener('input',e=>{seekPreviewUntil=Date.now()+900;$('elapsed').textContent=time(Number(e.target.value))});$('seek').addEventListener('change',e=>{if(ready&&selected)try{player.seekTo(Number(e.target.value),true)}catch{}draggingSeek=false;seekPreviewUntil=Date.now()+600});window.addEventListener('pointerup',()=>draggingSeek=false);window.addEventListener('pointercancel',()=>draggingSeek=false);setInterval(()=>{if(!ready||!selected)return;try{const duration=player.getDuration()||0,position=player.getCurrentTime()||0;$('seek').max=duration||100;if(!draggingSeek&&Date.now()>seekPreviewUntil){$('seek').value=position;$('elapsed').textContent=time(position)}$('duration').textContent=time(duration)}catch{}},700);$('filter').oninput=()=>{visibleCount=60;render()};$('newCat').onclick=async()=>{
- const c=await openPlaylistDialog({type:'input',title:'เพิ่มหมวดเพลงใหม่',description:'หมวดใหม่จะถูกจำไว้ในเบราว์เซอร์นี้',label:'ชื่อหมวด',placeholder:'เช่น เพลงลูกทุ่ง',maxLength:80,okText:'เพิ่มหมวด',validate:v=>!String(v).trim()?'กรุณากรอกชื่อหมวด':''});
+ const c=await openPlaylistDialog({type:'input',title:'เพิ่มหมวดเพลงใหม่',description:'หมวดใหม่จะบันทึกเฉพาะคลังของรหัสนี้',label:'ชื่อหมวด',placeholder:'เช่น เพลงลูกทุ่ง',maxLength:80,okText:'เพิ่มหมวด',validate:v=>!String(v).trim()?'กรุณากรอกชื่อหมวด':''});
  if(c===null)return;const name=c.trim().replace(/\s+/g,' ').slice(0,80);
- if(!customCats.includes(name)){customCats.push(name);try{localStorage.setItem(CAT_KEY,JSON.stringify(customCats))}catch{}}
+ if(!customCats.includes(name)){customCats.push(name);window.musicAccountSave?.()}
  refreshCategoryOptions(name);
 };
 $('add').onclick=async()=>{
+ const generation=window.musicProfileGeneration;
  if(auth&&(!user||!cloudLoaded))return playlistNotice('ยังไม่ได้เข้าสู่ระบบ','กรุณาเข้าสู่ระบบ Cloud ก่อนเพิ่มเพลง');
  const id=idOf($('url').value);if(!valid(id))return playlistNotice('ลิงก์ไม่ถูกต้อง','กรุณาวางลิงก์วิดีโอจาก youtube.com หรือ youtu.be');
  const existing=songs.find(s=>s.id===id),p=selectedPlaylist();
  // Check duplicates before changing anything, so the success message is only shown for a real addition.
  if(existing&&!p)return playlistNotice('เพลงนี้อยู่ในคลังแล้ว','กดปุ่ม ＋ ที่เพลงในคลังเพื่อเลือก Playlist');
  if(existing&&p&&p.songIds.includes(id))return playlistNotice('มีเพลงนี้แล้ว','เพลงนี้อยู่ใน Playlist “'+p.name+'” แล้ว');
- if(!existing){let title=$('title').value.trim();if(!title){await inspectYoutubeUrl();title=$('title').value.trim()}songs.unshift({id,title:(title||'YouTube '+id).slice(0,250),category:$('category').value||'เพลงโปรด'})}
- if(p){p.songIds.push(id);localStorage.setItem(PLAYLIST_KEY,JSON.stringify(playlists))}
+ if(!existing){let title=$('title').value.trim();if(!title){await inspectYoutubeUrl();title=$('title').value.trim()}if(generation!==window.musicProfileGeneration)return;songs.unshift({id,title:(title||'YouTube '+id).slice(0,250),category:$('category').value||'เพลงโปรด'})}
+ if(p){p.songIds.push(id)}
  $('url').value='';$('title').value='';category='ทั้งหมด';persist();
  if(p)await playlistNotice('เพิ่มเพลงแล้ว','เพิ่มเพลงลง Playlist “'+p.name+'” แล้ว');else showLinkStatus('เพิ่มเพลงเข้าคลังแล้ว',true);
 };$('export').onclick=()=>{
@@ -568,6 +520,7 @@ $('add').onclick=async()=>{
 };
 $('import').onclick=()=>$('file').click();
 $('file').onchange=async e=>{
+ const generation=window.musicProfileGeneration;
  try{
   const file=e.target.files?.[0];if(!file)return;
   if(auth&&(!user||!cloudLoaded))throw Error('กรุณาเข้าสู่ระบบก่อนนำเข้าข้อมูล');
@@ -603,19 +556,21 @@ $('file').onchange=async e=>{
     mergedPlaylists.push({id:makePlaylistId(),name:importUnique(raw.name),songIds:filtered});freshLists++;
    }
   }
+  if(generation!==window.musicProfileGeneration)return;
   const proceed=await openPlaylistDialog({type:'confirm',title:'ยืนยันนำเข้าคลังเพลง',description:'เพิ่มเพลงใหม่ '+freshSongs+' เพลง\nเพิ่มPlaylistใหม่ '+freshLists+' ชุด\nรายการเพลงเดิมและPlaylistเดิมจะไม่ถูกลบ',okText:'ยืนยันนำเข้า'});
-  if(!proceed)return;
+  if(!proceed||generation!==window.musicProfileGeneration)return;
   const beforeSongs=songs,beforeLists=playlists;
   try{
    // Local transaction: on failure restore both keys and in-memory data.
-   localStorage.setItem(KEY,JSON.stringify([...mergedSongs.values()]));
-   localStorage.setItem(PLAYLIST_KEY,JSON.stringify(mergedPlaylists));
+   if(!window.MUSIC_PROFILE_MODE)localStorage.setItem(KEY,JSON.stringify([...mergedSongs.values()]));
+   if(!window.MUSIC_PROFILE_MODE)localStorage.setItem(PLAYLIST_KEY,JSON.stringify(mergedPlaylists));
    songs=[...mergedSongs.values()];playlists=mergedPlaylists;activePlaylistId='';persist();
   }catch(err){
    songs=beforeSongs;playlists=beforeLists;
-   try{localStorage.setItem(KEY,JSON.stringify(beforeSongs));localStorage.setItem(PLAYLIST_KEY,JSON.stringify(beforeLists))}catch{}
+   if(!window.MUSIC_PROFILE_MODE)try{localStorage.setItem(KEY,JSON.stringify(beforeSongs));localStorage.setItem(PLAYLIST_KEY,JSON.stringify(beforeLists))}catch{}
    throw err
   }
+  if(window.MUSIC_PROFILE_MODE)await window.musicAccountFlush?.();
   await playlistNotice('นำเข้าข้อมูลสำเร็จ','เพิ่มเพลง '+freshSongs+' เพลง และเพิ่มPlaylist '+freshLists+' ชุด');
  }catch(err){await playlistNotice('นำเข้าข้อมูลไม่สำเร็จ',err?.message||'กรุณาตรวจสอบไฟล์อีกครั้ง')}
  finally{e.target.value=''}
@@ -642,7 +597,21 @@ function loadScriptOnce(src){return new Promise((resolve,reject)=>{const s=docum
 async function initCloud(){const cfg=window.MY_MUSIC_FIREBASE_CONFIG;if(!cfg?.apiKey||!cfg?.projectId){status('โหมดเครื่องนี้ · Firebase ยังไม่ตั้งค่า');render();return}document.querySelector('main').style.display='none';status('กำลังโหลดระบบ Cloud…');try{
  // Load the compat SDK in order (app first) only when Cloud is actually configured.
  for(const part of ['app','auth','firestore'])if(!(part==='app'?window.firebase:window.firebase?.[part]))await loadScriptOnce('https://www.gstatic.com/firebasejs/10.14.1/firebase-'+part+'-compat.js');
- firebase.initializeApp(cfg);auth=firebase.auth();db=firebase.firestore();auth.onAuthStateChanged(cloudLogin);status('กำลังตรวจสอบบัญชีเจ้าของ…')}catch(e){status('Firebase ผิดพลาด · '+(e?.message||''));document.querySelector('main').style.display='none'}}$('authBtn').onclick=()=>{$('authBox').style.display='flex'};$('closeAuth').onclick=()=>$('authBox').style.display='none';async function sign(up){if(up){$('authError').textContent='บัญชีเจ้าของต้องสร้างโดยผู้ดูแลใน Firebase Console เท่านั้น';return}if(!auth){$('authError').textContent='ยังไม่ได้เชื่อม Firebase';return}const email=$('email').value.trim(),pass=$('password').value;try{await auth.signInWithEmailAndPassword(email,pass);$('authBox').style.display='none';$('password').value=''}catch(e){$('authError').textContent=e.message}}$('signIn').onclick=()=>sign(false);$('signUp').hidden=true;$('managePasskey').onclick=()=>{$('authBox').style.display='flex'};$('outBtn').onclick=()=>auth?.signOut();initCloud()})();
+ firebase.initializeApp(cfg);auth=firebase.auth();db=firebase.firestore();auth.onAuthStateChanged(cloudLogin);status('กำลังตรวจสอบบัญชีเจ้าของ…')}catch(e){status('Firebase ผิดพลาด · '+(e?.message||''));document.querySelector('main').style.display='none'}}$('authBtn').onclick=()=>{$('authBox').style.display='flex'};$('closeAuth').onclick=()=>$('authBox').style.display='none';async function sign(up){if(up){$('authError').textContent='บัญชีเจ้าของต้องสร้างโดยผู้ดูแลใน Firebase Console เท่านั้น';return}if(!auth){$('authError').textContent='ยังไม่ได้เชื่อม Firebase';return}const email=$('email').value.trim(),pass=$('password').value;try{await auth.signInWithEmailAndPassword(email,pass);$('authBox').style.display='none';$('password').value=''}catch(e){$('authError').textContent=e.message}}$('signIn').onclick=()=>sign(false);$('signUp').hidden=true;$('managePasskey').onclick=()=>{$('authBox').style.display='flex'};$('outBtn').onclick=()=>auth?.signOut();function resetProfileView(){
+ window.musicProfileGeneration=(window.musicProfileGeneration||0)+1;window.pendingYoutubeSong=null;
+ stopYTWatchdogs();try{player?.destroy()}catch{}player=null;ready=false;selected=null;
+ const old=$('player'),mount=document.createElement('div');mount.id='player';if(old)old.replaceWith(mount);else $('playerProblem').before(mount);
+ for(const id of ['filter','youtubeQuery','url','title','playlistDialogInput'])$(id).value='';
+ $('youtubeSearchResults').replaceChildren();$('youtubeSearchResults').hidden=true;
+ if(dialogDone)closePlaylistDialog();$('playlistDialogDesc').textContent='';$('playlistDialogTitle').textContent='จัดการ Playlist';
+ activePlaylistId='';category='ทั้งหมด';visibleCount=60;
+}
+window.musicProfileApp={
+ load(data){resetProfileView();songs=Array.isArray(data.songs)?data.songs:[];playlists=Array.isArray(data.playlists)?data.playlists:[];customCats=Array.isArray(data.customCats)?data.customCats:[];$('now').textContent='เลือกเพลงเพื่อเริ่มเล่น';render();loadYTApi()},
+ clear(){resetProfileView();songs=[];playlists=[];customCats=[];$('now').textContent='กรุณาเข้าสู่ระบบ';render()},
+ snapshot(){return JSON.parse(JSON.stringify({songs,playlists,customCats}))},confirm:openPlaylistDialog
+};
+if(window.MUSIC_PROFILE_MODE){$('authBtn').hidden=true;$('managePasskey').hidden=true;render()}else initCloud()})();
 </script>
 <script>
 /* Screen Wake Lock only when document is visible; not background YouTube playback. */
@@ -757,62 +726,7 @@ say('ผูก Passkey กับบัญชีเรียบร้อยแล
     <div id="pinMessage" role="status"></div>
     <button id="pinSubmit" type="button">ตั้งรหัสและเข้าคลังเพลง</button>
     <button id="pinReset" type="button" hidden>ลืมรหัส PIN? ตั้งรหัสใหม่ (เพลงและ Playlist ยังอยู่ครบ)</button>
-    <p style="font-size:11px">รหัสนี้ล็อกหน้าจอบนเบราว์เซอร์เครื่องนี้เท่านั้น ไม่ได้เข้ารหัสรายการเพลงหรือแทนบัญชี Cloud</p>
+    <p id="pinPrivacyNote" style="font-size:13px">รหัสแต่ละชุดเข้าถึงเฉพาะคลังของตน · จำกัดอุปกรณ์รวม 10 เครื่อง</p>
   </div>
 </section>
-<script>
-(()=>{'use strict';
-const key='my-music-pin-v1',root=document.documentElement,$=id=>document.getElementById(id);
-const screen=$('pinScreen'),code=$('pinCode'),confirm=$('pinConfirm'),wrap=$('pinConfirmWrap'),heading=$('pinHeading'),desc=$('pinDescription'),submit=$('pinSubmit'),message=$('pinMessage');
-let record=null,failures=0,blockedUntil=0;
-try{record=JSON.parse(localStorage.getItem(key)||'null')}catch{}
-const secure=!!window.isSecureContext&&!!crypto?.subtle;
-if(!secure){message.textContent='อุปกรณ์นี้ไม่รองรับการตั้งรหัสอย่างปลอดภัย';submit.disabled=true;return}
-const resetBtn=$('pinReset');let resetArmed=0;
-function setupMode(){heading.textContent='ตั้งรหัสคลังเพลง';desc.textContent='สร้าง PIN 6 หลักเพื่อเปิดคลังเพลงบนเครื่องนี้ รหัสไม่ถูกส่งไปที่เซิร์ฟเวอร์';wrap.hidden=false;submit.textContent='ตั้งรหัสและเข้าคลังเพลง';resetBtn.hidden=true}
-if(record){heading.textContent='ปลดล็อกคลังเพลง';desc.textContent='กรอกรหัส PIN 6 หลักที่ตั้งไว้บนเครื่องนี้';wrap.hidden=true;submit.textContent='เข้าสู่คลังเพลง';resetBtn.hidden=false}
-// Forgotten PIN: remove only the PIN record. Songs, Playlists and other apps on this origin are untouched.
-resetBtn.addEventListener('click',()=>{
- if(Date.now()>resetArmed){resetArmed=Date.now()+6000;resetBtn.textContent='แตะอีกครั้งภายใน 6 วินาทีเพื่อยืนยันตั้ง PIN ใหม่';message.textContent='การตั้ง PIN ใหม่จะไม่ลบเพลงหรือ Playlist';return}
- try{localStorage.removeItem(key)}catch{}
- record=null;failures=0;blockedUntil=0;resetArmed=0;code.value='';confirm.value='';setupMode();
- resetBtn.textContent='ลืมรหัส PIN? ตั้งรหัสใหม่ (เพลงและ Playlist ยังอยู่ครบ)';message.textContent='ลบ PIN เดิมแล้ว กรุณาตั้ง PIN ใหม่';code.focus();
-});
-async function derive(pin,salt){
- const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
- const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},k,256);
- return new Uint8Array(bits);
-}
-const bytesToString=a=>Array.from(a).map(x=>x.toString(16).padStart(2,'0')).join('');
-const stringToBytes=str=>new Uint8Array(str.match(/.{2}/g).map(h=>parseInt(h,16)));
-const equal=(a,b)=>{if(a.length!==b.length)return false;let v=0;for(let i=0;i<a.length;i++)v|=a[i]^b[i];return v===0};
-function unlock(){root.classList.remove('pin-locked');screen.hidden=true;code.value='';confirm.value=''}
-submit.addEventListener('click',async()=>{
- const pin=code.value;
- if(!/^\d{6}$/.test(pin)){message.textContent='กรุณากรอกตัวเลข 6 หลัก';return}
- if(Date.now()<blockedUntil){message.textContent='กรุณารอแล้วลองอีกครั้ง';return}
- submit.disabled=true;
- try{
-  if(!record){
-   if(pin!==confirm.value){message.textContent='รหัสทั้งสองช่องไม่ตรงกัน';return}
-   if(/^([0-9])\1{5}$/.test(pin)||['123456','654321','000000'].includes(pin)){message.textContent='รหัสนี้เดาง่ายเกินไป กรุณาเลือกใหม่';return}
-   const salt=crypto.getRandomValues(new Uint8Array(16));
-   const hash=await derive(pin,salt);
-   record={salt:bytesToString(salt),hash:bytesToString(hash),version:1};
-   localStorage.setItem(key,JSON.stringify(record));
-   heading.textContent='ปลดล็อกคลังเพลง';desc.textContent='กรอกรหัส PIN 6 หลักที่ตั้งไว้บนเครื่องนี้';wrap.hidden=true;submit.textContent='เข้าสู่คลังเพลง';resetBtn.hidden=false;message.textContent='';
-   unlock();
-  }else{
-   const actual=await derive(pin,stringToBytes(record.salt)),expected=stringToBytes(record.hash);
-   if(equal(actual,expected)){failures=0;unlock()}else{
-    failures++;code.value='';message.textContent='รหัสไม่ถูกต้อง';
-    if(failures%5===0){blockedUntil=Date.now()+30000;message.textContent='ลองผิดหลายครั้ง กรุณารอ 30 วินาที'}
-   }
-  }
- }catch(e){message.textContent='ไม่สามารถตรวจสอบ PIN ได้'}
- finally{submit.disabled=false}
-});
-[code,confirm].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')submit.click()}));
-window.addEventListener('pageshow',()=>{if(screen.hidden){screen.hidden=false;root.classList.add('pin-locked')}}); 
-})();
-</script></body></html>
+<script src="accounts-client.js?v=20261123"></script></body></html>

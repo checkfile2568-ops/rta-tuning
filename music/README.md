@@ -93,3 +93,15 @@ Service URL: https://pop-music-search-gateway.chaninposri.chatgpt.site
 Health endpoint: `/api/health`; search endpoint: `/api/search?q=...` (CORS for this GitHub Pages origin only). Service project: `appgprj_6b0320e5084081919264eb69e2364c07`.
 
 Rollback: restore only `music/index.html`, `music/car.html` and this README from `3dc3e8c9eb713797b49752afe483dde092a06eb1`, then remove `music/search-config.js`. No data migration or clearing is needed. Keep the previous saved local keys; they will again be used by the old source.
+
+## Private code profiles and global device limit (2026-11-23)
+
+The mobile library now uses server-verified six-digit code profiles. New codes start with no saved songs or Playlists. The same code opens only that profile across registered browsers. Codes are unique: an existing code must be used through login, not new-code registration. The mobile page requires an online connection for authentication and library synchronization. The car page continues to open without a PIN and uses the same server-side YouTube key.
+
+The central registry accepts at most **10 registered browser identities in total**, including car and mobile. Another browser or browser profile counts separately. Clearing browser storage does not automatically release the old entry. Use **ยกเลิกเครื่องนี้** on the old browser before retiring it; the account's stored music remains. This is a registered-browser cap, not a hardware identifier.
+
+To keep old saved songs: on the browser that has them, choose login and enter its **old PIN**. Only a verified old PIN can migrate the unscoped local songs and Playlists to an empty central profile. The migration retains an encrypted local backup before removing old shared keys. A newly created different code starts empty and cannot import the old owner's collection. A local old PIN cannot be recovered or reset to claim another person's central library.
+
+Logout clears private song rows, Playlist options, dialogs, forms and the player. Returning through browser history also locks the page. Writes are scoped by the server session and use revision checks; if another device changes the same profile, choose **โหลดคลังล่าสุด** before editing further. Unsaved changes are reported and page-close warnings prevent silent loss where supported.
+
+Account interface files: `device-client.js`, `accounts-client.js`. Backend schema and tests live in the existing search service source repository. No PIN or API key is embedded in this repository. Search uses the one existing runtime key for all devices.
