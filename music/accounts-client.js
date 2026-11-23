@@ -60,7 +60,7 @@ async function flush(){
 window.musicAccountSave=markDirty;
 window.musicAccountFlush=flush;
 submit.onclick=async()=>{
- if(submit.disabled)return;if(window.MusicBrowser){await window.MusicBrowser.ready;if(!window.MusicBrowser.isAllowed()){message.textContent='กรุณาเปิดระบบด้วย Brave';return}}const pin=code.value;if(!/^\d{6}$/.test(pin)){message.textContent='กรุณากรอกรหัส 6 หลัก';return}if(creating&&pin!==confirm.value){message.textContent='รหัสทั้งสองช่องไม่ตรงกัน';return}
+ if(submit.disabled)return;if(window.MusicBrowser){await window.MusicBrowser.ready;if(submit.disabled)return;if(!window.MusicBrowser.isAllowed()){message.textContent='กรุณาเปิดระบบด้วย Brave';return}}const pin=code.value;if(!/^\d{6}$/.test(pin)){message.textContent='กรุณากรอกรหัส 6 หลัก';return}if(creating&&pin!==confirm.value){message.textContent='รหัสทั้งสองช่องไม่ตรงกัน';return}
  submit.disabled=true;message.textContent='กำลังตรวจสอบรหัสและทะเบียนเครื่อง…';
  try{
   if(!device||!app)throw Error('โหลดระบบไม่ครบ กรุณารีเฟรชหน้า');
