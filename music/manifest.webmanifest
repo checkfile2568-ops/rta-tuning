@@ -19,5 +19,12 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "id": "/rta-tuning/music/",
+  "scope": "./",
+  "description": "เครื่องเล่นเพลงและคลังเพลงส่วนตัว Music YouTube",
+  "categories": [
+    "music",
+    "entertainment"
   ]
 }
