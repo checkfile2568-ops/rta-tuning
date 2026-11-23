@@ -32,6 +32,23 @@ async function migrateLegacy(pin,library){
  for(const name of ['my-music-library-v2-web','my-music-playlists-v1','music-custom-categories-v1','my-music-pin-v1'])localStorage.removeItem(name);
  legacyRecord=null;return true;
 }
+// Migration-only path keeps the normal library locked in unsupported mobile browsers.
+window.musicLegacyMigration=async pin=>{
+ if(session)throw Error('กรุณาออกจากคลังก่อนย้ายข้อมูล');
+ if(!/^\d{6}$/.test(pin)||!await matchesLegacy(pin))throw Error('PIN เดิมไม่ถูกต้อง ไม่ได้ย้ายข้อมูล');
+ const legacy=readLegacy();if(!legacy.songs.length&&!legacy.playlists.length)throw Error('ไม่มีเพลงเดิมให้ย้ายในเบราว์เซอร์นี้');
+ let temp;
+ try{
+  try{temp=await device.request('/api/auth/login',{method:'POST',data:{pin,label:'ย้ายคลังเดิม'}})}catch(e){if(e.status!==401)throw e;temp=await device.request('/api/auth/register',{method:'POST',data:{pin,label:'ย้ายคลังเดิม'}})}
+  const library=await device.request('/api/library',{token:temp.token});
+  if(library.revision!==0||library.data.songs.length||library.data.playlists.length)throw Error('รหัสนี้มีคลังกลางแล้ว จึงเก็บเพลงเดิมไว้โดยไม่เขียนทับ กรุณาเปิดด้วย Brave เพื่อตรวจสอบ');
+  session=temp;await migrateLegacy(pin,legacy);
+ }finally{
+  session=null;
+  if(temp)try{await device.request('/api/auth/logout',{method:'POST',token:temp.token})}catch{}
+ }
+ try{await device.release();return {released:true}}catch{return {released:false}}
+};
 async function loadLibrary(){const owner=session?.accountId,token=session?.token;if(!owner)return;const result=await device.request('/api/library',{token});if(session?.accountId!==owner)return;revision=result.revision;app.load(result.data);dirty=0;saved=0;conflict=false;status('คลังส่วนตัว · แยกตามรหัส · เครื่อง '+session.devices+'/10')}
 function markDirty(){if(!session)return;dirty++;status('กำลังบันทึกคลังส่วนตัว…');clearTimeout(timer);timer=setTimeout(()=>flush().catch(()=>{}),350)}
 async function flush(){
@@ -43,7 +60,7 @@ async function flush(){
 window.musicAccountSave=markDirty;
 window.musicAccountFlush=flush;
 submit.onclick=async()=>{
- if(submit.disabled)return;const pin=code.value;if(!/^\d{6}$/.test(pin)){message.textContent='กรุณากรอกรหัส 6 หลัก';return}if(creating&&pin!==confirm.value){message.textContent='รหัสทั้งสองช่องไม่ตรงกัน';return}
+ if(submit.disabled)return;if(window.MusicBrowser){await window.MusicBrowser.ready;if(!window.MusicBrowser.isAllowed()){message.textContent='กรุณาเปิดระบบด้วย Brave';return}}const pin=code.value;if(!/^\d{6}$/.test(pin)){message.textContent='กรุณากรอกรหัส 6 หลัก';return}if(creating&&pin!==confirm.value){message.textContent='รหัสทั้งสองช่องไม่ตรงกัน';return}
  submit.disabled=true;message.textContent='กำลังตรวจสอบรหัสและทะเบียนเครื่อง…';
  try{
   if(!device||!app)throw Error('โหลดระบบไม่ครบ กรุณารีเฟรชหน้า');
