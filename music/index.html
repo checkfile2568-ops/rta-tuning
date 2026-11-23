@@ -490,9 +490,9 @@ function pauseSelected(){playIntent=false;window.pendingYoutubeSong=null;if(read
 function stopSelected(){playIntent=false;resumeAt=0;window.pendingYoutubeSong=null;if(ready)try{player.stopVideo()}catch{}$('elapsed').textContent='0:00';$('seek').value=0;if(valid(selected))setPlayback('stopped','หยุดเพลงแล้ว')}
 function toggleVideo(){
  if(videoHidden){revealVideo();setPlayback(playbackState);if(valid(selected))loadYTApi();return}
- if(ready)try{resumeAt=player.getCurrentTime()||0}catch{}playIntent=false;window.pendingYoutubeSong=null;
+ const stopped=playbackState==='stopped';if(ready&&!stopped)try{resumeAt=player.getCurrentTime()||0}catch{}playIntent=false;window.pendingYoutubeSong=null;
  // Destroy before hiding, so playback cannot continue in a hidden YouTube iframe.
- resetPlayer();videoHidden=true;$('videoArea').hidden=true;clearYTProblem();setPlayback(valid(selected)?'paused':'idle',valid(selected)?'พักเพลงและซ่อนวิดีโอแล้ว':'ซ่อนวิดีโอแล้ว');
+ resetPlayer();videoHidden=true;$('videoArea').hidden=true;clearYTProblem();setPlayback(valid(selected)?(stopped?'stopped':'paused'):'idle',valid(selected)?(stopped?'หยุดเพลงและซ่อนวิดีโอแล้ว':'พักเพลงและซ่อนวิดีโอแล้ว'):'ซ่อนวิดีโอแล้ว');
 }
 window.MusicPlayback=Object.freeze({play:playSelected,pause:pauseSelected,stop:stopSelected,toggleVideo,state:playbackInfo});
 $('retryYouTube').onclick=()=>{if(!valid(selected)){clearYTProblem();setPlayback('idle','เลือกเพลงก่อนเชื่อมต่อตัวเล่น');return}resetPlayer();ytRetry++;playIntent=true;revealVideo();window.pendingYoutubeSong=selected;setPlayback('loading','กำลังเชื่อมต่อ YouTube อีกครั้ง…');loadYTApi(true)};
