@@ -213,7 +213,7 @@ html[data-theme="daylight"] .playlist-dialog{background:rgba(15,39,66,.35)}
 <button type="button" class="bio-login" id="biometricLogin" disabled><span aria-hidden="true">◎</span>เข้าสู่ระบบด้วยลายนิ้วมือ / Passkey</button>
 <button type="button" class="bio-add" id="addBiometric" disabled>＋ เพิ่ม Passkey ให้บัญชีนี้</button>
 <p class="bio-note" id="biometricMessage" role="status">กำลังตรวจสอบบริการ Passkey…</p><p id="bioHelp">การเข้าใช้ด้วยลายนิ้วมือ/Passkey ต้องติดตั้งการยืนยันฝั่งเซิร์ฟเวอร์ก่อน ขณะนี้ยังใช้บัญชี Firebase เมื่อเปิด Cloud เท่านั้น</p></div></div>
-<!-- Firebase SDK is loaded on demand only when firebase-config.js has a real config (see initCloud). --><script src="search-config.js?v=20261123-profiles"></script><script src="device-client.js?v=20261123"></script><script src="firebase-config.js"></script><script>
+<!-- Firebase SDK is loaded on demand only when firebase-config.js has a real config (see initCloud). --><script src="search-config.js?v=20261123-profiles"></script><script src="device-client.js?v=20261123-quota"></script><script src="firebase-config.js"></script><script>
 (()=>{'use strict';const $=id=>document.getElementById(id), KEY='my-music-library-v2-web',BACKUP='my-music-before-cloud';let songs=[],selected=null,player=null,ready=false,shuffle=false,repeat=false,category='ทั้งหมด',auth=null,db=null,user=null,unsub=null,cloudLoaded=false,writeTimer=null,refreshing=false;
 // Category choices for new songs: built-in list + user-created categories + categories already used in the library.
 const CAT_KEY='music-custom-categories-v1',DEFAULT_CATS=['เพลงโปรด','Country','Acoustic','EDM','เพลงไทย','ดนตรีสด'];
@@ -729,4 +729,4 @@ say('ผูก Passkey กับบัญชีเรียบร้อยแล
     <p id="pinPrivacyNote" style="font-size:13px">รหัสแต่ละชุดเข้าถึงเฉพาะคลังของตน · จำกัดอุปกรณ์รวม 10 เครื่อง</p>
   </div>
 </section>
-<script src="accounts-client.js?v=20261123-brave"></script></body></html>
+<script src="accounts-client.js?v=20261123-quota"></script></body></html>

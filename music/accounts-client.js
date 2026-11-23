@@ -5,11 +5,12 @@ let creating=false,session=null,revision=0,dirty=0,saved=0,timer=null,saving=nul
 try{legacyRecord=JSON.parse(localStorage.getItem('my-music-pin-v1')||'null')}catch{}
 const legacyOwner=()=>localStorage.getItem('music-legacy-owner-account-v1');
 function status(text){$('status').textContent=text}
+function quotaLabel(){const q=session?.quota;return q?(q.pool==='owner'?'มือถือรหัสหลัก ':'เครื่องรหัสอื่น ')+q.used+'/'+q.limit:'เครื่อง '+session.devices+'/10'}
 function ui(){
  $('pinHeading').textContent=creating?'สร้างรหัสคลังใหม่':'เข้าสู่คลังเพลงส่วนตัว';
  $('pinDescription').textContent=creating?'รหัสใหม่เริ่มด้วยคลังว่าง แยกจากรหัสอื่น':'ใช้รหัส 6 หลักของคุณ เพื่อเปิดเฉพาะเพลงและ Playlist ของรหัสนี้';
  $('pinConfirmWrap').hidden=!creating;submit.textContent=creating?'สร้างรหัสและเข้าคลัง':'เข้าสู่คลังเพลง';modeButton.hidden=false;modeButton.textContent=creating?'มีรหัสแล้ว · เข้าสู่ระบบ':'สร้างรหัสใหม่ · เริ่มคลังว่าง';
- $('pinPrivacyNote').textContent='จำกัดอุปกรณ์รวม 10 เครื่อง · รหัสใหม่ไม่เห็นเพลงของรหัสอื่น'+(legacyRecord&&!legacyOwner()?' · มีคลังเดิมบนเครื่องนี้ ให้กรอก PIN เดิมเพื่อย้ายเพลง':'');
+ $('pinPrivacyNote').textContent='โควตารวม 10 เครื่อง · รหัสหลัก: มือถือ 3 + จอรถ 1 · รหัสอื่นรวม 6 เครื่อง · คลังเพลงแยกตามรหัส'+(legacyRecord&&!legacyOwner()?' · มีคลังเดิมบนเครื่องนี้ ให้กรอก PIN เดิมเพื่อย้ายเพลง':'');
 }
 function setLocked(){clearTimeout(timer);creating=false;session=null;revision=0;dirty=0;saved=0;conflict=false;app.clear();code.value='';confirm.value='';screen.hidden=false;document.documentElement.classList.add('pin-locked');$('outBtn').hidden=true;$('profileReload').hidden=true;$('profileRelease').hidden=true;status('กรุณาเข้าสู่ระบบด้วยรหัสส่วนตัว');ui()}
 async function deriveLegacy(pin,salt,usage='bits'){
@@ -49,12 +50,12 @@ window.musicLegacyMigration=async pin=>{
  }
  try{await device.release();return {released:true}}catch{return {released:false}}
 };
-async function loadLibrary(){const owner=session?.accountId,token=session?.token;if(!owner)return;const result=await device.request('/api/library',{token});if(session?.accountId!==owner)return;revision=result.revision;app.load(result.data);dirty=0;saved=0;conflict=false;status('คลังส่วนตัว · แยกตามรหัส · เครื่อง '+session.devices+'/10')}
+async function loadLibrary(){const owner=session?.accountId,token=session?.token;if(!owner)return;const result=await device.request('/api/library',{token});if(session?.accountId!==owner)return;revision=result.revision;app.load(result.data);dirty=0;saved=0;conflict=false;status('คลังส่วนตัว · แยกตามรหัส · '+quotaLabel())}
 function markDirty(){if(!session)return;dirty++;status('กำลังบันทึกคลังส่วนตัว…');clearTimeout(timer);timer=setTimeout(()=>flush().catch(()=>{}),350)}
 async function flush(){
  if(!session||dirty===saved)return;if(conflict)throw Error('กรุณาโหลดคลังล่าสุดก่อนบันทึก');if(saving){await saving;return flush()}
  const owner=session.accountId,version=dirty,data=app.snapshot(),expected=revision;
- saving=(async()=>{try{const result=await device.request('/api/library',{method:'PUT',token:session.token,data:{revision:expected,data}});if(session?.accountId!==owner)return;revision=result.revision;saved=version;status('บันทึกแล้ว · คลังส่วนตัว · เครื่อง '+session.devices+'/10')}catch(e){if(e.status===409)conflict=true;status(e.message+' · ข้อมูลที่แก้ไขยังไม่ถูกบันทึก');throw e}})();
+ saving=(async()=>{try{const result=await device.request('/api/library',{method:'PUT',token:session.token,data:{revision:expected,data}});if(session?.accountId!==owner)return;revision=result.revision;saved=version;status('บันทึกแล้ว · คลังส่วนตัว · '+quotaLabel())}catch(e){if(e.status===409)conflict=true;status(e.message+' · ข้อมูลที่แก้ไขยังไม่ถูกบันทึก');throw e}})();
  try{await saving}finally{saving=null}if(dirty!==saved)return flush();
 }
 window.musicAccountSave=markDirty;
@@ -72,7 +73,7 @@ submit.onclick=async()=>{
   let migrated=false;
   if(legacy&&revision===0&&!library.data.songs.length&&!library.data.playlists.length)migrated=await migrateLegacy(pin,readLegacy());
   if(migrated){const fresh=await device.request('/api/library',{token:session.token});revision=fresh.revision;app.load(fresh.data)}else app.load(library.data);
-  dirty=0;saved=0;conflict=false;code.value='';confirm.value='';screen.hidden=true;document.documentElement.classList.remove('pin-locked');$('outBtn').hidden=false;$('outBtn').textContent='ออก / เปลี่ยนรหัส';$('profileReload').hidden=false;$('profileRelease').hidden=false;message.textContent='';status((migrated?'ย้ายเพลงเดิมแล้ว · ':'')+'คลังส่วนตัว · เครื่อง '+session.devices+'/10');
+  dirty=0;saved=0;conflict=false;code.value='';confirm.value='';screen.hidden=true;document.documentElement.classList.remove('pin-locked');$('outBtn').hidden=false;$('outBtn').textContent='ออก / เปลี่ยนรหัส';$('profileReload').hidden=false;$('profileRelease').hidden=false;message.textContent='';status((migrated?'ย้ายเพลงเดิมแล้ว · ':'')+'คลังส่วนตัว · '+quotaLabel());
  }catch(e){session=null;app.clear();message.textContent=e.message||'เข้าสู่ระบบไม่สำเร็จ';code.value='';confirm.value=''}finally{submit.disabled=false}
 };
 modeButton.onclick=()=>{creating=!creating;code.value='';confirm.value='';message.textContent='';ui()};
