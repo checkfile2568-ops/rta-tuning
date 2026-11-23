@@ -1,9 +1,12 @@
-.brave-checking body>*,.brave-required body>*{display:none!important}
-.brave-checking #braveGate,.brave-required #braveGate{display:flex!important}
+/* v2: the gate is an overlay sheet opened from the welcome screen (MusicBrowser.showGate), never a page-wide block. */
+#braveGate{display:flex}
 #braveGate[hidden]{display:none!important}
+html.music-welcome body>#braveGate#braveGate,html.music-welcome body>#braveGate#braveGate *{visibility:visible!important}
 #braveGate{position:fixed;inset:0;z-index:10000;overflow:auto;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));background:linear-gradient(145deg,#eaf3ff,#f6f8fc);color:#163d70;font:16px/1.65 system-ui,-apple-system,sans-serif}
 .brave-panel{width:min(460px,100%);margin:auto;background:#fff;border:1px solid #d2e0ef;border-radius:26px;padding:24px;box-shadow:0 20px 60px #163d7022}
 .brave-symbol{font-size:42px}.brave-panel h1{font-size:25px;margin:8px 0}.brave-panel p{margin:12px 0}.brave-panel small{display:block;color:#536982;margin-top:18px;font-size:13px}
 .brave-panel a,.brave-panel button{display:block;text-align:center;width:100%;min-height:48px;padding:12px;margin:10px 0;border-radius:13px;border:1px solid #bdcfe3;background:#eef4fc;color:#163d70;font:inherit;text-decoration:none;box-shadow:none;cursor:pointer}
 .brave-panel a.brave-primary{background:#163d70;color:white;border-color:#163d70;font-weight:700}.brave-panel details{border-top:1px solid #dce5f0;margin-top:16px;padding-top:14px}.brave-panel summary{cursor:pointer;font-weight:600}.brave-panel input{width:100%;color:#163d70!important;background:#f4f7fc!important;border:1px solid #bdcfe3!important;font:inherit}.brave-panel [hidden]{display:none!important}
 #braveMessage{font-size:14px;color:#435e7c;min-height:24px}.brave-panel :focus-visible{outline:3px solid #c8a45a;outline-offset:3px}
+
+.brave-panel .brave-back{display:inline-block;width:auto;min-height:40px;padding:6px 14px;margin:0 0 6px;border-radius:999px;font-size:14px;background:#f4f7fc}

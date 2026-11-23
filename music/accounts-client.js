@@ -77,6 +77,8 @@ submit.onclick=async()=>{
  }catch(e){session=null;app.clear();message.textContent=e.message||'เข้าสู่ระบบไม่สำเร็จ';code.value='';confirm.value=''}finally{submit.disabled=false}
 };
 modeButton.onclick=()=>{creating=!creating;code.value='';confirm.value='';message.textContent='';ui()};
+// Called by the welcome screen: 'login' = เข้าระบบ, 'create' = สร้างรหัสผ่าน.
+window.musicPinMode=mode=>{if(session)return;creating=mode==='create';code.value='';confirm.value='';message.textContent='';ui()};
 [code,confirm].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')submit.click()}));
 $('outBtn').onclick=async()=>{try{await flush();const token=session?.token;setLocked();if(token)try{await device.request('/api/auth/logout',{method:'POST',token})}catch{message.textContent='ออกจากเครื่องนี้แล้ว · ไม่สามารถติดต่อบริการเพื่อปิดเซสชันเดิมได้'}}catch(e){status(e.message)}};
 $('profileReload').onclick=async()=>{if(dirty!==saved&&!await app.confirm({type:'confirm',title:'โหลดคลังล่าสุด',description:'รายการที่ยังไม่บันทึกบนเครื่องนี้จะถูกแทนด้วยข้อมูลล่าสุดของรหัสนี้',okText:'โหลดล่าสุด'}))return;try{await loadLibrary()}catch(e){status(e.message)}};
