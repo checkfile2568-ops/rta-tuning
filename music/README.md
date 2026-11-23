@@ -82,3 +82,14 @@ New keys are checked against the YouTube Data API videos endpoint before saving.
 DOM simulation covers valid saves, intentional unlock/cancel, invalid and empty keys preserving the original, storage denial, migration/reload, shared settings and mocked search results. No live credential was recovered or created in this release. Earlier records indicate `YOUTUBE_API_KEY` in the old Elderly AI Hub Apps Script properties, with a historical reference to Google Cloud project **My First Project**; its current value and validity remain unverified. Google Cloud Console could not be opened from the available browser.
 
 This release also restores the complete YouTube player initialization from the local verified source after detecting a truncation marker in the previous GitHub upload. Release verification must compare the GitHub blobs byte-for-byte with the local source and re-run JavaScript syntax checks against those fetched blobs.
+
+## Shared search, 2026-11-23
+
+Both the library and car page use `search-config.js` to reach the shared YouTube search service. Browsers no longer need a locally configured API key; the API key is a runtime secret in the search service and is not present in this GitHub repository. The manual key controls are hidden while the shared endpoint is configured. Existing saved local keys and music are retained for rollback.
+
+The car and Kid/Music screens remain available without a PIN. The library's existing local PIN code and stored record are unchanged. This is the user's existing device-local screen gate, not shared account authentication. Playback still uses the official YouTube player. Search quota is shared by all devices; cached identical queries can be reused for 15 minutes.
+
+Service URL: https://pop-music-search-gateway.chaninposri.chatgpt.site
+Health endpoint: `/api/health`; search endpoint: `/api/search?q=...` (CORS for this GitHub Pages origin only). Service project: `appgprj_6b0320e5084081919264eb69e2364c07`.
+
+Rollback: restore only `music/index.html`, `music/car.html` and this README from `3dc3e8c9eb713797b49752afe483dde092a06eb1`, then remove `music/search-config.js`. No data migration or clearing is needed. Keep the previous saved local keys; they will again be used by the old source.
