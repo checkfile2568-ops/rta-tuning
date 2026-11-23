@@ -1,0 +1,49 @@
+html.music-welcome:not(.brave-required):not(.brave-checking) body>:not(#musicWelcome){visibility:hidden!important}
+html.music-welcome body{overflow:hidden}
+#musicWelcome{position:fixed;inset:0;z-index:150;overflow:auto;background:radial-gradient(ellipse at 80% 38%,#143d4145,transparent 50%),radial-gradient(ellipse at 12% 90%,#80653a18,transparent 50%),#07121e;color:#f4f2ec;font:16px/1.6 system-ui,-apple-system,"Noto Sans Thai",sans-serif;color-scheme:dark;text-align:left}
+#musicWelcome[hidden]{display:none!important}
+#musicWelcome *{box-sizing:border-box}
+.entry-shell{max-width:1240px;margin:auto;min-height:100%;padding:38px 54px 22px;display:flex;flex-direction:column}
+.entry-brand{display:flex;align-items:center;gap:12px;font-weight:650;letter-spacing:-.4px;font-size:18px;flex-shrink:0}
+.entry-logo{display:grid;place-items:center;width:40px;height:40px;border:1px solid #d8b87e88;border-radius:12px;background:linear-gradient(140deg,#d8b87e20,#d8b87e05);color:#e5c78e;box-shadow:inset 0 1px 1px #ffffff20}
+.entry-logo svg{width:28px;height:28px}
+.entry-layout{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;flex:1;padding:54px 0 60px;min-height:610px}
+.entry-copy{position:relative;z-index:2}
+#musicWelcome .entry-eyebrow{color:#c5aa77;font-size:13px;letter-spacing:3px;margin:0 0 26px;font-weight:600}
+#musicWelcome h1{font-size:clamp(62px,7.4vw,100px);font-weight:650;letter-spacing:-5px;line-height:1.03;margin:0 0 30px;color:#f8f5ed;text-shadow:none}
+#musicWelcome h1 span{color:#e1c28c;background:linear-gradient(120deg,#f8e3b9,#c5a368 85%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#musicWelcome .entry-description{font-size:22px;line-height:1.8;color:#e3e7e8;margin:0 0 34px}
+#musicWelcome .entry-description span{color:#9baebc;font-size:16px}
+.entry-actions{max-width:330px}
+#musicEnter{width:100%;min-height:60px;padding:16px 28px;display:flex;align-items:center;justify-content:center;gap:13px;font-size:18px;font-weight:700;border:1px solid #f4dbab;border-radius:15px;color:#1e2930;background:linear-gradient(120deg,#f0d6a4,#caa76d);box-shadow:0 12px 38px #b18b4326,inset 0 1px 1px #fff9;cursor:pointer;transition:transform .2s,box-shadow .2s}
+#musicEnter:hover{transform:translateY(-2px);box-shadow:0 17px 40px #b18b4345;filter:none}
+#musicEnter:active{transform:translateY(1px)}
+#musicEnter svg{width:22px;height:22px}
+#musicWelcome .entry-actions p{font-size:13px;color:#8d9eab;text-align:center;margin:12px 0 23px}
+#musicWelcome .entry-actions a{display:block;text-align:center;color:#d3dde1;font-size:15px;text-decoration:none;text-underline-offset:5px;padding:5px}
+#musicWelcome .entry-actions a:hover{text-decoration:underline;color:#e5c78e}
+#musicWelcome :focus-visible{outline:3px solid #edce98;outline-offset:5px}
+.entry-art{position:relative;width:100%;aspect-ratio:1;max-width:520px;justify-self:center;isolation:isolate;perspective:1000px}
+.entry-art:before{content:"";position:absolute;inset:15%;border-radius:50%;background:#ddba7422;filter:blur(65px);z-index:-1}
+.entry-orbit{position:absolute;border:1px solid #d4bf8a14;border-radius:50%;inset:0;transform:rotate(-25deg) scaleY(.76);z-index:-1}
+.orbit-two{inset:8%;transform:rotate(40deg) scaleY(.88);border-color:#b0d6ce16}
+.entry-sleeve{position:absolute;left:4%;top:17%;width:66%;height:66%;border-radius:12px;background:linear-gradient(140deg,#295358,#112b35 47%,#081a26);border:1px solid #779a9355;transform:rotate(-10deg) rotateY(10deg);box-shadow:0 35px 70px #0008,inset 1px 1px 0 #a8c5b733;overflow:hidden}
+.entry-art-brand{position:absolute;top:8%;left:13%;font-size:clamp(62px,9vw,110px);font-weight:350;color:#e4c892;letter-spacing:-16px;line-height:1.2;opacity:.9}
+.entry-art-brand span{position:relative;top:45px;font-weight:200;opacity:.5}
+.entry-art-lines{position:absolute;inset:12% -30% -25%;background:repeating-radial-gradient(ellipse at 50% 90%,transparent 0 18px,#d8bd861c 19px 20px,transparent 21px 32px);transform:rotate(-22deg)}
+.entry-sleeve-caption{position:absolute;bottom:8%;left:10%;font-size:9px;letter-spacing:3px;color:#d3c5a9}
+.entry-record{position:absolute;top:22%;right:0;width:65%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 30deg,#080e14 0deg,#34404c 45deg,#0b1119 90deg,#161e28 175deg,#4a5157 230deg,#080e14 270deg,#172530 340deg,#080e14);box-shadow:14px 25px 40px #0008,inset 0 0 0 2px #c7d4d933,inset 0 0 0 5px #050a12;transform:rotate(10deg)}
+.entry-record:before{content:"";position:absolute;inset:5%;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 2px,#ffffff10 3px,transparent 4px 6px);border:1px solid #f6f6ec12}
+.entry-record-label{position:absolute;inset:32%;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 25% 25%,#f0d9ae,#ae8a53);box-shadow:inset 0 0 0 3px #d6bb8a,inset 0 0 0 4px #4e412b55,0 0 20px #0006;color:#18222b}
+.entry-record-label svg{width:58%;height:58%}
+.entry-wave{position:absolute;left:20%;bottom:4%;right:12%;height:38px;display:flex;align-items:center;justify-content:center;gap:5px;opacity:.6}
+.entry-wave i{width:3px;border-radius:4px;height:18%;background:linear-gradient(#f0d9ac,#8f805d);animation:music-wave 3s ease-in-out infinite alternate}
+.entry-wave i:nth-child(3n){height:65%;animation-delay:-1.2s}.entry-wave i:nth-child(4n){height:90%;animation-delay:-.8s}.entry-wave i:nth-child(2n){height:40%;animation-delay:-1.8s}
+.entry-art-caption{position:absolute;bottom:-15px;left:0;right:0;text-align:center;color:#718b97;letter-spacing:4px;font-size:10px}
+.entry-footer{display:flex;justify-content:space-between;gap:20px;padding-top:18px;border-top:1px solid #ced5dd16;color:#798b99;font-size:12px}
+@keyframes music-wave{from{transform:scaleY(.45)}to{transform:scaleY(1)}}
+@media(min-width:1600px){.entry-shell{max-width:1340px}.entry-layout{gap:70px}}
+@media(max-width:760px){.entry-shell{padding:24px 24px 20px}.entry-brand{font-size:16px;gap:10px}.entry-logo{width:35px;height:35px}.entry-layout{grid-template-columns:1fr;gap:0;padding:30px 0 24px;min-height:0;align-content:center}.entry-copy{display:contents}#musicWelcome .entry-eyebrow{font-size:10px;letter-spacing:2.5px;margin:0 0 15px;order:0;text-align:center}#musicWelcome h1{font-size:clamp(49px,12vw,70px);line-height:1.05;letter-spacing:-2.8px;text-align:center;margin:0 0 13px;order:1}#musicWelcome h1 br{display:none}#musicWelcome h1 span:before{content:" "}#musicWelcome .entry-description{font-size:18px;line-height:1.6;text-align:center;margin:0;order:2}#musicWelcome .entry-description span{font-size:13px}.entry-art{width:260px;max-width:75vw;margin:5px auto 30px;order:3}.entry-art-brand{font-size:68px;letter-spacing:-12px}.entry-art-brand span{top:26px}.entry-sleeve-caption{font-size:6px;letter-spacing:2px}.entry-art-caption{font-size:8px;letter-spacing:3px;bottom:-12px}.entry-wave{height:25px;gap:4px}.entry-wave i{width:2px}.entry-actions{order:4;width:100%;max-width:360px;justify-self:center}#musicEnter{min-height:56px;font-size:17px}#musicWelcome .entry-actions p{font-size:12px;margin:10px 0 13px}.entry-footer{font-size:10px;padding-top:14px}.entry-footer span:last-child{display:none}}
+@media(max-height:700px) and (max-width:760px){.entry-shell{padding-top:18px}.entry-layout{padding-top:22px}#musicWelcome .entry-eyebrow{margin-bottom:9px}#musicWelcome h1{font-size:46px}.entry-art{width:200px;margin-bottom:24px}.entry-brand{font-size:14px}.entry-art-brand{font-size:54px}}
+@media(orientation:landscape) and (max-height:520px){.entry-shell{padding:20px 30px;min-height:100%}.entry-layout{display:grid;grid-template-columns:1fr 1fr;gap:25px;padding:20px 0;min-height:0}.entry-copy{display:block}#musicWelcome .entry-eyebrow{text-align:left;font-size:9px;margin-bottom:10px}#musicWelcome h1{text-align:left;font-size:50px;margin-bottom:14px}#musicWelcome .entry-description{text-align:left;font-size:16px;margin-bottom:18px}#musicWelcome .entry-description span{font-size:12px}.entry-actions{max-width:300px}.entry-art{width:270px;margin:0}#musicEnter{min-height:46px;padding:9px}#musicWelcome .entry-actions p{display:none}#musicWelcome .entry-actions a{font-size:13px;margin-top:9px}.entry-footer{display:none}}
+@media(prefers-reduced-motion:reduce){.entry-wave i{animation:none}#musicEnter{transition:none}}
