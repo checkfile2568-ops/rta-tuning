@@ -47,3 +47,16 @@ html.music-welcome body{overflow:hidden}
 @media(max-height:700px) and (max-width:760px){.entry-shell{padding-top:18px}.entry-layout{padding-top:22px}#musicWelcome .entry-eyebrow{margin-bottom:9px}#musicWelcome h1{font-size:46px}.entry-art{width:200px;margin-bottom:24px}.entry-brand{font-size:14px}.entry-art-brand{font-size:54px}}
 @media(orientation:landscape) and (max-height:520px){.entry-shell{padding:20px 30px;min-height:100%}.entry-layout{display:grid;grid-template-columns:1fr 1fr;gap:25px;padding:20px 0;min-height:0}.entry-copy{display:block}#musicWelcome .entry-eyebrow{text-align:left;font-size:9px;margin-bottom:10px}#musicWelcome h1{text-align:left;font-size:50px;margin-bottom:14px}#musicWelcome .entry-description{text-align:left;font-size:16px;margin-bottom:18px}#musicWelcome .entry-description span{font-size:12px}.entry-actions{max-width:300px}.entry-art{width:270px;margin:0}#musicEnter{min-height:46px;padding:9px}#musicWelcome .entry-actions p{display:none}#musicWelcome .entry-actions a{font-size:13px;margin-top:9px}.entry-footer{display:none}}
 @media(prefers-reduced-motion:reduce){.entry-wave i{animation:none}#musicEnter{transition:none}}
+
+/* Welcome actions v2 (2026-11-23): เข้าระบบ → ติดตั้ง Brave → (ติดตั้งแอป) → สร้างรหัสผ่าน as the last line. */
+#musicWelcome .entry-actions{display:flex;flex-direction:column;align-items:stretch}
+#musicWelcome .entry-browser-note{font-size:12.5px;line-height:1.5;color:#a9b8c4;text-align:center;margin:10px 0 4px}
+#musicWelcome .entry-browser-note.is-blocked{color:#f1cf86;font-weight:600}
+#musicWelcome a.entry-brave-install{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:8px;padding:10px 14px;border-radius:15px;border:1px solid #fb542b;background:linear-gradient(120deg,#fb542b,#d93a14);color:#fff;font-weight:700;font-size:15px;text-decoration:none;box-shadow:0 10px 26px #fb542b33}
+#musicWelcome a.entry-brave-install:hover{color:#fff;text-decoration:none;filter:brightness(1.05)}
+#musicWelcome a.entry-brave-install[hidden]{display:none}
+#musicWelcome .entry-create{order:10;margin-top:14px;padding-top:12px;border-top:1px solid #ffffff1c;text-align:center;font-size:14px;color:#a9b8c4}
+#musicWelcome .entry-create button{background:none;border:0;padding:4px 2px;color:#e5c78e;font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:4px;cursor:pointer;box-shadow:none;min-height:0}
+#musicWelcome .entry-create button:disabled{opacity:.6}
+html.brave-blocked #musicInstall{display:none!important}
+@media(max-height:700px) and (max-width:760px){#musicWelcome .entry-browser-note{margin:6px 0 2px;font-size:12px}#musicWelcome a.entry-brave-install{min-height:42px;margin-top:6px}#musicWelcome .entry-create{margin-top:8px;padding-top:8px}}
