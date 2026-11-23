@@ -1,0 +1,23 @@
+#musicHeader{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:12px max(16px,calc((100vw - 1200px)/2));align-items:center;position:relative;z-index:5}
+#musicHeader .shell-brand{min-width:0}
+#musicHeader .shell-brand h1{font-size:22px;line-height:1.35;letter-spacing:-.6px;margin:0;white-space:nowrap}
+#musicHeader .shell-brand small{font-size:12px}
+#musicHeader .shell-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;width:auto;flex-wrap:nowrap}
+#musicHeader .shell-actions>button,#musicHeader summary{width:42px;height:42px;min-height:42px;min-width:42px;margin:0;padding:7px;display:grid;place-items:center;border-radius:12px;font-size:22px;box-shadow:0 3px 10px #071a3315;line-height:1}
+#musicHeader #themeBtn .theme-btn-text{display:none}
+#musicHeader #status{grid-column:1/-1;max-width:none;min-width:0;font-size:12px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}
+#headerMore{position:relative}
+#headerMore summary{list-style:none;cursor:pointer;color:var(--t-btn-text,#e9e4f6);background:var(--t-tab,#303957);border:1px solid var(--t-border,#ffffff33);font-weight:650;user-select:none}
+#headerMore summary::-webkit-details-marker{display:none}
+#headerMore[open] summary{outline:2px solid var(--t-accent,#8575eb);outline-offset:1px}
+#headerMorePanel{position:absolute;top:calc(100% + 10px);right:0;display:flex;flex-direction:column;gap:7px;width:min(280px,calc(100vw - 32px));padding:12px;border-radius:17px;background:var(--t-dialog,#171d35);border:1px solid var(--t-border,#38425d);box-shadow:0 15px 40px #071a3340;z-index:40}
+#headerMore:not([open]) #headerMorePanel{display:none}
+#headerMorePanel>button{width:100%;min-height:44px;min-width:0;margin:0;padding:10px 13px;font-size:14px;line-height:1.4;text-align:left;border-radius:10px;box-shadow:none}
+#musicHeader [hidden]{display:none!important}
+#musicHeader #fullscreenNotice{grid-column:1/-1;margin:3px 0 0;font-size:12px;color:var(--t-muted,#bdc8df);line-height:1.5}
+#musicWorkPanel .music-menu-tabs{gap:7px;grid-template-columns:1fr 1.5fr .8fr}
+#musicWorkPanel .music-menu-tab{min-height:44px;padding:9px 6px;font-size:14px;border-radius:11px;box-shadow:none}
+html:fullscreen{min-height:100%;overflow-y:auto}
+html:-webkit-full-screen{min-height:100%;overflow-y:auto}
+@media(max-width:600px){#musicHeader{padding:10px 12px;gap:5px 8px}#musicHeader .shell-brand h1{font-size:19px}#musicHeader .shell-brand small{display:none}#musicHeader .shell-actions{gap:6px}#musicHeader .shell-actions>button,#musicHeader summary{width:40px;height:40px;min-height:40px;min-width:40px;font-size:20px}#musicHeader #status{font-size:11px}#musicWorkPanel .music-menu-tab{font-size:12.5px;min-height:44px}}
+@media(max-width:350px){#musicHeader .shell-brand h1{font-size:17px}#musicHeader .shell-actions{gap:4px}#musicHeader .shell-actions>button,#musicHeader summary{width:36px;height:38px;min-width:36px;min-height:38px;font-size:19px}}
