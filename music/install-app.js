@@ -28,5 +28,5 @@
   sync();window.matchMedia?.('(display-mode: standalone)').addEventListener?.('change',sync);
   if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js',{scope:'./',updateViaCache:'none'}).catch(()=>{});
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>queueMicrotask(setup));else queueMicrotask(setup);
+ if(document.readyState!=='complete')document.addEventListener('DOMContentLoaded',()=>queueMicrotask(setup));else queueMicrotask(setup);
 })();
