@@ -1,0 +1,47 @@
+/* YouTube-style top search bar + "เพลงที่คล้ายกัน" row (2026-11-24).
+   Colours follow the 4 themes through --t-* variables, with fallbacks for the base design. */
+
+/* Sticky needs a non-scrolling body: "clip" hides horizontal overflow like "hidden" but keeps the viewport as the scroller. */
+html,body{overflow-x:clip}
+
+/* ---------- 1) Search bar ---------- */
+#ytTopBar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:10px 2px;
+ background:var(--t-header,rgba(16,21,44,.86));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--t-border,#ffffff1f)}
+#ytTopBar .yt-pill{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:46px;padding:0 6px 0 14px;border-radius:999px;
+ background:var(--t-input,#ffffff14);border:1px solid var(--t-input-border,#ffffff33);color:var(--t-muted,#c8c3dc);transition:border-color .15s,box-shadow .15s}
+#ytTopBar .yt-pill:focus-within{border-color:var(--t-accent,#d6a7ff);box-shadow:0 0 0 3px var(--t-hover,#d6a7ff26)}
+#ytTopBar .yt-pill-ico{display:grid;place-items:center;flex:0 0 auto}
+#ytTopBar #youtubeQuery{flex:1;min-width:0;height:100%;margin:0;padding:0;border:0!important;outline:0;background:transparent!important;box-shadow:none!important;color:var(--t-text,#fff);font:inherit;font-size:16px}
+#ytTopBar #youtubeQuery::-webkit-search-cancel-button{display:none;-webkit-appearance:none}
+#ytTopBar .yt-pill-clear{flex:0 0 36px;width:36px;height:36px;min-height:36px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none;color:var(--t-muted,#c8c3dc);font-size:17px;display:grid;place-items:center}
+#ytTopBar .yt-pill-clear[hidden]{display:none}
+#ytTopBar .yt-pill-clear:hover{background:var(--t-hover,#ffffff14)}
+#ytTopBar .yt-go{flex:0 0 52px;width:52px;height:46px;min-height:46px;margin:0;padding:0;border-radius:999px;display:grid;place-items:center}
+#topMusicSearch[hidden]{display:none!important}
+
+/* ---------- 2) Suggestions ---------- */
+.song-suggest{margin:12px 0 6px;min-width:0}
+.song-suggest[hidden]{display:none}
+.song-suggest-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 2px 8px}
+.song-suggest-head h3{margin:0;font-size:15px;line-height:1.3;color:var(--t-text,#fff)}
+.song-suggest-nav{display:flex;gap:6px}
+.song-suggest-nav button{width:34px;height:34px;min-height:34px;margin:0;padding:0;border-radius:50%;font-size:20px;line-height:1;display:grid;place-items:center;box-shadow:none}
+.song-suggest-row{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 18px)/3.15);gap:9px;overflow-x:auto;overflow-y:hidden;
+ scroll-snap-type:x mandatory;scroll-padding:0 2px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none;padding:2px 2px 4px}
+.song-suggest-row::-webkit-scrollbar{display:none}
+.song-suggest-card{scroll-snap-align:start;display:flex;flex-direction:column;align-items:stretch;gap:5px;min-width:0;min-height:0;margin:0;padding:0;border:0;background:transparent!important;box-shadow:none!important;text-align:left;color:var(--t-text,#fff);cursor:pointer;border-radius:12px}
+.song-suggest-card:focus-visible{outline:3px solid var(--t-accent,#d6a7ff);outline-offset:2px}
+.song-suggest-thumb{position:relative;display:block;aspect-ratio:16/9;border-radius:11px;overflow:hidden;background:var(--t-pane,#0003)}
+.song-suggest-thumb img{display:block;width:100%;height:100%;object-fit:cover}
+.song-suggest-badge{position:absolute;left:5px;top:5px;padding:0 6px;border-radius:6px;font:700 10px/1.6 system-ui,sans-serif;color:#fff;background:#c4302b}
+.song-suggest-badge.lib{background:#178a52}
+.song-suggest-card:active .song-suggest-thumb{transform:scale(.97)}
+.song-suggest-title{font-size:12.5px;line-height:1.35;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.song-suggest-ch{font-size:11px;line-height:1.3;color:var(--t-muted,#c8c3dc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-suggest-note{display:block;margin:4px 2px 0;font-size:11px;color:var(--t-muted,#c8c3dc)}
+.song-suggest-note:empty{display:none}
+.song-suggest-skel .song-suggest-thumb{animation:songSuggestPulse 1.2s ease-in-out infinite}
+@keyframes songSuggestPulse{50%{opacity:.45}}
+@media (hover:none){.song-suggest-nav{display:none}}
+@media (min-width:900px){.song-suggest-row{grid-auto-columns:calc((100% - 36px)/5.15)}}
+@media (prefers-reduced-motion:reduce){.song-suggest-skel .song-suggest-thumb{animation:none}.song-suggest-row{scroll-behavior:auto}}
