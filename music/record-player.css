@@ -55,3 +55,11 @@
 @keyframes rhythm-treble{from{transform:scaleY(.18)}40%{transform:scaleY(.56)}to{transform:scaleY(.28)}}
 @media(max-width:440px){#classicRecord .music-rhythm{width:42%;height:42px;gap:4px}#classicRecord .rhythm-group{gap:2px}.record-status-row{gap:5px}}
 @media(prefers-reduced-motion:reduce){#classicRecord .rhythm-bar{animation:none!important;transform:scaleY(.18)!important}}
+
+/* Manual pace adjustment for the visual illustration, not an audio spectrum analyzer. */
+#classicRecord .rhythm-bar{animation-duration:calc(1.7s * var(--rhythm-pace,1))}
+#classicRecord .rhythm-mid .rhythm-bar{animation-duration:calc(.91s * var(--rhythm-pace,1))}
+#classicRecord .rhythm-treble .rhythm-bar{animation-duration:calc(.57s * var(--rhythm-pace,1))}
+#classicRecord .rhythm-pace{margin:0;min-height:40px;padding:7px 3px;font-size:12px;color:#b8c8d9;background:transparent!important;border:0!important;box-shadow:none!important;white-space:nowrap}
+#classicRecord .record-options small{flex-basis:100%}
+#classicRecord .rhythm-pace:focus-visible{outline:2px solid #b8c8d9;outline-offset:1px}
