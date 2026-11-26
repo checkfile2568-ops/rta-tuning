@@ -2,6 +2,7 @@
 const $=id=>document.getElementById(id),device=window.MusicDevice,app=window.musicProfileApp;
 const screen=$('pinScreen'),code=$('pinCode'),confirm=$('pinConfirm'),submit=$('pinSubmit'),message=$('pinMessage'),modeButton=$('pinReset');
 let creating=false,session=null,revision=0,dirty=0,saved=0,timer=null,saving=null,conflict=false,legacyRecord=null;
+let autoRefreshRunning=false,lastAutoRefresh=0;
 try{legacyRecord=JSON.parse(localStorage.getItem('my-music-pin-v1')||'null')}catch{}
 const legacyOwner=()=>localStorage.getItem('music-legacy-owner-account-v1');
 function showRecover(){const b=$('legacyRecover');if(b)b.hidden=!session||!(localStorage.getItem('music-private-legacy-backup-v1')||localStorage.getItem('my-music-library-v2-web')||localStorage.getItem('my-music-playlists-v1'))}
@@ -14,7 +15,7 @@ function ui(){
  $('pinConfirmWrap').hidden=!creating;submit.textContent=creating?'สร้างรหัสและเข้าคลัง':'เข้าสู่คลังเพลง';modeButton.hidden=false;modeButton.textContent=creating?'มีรหัสแล้ว · เข้าสู่ระบบ':'สร้างรหัสใหม่ · เริ่มคลังว่าง';
  $('pinPrivacyNote').textContent='สิทธิ์ใช้งานทั่วไปจำกัด 6 เครื่อง · คลังเพลงส่วนตัวแยกตามรหัส'+(legacyRecord&&!legacyOwner()?' · มีคลังเดิมบนเครื่องนี้ ให้กรอก PIN เดิมเพื่อย้ายเพลง':'');
 }
-function setLocked(){clearTimeout(timer);creating=false;session=null;revision=0;dirty=0;saved=0;conflict=false;app.clear();code.value='';confirm.value='';screen.hidden=false;document.documentElement.classList.add('pin-locked');$('outBtn').hidden=true;$('profileReload').hidden=true;$('profileRelease').hidden=true;$('legacyRecover').hidden=true;status('กรุณาเข้าสู่ระบบด้วยรหัสส่วนตัว');ui()}
+function setLocked(){clearTimeout(timer);lastAutoRefresh=0;creating=false;session=null;revision=0;dirty=0;saved=0;conflict=false;app.clear();code.value='';confirm.value='';screen.hidden=false;document.documentElement.classList.add('pin-locked');$('outBtn').hidden=true;$('profileReload').hidden=true;$('profileRelease').hidden=true;$('legacyRecover').hidden=true;status('กรุณาเข้าสู่ระบบด้วยรหัสส่วนตัว');ui()}
 async function deriveLegacy(pin,salt,usage='bits'){
  const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,usage==='bits'?['deriveBits']:['deriveKey']);
  const algorithm={name:'PBKDF2',hash:'SHA-256',salt,iterations:250000};
@@ -52,7 +53,29 @@ window.musicLegacyMigration=async pin=>{
  }
  try{await device.release();return {released:true}}catch{return {released:false}}
 };
-async function loadLibrary(){const owner=session?.accountId,token=session?.token;if(!owner)return;const result=await device.request('/api/library',{token});if(session?.accountId!==owner)return;revision=result.revision;app.load(result.data);dirty=0;saved=0;conflict=false;status('คลังส่วนตัว · แยกตามรหัส · '+quotaLabel());showRecover()}
+async function loadLibrary(){const owner=session?.accountId,token=session?.token;if(!owner)return;const result=await device.request('/api/library',{token});if(session?.accountId!==owner)return;revision=result.revision;app.load(result.data);dirty=0;saved=0;conflict=false;lastAutoRefresh=Date.now();status('คลังส่วนตัว · แยกตามรหัส · '+quotaLabel());showRecover()}
+// Refresh when returning to this tab and periodically while it stays visible.
+// Never overwrite local edits, an active dialog, or another account's in-flight data.
+async function refreshLibrarySafely(){
+ if(!session||document.hidden||autoRefreshRunning||saving||dirty!==saved||conflict||!$('playlistDialog').hidden)return;
+ if(Date.now()-lastAutoRefresh<20000)return;
+ const owner=session.accountId,token=session.token;
+ autoRefreshRunning=true;lastAutoRefresh=Date.now();
+ try{
+  const latest=await device.request('/api/library',{token});
+  if(!session||session.accountId!==owner||session.token!==token||saving||dirty!==saved||conflict||!$('playlistDialog').hidden)return;
+  if(String(latest.revision)===String(revision))return;
+  if(!latest.data||!Array.isArray(latest.data.songs)||!Array.isArray(latest.data.playlists))throw Error('ข้อมูลคลังที่ได้รับไม่ครบ');
+  if(typeof app.refresh==='function')app.refresh(latest.data);else app.load(latest.data);
+  revision=latest.revision;
+  status('ซิงก์คลังล่าสุดจากอีกเครื่องแล้ว · '+latest.data.songs.length+' เพลง · '+quotaLabel());
+ }catch(e){if(session?.accountId===owner)status('ตรวจคลังล่าสุดไม่สำเร็จ · '+(e?.message||'กรุณาลองใหม่'))}
+ finally{autoRefreshRunning=false}
+}
+function askForFreshLibrary(){if(session&&!document.hidden)refreshLibrarySafely()}
+document.addEventListener('visibilitychange',askForFreshLibrary);
+window.addEventListener('focus',askForFreshLibrary);
+setInterval(askForFreshLibrary,90000);
 function markDirty(){if(!session)return;dirty++;status('กำลังบันทึกคลังส่วนตัว…');clearTimeout(timer);timer=setTimeout(()=>flush().catch(()=>{}),350)}
 async function flush(){
  if(!session||dirty===saved)return;if(conflict)throw Error('กรุณาโหลดคลังล่าสุดก่อนบันทึก');if(saving){await saving;return flush()}
@@ -75,7 +98,7 @@ submit.onclick=async()=>{
   let migrated=false;
   if(legacy&&revision===0&&!library.data.songs.length&&!library.data.playlists.length)migrated=await migrateLegacy(pin,readLegacy());
   if(migrated){const fresh=await device.request('/api/library',{token:session.token});revision=fresh.revision;app.load(fresh.data)}else app.load(library.data);
-  dirty=0;saved=0;conflict=false;code.value='';confirm.value='';screen.hidden=true;document.documentElement.classList.remove('pin-locked');$('outBtn').hidden=false;$('outBtn').textContent='ออก / เปลี่ยนรหัส';$('profileReload').hidden=false;$('profileRelease').hidden=false;message.textContent='';status((migrated?'ย้ายเพลงเดิมแล้ว · ':'')+'คลังส่วนตัว · '+quotaLabel());showRecover();
+  dirty=0;saved=0;conflict=false;lastAutoRefresh=Date.now();code.value='';confirm.value='';screen.hidden=true;document.documentElement.classList.remove('pin-locked');$('outBtn').hidden=false;$('outBtn').textContent='ออก / เปลี่ยนรหัส';$('profileReload').hidden=false;$('profileRelease').hidden=false;message.textContent='';status((migrated?'ย้ายเพลงเดิมแล้ว · ':'')+'คลังส่วนตัว · '+quotaLabel());showRecover();
  }catch(e){session=null;app.clear();message.textContent=e.message||'เข้าสู่ระบบไม่สำเร็จ';code.value='';confirm.value=''}finally{submit.disabled=false}
 };
 modeButton.onclick=()=>{creating=!creating;code.value='';confirm.value='';message.textContent='';ui()};
@@ -154,6 +177,6 @@ $('legacyRecover').onclick=async()=>{
 $('profileReload').onclick=async()=>{if(dirty!==saved&&!await app.confirm({type:'confirm',title:'โหลดคลังล่าสุด',description:'รายการที่ยังไม่บันทึกบนเครื่องนี้จะถูกแทนด้วยข้อมูลล่าสุดของรหัสนี้',okText:'โหลดล่าสุด'}))return;try{await loadLibrary()}catch(e){status(e.message)}};
 $('profileRelease').onclick=async()=>{if(!await app.confirm({type:'confirm',title:'ยกเลิกเครื่องนี้',description:'คืนสิทธิ์เครื่องนี้จากจำนวน 10 เครื่อง เพลงของรหัสคุณยังอยู่ เมื่อใช้อีกครั้งต้องลงทะเบียนใหม่',okText:'ยกเลิกเครื่องนี้'}))return;try{await flush();await device.release();setLocked();message.textContent='ยกเลิกเครื่องนี้แล้ว เพลงของคุณยังอยู่'}catch(e){status(e.message)}};
 window.addEventListener('beforeunload',e=>{if(dirty!==saved){e.preventDefault();e.returnValue=''}});
-window.addEventListener('pageshow',e=>{if(e.persisted){setLocked()}});
+window.addEventListener('pageshow',e=>{if(e.persisted){setLocked()}else askForFreshLibrary()});
 ui();status('กรุณาเข้าสู่ระบบด้วยรหัสส่วนตัว');
 })();
