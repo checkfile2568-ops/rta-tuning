@@ -42,3 +42,11 @@ main{width:100%;min-width:0}
 #list .song .song-play-main strong{white-space:normal;overflow-wrap:anywhere;line-height:1.4;font-size:14px}
 #list .song .song-play-main small{font-size:12px}
 #list .song .song-play-main:hover{background:var(--t-pane,#ffffff10)}
+
+/* Final controls and scroll audit; loaded after app-shell.css. */
+#musicHeader .shell-secondary{flex-wrap:wrap;justify-content:space-between}
+#musicHeader .shell-secondary #status{flex:1 1 150px;min-width:0;white-space:normal;overflow-wrap:anywhere;overflow:visible;text-overflow:clip;max-width:none}
+#musicHeader .shell-secondary #wakeBtn{flex:0 0 auto;min-height:44px;max-width:100%;white-space:normal}
+#youtubeSearchResults{max-height:min(47dvh,410px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+@media(max-width:580px){#youtubeSearchResults{max-height:min(44dvh,340px)}}
+@media(max-width:400px){#musicHeader .shell-secondary #status{flex-basis:100%}#musicHeader .shell-secondary #wakeBtn{min-height:42px}#musicHeader .shell-actions{flex-shrink:0}}
