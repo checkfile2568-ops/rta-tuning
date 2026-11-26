@@ -50,3 +50,8 @@ main{width:100%;min-width:0}
 #youtubeSearchResults{max-height:min(47dvh,410px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
 @media(max-width:580px){#youtubeSearchResults{max-height:min(44dvh,340px)}}
 @media(max-width:400px){#musicHeader .shell-secondary #status{flex-basis:100%}#musicHeader .shell-secondary #wakeBtn{min-height:42px}#musicHeader .shell-actions{flex-shrink:0}}
+
+/* Four top-row icons override prior 3-icon layout safely. */
+#musicHeader .shell-actions>#wakeBtn{flex:none;max-width:none;min-height:42px}
+@media(max-width:600px){#musicHeader .shell-actions>#wakeBtn{min-height:40px}}
+@media(max-width:370px){#musicHeader .shell-actions>#wakeBtn{min-height:38px}}
