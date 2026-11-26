@@ -21,3 +21,17 @@ html:fullscreen{min-height:100%;overflow-y:auto}
 html:-webkit-full-screen{min-height:100%;overflow-y:auto}
 @media(max-width:600px){#musicHeader{padding:10px 12px;gap:5px 8px}#musicHeader .shell-brand h1{font-size:19px}#musicHeader .shell-brand small{display:none}#musicHeader .shell-actions{gap:6px}#musicHeader .shell-actions>button,#musicHeader summary{width:40px;height:40px;min-height:40px;min-width:40px;font-size:20px}#musicHeader #status{font-size:11px}#musicWorkPanel .music-menu-tab{font-size:12.5px;min-height:44px}}
 @media(max-width:350px){#musicHeader .shell-brand h1{font-size:17px}#musicHeader .shell-actions{gap:4px}#musicHeader .shell-actions>button,#musicHeader summary{width:36px;height:38px;min-width:36px;min-height:38px;font-size:19px}}
+
+/* Responsive controls audit: header, safe-area, dropdown and scroll */
+#musicHeader{min-width:0;box-sizing:border-box;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+#musicHeader .shell-brand{min-width:0;overflow:hidden}
+#musicHeader .shell-actions{min-width:0;flex-shrink:0}
+#musicHeader .shell-secondary{grid-column:1/-1;min-width:0;width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 12px}
+#musicHeader #status{grid-column:auto;flex:1 1 150px;min-width:0;max-width:none;white-space:normal;overflow-wrap:anywhere;text-overflow:clip;overflow:visible}
+#musicHeader #wakeBtn{flex:0 0 auto;max-width:100%;min-height:44px;white-space:normal}
+#headerMorePanel{max-height:min(62dvh,480px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;box-sizing:border-box}
+#headerMorePanel>button{position:relative;z-index:auto}
+#musicWorkPanel .music-menu-tabs,.playlist-overview,#musicLibraryPane #list{min-width:0}
+#musicWorkPanel .music-menu-tab{overflow-wrap:anywhere}
+@media(max-width:400px){#musicHeader .shell-brand h1{font-size:clamp(15px,4.2vw,18px);white-space:normal;overflow-wrap:anywhere}#musicHeader .shell-actions{gap:4px}#musicHeader .shell-secondary{align-items:flex-start}#musicHeader #status{font-size:11px;flex-basis:100%}#musicHeader #wakeBtn{font-size:12px;min-height:42px}#headerMorePanel{width:min(280px,calc(100vw - 24px))}}
+@media(orientation:landscape) and (max-height:500px){#headerMorePanel{max-height:calc(100dvh - 82px)}#musicHeader .shell-secondary{gap:4px 8px}}
