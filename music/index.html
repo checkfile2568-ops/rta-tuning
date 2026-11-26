@@ -740,6 +740,11 @@ async function initCloud(){const cfg=window.MY_MUSIC_FIREBASE_CONFIG;if(!cfg?.ap
 }
 window.musicProfileApp={
  load(data){resetProfileView();songs=Array.isArray(data.songs)?data.songs:[];playlists=Array.isArray(data.playlists)?data.playlists:[];customCats=Array.isArray(data.customCats)?data.customCats:[];$('now').textContent='เลือกเพลงเพื่อเริ่มเล่น';render();loadYTApi()},
+ refresh(data){if(!data||!Array.isArray(data.songs)||!Array.isArray(data.playlists))return;
+  songs=data.songs;playlists=data.playlists;customCats=Array.isArray(data.customCats)?data.customCats:[];
+  if(activePlaylistId&&!playlists.some(p=>p.id===activePlaylistId))activePlaylistId='';
+  render();
+ },
  clear(){resetProfileView();songs=[];playlists=[];customCats=[];$('now').textContent='กรุณาเข้าสู่ระบบ';render()},
  snapshot(){return JSON.parse(JSON.stringify({songs,playlists,customCats}))},confirm:openPlaylistDialog
 };
