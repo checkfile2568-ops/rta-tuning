@@ -5,7 +5,7 @@ function setup(){
  video.before(section);
  const $=id=>document.getElementById(id);
  const paceModes=[{name:'ช้า',speed:1.65},{name:'ปกติ',speed:1},{name:'เร็ว',speed:.65}];
- let pace=1;try{const stored=Number(localStorage.getItem('music-rhythm-pace-v1'));if(Number.isInteger(stored)&&stored>=0&&stored<paceModes.length)pace=stored}catch{}
+ let pace=1;try{const raw=localStorage.getItem('music-rhythm-pace-v1');if(raw!==null){const stored=Number(raw);if(Number.isInteger(stored)&&stored>=0&&stored<paceModes.length)pace=stored}}catch{}
  function applyPace(){section.style.setProperty('--rhythm-pace',String(paceModes[pace].speed));$('rhythmPace').textContent='ภาพจังหวะ: '+paceModes[pace].name;$('rhythmPace').title='ภาพจังหวะประกอบเพลง ไม่ใช่ข้อมูลความถี่เสียงจริง'}
  $('rhythmPace').onclick=()=>{pace=(pace+1)%paceModes.length;try{localStorage.setItem('music-rhythm-pace-v1',String(pace))}catch{}applyPace()};
  applyPace();
