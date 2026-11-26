@@ -45,3 +45,12 @@ html,body{overflow-x:clip}
 @media (hover:none){.song-suggest-nav{display:none}}
 @media (min-width:900px){.song-suggest-row{grid-auto-columns:calc((100% - 36px)/5.15)}}
 @media (prefers-reduced-motion:reduce){.song-suggest-skel .song-suggest-thumb{animation:none}.song-suggest-row{scroll-behavior:auto}}
+
+/* Prevent the sticky search strip from covering buttons while scrolling on touch and short screens. */
+@media (max-width:800px), (orientation:landscape) and (max-height:550px){
+ #ytTopBar{position:relative;top:auto;z-index:1}
+ #musicPlayerPanel,#musicWorkPanel,.music-menu-pane{scroll-margin-top:12px}
+}
+@media (min-width:801px) and (min-height:551px){
+ #musicPlayerPanel,#musicWorkPanel,.music-menu-pane{scroll-margin-top:82px}
+}
