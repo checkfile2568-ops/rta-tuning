@@ -4,6 +4,8 @@ const screen=$('pinScreen'),code=$('pinCode'),confirm=$('pinConfirm'),submit=$('
 let creating=false,session=null,revision=0,dirty=0,saved=0,timer=null,saving=null,conflict=false,legacyRecord=null;
 try{legacyRecord=JSON.parse(localStorage.getItem('my-music-pin-v1')||'null')}catch{}
 const legacyOwner=()=>localStorage.getItem('music-legacy-owner-account-v1');
+function showRecover(){const b=$('legacyRecover');if(b)b.hidden=!session||!(localStorage.getItem('music-private-legacy-backup-v1')||localStorage.getItem('my-music-library-v2-web')||localStorage.getItem('my-music-playlists-v1'))}
+
 function status(text){$('status').textContent=text}
 function quotaLabel(){const q=session?.quota;return q?(q.pool==='owner'?'มือถือรหัสหลัก ':'เครื่องรหัสอื่น ')+q.used+'/'+q.limit:'เครื่อง '+session.devices+'/10'}
 function ui(){
@@ -12,11 +14,11 @@ function ui(){
  $('pinConfirmWrap').hidden=!creating;submit.textContent=creating?'สร้างรหัสและเข้าคลัง':'เข้าสู่คลังเพลง';modeButton.hidden=false;modeButton.textContent=creating?'มีรหัสแล้ว · เข้าสู่ระบบ':'สร้างรหัสใหม่ · เริ่มคลังว่าง';
  $('pinPrivacyNote').textContent='สิทธิ์ใช้งานทั่วไปจำกัด 6 เครื่อง · คลังเพลงส่วนตัวแยกตามรหัส'+(legacyRecord&&!legacyOwner()?' · มีคลังเดิมบนเครื่องนี้ ให้กรอก PIN เดิมเพื่อย้ายเพลง':'');
 }
-function setLocked(){clearTimeout(timer);creating=false;session=null;revision=0;dirty=0;saved=0;conflict=false;app.clear();code.value='';confirm.value='';screen.hidden=false;document.documentElement.classList.add('pin-locked');$('outBtn').hidden=true;$('profileReload').hidden=true;$('profileRelease').hidden=true;status('กรุณาเข้าสู่ระบบด้วยรหัสส่วนตัว');ui()}
+function setLocked(){clearTimeout(timer);creating=false;session=null;revision=0;dirty=0;saved=0;conflict=false;app.clear();code.value='';confirm.value='';screen.hidden=false;document.documentElement.classList.add('pin-locked');$('outBtn').hidden=true;$('profileReload').hidden=true;$('profileRelease').hidden=true;$('legacyRecover').hidden=true;status('กรุณาเข้าสู่ระบบด้วยรหัสส่วนตัว');ui()}
 async function deriveLegacy(pin,salt,usage='bits'){
  const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,usage==='bits'?['deriveBits']:['deriveKey']);
  const algorithm={name:'PBKDF2',hash:'SHA-256',salt,iterations:250000};
- return usage==='bits'?new Uint8Array(await crypto.subtle.deriveBits(algorithm,material,256)):crypto.subtle.deriveKey(algorithm,material,{name:'AES-GCM',length:256},false,['encrypt']);
+ return usage==='bits'?new Uint8Array(await crypto.subtle.deriveBits(algorithm,material,256)):crypto.subtle.deriveKey(algorithm,material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
 }
 function unhex(value){if(!/^[0-9a-f]+$/.test(value||'')||value.length%2)throw Error('ข้อมูลรหัสเดิมไม่สมบูรณ์');return new Uint8Array(value.match(/.{2}/g).map(h=>parseInt(h,16)))}
 function hex(bytes){return Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('')}
@@ -50,7 +52,7 @@ window.musicLegacyMigration=async pin=>{
  }
  try{await device.release();return {released:true}}catch{return {released:false}}
 };
-async function loadLibrary(){const owner=session?.accountId,token=session?.token;if(!owner)return;const result=await device.request('/api/library',{token});if(session?.accountId!==owner)return;revision=result.revision;app.load(result.data);dirty=0;saved=0;conflict=false;status('คลังส่วนตัว · แยกตามรหัส · '+quotaLabel())}
+async function loadLibrary(){const owner=session?.accountId,token=session?.token;if(!owner)return;const result=await device.request('/api/library',{token});if(session?.accountId!==owner)return;revision=result.revision;app.load(result.data);dirty=0;saved=0;conflict=false;status('คลังส่วนตัว · แยกตามรหัส · '+quotaLabel());showRecover()}
 function markDirty(){if(!session)return;dirty++;status('กำลังบันทึกคลังส่วนตัว…');clearTimeout(timer);timer=setTimeout(()=>flush().catch(()=>{}),350)}
 async function flush(){
  if(!session||dirty===saved)return;if(conflict)throw Error('กรุณาโหลดคลังล่าสุดก่อนบันทึก');if(saving){await saving;return flush()}
@@ -73,7 +75,7 @@ submit.onclick=async()=>{
   let migrated=false;
   if(legacy&&revision===0&&!library.data.songs.length&&!library.data.playlists.length)migrated=await migrateLegacy(pin,readLegacy());
   if(migrated){const fresh=await device.request('/api/library',{token:session.token});revision=fresh.revision;app.load(fresh.data)}else app.load(library.data);
-  dirty=0;saved=0;conflict=false;code.value='';confirm.value='';screen.hidden=true;document.documentElement.classList.remove('pin-locked');$('outBtn').hidden=false;$('outBtn').textContent='ออก / เปลี่ยนรหัส';$('profileReload').hidden=false;$('profileRelease').hidden=false;message.textContent='';status((migrated?'ย้ายเพลงเดิมแล้ว · ':'')+'คลังส่วนตัว · '+quotaLabel());
+  dirty=0;saved=0;conflict=false;code.value='';confirm.value='';screen.hidden=true;document.documentElement.classList.remove('pin-locked');$('outBtn').hidden=false;$('outBtn').textContent='ออก / เปลี่ยนรหัส';$('profileReload').hidden=false;$('profileRelease').hidden=false;message.textContent='';status((migrated?'ย้ายเพลงเดิมแล้ว · ':'')+'คลังส่วนตัว · '+quotaLabel());showRecover();
  }catch(e){session=null;app.clear();message.textContent=e.message||'เข้าสู่ระบบไม่สำเร็จ';code.value='';confirm.value=''}finally{submit.disabled=false}
 };
 modeButton.onclick=()=>{creating=!creating;code.value='';confirm.value='';message.textContent='';ui()};
@@ -81,6 +83,74 @@ modeButton.onclick=()=>{creating=!creating;code.value='';confirm.value='';messag
 window.musicPinMode=mode=>{if(session)return;creating=mode==='create';code.value='';confirm.value='';message.textContent='';ui()};
 [code,confirm].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')submit.click()}));
 $('outBtn').onclick=async()=>{try{await flush();const token=session?.token;setLocked();if(token)try{await device.request('/api/auth/logout',{method:'POST',token})}catch{message.textContent='ออกจากเครื่องนี้แล้ว · ไม่สามารถติดต่อบริการเพื่อปิดเซสชันเดิมได้'}}catch(e){status(e.message)}};
+
+async function recoverLocalData(pin){
+ const owner=legacyOwner();if(owner&&owner!==session?.accountId)throw Error('สำเนานี้เป็นของคลังรหัสอื่น');
+ let backup=null;try{backup=JSON.parse(localStorage.getItem('music-private-legacy-backup-v1')||'null')}catch{}
+ if(backup){
+  if(backup.version!==1)throw Error('สำเนาข้อมูลเดิมไม่ถูกต้อง');
+  try{
+   const key=await deriveLegacy(pin,unhex(backup.salt),'key');
+   const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unhex(backup.iv)},key,unhex(backup.ciphertext));
+   const data=JSON.parse(new TextDecoder().decode(raw));
+   if(!Array.isArray(data.songs)||!Array.isArray(data.playlists))throw Error();
+   return data;
+  }catch{throw Error('ไม่สามารถเปิดสำเนาเก่าได้ โปรดตรวจ PIN เดิม')}
+ }
+ if(legacyRecord&&!owner&&!await matchesLegacy(pin))throw Error('รหัสไม่ตรงกับคลังเดิม');
+ const data=readLegacy();if(!data.songs.length&&!data.playlists.length)throw Error('ไม่พบเพลงเก่าที่กู้คืนได้ใน Brave เครื่องนี้');
+ return data;
+}
+function mergeRecovered(current,old){
+ const songMap=new Map((current.songs||[]).filter(s=>s&&typeof s.id==='string').map(s=>[s.id,s]));
+ let newSongs=0,newLists=0,newLinks=0;
+ for(const s of old.songs||[]){
+  if(!s||typeof s.id!=='string'||s.id.length!==11||typeof s.title!=='string')continue;
+  if(!songMap.has(s.id)){songMap.set(s.id,{id:s.id,title:s.title.slice(0,250),category:String(s.category||'เพลงโปรด').slice(0,80)});newSongs++}
+ }
+ const lists=(current.playlists||[]).map(p=>({...p,songIds:[...(p.songIds||[])]}));
+ const usedNames=new Set(lists.map(p=>String(p.name).toLowerCase()));
+ for(const p of old.playlists||[]){
+  if(!p||!Array.isArray(p.songIds)||typeof p.name!=='string')continue;
+  const ids=[...new Set(p.songIds.filter(id=>songMap.has(id)))];
+  const match=lists.find(x=>x.id===p.id&&p.id);
+  if(match){const original=match.songIds.length;match.songIds=[...new Set([...match.songIds,...ids])];newLinks+=match.songIds.length-original}
+  else{
+   let title=p.name.slice(0,100)||'Playlist ที่กู้คืน',count=2;const base=title;
+   while(usedNames.has(title.toLowerCase()))title=base.slice(0,85)+' ('+count+++')';
+   usedNames.add(title.toLowerCase());
+   let id=p.id;if(typeof id!=='string'||!id||lists.some(x=>x.id===id))id='recovered-'+crypto.randomUUID();
+   lists.push({id,name:title,songIds:ids});newLists++;
+  }
+ }
+ const customCats=[...new Set([...(current.customCats||[]),...(old.customCats||[])].filter(x=>typeof x==='string'))];
+ return {data:{songs:[...songMap.values()],playlists:lists,customCats},newSongs,newLists,newLinks};
+}
+$('legacyRecover').onclick=async()=>{
+ if(!session||conflict)return;
+ if(dirty!==saved){status('มีข้อมูลยังไม่บันทึก กรุณารอระบบบันทึกก่อน');return}
+ const btn=$('legacyRecover'),owner=session.accountId;btn.disabled=true;
+ try{
+  const pin=await app.confirm({type:'input',title:'ตรวจคลังเพลงเดิม',description:'กรอก PIN เดิมอีกครั้งเพื่อเปิดสำเนาเพลงใน Brave เครื่องนี้',label:'PIN เดิม',placeholder:'PIN 6 หลัก',okText:'ตรวจข้อมูล',validate:v=>/^[0-9]{6}$/.test(String(v))?'':'กรุณากรอก PIN 6 หลัก'});
+  if(pin===null)return;
+  const older=await recoverLocalData(pin);
+  const latest=await device.request('/api/library',{token:session.token});
+  if(session?.accountId!==owner)return;
+  const merged=mergeRecovered(latest.data,older);
+  if(!(merged.newSongs+merged.newLists+merged.newLinks)){
+   await app.confirm({type:'notice',title:'ตรวจคลังเรียบร้อย',description:'ไม่พบรายการใหม่ที่ต้องรวม ข้อมูลเดิมไม่ถูกแก้ไข',okText:'รับทราบ'});return
+  }
+  const approved=await app.confirm({type:'confirm',title:'ยืนยันกู้คืนคลังเดิม',description:'พบเพลงเดิม '+(older.songs?.length||0)+' เพลง และ Playlist '+(older.playlists?.length||0)+' ชุด\nเพิ่มเพลงที่ขาด '+merged.newSongs+' เพลง · Playlist ใหม่ '+merged.newLists+' ชุด\nจะไม่ลบหรือเขียนทับเพลงปัจจุบัน',okText:'รวมข้อมูล'});
+  if(!approved)return;
+  if(session?.accountId!==owner||dirty!==saved)throw Error('สถานะคลังเปลี่ยน กรุณาตรวจอีกครั้ง');
+  const savedResult=await device.request('/api/library',{method:'PUT',token:session.token,data:{revision:latest.revision,data:merged.data}});
+  if(session?.accountId!==owner)return;
+  revision=savedResult.revision;app.load(merged.data);dirty=0;saved=0;conflict=false;
+  status('กู้คืนสำเร็จ · เพิ่ม '+merged.newSongs+' เพลง · '+quotaLabel());
+  await app.confirm({type:'notice',title:'กู้คืนสำเร็จ',description:'รวมเพลงที่ขาดแล้ว โดยยังรักษาข้อมูลออนไลน์และสำเนาใน Brave',okText:'รับทราบ'});
+ }catch(e){status('ไม่ได้เปลี่ยนข้อมูล · '+(e?.message||'กู้คืนไม่สำเร็จ'));await app.confirm({type:'notice',title:'กู้คืนยังไม่สำเร็จ',description:e?.message||'ตรวจสอบอีกครั้ง',okText:'รับทราบ'})}
+ finally{btn.disabled=false;showRecover()}
+};
 $('profileReload').onclick=async()=>{if(dirty!==saved&&!await app.confirm({type:'confirm',title:'โหลดคลังล่าสุด',description:'รายการที่ยังไม่บันทึกบนเครื่องนี้จะถูกแทนด้วยข้อมูลล่าสุดของรหัสนี้',okText:'โหลดล่าสุด'}))return;try{await loadLibrary()}catch(e){status(e.message)}};
 $('profileRelease').onclick=async()=>{if(!await app.confirm({type:'confirm',title:'ยกเลิกเครื่องนี้',description:'คืนสิทธิ์เครื่องนี้จากจำนวน 10 เครื่อง เพลงของรหัสคุณยังอยู่ เมื่อใช้อีกครั้งต้องลงทะเบียนใหม่',okText:'ยกเลิกเครื่องนี้'}))return;try{await flush();await device.release();setLocked();message.textContent='ยกเลิกเครื่องนี้แล้ว เพลงของคุณยังอยู่'}catch(e){status(e.message)}};
 window.addEventListener('beforeunload',e=>{if(dirty!==saved){e.preventDefault();e.returnValue=''}});
