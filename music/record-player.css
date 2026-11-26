@@ -35,3 +35,23 @@
 @keyframes record-spin{to{transform:rotate(360deg)}}
 @media(max-width:480px){.record-console{padding:13px 13px 5px}.record-deck{aspect-ratio:1.8;min-height:155px}.record-centre{font-size:13px}.record-tonearm{width:9px}.record-tonearm:before{width:25px;height:25px;left:-8px}.record-speed{font-size:8px;right:5%;letter-spacing:1px}.record-switch{right:8%;width:17px;height:17px}#play,#pauseSong,#stopSong{min-width:65px;padding:10px 11px;font-size:14px}.record-options{padding:0 13px 13px}.record-caption{padding:12px 13px 9px}}
 @media(prefers-reduced-motion:reduce){.record-platter{animation:none}.record-tonearm{transition:none}#playbackState:before{animation:none!important}}
+
+/* Frameless three-band rhythm illustration. YouTube IFrame exposes playback state, not raw audio/FFT. */
+.record-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;margin-top:5px}
+#classicRecord #playbackState{flex:1 1 auto;min-width:0;white-space:normal;margin:0}
+#classicRecord .music-rhythm{flex:0 0 auto;display:flex;gap:7px;justify-content:flex-end;align-items:flex-end;width:min(42%,205px);height:55px;padding:0;margin:0;background:none!important;border:0!important;box-shadow:none!important;pointer-events:none}
+#classicRecord .rhythm-group{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:100%;min-width:0}
+#classicRecord .rhythm-bass{flex:4}.rhythm-mid{flex:6}.rhythm-treble{flex:7}
+#classicRecord .rhythm-bar{display:block;flex:1 1 0;min-width:2px;max-width:11px;height:80%;min-height:3px;border-radius:9px 9px 4px 4px;transform-origin:center bottom;transform:scaleY(.09);background:linear-gradient(to top,#2776d2,#71d6fc);box-shadow:0 0 5px #36b9f866;animation:rhythm-bass 1.7s ease-in-out infinite alternate paused;transition:transform .2s ease-out}
+#classicRecord .rhythm-mid .rhythm-bar{background:linear-gradient(to top,#3666e7,#cf68ff);box-shadow:0 0 6px #bd70fa80;animation-name:rhythm-mid;animation-duration:.91s}
+#classicRecord .rhythm-treble .rhythm-bar{background:linear-gradient(to top,#228dd0,#b2e9ff);box-shadow:0 0 4px #5bcaff68;animation-name:rhythm-treble;animation-duration:.57s}
+#classicRecord .rhythm-bar:nth-child(2n){animation-delay:-.4s}
+#classicRecord .rhythm-bar:nth-child(3n){animation-delay:-.9s}
+#classicRecord .rhythm-bar:nth-child(4n){animation-delay:-.18s}
+#classicRecord[data-state="playing"] .rhythm-bar{animation-play-state:running}
+#classicRecord:not([data-state="playing"]) .rhythm-bar{animation:none;transform:scaleY(.09)}
+@keyframes rhythm-bass{from{transform:scaleY(.16)}45%{transform:scaleY(.68)}to{transform:scaleY(.32)}}
+@keyframes rhythm-mid{from{transform:scaleY(.2)}55%{transform:scaleY(.85)}to{transform:scaleY(.38)}}
+@keyframes rhythm-treble{from{transform:scaleY(.18)}40%{transform:scaleY(.56)}to{transform:scaleY(.28)}}
+@media(max-width:440px){#classicRecord .music-rhythm{width:42%;height:42px;gap:4px}#classicRecord .rhythm-group{gap:2px}.record-status-row{gap:5px}}
+@media(prefers-reduced-motion:reduce){#classicRecord .rhythm-bar{animation:none!important;transform:scaleY(.18)!important}}
