@@ -16,14 +16,18 @@ function setup(){
  const actions=document.createElement('div');actions.className='shell-actions';
  const fullscreen=document.createElement('button');fullscreen.id='fullscreenToggle';fullscreen.type='button';fullscreen.textContent='⛶';fullscreen.setAttribute('aria-label','เปิดเต็มจอ');fullscreen.title='เปิดเต็มจอ';
  const more=document.createElement('details');more.id='headerMore';const summary=document.createElement('summary');summary.setAttribute('aria-label','เมนูเพิ่มเติม');summary.title='เมนูเพิ่มเติม';summary.textContent='⋯';const panel=document.createElement('div');panel.id='headerMorePanel';
- for(const id of ['profileReload','profileRelease','outBtn','authBtn','managePasskey']){const el=document.getElementById(id);if(el)panel.append(el)}
+ for(const id of ['profileReload','legacyRecover','profileRelease','outBtn','authBtn','managePasskey']){const el=document.getElementById(id);if(el)panel.append(el)}
  more.append(summary,panel);actions.append(fullscreen,document.getElementById('themeBtn'),more);const secondary=document.createElement('div');secondary.className='shell-secondary';secondary.append(status,document.getElementById('wakeBtn'));header.append(actions,secondary);oldActions.remove();status.setAttribute('role','status');
  const hint=document.createElement('p');hint.id='fullscreenNotice';hint.hidden=true;hint.setAttribute('role','status');header.append(hint);
  function sync(){const full=!!currentFullscreen();fullscreen.textContent=full?'⊡':'⛶';fullscreen.setAttribute('aria-label',full?'ออกจากเต็มจอ':'เปิดเต็มจอ');fullscreen.title=full?'ออกจากเต็มจอ':'เปิดเต็มจอ';fullscreen.setAttribute('aria-pressed',String(full))}
  fullscreen.onclick=()=>{if(!currentFullscreen()){enterFullscreen();return}const exit=document.exitFullscreen||document.webkitExitFullscreen;try{Promise.resolve(exit?.call(document)).catch(()=>notice('ออกจากเต็มจอด้วยปุ่มย้อนกลับหรือ Esc ได้'))}catch{notice('ออกจากเต็มจอด้วยปุ่มย้อนกลับหรือ Esc ได้')}};
  document.addEventListener('fullscreenchange',sync);document.addEventListener('webkitfullscreenchange',sync);sync();
  document.getElementById('pinSubmit').addEventListener('click',()=>{if(!document.getElementById('pinSubmit').disabled)enterFullscreen()},{capture:true});
- document.addEventListener('click',e=>{if(!more.contains(e.target))more.open=false});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&more.open){more.open=false;summary.focus()}});
+ document.addEventListener('click',e=>{if(!more.contains(e.target))more.open=false});
+ panel.addEventListener('click',e=>{if(e.target.closest('button'))more.open=false});
+ document.addEventListener('scroll',e=>{if(more.open&&!more.contains(e.target))more.open=false},{capture:true,passive:true});
+ window.addEventListener('resize',()=>{more.open=false},{passive:true});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&more.open){more.open=false;summary.focus()}});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
 })();
