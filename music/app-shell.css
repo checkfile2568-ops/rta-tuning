@@ -35,3 +35,12 @@ html:-webkit-full-screen{min-height:100%;overflow-y:auto}
 #musicWorkPanel .music-menu-tab{overflow-wrap:anywhere}
 @media(max-width:400px){#musicHeader .shell-brand h1{font-size:clamp(15px,4.2vw,18px);white-space:normal;overflow-wrap:anywhere}#musicHeader .shell-actions{gap:4px}#musicHeader .shell-secondary{align-items:flex-start}#musicHeader #status{font-size:11px;flex-basis:100%}#musicHeader #wakeBtn{font-size:12px;min-height:42px}#headerMorePanel{width:min(280px,calc(100vw - 24px))}}
 @media(orientation:landscape) and (max-height:500px){#headerMorePanel{max-height:calc(100dvh - 82px)}#musicHeader .shell-secondary{gap:4px 8px}}
+
+/* Four header action icons in one row, preserving the full-width status below. */
+#musicHeader .shell-actions{display:grid;grid-template-columns:repeat(4,minmax(0,42px));align-items:center;justify-content:end;gap:6px;flex:0 0 auto}
+#musicHeader .shell-actions>#wakeBtn{width:42px;height:42px;min-width:42px;min-height:42px;margin:0;padding:5px;font-size:24px;line-height:1;white-space:nowrap;overflow:hidden}
+#musicHeader .shell-actions>#wakeBtn.on{box-shadow:0 0 0 2px #39b87688,0 3px 10px #071a3322}
+#musicHeader .shell-secondary{grid-column:1/-1;display:block;width:100%;min-width:0}
+#musicHeader .shell-secondary #status{display:block;min-width:0;width:100%;overflow-wrap:anywhere;white-space:normal;line-height:1.5}
+@media(max-width:600px){#musicHeader .shell-actions{grid-template-columns:repeat(4,minmax(0,38px));gap:5px}#musicHeader .shell-actions>button,#musicHeader .shell-actions summary,#musicHeader .shell-actions>#wakeBtn{width:38px;height:40px;min-width:38px;min-height:40px;padding:4px;font-size:21px}}
+@media(max-width:370px){#musicHeader{grid-template-columns:minmax(0,1fr) auto;gap:4px}#musicHeader .shell-brand h1{font-size:clamp(14px,4vw,17px);letter-spacing:-.5px;white-space:normal}#musicHeader .shell-actions{grid-template-columns:repeat(4,34px);gap:3px}#musicHeader .shell-actions>button,#musicHeader .shell-actions summary,#musicHeader .shell-actions>#wakeBtn{width:34px;height:38px;min-width:34px;min-height:38px;font-size:18px}#musicHeader .shell-brand small{display:none}}
