@@ -172,8 +172,46 @@ html[data-theme="daylight"] .playlist-dialog{background:rgba(15,39,66,.35)}
 @media(max-width:480px){#topMusicSearch .row .stretch{flex-basis:100%}#topMusicSearch #youtubeSearch{width:100%}}
 @media(max-width:380px){.theme-grid{grid-template-columns:1fr}}
 @media(max-width:480px){#musicWorkPanel{padding:11px}.music-menu-tabs{gap:6px;grid-template-columns:1fr 1.55fr .84fr}.music-menu-tab{padding:8px 5px;min-height:56px;font-size:12.5px;border-radius:11px}.music-menu-pane{padding:10px}.music-menu-pane .row{gap:8px}.music-menu-pane .row input.stretch,.music-menu-pane .row select.stretch{flex:1 1 100%;width:100%}.music-menu-pane .row button{flex:1 1 auto;min-height:44px}#toggleAdd{font-size:15px}}
+
+/* Browsing and search UX: restrained YouTube-inspired layouts, preserving all existing controls */
+#youtubeSearchResults{height:auto;max-height:min(47dvh,410px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scroll-behavior:auto;margin-bottom:0}
+.yt-results-footer{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 4px;border-top:1px solid var(--t-border,#ffffff30)}
+.yt-results-footer[hidden],#youtubeMoreResults[hidden]{display:none!important}
+#youtubeResultsCount{font-size:13px;color:var(--t-muted,#c1c1d0)}
+#youtubeMoreResults{font-size:14px;border-radius:20px;min-height:42px;padding:9px 16px;background:var(--t-btn,#38384c);color:var(--t-btn-text,#fff)}
+#topMusicSearch .yt-result{contain:layout style;min-height:90px}
+#topMusicSearch .yt-result-play{min-width:0}
+.playlist-browser{margin:8px 0 16px}
+.playlist-browser-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:17px}
+#playlistBrowserBack{border-radius:28px;min-height:44px}
+.playlist-overview{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:14px}
+.playlist-overview-card{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:150px;padding:0 0 12px;border:1px solid var(--t-border,#ffffff29);border-radius:15px;overflow:hidden;background:var(--t-pane,#282536);color:var(--t-text,#fff);text-align:left}
+.playlist-overview-card:focus-visible{outline:3px solid var(--t-accent,#aa8ce9);outline-offset:2px}
+.playlist-overview-cover{aspect-ratio:16/9;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));overflow:hidden;background:#201d35;place-items:center}
+.playlist-overview-cover img{display:block;width:100%;height:100%;object-fit:cover}
+.playlist-overview-cover img:first-child:last-child{grid-column:span 2;grid-row:span 2}
+.playlist-overview-cover.empty-cover{font-size:46px;color:#e4d8fd}
+.playlist-overview-info{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0 11px}
+.playlist-overview-info strong{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.playlist-overview-info small{font-size:12px;color:var(--t-muted,#aeb5cc)}
+#musicLibraryPane #list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,218px),1fr));gap:13px;min-width:0;margin-top:14px}
+#musicLibraryPane #list>.song{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;align-content:start;align-items:stretch;min-width:0;padding:8px!important;margin:0;border:1px solid var(--t-border,#ffffff29)!important;border-radius:16px!important;background:var(--t-pane,#22253d);overflow:hidden}
+#musicLibraryPane #list>.song:hover{background:var(--t-hover,#ffffff14)}
+#musicLibraryPane #list>.song>.song-play-main{grid-column:1/-1;display:flex;flex-direction:column;align-items:stretch;gap:9px;min-width:0;padding:0!important;min-height:0;flex:unset;background:transparent!important;border:0;text-align:left;border-radius:10px;overflow:hidden;color:var(--t-text,#fff)}
+#musicLibraryPane #list>.song .song-play-main img{width:100%!important;max-width:100%!important;height:auto!important;aspect-ratio:16/9;object-fit:cover;border-radius:10px;box-shadow:none}
+#musicLibraryPane #list>.song .song-play-main .details{width:100%;min-width:0;flex:unset;padding:0 3px 5px}
+#musicLibraryPane #list>.song .song-play-main strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;white-space:normal;line-height:1.4;font-size:15px;min-height:40px}
+#musicLibraryPane #list>.song .song-play-main small{margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--t-muted,#a9afc1);font-size:12px}
+#musicLibraryPane #list>.song>button:not(.song-play-main){min-width:0!important;width:100%;min-height:40px;padding:7px 0!important;font-size:16px!important;border-radius:10px}
+@media(max-width:580px){#youtubeSearchResults{max-height:min(44dvh,340px)}.playlist-overview{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#musicLibraryPane #list{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.playlist-overview-info strong{font-size:14px}#musicLibraryPane #list>.song{padding:6px!important}#musicLibraryPane #list>.song .song-play-main strong{font-size:13px;min-height:37px}#musicLibraryPane #list>.song>button:not(.song-play-main){min-height:39px}}
+@media(max-width:340px){#musicLibraryPane #list{grid-template-columns:1fr}}
+
 </style><link rel="stylesheet" href="app-shell.css?v=20261123-compact"><script defer src="app-shell.js?v=20261123-wake"></script><link rel="stylesheet" href="record-player.css?v=20261123-responsive"><link rel="stylesheet" href="responsive-player.css?v=20261123-responsive"><link rel="stylesheet" href="yt-search-suggest.css?v=20261124"><script defer src="song-suggest.js?v=20261124"></script><script defer src="record-player.js?v=20261123-responsive"></script></head><body><header id="musicHeader"><div><h1>♫ Music YouTube</h1><small>ฟังเพลงจาก YouTube • จัดคลังเพลงส่วนตัว</small></div><div class="row"><span id="status">โหมดเครื่องนี้</span><button id="themeBtn" type="button" title="เปลี่ยนธีม" aria-haspopup="dialog" aria-label="เปลี่ยนธีม">🎨<span class="theme-btn-text"> ธีม</span></button><button id="wakeBtn" title="ขอให้หน้าจอเปิดอยู่">☀ เปิดจอค้าง</button><button id="authBtn">เข้าสู่ระบบ Cloud</button><button id="managePasskey" hidden>◎ จัดการ Passkey</button><button id="profileReload" type="button" hidden>โหลดคลังล่าสุด</button><button id="legacyRecover" type="button" hidden>ตรวจ/กู้คืนคลังเดิม</button><button id="profileRelease" type="button" hidden>ยกเลิกเครื่องนี้</button><button id="outBtn" hidden>ออกจากระบบ</button></div></header><main><div id="ytTopBar" role="search" aria-label="ค้นหาเพลงบน YouTube"><div class="yt-pill"><span class="yt-pill-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><input id="youtubeQuery" type="search" aria-label="ค้นหาเพลงบน YouTube" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="button" id="youtubeClear" class="yt-pill-clear" aria-label="ล้างคำค้นและปิดผลค้นหา" hidden>✕</button></div><button type="button" id="youtubeSearch" class="primary yt-go" aria-label="ค้นหา"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button></div><section class="panel" id="topMusicSearch" aria-label="ผลค้นหาเพลงบน YouTube" style="margin-bottom:16px" hidden>
-<div id="youtubeSearchResults" hidden aria-live="polite"></div>
+<div id="youtubeSearchResults" hidden aria-live="polite" aria-label="ผลการค้นหาวิดีโอ เลื่อนเพื่อดูรายการเพิ่มเติม"></div>
+<div id="youtubeResultsFooter" class="yt-results-footer" hidden>
+ <span id="youtubeResultsCount" role="status"></span>
+ <button type="button" id="youtubeMoreResults" hidden>แสดงวิดีโอเพิ่มเติม ↓</button>
+</div>
 <div class="row" style="margin:9px 0"><button type="button" id="toggleSearchConfig">⚙ ตั้งค่าค้นหาในหน้าเว็บ</button><span class="muted" id="youtubeSearchStatus" role="status" style="font-size:12px"></span></div>
 <div id="youtubeSearchConfig" hidden><label for="youtubeApiKey" class="muted" style="font-size:12px">YouTube Data API Key (ไม่บังคับ)</label><div class="row"><input id="youtubeApiKey" type="password" autocomplete="off" placeholder="วาง API Key สำหรับค้นหาภายในเว็บ" class="stretch"><button type="button" id="saveYoutubeKey">ตรวจสอบและล็อกคีย์</button><button type="button" id="changeYoutubeKey" hidden>เปลี่ยนคีย์</button></div><small>หากไม่ได้ตั้งค่า ระบบจะใช้การค้นหาบน YouTube ตามปกติ · บันทึกครั้งเดียว ใช้ร่วมกับหน้าเล่นเพลงในรถบนเบราว์เซอร์นี้ · เครื่องอื่นต้องตั้งค่าแยก</small></div></section><div class="layout"><section class="panel" id="musicPlayerPanel"><div class="player" id="videoArea" hidden><div id="player" class="player-idle">เลือกเพลง แล้วกด ▶ เพื่อเริ่มเล่น</div><div id="playerProblem" hidden role="status" aria-live="polite"><strong id="playerProblemTitle">เชื่อมต่อ YouTube ไม่สำเร็จ</strong><span id="playerProblemDescription">ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</span><div class="row" style="justify-content:center;gap:8px"><button type="button" id="retryYouTube" class="primary">↻ เชื่อมต่อใหม่</button><button type="button" id="openYouTubeDirect">เปิดเพลงใน YouTube ↗</button></div></div></div><div id="now">เลือกเพลงเพื่อเริ่มเล่น</div><div class="row controls"><button id="prev" aria-label="ก่อนหน้า">⏮</button><button id="play" type="button" aria-label="เล่นเพลง">▶ เล่น</button><button id="pauseSong" type="button" aria-label="พักเพลง" disabled>Ⅱ พัก</button><button id="stopSong" type="button" aria-label="หยุดเพลง" disabled>■ หยุด</button><button id="next" aria-label="ถัดไป">⏭</button><button id="shuffle" title="สุ่ม">🔀</button><button id="repeat" title="เล่นวน">🔁</button><button id="yt" title="เปิดบน YouTube">YouTube ↗</button></div><div class="row"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" value="0" class="time stretch" aria-label="เลื่อนตำแหน่งเพลง"><span id="duration">0:00</span></div><section id="songSuggest" class="song-suggest" aria-labelledby="songSuggestTitle" hidden><div class="song-suggest-head"><h3 id="songSuggestTitle">เพลงที่คล้ายกัน</h3><span class="song-suggest-nav"><button type="button" id="songSuggestPrev" aria-label="เลื่อนไปทางซ้าย">‹</button><button type="button" id="songSuggestNext" aria-label="เลื่อนไปทางขวา">›</button></span></div><div id="songSuggestRow" class="song-suggest-row" role="list"></div><small id="songSuggestNote" class="song-suggest-note" aria-live="polite"></small></section><div class="row volume-glass" role="group" aria-label="ปรับระดับเสียง YouTube"><span class="volume-ico" aria-hidden="true">♫</span><label for="volume" class="volume-label">VOLUME</label><input id="volume" type="range" min="0" max="100" step="1" value="90" class="stretch" aria-label="ระดับเสียง YouTube (เปอร์เซ็นต์)" aria-valuetext="90 เปอร์เซ็นต์"><output id="volumeValue" for="volume" class="volume-number" aria-live="off">90%</output></div><small id="volumeHelp" class="muted" aria-live="polite"></small><small id="wakeState" aria-live="polite">จอตามการตั้งค่าของเครื่อง</small><small id="notice">เล่นผ่าน YouTube Player โดยตรง · เล่นขณะล็อกหน้าจอไม่รองรับ · บางคลิปต้องเปิดบน YouTube ↗</small></section><section class="panel" id="musicWorkPanel">
 <nav class="music-menu-tabs" aria-label="เมนูคลังเพลง">
@@ -182,6 +220,10 @@ html[data-theme="daylight"] .playlist-dialog{background:rgba(15,39,66,.35)}
 <button type="button" class="music-menu-tab" data-music-menu="backup" aria-controls="musicBackupPane" aria-expanded="false">⇩ ข้อมูล</button>
 </nav>
 <div id="musicAddPane" class="music-menu-pane" hidden><button id="toggleAdd" type="button" aria-expanded="false" aria-controls="addSongBody" class="primary" style="width:100%;text-align:left">＋ เพิ่มเพลง YouTube <span id="addToggleIcon" style="float:right">⌄</span></button><div id="addSongBody" hidden style="margin-top:14px"><h2>ค้นหาและเพิ่มเพลง YouTube</h2><div class="row"><input id="url" placeholder="วางลิงก์ youtube.com หรือ youtu.be" class="stretch"><button type="button" id="inspectUrl">ตรวจสอบลิงก์</button><button class="primary" id="add">+ เพิ่มเพลง</button></div><p id="linkCheck" class="muted" style="font-size:12px;min-height:20px" aria-live="polite"></p><div style="margin-top:9px"><input id="title" placeholder="ชื่อเพลง (แก้ไขได้)"></div><div class="row" style="margin-top:9px"><select id="category" class="stretch"><option>เพลงโปรด</option><option>Country</option><option>Acoustic</option><option>EDM</option><option>เพลงไทย</option><option>ดนตรีสด</option></select><button id="newCat">+ หมวดใหม่</button></div></div></div><div id="musicLibraryPane" class="music-menu-pane" hidden><h2>คลังเพลงและ Playlist</h2>
+<div id="playlistBrowser" class="playlist-browser">
+ <div class="playlist-browser-heading"><button type="button" id="playlistBrowserBack" hidden>← กลับไปหน้า Playlist</button><strong id="playlistBrowserLabel">Playlist ของฉัน</strong></div>
+ <div id="playlistOverview" class="playlist-overview"></div>
+</div>
 <div class="row" style="margin:0 0 12px"><select id="activePlaylist" class="stretch" aria-label="เลือก Playlist"><option value="">เพลงทั้งหมดในคลัง</option></select><button id="createPlaylist" type="button" class="primary">＋ Playlist</button></div>
 <div class="row" style="margin-bottom:12px"><button id="renamePlaylist" type="button">✎ เปลี่ยนชื่อ</button><button id="deletePlaylist" type="button">🗑 ลบ Playlist</button><span id="playlistInfo" class="muted" style="font-size:12px"></span></div>
 <input id="filter" placeholder="ค้นหาชื่อเพลงหรือช่อง"><div class="tabs" id="cats"></div><div id="list"></div><button type="button" id="loadMoreSongs" hidden style="width:100%;margin-top:12px" class="action">แสดงเพลงเพิ่มเติม</button>
@@ -316,14 +358,32 @@ function lockSearchKeyUI(){
 }
 function showSearchStatus(msg){$('youtubeSearchStatus').textContent=msg}
 function showLinkStatus(msg,ok=false){$('linkCheck').textContent=msg;$('linkCheck').style.color=ok?'#baf3d4':'#f9d9b7'}
+// Search results: a bounded-height list, progressive YouTube pages, and account-safe request cancellation.
+const SEARCH_PAGE_SIZE=25,SEARCH_MAX_ITEMS=125;
+let foundVideos=[],foundIds=new Set(),searchNextPage='',searchQuery='',searchBusy=false,searchRequest=0;
+function updateSearchFooter(){
+ const footer=$('youtubeResultsFooter'),more=$('youtubeMoreResults');
+ footer.hidden=!foundVideos.length&&!searchNextPage;
+ $('youtubeResultsCount').textContent=foundVideos.length?'แสดง '+foundVideos.length+' วิดีโอ'+(searchNextPage?' · มีรายการเพิ่มเติม':''):'';
+ more.hidden=!searchNextPage||foundVideos.length>=SEARCH_MAX_ITEMS;
+ more.disabled=searchBusy;
+ more.textContent=searchBusy?'กำลังโหลด…':'แสดงวิดีโอเพิ่มเติม ↓';
+}
+function resetSearchPage(){
+ searchRequest++;foundVideos=[];foundIds=new Set();searchNextPage='';searchQuery='';searchBusy=false;
+ $('youtubeResultsFooter').hidden=true;$('youtubeMoreResults').disabled=false;
+}
+window.addEventListener('music-profile-changed',resetSearchPage);
 function renderYouTubeResults(data){
  const wrap=$('youtubeSearchResults');wrap.replaceChildren();wrap.hidden=false;
- for(const v of (data.items||[])){
+ const rows=Array.isArray(data.items)?data.items:[];
+ for(const v of rows){
   const id=v?.id?.videoId;if(!/^[a-zA-Z0-9_-]{11}$/.test(id))continue;
   const name=String(v.snippet?.title||'YouTube'),channelName=String(v.snippet?.channelTitle||'');
   const row=document.createElement('div');row.className='yt-result';
   const play=document.createElement('button');play.type='button';play.className='yt-result-play';play.setAttribute('aria-label','เล่น '+name);
-  const art=document.createElement('span');art.className='yt-result-thumb';const image=document.createElement('img');image.src='https://i.ytimg.com/vi/'+id+'/mqdefault.jpg';image.loading='lazy';image.alt='';const mark=document.createElement('span');mark.className='yt-result-play-mark';mark.textContent='▶';mark.setAttribute('aria-hidden','true');art.append(image,mark);
+  const art=document.createElement('span');art.className='yt-result-thumb';const image=document.createElement('img');image.src='https://i.ytimg.com/vi/'+id+'/mqdefault.jpg';image.loading='lazy';image.decoding='async';image.alt='';
+  const mark=document.createElement('span');mark.className='yt-result-play-mark';mark.textContent='▶';mark.setAttribute('aria-hidden','true');art.append(image,mark);
   const info=document.createElement('span');info.className='yt-result-info';const title=document.createElement('strong');title.textContent=name;const channel=document.createElement('small');channel.textContent=channelName;info.append(title,channel);play.append(art,info);
   play.onclick=()=>{if(document.documentElement.classList.contains('pin-locked'))return;start(id,{title:name,channel:channelName});showSearchStatus('กำลังเปิดเพลงที่เลือก…');$('musicPlayerPanel').scrollIntoView?.({block:'start',behavior:'auto'})};
   const save=document.createElement('button');save.type='button';save.className='yt-result-save';save.textContent='＋';save.title='เก็บเพลงนี้ในคลัง';save.setAttribute('aria-label','เก็บเพลง '+name);
@@ -331,27 +391,46 @@ function renderYouTubeResults(data){
   row.append(play,save);wrap.append(row)
  }
  if(!wrap.childNodes.length)wrap.textContent='ไม่พบวิดีโอที่เลือกได้จากคำค้นนี้';
+ updateSearchFooter();
 }
-async function searchYouTubeByName(){
+async function searchYouTubeByName(loadMore=false){
  const generation=window.musicProfileGeneration;
  try{ytSearchKey=localStorage.getItem(SEARCH_KEY)??ytSearchKey}catch{}
- const q=$('youtubeQuery').value.trim().slice(0,120);if(!q){await playlistNotice('ยังไม่ได้ระบุเพลง','กรุณาพิมพ์ชื่อเพลงที่จะค้นหา');return}
+ const q=$('youtubeQuery').value.trim().slice(0,120);
+ if(!q){if(!loadMore)await playlistNotice('ยังไม่ได้ระบุเพลง','กรุณาพิมพ์ชื่อเพลงที่จะค้นหา');return}
+ if(loadMore&&(!searchNextPage||q!==searchQuery||searchBusy))return;
+ if(!loadMore){resetSearchPage();searchQuery=q;$('youtubeSearchResults').scrollTop=0}
  if(!ytSearchKey&&!SEARCH_API){showSearchStatus('เปิดผลค้นหาบน YouTube');window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank','noopener');return}
- showSearchStatus('กำลังค้นหา…');
+ const request=searchRequest;
+ searchBusy=true;updateSearchFooter();
+ showSearchStatus(loadMore?'กำลังโหลดวิดีโอเพิ่มเติม…':'กำลังค้นหาวิดีโอ…');
  try{
-  const c=new AbortController();const timeout=setTimeout(()=>c.abort(),15000);let response;
-  try{response=await (window.musicSearchFetch||fetch)(SEARCH_API?SEARCH_API+'?'+new URLSearchParams({q}):'https://www.googleapis.com/youtube/v3/search?'+new URLSearchParams({part:'snippet',q,type:'video',maxResults:'12',videoEmbeddable:'true',key:ytSearchKey}),{signal:c.signal})}finally{clearTimeout(timeout)}
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);let response;
+  try{
+   const params=new URLSearchParams({q,maxResults:String(SEARCH_PAGE_SIZE)});
+   if(loadMore)params.set('pageToken',searchNextPage);
+   const endpoint=SEARCH_API?SEARCH_API+'?'+params:
+     'https://www.googleapis.com/youtube/v3/search?'+new URLSearchParams({part:'snippet',q,type:'video',maxResults:String(SEARCH_PAGE_SIZE),videoEmbeddable:'true',key:ytSearchKey,...(loadMore?{pageToken:searchNextPage}:{})});
+   response=await (window.musicSearchFetch||fetch)(endpoint,{signal:controller.signal})
+  }finally{clearTimeout(timeout)}
   const json=await response.json();if(!response.ok)throw Error(json.error?.message||'YouTube ไม่ตอบสนอง');
-  if(generation!==window.musicProfileGeneration)return;renderYouTubeResults(json);showSearchStatus('แตะเพลงเพื่อเล่นทันที · กด ＋ เพื่อเก็บในคลัง')
+  if(request!==searchRequest||generation!==window.musicProfileGeneration)return;
+  const rows=Array.isArray(json.items)?json.items:[];
+  let added=0;
+  for(const row of rows){const id=row?.id?.videoId;if(!/^[a-zA-Z0-9_-]{11}$/.test(id)||foundIds.has(id))continue;foundVideos.push(row);foundIds.add(id);added++;if(foundVideos.length>=SEARCH_MAX_ITEMS)break}
+  searchNextPage=added>0&&foundVideos.length<SEARCH_MAX_ITEMS?String(json.nextPageToken||''):'';
+  searchBusy=false;renderYouTubeResults({items:foundVideos});
+  if(loadMore)$('youtubeSearchResults').scrollTop=$('youtubeSearchResults').scrollHeight;
+  showSearchStatus('เลือกเพลงเพื่อเล่นทันที · กด ＋ เพื่อเก็บในคลัง · พบ '+foundVideos.length+' วิดีโอ');
  }catch(e){
-  if(generation!==window.musicProfileGeneration)return;
-  // window.open after an await is usually blocked as a popup, so offer a real link the user can tap.
+  if(request!==searchRequest||generation!==window.musicProfileGeneration)return;
+  searchBusy=false;searchNextPage='';updateSearchFooter();
   showSearchStatus('ค้นหาภายในเว็บไม่สำเร็จ'+(e?.name==='AbortError'?' (หมดเวลา)':e?.message?' · '+e.message:''));
-  const wrap=$('youtubeSearchResults');wrap.hidden=false;wrap.replaceChildren();
-  const a=document.createElement('a');a.href='https://www.youtube.com/results?search_query='+encodeURIComponent(q);a.target='_blank';a.rel='noopener';a.textContent='เปิดผลค้นหา “'+q+'” บน YouTube ↗';a.style.cssText='display:inline-block;padding:10px 14px;border-radius:12px;background:#ffffff1f;color:#fff;text-decoration:none;border:1px solid #ffffff3a';
-  wrap.append(a);
- }
+  if(!loadMore){const wrap=$('youtubeSearchResults');wrap.hidden=false;wrap.replaceChildren();
+   const a=document.createElement('a');a.href='https://www.youtube.com/results?search_query='+encodeURIComponent(q);a.target='_blank';a.rel='noopener';a.textContent='เปิดผลค้นหา “'+q+'” บน YouTube ↗';a.style.cssText='display:inline-block;padding:10px 14px;border-radius:12px;background:#ffffff1f;color:#fff;text-decoration:none;border:1px solid #ffffff3a';wrap.append(a)}
+ }finally{if(request===searchRequest){searchBusy=false;updateSearchFooter()}}
 }
+$('youtubeMoreResults').onclick=()=>searchYouTubeByName(true);
 async function inspectYoutubeUrl(){
  const generation=window.musicProfileGeneration;
  const id=idOf($('url').value);
@@ -430,12 +509,43 @@ function setupMusicMenu(){
 }
 setupMusicMenu();
 
+// Playlist browser: thumbnails and drill-down, while preserving the original select, editing and stored song IDs.
+function openPlaylistFromCard(id){
+ activePlaylistId=id;
+ category='ทั้งหมด';visibleCount=60;
+ $('filter').value='';
+ render();
+ document.getElementById('musicLibraryPane').scrollIntoView?.({block:'start',behavior:'auto'});
+}
+function renderPlaylistBrowser(){
+ const grid=$('playlistOverview'),back=$('playlistBrowserBack'),label=$('playlistBrowserLabel');
+ const active=selectedPlaylist();
+ back.hidden=!active;grid.hidden=!!active;
+ label.textContent=active?active.name+' · '+active.songIds.length+' เพลง':'เลือก Playlist ที่ต้องการ';
+ if(active)return;
+ grid.replaceChildren();
+ const cards=[{id:'',name:'เพลงทั้งหมด',songIds:songs.filter(s=>valid(s.id)).map(s=>s.id)},...playlists];
+ for(const item of cards){
+  const button=document.createElement('button');button.type='button';button.className='playlist-overview-card';
+  const cover=document.createElement('span');cover.className='playlist-overview-cover';
+  const ids=(item.songIds||[]).filter(id=>valid(id)&&songs.some(s=>s.id===id)).slice(0,4);
+  if(ids.length){for(const id of ids){const img=document.createElement('img');img.src=thumb(id);img.loading='lazy';img.decoding='async';img.alt='';cover.appendChild(img)}}
+  else{cover.textContent='♫';cover.classList.add('empty-cover')}
+  const info=document.createElement('span'),name=document.createElement('strong'),size=document.createElement('small');
+  name.textContent=item.name;size.textContent=item.songIds.length+' เพลง';
+  info.className='playlist-overview-info';info.append(name,size);button.append(cover,info);
+  button.onclick=()=>openPlaylistFromCard(item.id);
+  grid.append(button);
+ }
+}
+$('playlistBrowserBack').onclick=()=>openPlaylistFromCard('');
 // queue(): what Next/Previous/Repeat play — the selected Playlist (or whole library) and category, ignoring the text search box.
 function queue(){const active=selectedPlaylist();const result=active?active.songIds.map(id=>songs.find(s=>s.id===id)).filter(Boolean):songs.slice();return result.filter(s=>valid(s.id)&&(category==='ทั้งหมด'||(s.category||'เพลงโปรด')===category))}
 // playlist(): what the list shows — queue() narrowed by the search box.
 function playlist(){const q=$('filter').value.toLowerCase().trim();return queue().filter(s=>(String(s.title||'')+' '+(s.channel||'')).toLowerCase().includes(q))}function render(){
 refreshCategoryOptions();
 const selector=$('activePlaylist');if(selector){if(activePlaylistId&&!selectedPlaylist())activePlaylistId='';selector.innerHTML='<option value="">เพลงทั้งหมดในคลัง</option>'+playlists.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' ('+p.songIds.length+')</option>').join('');selector.value=activePlaylistId;$('renamePlaylist').disabled=!activePlaylistId;$('deletePlaylist').disabled=!activePlaylistId;$('playlistInfo').textContent=activePlaylistId?'เพลงในชุดนี้ '+(selectedPlaylist()?.songIds.length||0)+' รายการ':'เลือก Playlist เพื่อจัดการเพลง';}
+renderPlaylistBrowser();
 const cats=['ทั้งหมด',...new Set(songs.map(s=>s.category||'เพลงโปรด'))];$('cats').innerHTML=cats.map(c=>'<button class="'+(category===c?'primary':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join('');const filteredSongs=playlist();const more=$('loadMoreSongs');more.hidden=filteredSongs.length<=visibleCount;more.textContent='แสดงเพิ่มเติม ('+Math.min(60,filteredSongs.length-visibleCount)+' จาก '+(filteredSongs.length-visibleCount)+' เพลง)';more.onclick=()=>{visibleCount+=60;render()};$('list').innerHTML=filteredSongs.slice(0,visibleCount).map(s=>'<div class="song"><button type="button" class="song-play-main" data-play="'+esc(s.id)+'" aria-label="เล่น '+esc(s.title)+'"><img loading="lazy" src="'+thumb(s.id)+'" alt=""><span class="details"><strong>'+esc(s.title)+'</strong><small>'+esc(s.category)+'</small></span></button><button data-play="'+esc(s.id)+'" title="เล่น">▶</button><button data-move="'+esc(s.id)+'" title="เพิ่มลง Playlist">＋</button><button data-edit="'+esc(s.id)+'" title="แก้ไขชื่อ/หมวดเพลง">✎</button><button data-delete="'+esc(s.id)+'" title="'+(activePlaylistId?'นำออกจาก Playlist':'ลบออกจากคลัง')+'">'+(activePlaylistId?'−':'✕')+'</button></div>').join('')||'<p class="muted">ยังไม่มีเพลงในหมวดนี้</p>';document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{category=b.dataset.cat;visibleCount=60;render()});document.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>start(b.dataset.play));document.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>addToPlaylist(b.dataset.move));document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editSong(b.dataset.edit));document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{const id=b.dataset.delete;const p=selectedPlaylist();const s=songs.find(x=>x.id===id);const name=s?.title||'เพลงนี้';
  if(p){const ok=await openPlaylistDialog({type:'confirm',title:'นำเพลงออกจาก Playlist',description:'นำ “'+name+'” ออกจาก Playlist “'+p.name+'”?\nเพลงยังอยู่ในคลังหลัก',okText:'นำออก'});if(ok){p.songIds=p.songIds.filter(x=>x!==id);savePlaylists()}}
  else{if(auth&&(!user||!cloudLoaded)){status('ต้องเข้าสู่ระบบก่อนแก้ไขเพลง');return}const ok=await openPlaylistDialog({type:'confirm',title:'ลบเพลงออกจากคลัง',description:'ลบ “'+name+'” ออกจากคลังหลักและทุก Playlist?\nแนะนำให้สำรอง JSON ไว้ก่อน',okText:'ลบเพลง'});if(ok){songs=songs.filter(x=>x.id!==id);playlists.forEach(pl=>pl.songIds=pl.songIds.filter(x=>x!==id));savePlaylists();persist()}}})}function status(s){$('status').textContent=s}function time(v){v=Math.max(0,Math.floor(v||0));return Math.floor(v/60)+':'+String(v%60).padStart(2,'0')}let youtubeApiTimer=null,youtubeReadyTimer=null,loadingScript=null,ytRetry=0;
